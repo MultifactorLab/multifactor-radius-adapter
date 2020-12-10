@@ -267,17 +267,6 @@ namespace MultiFactor.Radius.Adapter.Services
 
         private IList<LdapEntry> Query(LdapConnection connection, string baseDn, string filter, LdapSearchScope scope, params string[] attributes)
         {
-            //var c = new LdapSearchConstraints()
-            //{
-            //    ReferralFollowing = true,
-            //};
-
-            //c.setReferralHandler(new LdapBindHandlerImpl());
-
-            //var results = connection.Search(baseDn, scope, filter, attributes, false, new LdapSearchConstraints(connection.Constraints)
-            //{
-            //    ReferralFollowing = true,
-            //});
             var results = connection.Search(baseDn, filter, attributes, scope);
             return results;
         }
