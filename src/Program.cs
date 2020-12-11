@@ -56,7 +56,7 @@ namespace MultiFactor.Radius.Adapter
             var loggerConfiguration = new LoggerConfiguration()
                 .MinimumLevel.ControlledBy(levelSwitch)
                 .WriteTo.Console(LogEventLevel.Debug)
-                .WriteTo.File($"{path}log{Path.DirectorySeparatorChar}log-.txt", rollingInterval: RollingInterval.Day);
+                .WriteTo.File($"{path}logs{Path.DirectorySeparatorChar}log-.txt", rollingInterval: RollingInterval.Day);
 
             Log.Logger = loggerConfiguration.CreateLogger();
 
