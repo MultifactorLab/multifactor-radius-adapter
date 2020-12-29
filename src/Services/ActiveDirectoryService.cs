@@ -140,6 +140,7 @@ namespace MultiFactor.Radius.Adapter.Services
                     {
                         request.UserPhone = profile.Mobile;
                     }
+                    request.DisplayName = profile.DisplayName;
                     request.EmailAddress = profile.Email;
                 }
 
@@ -184,7 +185,7 @@ namespace MultiFactor.Radius.Adapter.Services
         {
             profile = null;
 
-            var attributes = new[] { "DistinguishedName", "mail", "telephoneNumber", "mobile" };
+            var attributes = new[] { "DistinguishedName", "displayName", "mail", "telephoneNumber", "mobile" };
             var searchFilter = $"(&(objectClass=user)({user.TypeName}={user.Name}))";
 
             _logger.Debug($"Querying user '{user.Name}' in {domain.Name}");
@@ -205,6 +206,10 @@ namespace MultiFactor.Radius.Adapter.Services
             };
 
             var attrs = entry.DirectoryAttributes;
+            if (attrs.TryGetValue("displayName", out var displayNameAttr))
+            {
+                profile.DisplayName = displayNameAttr.GetValue<string>();
+            }
             if (attrs.TryGetValue("mail", out var mailAttr))
             {
                 profile.Email = mailAttr.GetValue<string>();
