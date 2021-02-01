@@ -8,23 +8,6 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap
     {
         public string Name { get; set; }
         public IdentityType Type { get; set; }
-        public string TypeName
-        {
-            get
-            {
-                switch (Type)
-                {
-                    case IdentityType.DistinguishedName:
-                        return "distinguishedName";
-                    case IdentityType.SamAccountName:
-                        return "sAMAccountName";
-                    case IdentityType.UserPrincipalName:
-                        return "userPrincipalName";
-                    default:
-                        return "name";
-                }
-            }
-        }
 
         public static LdapIdentity ParseUser(string name)
         {
@@ -86,7 +69,7 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap
                 identity = identity.Substring(index + 1);
             }
 
-            var type = isUser ? IdentityType.SamAccountName : IdentityType.Name;
+            var type = isUser ? IdentityType.Uid : IdentityType.Cn;
 
             if (identity.Contains("="))
             {
@@ -104,11 +87,18 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap
             };
         }
 
-        public string DnToFqdn()
+        /// <summary>
+        /// Converts DC=domain,DC=local to domain.local
+        /// </summary>
+        public static string DnToFqdn(string dn)
         {
-            var ncs = Name.Split(new[] { "," }, StringSplitOptions.RemoveEmptyEntries);
+            var ncs = dn.Split(new[] { "," }, StringSplitOptions.RemoveEmptyEntries);
             var fqdn = ncs.Select(nc => nc.Split(new[] { '=' }, StringSplitOptions.RemoveEmptyEntries)[1].TrimEnd(','));
             return string.Join(".", fqdn);
+        }
+        public string DnToFqdn()
+        {
+            return DnToFqdn(Name);
         }
 
         public bool IsChildOf(LdapIdentity parent)

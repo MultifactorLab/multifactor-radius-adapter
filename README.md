@@ -205,8 +205,8 @@ The component's parameters are stored in ```/opt/multifactor/radius/multifactor-
 
 To check the first factor in the Active Directory domain, the following parameters apply:
 ```xml
-<!--Domain-->
-<add key="active-directory-domain" value="ldaps://10.0.0.4"/>
+<!--ActiveDirectory authentication settings: for example domain.local on host 10.0.0.4 -->
+<add key="active-directory-domain" value="ldaps://10.0.0.4/DC=domain,DC=local"/>
 
 <!--Give access to users from specified group only (not checked if setting is removed)-->
 <add key="active-directory-group" value="VPN Users"/>

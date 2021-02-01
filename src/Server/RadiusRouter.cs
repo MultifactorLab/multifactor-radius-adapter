@@ -4,6 +4,7 @@
 
 using MultiFactor.Radius.Adapter.Core;
 using MultiFactor.Radius.Adapter.Services;
+using MultiFactor.Radius.Adapter.Services.Ldap;
 using Serilog;
 using System;
 using System.Collections.Concurrent;
@@ -20,8 +21,9 @@ namespace MultiFactor.Radius.Adapter.Server
         private Configuration _configuration;
         private ILogger _logger;
         private IRadiusPacketParser _packetParser;
-        private ActiveDirectoryService _activeDirectoryService;
         private MultiFactorApiClient _multifactorApiClient;
+        private ActiveDirectoryService _activeDirectoryService;
+        private LdapService _ldapService;
         public event EventHandler<PendingRequest> RequestProcessed;
         private readonly ConcurrentDictionary<string, PendingRequest> _stateChallengePendingRequests = new ConcurrentDictionary<string, PendingRequest>();
 
@@ -31,8 +33,9 @@ namespace MultiFactor.Radius.Adapter.Server
             _packetParser = packetParser ?? throw new ArgumentNullException(nameof(packetParser));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
-            _activeDirectoryService = new ActiveDirectoryService(configuration, logger);
             _multifactorApiClient = new MultiFactorApiClient(configuration, logger);
+            _activeDirectoryService = new ActiveDirectoryService(configuration, logger);
+            _ldapService = new LdapService(configuration, logger);
         }
 
         public void HandleRequest(PendingRequest request)
@@ -108,6 +111,7 @@ namespace MultiFactor.Radius.Adapter.Server
             switch(_configuration.FirstFactorAuthenticationSource)
             {
                 case AuthenticationSource.ActiveDirectory:  //AD auth
+                case AuthenticationSource.Ldap:             //LDAP auth
                     return ProcessActiveDirectoryAuthentication(request);
                 case AuthenticationSource.Radius:           //RADIUS auth
                     return ProcessRadiusAuthentication(request);
@@ -140,7 +144,13 @@ namespace MultiFactor.Radius.Adapter.Server
                 return PacketCode.AccessReject;
             }
 
-            var isValid = _activeDirectoryService.VerifyCredential(userName, password, request);
+            var isActiveDirectory = _configuration.FirstFactorAuthenticationSource == AuthenticationSource.ActiveDirectory;
+
+            var ldapService = isActiveDirectory ? 
+                _activeDirectoryService : 
+                _ldapService;
+
+            var isValid = ldapService.VerifyCredential(userName, password, request);
 
             return isValid ? PacketCode.AccessAccept : PacketCode.AccessReject;
         }

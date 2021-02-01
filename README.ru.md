@@ -207,8 +207,8 @@ $ sudo systemctl enable multifactor-radius
 
 Для проверки первого фактора в домене применимы следующие параметры:
 ```xml
-<!--Домен-->
-<add key="active-directory-domain" value="ldaps://10.0.0.4"/>
+<!--ActiveDirectory домен: в текущем примере domain.local на сервере 10.0.0.4 -->
+<add key="active-directory-domain" value="ldaps://10.0.0.4/DC=domain,DC=local"/>
 
 <!--Разрешать доступ только пользователям из указанной группы (не проверяется, если удалить настройку)-->
 <add key="active-directory-group" value="VPN Users"/>

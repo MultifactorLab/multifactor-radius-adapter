@@ -55,6 +55,11 @@ namespace MultiFactor.Radius.Adapter
         public string ActiveDirectoryDomain { get; set; }
 
         /// <summary>
+        /// LDAP bind distinguished name
+        /// </summary>
+        public string LdapBindDn { get; set; }
+
+        /// <summary>
         /// Only members of this group allowed to access (Optional)
         /// </summary>
         public string ActiveDirectoryGroup { get; set; }
@@ -169,7 +174,7 @@ namespace MultiFactor.Radius.Adapter
 
             if (!Enum.TryParse<AuthenticationSource>(firstFactorAuthenticationSourceSettings, out var firstFactorAuthenticationSource))
             {
-                throw new Exception("Configuration error: Can't parse 'first-factor-authentication-source' value. Must be one of: ActiveDirectory, Radius");
+                throw new Exception("Configuration error: Can't parse 'first-factor-authentication-source' value. Must be one of: ActiveDirectory, Radius, None");
             }
             if (!TryParseIPEndPoint(serviceServerEndpointSetting, out var serviceServerEndpoint))
             {
@@ -207,6 +212,7 @@ namespace MultiFactor.Radius.Adapter
             switch (configuration.FirstFactorAuthenticationSource)
             {
                 case AuthenticationSource.ActiveDirectory:
+                case AuthenticationSource.Ldap:
                     LoadActiveDirectoryAuthenticationSourceSettings(configuration);
                     break;
                 case AuthenticationSource.Radius:
@@ -224,6 +230,7 @@ namespace MultiFactor.Radius.Adapter
             var appSettings = ConfigurationManager.AppSettings;
 
             var activeDirectoryDomainSetting = appSettings["active-directory-domain"];
+            var ldapBindDnSetting = appSettings["ldap-bind-dn"];
             var activeDirectoryGroupSetting = appSettings["active-directory-group"];
             var activeDirectory2FaGroupSetting = appSettings["active-directory-2fa-group"];
             var useActiveDirectoryUserPhoneSetting = appSettings["use-active-directory-user-phone"];
@@ -255,6 +262,7 @@ namespace MultiFactor.Radius.Adapter
             }
 
             configuration.ActiveDirectoryDomain = activeDirectoryDomainSetting;
+            configuration.LdapBindDn = ldapBindDnSetting;
             configuration.ActiveDirectoryGroup = activeDirectoryGroupSetting;
             configuration.ActiveDirectory2FaGroup = activeDirectory2FaGroupSetting;
         }
@@ -367,6 +375,7 @@ namespace MultiFactor.Radius.Adapter
     {
         ActiveDirectory,
         Radius,
+        Ldap,
         None
     }
 

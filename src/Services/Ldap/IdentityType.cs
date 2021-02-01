@@ -3,8 +3,8 @@
     public enum IdentityType
     {
         DistinguishedName,
-        SamAccountName,
         UserPrincipalName,
-        Name
+        Uid,
+        Cn
     }
 }
