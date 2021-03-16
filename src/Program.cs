@@ -1,10 +1,12 @@
 using System;
 using System.IO;
 using System.Text;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using MultiFactor.Radius.Adapter.Core;
 using MultiFactor.Radius.Adapter.Server;
+using MultiFactor.Radius.Adapter.Services;
 using Serilog;
 using Serilog.Core;
 using Serilog.Events;
@@ -72,8 +74,12 @@ namespace MultiFactor.Radius.Adapter
 
             services.AddSingleton(Log.Logger);
             services.AddSingleton(configuration);
+
+            services.AddMemoryCache();
+
             services.AddSingleton<IRadiusDictionary>(dictionary);
             services.AddSingleton<IRadiusPacketParser, RadiusPacketParser>();
+            services.AddSingleton<CacheService>();
             services.AddSingleton<RadiusServer>();
 
             services.AddHostedService<ServerHost>();

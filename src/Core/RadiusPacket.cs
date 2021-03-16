@@ -85,6 +85,17 @@ namespace MultiFactor.Radius.Adapter.Core
 
         public string UserName => GetString("User-Name");
 
+        public string RemoteHostName
+        {
+            get
+            {
+                //MS RDGW and RRAS
+                return GetString("MS-Client-Machine-Account-Name") ?? GetString("MS-RAS-Client-Name");
+            }
+        }
+
+        public string UserPassword => GetString("User-Password");
+
         internal RadiusPacket()
         {
         }
@@ -225,6 +236,12 @@ namespace MultiFactor.Radius.Adapter.Core
                 Attributes.Add(name, new List<Object>());
             }
             Attributes[name].Add(value);
+        }
+
+        public string CreateUniqueKey(IPEndPoint remoteEndpoint)
+        {
+            var base64Authenticator = Authenticator.Base64();
+            return $"{Code.ToString("d")}:{Identifier}:{remoteEndpoint}:{UserName}:{base64Authenticator}";
         }
     }
 }

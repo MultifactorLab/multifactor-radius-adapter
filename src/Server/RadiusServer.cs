@@ -31,6 +31,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Net.Sockets;
+using MultiFactor.Radius.Adapter.Services;
 
 namespace MultiFactor.Radius.Adapter.Server
 {
@@ -44,6 +45,8 @@ namespace MultiFactor.Radius.Adapter.Server
         private RadiusRouter _router;
         private Configuration _configuration;
 
+        private CacheService _cacheService;
+
         public bool Running
         {
             get;
@@ -53,10 +56,11 @@ namespace MultiFactor.Radius.Adapter.Server
         /// <summary>
         /// Create a new server on endpoint with packet handler repository
         /// </summary>
-        public RadiusServer(Configuration configuration, IRadiusPacketParser radiusPacketParser, ILogger logger)
+        public RadiusServer(Configuration configuration, IRadiusPacketParser radiusPacketParser, CacheService cacheService, ILogger logger)
         {
             _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
             _radiusPacketParser = radiusPacketParser ?? throw new ArgumentNullException(nameof(radiusPacketParser));
+            _cacheService = cacheService ?? throw new ArgumentNullException(nameof(cacheService));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
             _localEndpoint = configuration.ServiceServerEndpoint;
@@ -160,6 +164,12 @@ namespace MultiFactor.Radius.Adapter.Server
             var requestPacket = _radiusPacketParser.Parse(packetBytes, Encoding.UTF8.GetBytes(_configuration.RadiusSharedSecret));
             _logger.Debug($"Received {requestPacket.Code} from {remoteEndpoint} Id={requestPacket.Identifier}");
 
+            if (_cacheService.IsRetransmission(requestPacket, remoteEndpoint))
+            {
+                _logger.Debug($"Retransmissed request from {remoteEndpoint} Id={requestPacket.Identifier}, ignoring");
+                return;
+            }
+
             var request = new PendingRequest { RemoteEndpoint = remoteEndpoint, RequestPacket = requestPacket };
 
             Task.Run(() => _router.HandleRequest(request));
@@ -208,7 +218,7 @@ namespace MultiFactor.Radius.Adapter.Server
 
             if (request.ResponseCode == PacketCode.AccessChallenge)
             {
-                responsePacket.AddAttribute("Reply-Message", "Enter OTP code");
+                responsePacket.AddAttribute("Reply-Message", request.ReplyMessage ?? "Enter OTP code: ");
                 responsePacket.AddAttribute("State", request.State); //state to match user authentication session
             }
 

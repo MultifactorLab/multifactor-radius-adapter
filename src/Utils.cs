@@ -32,6 +32,18 @@ namespace MultiFactor.Radius.Adapter
         }
 
         /// <summary>
+        /// Base64 encoded string
+        /// </summary>
+        public static string Base64(this byte[] bytes)
+        {
+            if (bytes != null)
+            {
+                return Convert.ToBase64String(bytes);
+            }
+            return null;
+        }
+
+        /// <summary>
         /// User name without domain
         /// </summary>
         public static string CanonicalizeUserName(string userName)

@@ -54,6 +54,8 @@ namespace MultiFactor.Radius.Adapter.Core
         bool IsEapMessageChallenge { get; }
         AuthenticationType AuthenticationType { get; }
         string UserName { get; }
+        string UserPassword { get; }
+        string RemoteHostName { get; }
 
         IRadiusPacket CreateResponsePacket(PacketCode responseCode);
 
@@ -71,5 +73,7 @@ namespace MultiFactor.Radius.Adapter.Core
         {
             get; set;
         }
+
+        string CreateUniqueKey(IPEndPoint remoteEndpoint);
     }
 }
