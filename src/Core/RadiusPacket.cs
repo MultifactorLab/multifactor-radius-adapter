@@ -93,6 +93,7 @@ namespace MultiFactor.Radius.Adapter.Core
                 return GetString("MS-Client-Machine-Account-Name") ?? GetString("MS-RAS-Client-Name");
             }
         }
+        public string CallingStationId => GetString("Calling-Station-Id") ?? RemoteHostName;
 
         public string UserPassword => GetString("User-Password");
 
