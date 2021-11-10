@@ -68,7 +68,7 @@ namespace MultiFactor.Radius.Adapter.Services
             {
                 var reason = response?.ReplyMessage;
                 var phone = response?.Phone;
-                _logger.Warning("Second factor verification for user '{user:l}' failed with reason='{reason:l}'. User phone {phone:l}", userName, reason, phone);
+                _logger.Warning("Second factor verification for user '{user:l}' from {host:l}:{port} failed with reason='{reason:l}'. User phone {phone:l}", userName, request.RemoteEndpoint.Address, request.RemoteEndpoint.Port, reason, phone);
             }
 
             return responseCode;
