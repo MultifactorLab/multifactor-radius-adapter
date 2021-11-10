@@ -4,13 +4,10 @@
 
 using LdapForNet;
 using MultiFactor.Radius.Adapter.Core.Services.Ldap;
-using MultiFactor.Radius.Adapter.Server;
 using MultiFactor.Radius.Adapter.Services.Ldap;
 using Serilog;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text.RegularExpressions;
 using static LdapForNet.Native.Native;
 
 namespace MultiFactor.Radius.Adapter.Services

@@ -41,14 +41,14 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap
             }
             if (string.IsNullOrEmpty(password))
             {
-                _logger.Error($"Empty password provided for user '{userName}'");
+                _logger.Error("Empty password provided for user '{user:l}'", userName);
                 return false;
             }
 
             var user = LdapIdentity.ParseUser(userName);
             var bindDn = FormatBindDn(user);
 
-            _logger.Debug($"Verifying user '{bindDn}' credential and status at {_configuration.ActiveDirectoryDomain}");
+            _logger.Debug($"Verifying user '{{user:l}}' credential and status at {_configuration.ActiveDirectoryDomain}", bindDn);
 
             try
             {
@@ -77,7 +77,7 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap
 
                     var domain = WhereAmI(connection);
 
-                    _logger.Information($"User '{user.Name}' credential and status verified successfully in {domain.Name}");
+                    _logger.Information($"User '{{user:l}}' credential and status verified successfully in {domain.Name}", user.Name);
 
                     var isProfileLoaded = LoadProfile(connection, domain, user, out var profile);
                     if (!isProfileLoaded)
@@ -93,11 +93,11 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap
 
                         if (!isMemberOf)
                         {
-                            _logger.Warning($"User '{user.Name}' is not member of '{_configuration.ActiveDirectoryGroup}' group in {profile.BaseDn.Name}");
+                            _logger.Warning($"User '{{user:l}}' is not member of '{_configuration.ActiveDirectoryGroup}' group in {profile.BaseDn.Name}", user.Name);
                             return false;
                         }
 
-                        _logger.Debug($"User '{user.Name}' is member of '{_configuration.ActiveDirectoryGroup}' group in {profile.BaseDn.Name}");
+                        _logger.Debug($"User '{{user:l}}' is member of '{_configuration.ActiveDirectoryGroup}' group in {profile.BaseDn.Name}", user.Name);
                     }
 
                     var onlyMembersOfGroupMustProcess2faAuthentication = !string.IsNullOrEmpty(_configuration.ActiveDirectory2FaGroup);
@@ -108,11 +108,11 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap
 
                         if (isMemberOf)
                         {
-                            _logger.Debug($"User '{user.Name}' is member of '{_configuration.ActiveDirectory2FaGroup}' in {profile.BaseDn.Name}");
+                            _logger.Debug($"User '{{user:l}}' is member of '{_configuration.ActiveDirectory2FaGroup}' in {profile.BaseDn.Name}", user.Name);
                         }
                         else
                         {
-                            _logger.Information($"User '{user.Name}' is not member of '{_configuration.ActiveDirectory2FaGroup}' in {profile.BaseDn.Name}");
+                            _logger.Information($"User '{{user:l}}' is not member of '{_configuration.ActiveDirectory2FaGroup}' in {profile.BaseDn.Name}", user.Name);
                             request.Bypass2Fa = true;
                         }
                     }
@@ -124,12 +124,12 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap
                         {
                             if (IsMemberOf(connection, domain, user, profile, value.UserGroupCondition))
                             {
-                                _logger.Information($"User '{user.Name}' is member of '{value.UserGroupCondition}' in {profile.BaseDn.Name}. Adding attribute '{attribute.Key}:{value.Value}' to reply");
+                                _logger.Information($"User '{{user:l}}' is member of '{value.UserGroupCondition}' in {profile.BaseDn.Name}. Adding attribute '{attribute.Key}:{value.Value}' to reply", user.Name);
                                 request.UserGroups.Add(value.UserGroupCondition);
                             }
                             else
                             {
-                                _logger.Debug($"User '{user.Name}' is not member of '{value.UserGroupCondition}' in {profile.BaseDn.Name}");
+                                _logger.Debug($"User '{{user:l}}' is not member of '{value.UserGroupCondition}' in {profile.BaseDn.Name}", user.Name);
                             }
                         }
                     }
@@ -155,16 +155,16 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap
                     var dataReason = ExtractErrorReason(lex.Message);
                     if (dataReason != null)
                     {
-                        _logger.Warning($"Verification user '{user.Name}' at {_configuration.ActiveDirectoryDomain} failed: {dataReason}");
+                        _logger.Warning($"Verification user '{{user:l}}' at {_configuration.ActiveDirectoryDomain} failed: {dataReason}", user.Name);
                         return false;
                     }
                 }
 
-                _logger.Error(lex, $"Verification user '{user.Name}' at {_configuration.ActiveDirectoryDomain} failed");
+                _logger.Error(lex, $"Verification user '{{user:l}}' at {_configuration.ActiveDirectoryDomain} failed", user.Name);
             }
             catch (Exception ex)
             {
-                _logger.Error(ex, $"Verification user '{user.Name}' at {_configuration.ActiveDirectoryDomain} failed");
+                _logger.Error(ex, $"Verification user '{{user:l}}' at {_configuration.ActiveDirectoryDomain} failed", user.Name);
             }
 
             return false;
@@ -206,14 +206,14 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap
             var attributes = new[] { "DistinguishedName", "displayName", "mail", "telephoneNumber", "mobile", "memberOf" };
             var searchFilter = $"(&(objectClass={Names.UserClass})({Names.Identity(user)}={user.Name}))";
 
-            _logger.Debug($"Querying user '{user.Name}' in {domain.Name}");
+            _logger.Debug($"Querying user '{{user:l}}' in {domain.Name}", user.Name);
 
             var response = Query(connection, domain.Name, searchFilter, LdapSearchScope.LDAP_SCOPE_SUB, attributes);
 
             var entry = response.SingleOrDefault();
             if (entry == null)
             {
-                _logger.Error($"Unable to find user '{user.Name}' in {domain.Name}");
+                _logger.Error($"Unable to find user '{{user:l}}' in {domain.Name}", user.Name);
                 return false;
             }
 
@@ -245,7 +245,7 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap
                 profile.MemberOf = memberOfAttr.GetValues<string>().ToList();
             }
 
-            _logger.Debug($"User '{user.Name}' profile loaded: {profile.DistinguishedName}");
+            _logger.Debug($"User '{{user:l}}' profile loaded: {profile.DistinguishedName}", user.Name);
 
             return true;
         }

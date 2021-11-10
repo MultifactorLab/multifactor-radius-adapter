@@ -10,6 +10,8 @@ using MultiFactor.Radius.Adapter.Services;
 using Serilog;
 using Serilog.Core;
 using Serilog.Events;
+using Serilog.Formatting;
+using Serilog.Formatting.Compact;
 
 namespace MultiFactor.Radius.Adapter
 {
@@ -46,7 +48,6 @@ namespace MultiFactor.Radius.Adapter
                     host.StopAsync();
                 }
             }
-
         }
 
         private static void ConfigureServices(IServiceCollection services)
@@ -56,12 +57,23 @@ namespace MultiFactor.Radius.Adapter
             //create logging
             var levelSwitch = new LoggingLevelSwitch(LogEventLevel.Information);
             var loggerConfiguration = new LoggerConfiguration()
-                .MinimumLevel.ControlledBy(levelSwitch)
-                .WriteTo.Console(LogEventLevel.Debug)
-                .WriteTo.File($"{path}logs{Path.DirectorySeparatorChar}log-.txt", rollingInterval: RollingInterval.Day);
+                .MinimumLevel.ControlledBy(levelSwitch);
+
+            var formatter = GetLogFormatter();
+            if (formatter != null)
+            {
+                loggerConfiguration
+                    .WriteTo.Console(formatter)
+                    .WriteTo.File(formatter, $"{path}logs{Path.DirectorySeparatorChar}log-.txt", rollingInterval: RollingInterval.Day);
+            }
+            else
+            {
+                loggerConfiguration
+                    .WriteTo.Console()
+                    .WriteTo.File($"{path}logs{Path.DirectorySeparatorChar}log-.txt", rollingInterval: RollingInterval.Day);
+            }
 
             Log.Logger = loggerConfiguration.CreateLogger();
-
 
             //load radius attributes dictionary
             var dictionaryPath = path + "content" + Path.DirectorySeparatorChar + "radius.dictionary";
@@ -89,6 +101,9 @@ namespace MultiFactor.Radius.Adapter
         {
             switch (level)
             {
+                case "Verbose":
+                    levelSwitch.MinimumLevel = LogEventLevel.Verbose;
+                    break;
                 case "Debug":
                     levelSwitch.MinimumLevel = LogEventLevel.Debug;
                     break;
@@ -125,6 +140,18 @@ namespace MultiFactor.Radius.Adapter
             }
 
             return stringBuilder.ToString();
+        }
+
+        private static ITextFormatter GetLogFormatter()
+        {
+            var format = Configuration.GetLogFormat();
+            switch (format?.ToLower())
+            {
+                case "json":
+                    return new RenderedCompactJsonFormatter();
+                default:
+                    return null;
+            }
         }
     }
 }

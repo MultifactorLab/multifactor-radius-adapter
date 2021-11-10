@@ -121,6 +121,12 @@ namespace MultiFactor.Radius.Adapter
         /// </summary>
         public IDictionary<string, List<RadiusReplyAttributeValue>> RadiusReplyAttributes { get; set; }
 
+        public static string GetLogFormat()
+        {
+            var appSettings = ConfigurationManager.AppSettings;
+            return appSettings?["logging-format"];
+        }
+
         /// <summary>
         /// Read and load settings from appSettings configuration section
         /// </summary>

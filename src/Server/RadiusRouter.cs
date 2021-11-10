@@ -44,7 +44,7 @@ namespace MultiFactor.Radius.Adapter.Server
             {
                 if (request.RequestPacket.Code != PacketCode.AccessRequest)
                 {
-                    _logger.Warning($"Unprocessable packet type: {request.RequestPacket.Code}");
+                    _logger.Warning("Unprocessable packet type: {code}", request.RequestPacket.Code);
                     return;
                 }
 
@@ -78,7 +78,7 @@ namespace MultiFactor.Radius.Adapter.Server
                 {
                     //second factor not trquired
                     var userName = request.RequestPacket.UserName;
-                    _logger.Information($"Bypass second factor for user {userName}");
+                    _logger.Information("Bypass second factor for user '{user:l}'", userName);
 
                     request.ResponseCode = PacketCode.AccessAccept;
                     RequestProcessed?.Invoke(this, request);
@@ -131,13 +131,13 @@ namespace MultiFactor.Radius.Adapter.Server
 
             if (string.IsNullOrEmpty(userName))
             {
-                _logger.Warning($"Can't find User-Name in message Id={request.RequestPacket.Identifier} from {request.RemoteEndpoint}");
+                _logger.Warning("Can't find User-Name in message id={id} from {host:l}:{port}", request.RequestPacket.Identifier, request.RemoteEndpoint.Address, request.RemoteEndpoint.Port);
                 return PacketCode.AccessReject;
             }
 
             if (string.IsNullOrEmpty(password))
             {
-                _logger.Warning($"Can't find User-Password in message Id={request.RequestPacket.Identifier} from {request.RemoteEndpoint}");
+                _logger.Warning("Can't find User-Password in message id={id} from {host:l}:{port}", request.RequestPacket.Identifier, request.RemoteEndpoint.Address, request.RemoteEndpoint.Port);
                 return PacketCode.AccessReject;
             }
 
@@ -162,7 +162,7 @@ namespace MultiFactor.Radius.Adapter.Server
                 //sending request as is to Network Policy Server
                 using (var client = new RadiusClient(_configuration.ServiceClientEndpoint, _logger))
                 {
-                    _logger.Debug($"Sending Access-Request message with Id={request.RequestPacket.Identifier} to Network Policy Server {_configuration.NpsServerEndpoint}");
+                    _logger.Debug($"Sending AccessRequest message with id={{id}} to Network Policy Server {_configuration.NpsServerEndpoint}", request.RequestPacket.Identifier);
 
                     var requestBytes = _packetParser.GetBytes(request.RequestPacket);
                     var response = client.SendPacketAsync(request.RequestPacket.Identifier, requestBytes, _configuration.NpsServerEndpoint, TimeSpan.FromSeconds(5)).Result;
@@ -170,12 +170,12 @@ namespace MultiFactor.Radius.Adapter.Server
                     if (response != null)
                     {
                         var responsePacket = _packetParser.Parse(response, request.RequestPacket.SharedSecret, request.RequestPacket.Authenticator);
-                        _logger.Debug($"Received {responsePacket.Code} message with Id={responsePacket.Identifier} from Network Policy Server");
+                        _logger.Debug("Received {code:l} message with id={id} from Network Policy Server", responsePacket.Code.ToString(), responsePacket.Identifier);
                         
                         if (responsePacket.Code == PacketCode.AccessAccept)
                         {
                             var userName = request.RequestPacket.UserName;
-                            _logger.Information($"User '{userName}' credential and status verified successfully at {_configuration.NpsServerEndpoint}");
+                            _logger.Information($"User '{{user:l}}' credential and status verified successfully at {_configuration.NpsServerEndpoint}", userName);
                         }
 
                         request.ResponsePacket = responsePacket;
@@ -183,7 +183,7 @@ namespace MultiFactor.Radius.Adapter.Server
                     }
                     else
                     {
-                        _logger.Warning($"Network Policy Server did not respond on message with Id={request.RequestPacket.Identifier}");
+                        _logger.Warning("Network Policy Server did not respond on message with id={id}", request.RequestPacket.Identifier);
                         return PacketCode.AccessReject; //reject by default
                     }
                 }
@@ -205,7 +205,7 @@ namespace MultiFactor.Radius.Adapter.Server
 
             if (string.IsNullOrEmpty(userName))
             {
-                _logger.Warning($"Can't find User-Name in message Id={request.RequestPacket.Identifier} from {request.RemoteEndpoint}");
+                _logger.Warning("Can't find User-Name in message id={id} from {host:l}:{port}", request.RequestPacket.Identifier, request.RemoteEndpoint.Address, request.RemoteEndpoint.Port);
                 return PacketCode.AccessReject;
             }
 
@@ -223,7 +223,7 @@ namespace MultiFactor.Radius.Adapter.Server
 
             if (string.IsNullOrEmpty(userName))
             {
-                _logger.Warning($"Can't find User-Name in message Id={request.RequestPacket.Identifier} from {request.RemoteEndpoint}");
+                _logger.Warning("Can't find User-Name in message id={id} from {host:l}:{port}", request.RequestPacket.Identifier, request.RemoteEndpoint.Address, request.RemoteEndpoint.Port);
                 return PacketCode.AccessReject;
             }
 
@@ -238,7 +238,7 @@ namespace MultiFactor.Radius.Adapter.Server
 
                     if (string.IsNullOrEmpty(userAnswer))
                     {
-                        _logger.Warning($"Can't find User-Password with user response in message Id={request.RequestPacket.Identifier} from {request.RemoteEndpoint}");
+                        _logger.Warning("Can't find User-Password with user response in message id={id} from {host:l}:{port}", request.RequestPacket.Identifier, request.RemoteEndpoint.Address, request.RemoteEndpoint.Port);
                         return PacketCode.AccessReject;
                     }
 
@@ -248,7 +248,7 @@ namespace MultiFactor.Radius.Adapter.Server
 
                     if (msChapResponse == null)
                     {
-                        _logger.Warning($"Can't find MS-CHAP2-Response in message Id={request.RequestPacket.Identifier} from {request.RemoteEndpoint}");
+                        _logger.Warning("Can't find MS-CHAP2-Response in message id={id} from {host:l}:{port}", request.RequestPacket.Identifier, request.RemoteEndpoint.Address, request.RemoteEndpoint.Port);
                         return PacketCode.AccessReject;
                     }
 
@@ -258,7 +258,7 @@ namespace MultiFactor.Radius.Adapter.Server
 
                     break;
                 default:
-                    _logger.Warning($"Unable to process {request.RequestPacket.AuthenticationType} challange in message Id={request.RequestPacket.Identifier} from {request.RemoteEndpoint}");
+                    _logger.Warning("Unable to process {auth} challange in message id={id} from {host:l}:{port}", request.RequestPacket.AuthenticationType, request.RequestPacket.Identifier, request.RemoteEndpoint.Address, request.RemoteEndpoint.Port);
                     return PacketCode.AccessReject;
             }
 
@@ -289,7 +289,7 @@ namespace MultiFactor.Radius.Adapter.Server
         {
             if (!_stateChallengePendingRequests.TryAdd(state, request))
             {
-                _logger.Error($"Unable to cache request Id={request.RequestPacket.Identifier}");
+                _logger.Error("Unable to cache request id={id}", request.RequestPacket.Identifier);
             }
         }
 
