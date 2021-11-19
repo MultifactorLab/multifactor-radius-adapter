@@ -27,6 +27,8 @@ namespace MultiFactor.Radius.Adapter.Server
         public event EventHandler<PendingRequest> RequestProcessed;
         private readonly ConcurrentDictionary<string, PendingRequest> _stateChallengePendingRequests = new ConcurrentDictionary<string, PendingRequest>();
 
+        private DateTime _startedAt = DateTime.Now;
+
         public RadiusRouter(Configuration configuration, IRadiusPacketParser packetParser, ILogger logger)
         {
             _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
@@ -42,6 +44,16 @@ namespace MultiFactor.Radius.Adapter.Server
         {
             try
             {
+                if (request.RequestPacket.Code == PacketCode.StatusServer)
+                {
+                    //status
+                    var uptime = (DateTime.Now - _startedAt);
+                    request.ReplyMessage = $"Server up {uptime.Days} days {uptime.ToString("hh\\:mm\\:ss")}";
+                    request.ResponseCode = PacketCode.AccessAccept;
+                    RequestProcessed?.Invoke(this, request);
+                    return;
+                }
+
                 if (request.RequestPacket.Code != PacketCode.AccessRequest)
                 {
                     _logger.Warning("Unprocessable packet type: {code}", request.RequestPacket.Code);
