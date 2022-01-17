@@ -28,7 +28,7 @@ namespace MultiFactor.Radius.Adapter
         /// </summary>
         public static string ToHexString(this byte[] bytes)
         {
-            return bytes != null ? BitConverter.ToString(bytes).ToLowerInvariant().Replace("-", "") : null;    
+            return bytes != null ? BitConverter.ToString(bytes).ToLowerInvariant().Replace("-", "") : null;
         }
 
         /// <summary>
@@ -68,6 +68,19 @@ namespace MultiFactor.Radius.Adapter
             }
 
             return identity;
+        }
+
+        /// <summary>
+        /// Check if username does not contains domain prefix or suffix
+        /// </summary>
+        public static bool IsCanicalUserName(string userName)
+        {
+            if (string.IsNullOrEmpty(userName))
+            {
+                throw new ArgumentNullException(nameof(userName));
+            }
+
+            return userName.IndexOfAny(new[] { '\\', '@' }) == -1;
         }
     }
 }

@@ -28,9 +28,14 @@ namespace MultiFactor.Radius.Adapter.Server
 
 
         /// <summary>
-        /// Return condition
+        /// User group condition
         /// </summary>
         public string UserGroupCondition { get; set; }
+
+        /// <summary>
+        /// User name condition
+        /// </summary>
+        public string UserNameCondition { get; set; }
 
         /// <summary>
         /// Is match condition
@@ -42,16 +47,28 @@ namespace MultiFactor.Radius.Adapter.Server
                 throw new ArgumentNullException(nameof(request));
             }
 
-            if (string.IsNullOrEmpty(UserGroupCondition))
+            if (!string.IsNullOrEmpty(UserNameCondition))
             {
-                return true; //always on
+                var userName = request.RequestPacket.UserName;
+                var isCanonical = Utils.IsCanicalUserName(UserNameCondition);
+                if (isCanonical)
+                {
+                    userName = Utils.CanonicalizeUserName(userName);
+                }
+
+                return string.Compare(userName, UserNameCondition, StringComparison.InvariantCultureIgnoreCase) == 0;
             }
 
-            var isInGroup = request
-                .UserGroups
-                .Any(g => string.Compare(g, UserGroupCondition, StringComparison.InvariantCultureIgnoreCase) == 0);
-            
-            return isInGroup;
+            if (!string.IsNullOrEmpty(UserGroupCondition))
+            {
+                var isInGroup = request
+                    .UserGroups
+                    .Any(g => string.Compare(g, UserGroupCondition, StringComparison.InvariantCultureIgnoreCase) == 0);
+
+                return isInGroup;
+            }
+
+            return true; //without conditions
         }
 
         private void ParseConditionClause(string clause)
@@ -62,6 +79,9 @@ namespace MultiFactor.Radius.Adapter.Server
             {
                 case "UserGroup":
                     UserGroupCondition = parts[1];
+                    break;
+                case "UserName":
+                    UserNameCondition = parts[1];
                     break;
                 default:
                     throw new Exception($"Unknown condition '{clause}'");
