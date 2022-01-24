@@ -124,12 +124,7 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap
                         {
                             if (IsMemberOf(connection, domain, user, profile, value.UserGroupCondition))
                             {
-                                _logger.Information($"User '{{user:l}}' is member of '{value.UserGroupCondition}' in {profile.BaseDn.Name}. Adding attribute '{attribute.Key}:{value.Value}' to reply", user.Name);
                                 request.UserGroups.Add(value.UserGroupCondition);
-                            }
-                            else
-                            {
-                                _logger.Debug($"User '{{user:l}}' is not member of '{value.UserGroupCondition}' in {profile.BaseDn.Name}", user.Name);
                             }
                         }
                     }

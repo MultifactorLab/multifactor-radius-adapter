@@ -292,6 +292,10 @@ namespace MultiFactor.Radius.Adapter.Server
                     if (matched.Any())
                     {
                         responsePacket.Attributes.Add(attr.Key, matched.ToList());
+                        foreach(var val in matched.ToList())
+                        {
+                            _logger.Debug("Added attribute '{attrname:l}:{attrval:l}' to reply", attr.Key, val);
+                        }
                     }
                 }
             }
