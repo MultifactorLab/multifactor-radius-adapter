@@ -288,7 +288,7 @@ namespace MultiFactor.Radius.Adapter.Server
                 foreach (var attr in _configuration.RadiusReplyAttributes)
                 {
                     //check condition
-                    var matched = attr.Value.Where(val => val.IsMatch(request)).Select(val => val.Value);
+                    var matched = attr.Value.Where(val => val.IsMatch(request)).Select(val => val.GetValue(request));
                     if (matched.Any())
                     {
                         responsePacket.Attributes.Add(attr.Key, matched.ToList());

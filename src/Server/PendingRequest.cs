@@ -30,5 +30,6 @@ namespace MultiFactor.Radius.Adapter.Server
         public string EmailAddress { get; set; }
         public bool Bypass2Fa { get; set; }
         public IList<string> UserGroups { get; set; }
+        public IDictionary<string, object> LdapAttrs { get; set; }
     }
 }

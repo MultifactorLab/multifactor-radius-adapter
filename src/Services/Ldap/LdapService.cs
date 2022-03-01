@@ -139,6 +139,7 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap
                     }
                     request.DisplayName = profile.DisplayName;
                     request.EmailAddress = profile.Email;
+                    request.LdapAttrs = profile.LdapAttrs;
                 }
 
                 return true; //OK
@@ -196,14 +197,25 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap
 
         protected virtual bool LoadProfile(LdapConnection connection, LdapIdentity domain, LdapIdentity user, out LdapProfile profile)
         {
-            profile = null;
+            profile = new LdapProfile();
 
-            var attributes = new[] { "DistinguishedName", "displayName", "mail", "telephoneNumber", "mobile", "memberOf" };
+            var queryAttributes = new List<string> { "DistinguishedName", "displayName", "mail", "telephoneNumber", "mobile", "memberOf" };
+
+            var ldapReplyAttributes = _configuration.GetLdapReplyAttributes();
+            foreach(var ldapReplyAttribute in ldapReplyAttributes)
+            {
+                if (!profile.LdapAttrs.ContainsKey(ldapReplyAttribute))
+                {
+                    profile.LdapAttrs.Add(ldapReplyAttribute, null);
+                    queryAttributes.Add(ldapReplyAttribute);
+                }
+            }
+
             var searchFilter = $"(&(objectClass={Names.UserClass})({Names.Identity(user)}={user.Name}))";
 
             _logger.Debug($"Querying user '{{user:l}}' in {domain.Name}", user.Name);
 
-            var response = Query(connection, domain.Name, searchFilter, LdapSearchScope.LDAP_SCOPE_SUB, attributes);
+            var response = Query(connection, domain.Name, searchFilter, LdapSearchScope.LDAP_SCOPE_SUB, queryAttributes.ToArray());
 
             var entry = response.SingleOrDefault();
             if (entry == null)
@@ -212,11 +224,8 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap
                 return false;
             }
 
-            profile = new LdapProfile
-            {
-                BaseDn = LdapIdentity.BaseDn(entry.Dn),
-                DistinguishedName = entry.Dn,
-            };
+            profile.BaseDn = LdapIdentity.BaseDn(entry.Dn);
+            profile.DistinguishedName = entry.Dn;
 
             var attrs = entry.DirectoryAttributes;
             if (attrs.TryGetValue("displayName", out var displayNameAttr))
@@ -238,6 +247,18 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap
             if (attrs.TryGetValue("memberOf", out var memberOfAttr))
             {
                 profile.MemberOf = memberOfAttr.GetValues<string>().ToList();
+            }
+
+            foreach(var key in profile.LdapAttrs.Keys.ToList()) //to list to avoid collection was modified exception
+            {
+                if (attrs.TryGetValue(key, out var attrValue))
+                {
+                    profile.LdapAttrs[key] = attrValue.GetValue<string>();
+                }
+                else
+                {
+                    _logger.Warning($"Can't load attribute '{key}' from user '{entry.Dn}'");
+                }
             }
 
             _logger.Debug($"User '{{user:l}}' profile loaded: {profile.DistinguishedName}", user.Name);

@@ -284,6 +284,7 @@ namespace MultiFactor.Radius.Adapter.Server
                     {
                         request.UserGroups = stateChallengePendingRequest.UserGroups;
                         request.ResponsePacket = stateChallengePendingRequest.ResponsePacket;
+                        request.LdapAttrs = stateChallengePendingRequest.LdapAttrs;
                     }
                     break;
                 case PacketCode.AccessReject:

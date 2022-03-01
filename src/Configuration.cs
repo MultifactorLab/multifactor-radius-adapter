@@ -7,6 +7,7 @@ using MultiFactor.Radius.Adapter.Server;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
+using System.Linq;
 using System.Net;
 
 namespace MultiFactor.Radius.Adapter
@@ -120,6 +121,16 @@ namespace MultiFactor.Radius.Adapter
         /// Custom RADIUS reply attributes
         /// </summary>
         public IDictionary<string, List<RadiusReplyAttributeValue>> RadiusReplyAttributes { get; set; }
+
+        public IList<string> GetLdapReplyAttributes()
+        {
+            return RadiusReplyAttributes
+                .Values
+                .SelectMany(attr => attr)
+                .Where(attr => attr.FromLdap)
+                .Select(attr => attr.LdapAttributeName)
+                .ToList();
+        }
 
         public static string GetLogFormat()
         {
@@ -323,14 +334,21 @@ namespace MultiFactor.Radius.Adapter
                         replyAttributes.Add(attribute.Name, new List<RadiusReplyAttributeValue>());
                     }
 
-                    try
+                    if (!string.IsNullOrEmpty(attribute.From))
                     {
-                        var value = ParseRadiusReplyAttributeValue(radiusAttribute, attribute.Value);
-                        replyAttributes[attribute.Name].Add(new RadiusReplyAttributeValue(value, attribute.When));
+                        replyAttributes[attribute.Name].Add(new RadiusReplyAttributeValue(attribute.From));
                     }
-                    catch (Exception ex)
+                    else
                     {
-                        throw new ConfigurationErrorsException($"Error while parsing attribute '{radiusAttribute.Name}' with {radiusAttribute.Type} value '{attribute.Value}' in RadiusReply configuration element: {ex.Message}");
+                        try
+                        {
+                            var value = ParseRadiusReplyAttributeValue(radiusAttribute, attribute.Value);
+                            replyAttributes[attribute.Name].Add(new RadiusReplyAttributeValue(value, attribute.When));
+                        }
+                        catch (Exception ex)
+                        {
+                            throw new ConfigurationErrorsException($"Error while parsing attribute '{radiusAttribute.Name}' with {radiusAttribute.Type} value '{attribute.Value}' in RadiusReply configuration element: {ex.Message}");
+                        }
                     }
                 }
             }
@@ -340,6 +358,11 @@ namespace MultiFactor.Radius.Adapter
 
         private static object ParseRadiusReplyAttributeValue(DictionaryAttribute attribute, string value)
         {
+            if (string.IsNullOrEmpty(value))
+            {
+                throw new Exception("Value must be specified");
+            }
+            
             switch (attribute.Type)
             {
                 case DictionaryAttribute.TYPE_STRING:
@@ -393,7 +416,7 @@ namespace MultiFactor.Radius.Adapter
             get { return (string)this["name"]; }
         }
 
-        [ConfigurationProperty("value", IsKey = false, IsRequired = true)]
+        [ConfigurationProperty("value", IsKey = false, IsRequired = false)]
         public string Value
         {
             get { return (string)this["value"]; }
@@ -403,6 +426,12 @@ namespace MultiFactor.Radius.Adapter
         public string When
         {
             get { return (string)this["when"]; }
+        }
+
+        [ConfigurationProperty("from", IsKey = false, IsRequired = false)]
+        public string From
+        {
+            get { return (string)this["from"]; }
         }
     }
 
@@ -416,7 +445,7 @@ namespace MultiFactor.Radius.Adapter
         protected override object GetElementKey(ConfigurationElement element)
         {
             var attribute = (RadiusReplyAttributeElement)element;
-            return $"{attribute.Name}:{attribute.Value}";
+            return $"{attribute.Name}:{attribute.Value}:{attribute.From}";
         }
     }
 
