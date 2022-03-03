@@ -32,6 +32,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Net.Sockets;
 using MultiFactor.Radius.Adapter.Services;
+using System.Globalization;
+using System.Collections.Generic;
 
 namespace MultiFactor.Radius.Adapter.Server
 {
@@ -40,6 +42,7 @@ namespace MultiFactor.Radius.Adapter.Server
         private UdpClient _server;
         private readonly IPEndPoint _localEndpoint;
         private readonly IRadiusPacketParser _radiusPacketParser;
+        private readonly IRadiusDictionary _dictionary;
         private int _concurrentHandlerCount = 0;
         private readonly ILogger _logger;
         private RadiusRouter _router;
@@ -56,9 +59,10 @@ namespace MultiFactor.Radius.Adapter.Server
         /// <summary>
         /// Create a new server on endpoint with packet handler repository
         /// </summary>
-        public RadiusServer(Configuration configuration, IRadiusPacketParser radiusPacketParser, CacheService cacheService, ILogger logger)
+        public RadiusServer(Configuration configuration, IRadiusDictionary dictionary, IRadiusPacketParser radiusPacketParser, CacheService cacheService, ILogger logger)
         {
             _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+            _dictionary = dictionary ?? throw new ArgumentNullException(nameof(dictionary));
             _radiusPacketParser = radiusPacketParser ?? throw new ArgumentNullException(nameof(radiusPacketParser));
             _cacheService = cacheService ?? throw new ArgumentNullException(nameof(cacheService));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -291,11 +295,13 @@ namespace MultiFactor.Radius.Adapter.Server
                     var matched = attr.Value.Where(val => val.IsMatch(request)).Select(val => val.GetValue(request));
                     if (matched.Any())
                     {
-                        responsePacket.Attributes.Add(attr.Key, matched.ToList());
+                        var convertedValues = new List<object>();
                         foreach(var val in matched.ToList())
                         {
                             _logger.Debug("Added attribute '{attrname:l}:{attrval:l}' to reply", attr.Key, val);
+                            convertedValues.Add(ConvertType(attr.Key, val));
                         }
+                        responsePacket.Attributes.Add(attr.Key, convertedValues);
                     }
                 }
             }
@@ -339,6 +345,38 @@ namespace MultiFactor.Radius.Adapter.Server
             }
 
             return false;
+        }
+
+        private object ConvertType(string attrName, object value)
+        {
+            if (value is string)
+            {
+                var stringValue = (string)value;
+                var attribute = _dictionary.GetAttribute(attrName);
+                switch (attribute.Type)
+                {
+                    case "ipaddr":
+                        if (IPAddress.TryParse(stringValue, out var ipValue))
+                        {
+                            return ipValue;
+                        }
+                        break;
+                    case "date":
+                        if (DateTime.TryParse(stringValue, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var dateValue))
+                        {
+                            return dateValue;
+                        }
+                        break;
+                    case "integer":
+                        if (int.TryParse(stringValue, out var integerValue))
+                        {
+                            return integerValue;
+                        }
+                        break;
+                }
+            }
+
+            return value;
         }
 
         /// <summary>
