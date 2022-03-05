@@ -184,7 +184,7 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap
 
         protected LdapIdentity WhereAmI(LdapConnection connection)
         {
-            var result = Query(connection, null, "(objectclass=*)", LdapSearchScope.LDAP_SCOPE_BASEOBJECT, "defaultNamingContext").SingleOrDefault();
+            var result = Query(connection, "", "(objectclass=*)", LdapSearchScope.LDAP_SCOPE_BASEOBJECT, "defaultNamingContext").SingleOrDefault();
             if (result == null)
             {
                 throw new InvalidOperationException($"Unable to query {_configuration.ActiveDirectoryDomain} for current user");
