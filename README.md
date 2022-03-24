@@ -125,8 +125,7 @@ Create a folder, download and unzip the current version of the component from <a
 
 ```shell
 $ sudo mkdir /opt/multifactor /opt/multifactor/radius /opt/multifactor/radius/logs
-$ VER=1.0.16
-$ sudo wget https://github.com/MultifactorLab/multifactor-radius-adapter/releases/download/${VER}/release_linux_x64.zip
+$ sudo wget https://github.com/MultifactorLab/multifactor-radius-adapter/releases/latest/download/release_linux_x64.zip
 $ sudo unzip release_linux_x64.zip -d /opt/multifactor/radius
 ```
 
