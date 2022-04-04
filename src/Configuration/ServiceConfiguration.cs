@@ -4,96 +4,56 @@
 
 using MultiFactor.Radius.Adapter.Core;
 using MultiFactor.Radius.Adapter.Server;
+using Serilog;
 using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Configuration;
-using System.Linq;
+using System.IO;
 using System.Net;
 
-namespace MultiFactor.Radius.Adapter
+namespace MultiFactor.Radius.Adapter.Configuration
 {
     /// <summary>
     /// Service configuration
     /// </summary>
-    public class Configuration
+    public class ServiceConfiguration
     {
-        public Configuration()
+        private IDictionary<IPAddress, ClientConfiguration> _cients;
+
+        public ServiceConfiguration()
         {
-            BypassSecondFactorWhenApiUnreachable = true; //by default
+            _cients = new Dictionary<IPAddress, ClientConfiguration>();
         }
 
+        private void AddClient(IPAddress ip, ClientConfiguration client)
+        {
+            if (_cients.ContainsKey(ip))
+            {
+                throw new ConfigurationErrorsException($"Client with IP {ip} already added");
+            }
+            _cients.Add(ip, client);
+        }
+
+        public ClientConfiguration GetClient(IPAddress ip)
+        {
+            if (SingleClientMode)
+            {
+                return _cients[IPAddress.Any];
+            }
+            if (_cients.ContainsKey(ip))
+            {
+                return _cients[ip];
+            }
+            return null;
+        }
+
+        #region common configuration settings
 
         /// <summary>
         /// This service RADIUS UDP Server endpoint
         /// </summary>
         public IPEndPoint ServiceServerEndpoint { get; set; }
-
-        /// <summary>
-        /// Shared secret between this service and Radius client
-        /// </summary>
-        public string RadiusSharedSecret { get; set; }
-
-        /// <summary>
-        /// Where to handle first factor (UserName and Password)
-        /// </summary>
-        public AuthenticationSource FirstFactorAuthenticationSource { get; set; }
-
-        /// <summary>
-        /// Bypass second factor within specified minutes period for same client-machine/user-name
-        /// </summary>
-        public int? BypassSecondFactorPeriod { get; set; }
-
-        /// <summary>
-        /// Bypass second factor when MultiFactor API is unreachable
-        /// </summary>
-        public bool BypassSecondFactorWhenApiUnreachable { get; set; }
-
-        #region ActiveDirectory Authentication settings
-
-        /// <summary>
-        /// Active Directory Domain
-        /// </summary>
-        public string ActiveDirectoryDomain { get; set; }
-
-        /// <summary>
-        /// LDAP bind distinguished name
-        /// </summary>
-        public string LdapBindDn { get; set; }
-
-        /// <summary>
-        /// Only members of this group allowed to access (Optional)
-        /// </summary>
-        public string ActiveDirectoryGroup { get; set; }
-
-        /// <summary>
-        /// Only members of this group required to pass 2fa to access (Optional)
-        /// </summary>
-        public string ActiveDirectory2FaGroup { get; set; }
-
-        /// <summary>
-        /// Use ActiveDirectory User general properties phone number (Optional)
-        /// </summary>
-        public bool UseActiveDirectoryUserPhone { get; set; }
-
-        /// <summary>
-        /// Use ActiveDirectory User general properties mobile phone number (Optional)
-        /// </summary>
-        public bool UseActiveDirectoryMobileUserPhone { get; set; }
-
-        #endregion
-
-        #region RADIUS Authentication settings
-
-        /// <summary>
-        /// This service RADIUS UDP Client endpoint
-        /// </summary>
-        public IPEndPoint ServiceClientEndpoint { get; set; }
-        /// <summary>
-        /// Network Policy Service RADIUS UDP Server endpoint
-        /// </summary>
-        public IPEndPoint NpsServerEndpoint { get; set; }
-
-        #endregion
 
         /// <summary>
         /// Multifactor API URL
@@ -105,32 +65,13 @@ namespace MultiFactor.Radius.Adapter
         public string ApiProxy { get; set; }
 
         /// <summary>
-        /// Multifactor API KEY
-        /// </summary>
-        public string NasIdentifier { get; set; }
-        /// <summary>
-        /// RADIUS Shared Secret
-        /// </summary>
-        public string MultiFactorSharedSecret { get; set; }
-        /// <summary>
         /// Logging level
         /// </summary>
         public string LogLevel { get; set; }
 
-        /// <summary>
-        /// Custom RADIUS reply attributes
-        /// </summary>
-        public IDictionary<string, List<RadiusReplyAttributeValue>> RadiusReplyAttributes { get; set; }
+        public bool SingleClientMode { get; set; }
 
-        public IList<string> GetLdapReplyAttributes()
-        {
-            return RadiusReplyAttributes
-                .Values
-                .SelectMany(attr => attr)
-                .Where(attr => attr.FromLdap)
-                .Select(attr => attr.LdapAttributeName)
-                .ToList();
-        }
+        #endregion
 
         public static string GetLogFormat()
         {
@@ -141,41 +82,100 @@ namespace MultiFactor.Radius.Adapter
         /// <summary>
         /// Read and load settings from appSettings configuration section
         /// </summary>
-        public static Configuration Load(IRadiusDictionary dictionary)
+        public static ServiceConfiguration Load(IRadiusDictionary dictionary, ILogger logger)
         {
             if (dictionary == null)
             {
                 throw new ArgumentNullException(nameof(dictionary));
             }
-            
-            var appSettings = ConfigurationManager.AppSettings;
-            var serviceServerEndpointSetting = appSettings["adapter-server-endpoint"];
-            var radiusSharedSecretSetting = appSettings["radius-shared-secret"];
-            var firstFactorAuthenticationSourceSettings = appSettings["first-factor-authentication-source"];
-            var apiUrlSetting = appSettings["multifactor-api-url"];
-            var apiProxySetting = appSettings["multifactor-api-proxy"];
-            var bypassSecondFactorPeriodSetting = appSettings["bypass-second-factor-period"];
-            var bypassSecondFactorWhenApiUnreachableSetting = appSettings["bypass-second-factor-when-api-unreachable"];
-            var nasIdentifierSetting = appSettings["multifactor-nas-identifier"];
-            var multiFactorSharedSecretSetting = appSettings["multifactor-shared-secret"];
-            var logLevelSetting = appSettings["logging-level"];
 
-            if (string.IsNullOrEmpty(firstFactorAuthenticationSourceSettings))
-            {
-                throw new Exception("Configuration error: 'first-factor-authentication-source' element not found");
-            }
+            var serviceConfig = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
+
+            var appSettingsSection = serviceConfig.GetSection("appSettings");
+            var appSettings = appSettingsSection as AppSettingsSection;
+
+            var serviceServerEndpointSetting    = appSettings.Settings["adapter-server-endpoint"]?.Value;
+            var apiUrlSetting                   = appSettings.Settings["multifactor-api-url"]?.Value;
+            var apiProxySetting                 = appSettings.Settings["multifactor-api-proxy"]?.Value;
+            var logLevelSetting                 = appSettings.Settings["logging-level"]?.Value;
+
             if (string.IsNullOrEmpty(serviceServerEndpointSetting))
             {
                 throw new Exception("Configuration error: 'adapter-server-endpoint' element not found");
-            }
-            if (string.IsNullOrEmpty(radiusSharedSecretSetting))
-            {
-                throw new Exception("Configuration error: 'radius-shared-secret' element not found");
             }
             if (string.IsNullOrEmpty(apiUrlSetting))
             {
                 throw new Exception("Configuration error: 'multifactor-api-url' element not found");
             }
+            if (string.IsNullOrEmpty(logLevelSetting))
+            {
+                throw new Exception("Configuration error: 'logging-level' element not found");
+            }
+            if (!TryParseIPEndPoint(serviceServerEndpointSetting, out var serviceServerEndpoint))
+            {
+                throw new Exception("Configuration error: Can't parse 'adapter-server-endpoint' value");
+            }
+
+            var configuration = new ServiceConfiguration
+            {
+                ServiceServerEndpoint = serviceServerEndpoint,
+                ApiUrl = apiUrlSetting,
+                ApiProxy = apiProxySetting,
+                LogLevel = logLevelSetting
+            };
+
+            var clientConfigFilesPath = Path.GetDirectoryName(AppDomain.CurrentDomain.BaseDirectory) + Path.DirectorySeparatorChar + "clients";
+            var clientConfigFiles = Directory.Exists(clientConfigFilesPath) ? Directory.GetFiles(clientConfigFilesPath, "*.config") : new string[0];
+
+            if (clientConfigFiles.Length == 0)
+            {
+                var radiusReplyAttributesSection = ConfigurationManager.GetSection("RadiusReply") as RadiusReplyAttributesSection;
+
+                var client = Load("General", dictionary, appSettings, radiusReplyAttributesSection, false);
+                configuration.AddClient(IPAddress.Any, client);
+                configuration.SingleClientMode = true;
+            }
+            else
+            {
+                foreach (var clientConfigFile in clientConfigFiles)
+                {
+                    logger.Information($"Loading client configuration from {Path.GetFileName(clientConfigFile)}");
+
+                    var customConfigFileMap = new ExeConfigurationFileMap();
+                    customConfigFileMap.ExeConfigFilename = clientConfigFile;
+
+                    var config = ConfigurationManager.OpenMappedExeConfiguration(customConfigFileMap, ConfigurationUserLevel.None);
+                    var clientSettings = (AppSettingsSection)config.GetSection("appSettings");
+                    var radiusReplyAttributesSection = config.GetSection("RadiusReply") as RadiusReplyAttributesSection;
+
+                    var client = Load(Path.GetFileNameWithoutExtension(clientConfigFile), dictionary, clientSettings, radiusReplyAttributesSection, true);
+
+                    configuration.AddClient(client.Ip, client);
+                }
+            }
+
+            return configuration;
+        }
+
+        public static ClientConfiguration Load(string name, IRadiusDictionary dictionary, AppSettingsSection appSettings, RadiusReplyAttributesSection radiusReplyAttributesSection, bool requiresClientIp)
+        {       
+            var radiusClientIpSetting                           = appSettings.Settings["radius-client-ip"]?.Value;
+            var radiusSharedSecretSetting                       = appSettings.Settings["radius-shared-secret"]?.Value;
+            var firstFactorAuthenticationSourceSettings         = appSettings.Settings["first-factor-authentication-source"]?.Value;
+            var bypassSecondFactorWhenApiUnreachableSetting     = appSettings.Settings["bypass-second-factor-when-api-unreachable"]?.Value;
+            var nasIdentifierSetting                            = appSettings.Settings["multifactor-nas-identifier"]?.Value;
+            var multiFactorSharedSecretSetting                  = appSettings.Settings["multifactor-shared-secret"]?.Value;
+
+            if (string.IsNullOrEmpty(firstFactorAuthenticationSourceSettings))
+            {
+                throw new Exception("Configuration error: 'first-factor-authentication-source' element not found");
+            }
+
+            if (string.IsNullOrEmpty(radiusSharedSecretSetting))
+            {
+                throw new Exception("Configuration error: 'radius-shared-secret' element not found");
+            }
+
             if (string.IsNullOrEmpty(nasIdentifierSetting))
             {
                 throw new Exception("Configuration error: 'multifactor-nas-identifier' element not found");
@@ -184,38 +184,32 @@ namespace MultiFactor.Radius.Adapter
             {
                 throw new Exception("Configuration error: 'multifactor-shared-secret' element not found");
             }
-            if (string.IsNullOrEmpty(logLevelSetting))
-            {
-                throw new Exception("Configuration error: 'logging-level' element not found");
-            }
 
             if (!Enum.TryParse<AuthenticationSource>(firstFactorAuthenticationSourceSettings, out var firstFactorAuthenticationSource))
             {
                 throw new Exception("Configuration error: Can't parse 'first-factor-authentication-source' value. Must be one of: ActiveDirectory, Radius, None");
             }
-            if (!TryParseIPEndPoint(serviceServerEndpointSetting, out var serviceServerEndpoint))
-            {
-                throw new Exception("Configuration error: Can't parse 'adapter-server-endpoint' value");
-            }
 
-            var configuration = new Configuration
+            var configuration = new ClientConfiguration
             {
-                ServiceServerEndpoint = serviceServerEndpoint,
+                Name = name,
                 RadiusSharedSecret = radiusSharedSecretSetting,
                 FirstFactorAuthenticationSource = firstFactorAuthenticationSource,
-                ApiUrl = apiUrlSetting,
-                ApiProxy = apiProxySetting,
                 NasIdentifier = nasIdentifierSetting,
                 MultiFactorSharedSecret = multiFactorSharedSecretSetting,
-                LogLevel = logLevelSetting
             };
 
-            if (bypassSecondFactorPeriodSetting != null)
+            if (requiresClientIp)
             {
-                if (int.TryParse(bypassSecondFactorPeriodSetting, out var bypassSecondFactorPeriod))
+                if (string.IsNullOrEmpty(radiusClientIpSetting))
                 {
-                    configuration.BypassSecondFactorPeriod = bypassSecondFactorPeriod;
+                    throw new Exception("Configuration error: 'radius-client-ip' element not found");
                 }
+                if (!IPAddress.TryParse(radiusClientIpSetting, out var clientIpAddress))
+                {
+                    throw new Exception("Configuration error: Can't parse 'radius-client-ip' value. Must be valid IPv4 address");
+                }
+                configuration.Ip = clientIpAddress;
             }
 
             if (bypassSecondFactorWhenApiUnreachableSetting != null)
@@ -230,28 +224,26 @@ namespace MultiFactor.Radius.Adapter
             {
                 case AuthenticationSource.ActiveDirectory:
                 case AuthenticationSource.Ldap:
-                    LoadActiveDirectoryAuthenticationSourceSettings(configuration);
+                    LoadActiveDirectoryAuthenticationSourceSettings(configuration, appSettings);
                     break;
                 case AuthenticationSource.Radius:
-                    LoadRadiusAuthenticationSourceSettings(configuration);
+                    LoadRadiusAuthenticationSourceSettings(configuration, appSettings);
                     break;
             }
 
-            LoadRadiusReplyAttributes(configuration, dictionary);
+            LoadRadiusReplyAttributes(configuration, dictionary, radiusReplyAttributesSection);
 
             return configuration;
         }
 
-        private static void LoadActiveDirectoryAuthenticationSourceSettings(Configuration configuration)
+        private static void LoadActiveDirectoryAuthenticationSourceSettings(ClientConfiguration configuration, AppSettingsSection appSettings)
         {
-            var appSettings = ConfigurationManager.AppSettings;
-
-            var activeDirectoryDomainSetting = appSettings["active-directory-domain"];
-            var ldapBindDnSetting = appSettings["ldap-bind-dn"];
-            var activeDirectoryGroupSetting = appSettings["active-directory-group"];
-            var activeDirectory2FaGroupSetting = appSettings["active-directory-2fa-group"];
-            var useActiveDirectoryUserPhoneSetting = appSettings["use-active-directory-user-phone"];
-            var useActiveDirectoryMobileUserPhoneSetting = appSettings["use-active-directory-mobile-user-phone"];
+            var activeDirectoryDomainSetting                        = appSettings.Settings["active-directory-domain"]?.Value;
+            var ldapBindDnSetting                                   = appSettings.Settings["ldap-bind-dn"]?.Value;
+            var activeDirectoryGroupSetting                         = appSettings.Settings["active-directory-group"]?.Value;
+            var activeDirectory2FaGroupSetting                      = appSettings.Settings["active-directory-2fa-group"]?.Value;
+            var useActiveDirectoryUserPhoneSetting                  = appSettings.Settings["use-active-directory-user-phone"]?.Value;
+            var useActiveDirectoryMobileUserPhoneSetting            = appSettings.Settings["use-active-directory-mobile-user-phone"]?.Value;
 
             if (string.IsNullOrEmpty(activeDirectoryDomainSetting))
             {
@@ -284,12 +276,10 @@ namespace MultiFactor.Radius.Adapter
             configuration.ActiveDirectory2FaGroup = activeDirectory2FaGroupSetting;
         }
 
-        private static void LoadRadiusAuthenticationSourceSettings(Configuration configuration)
+        private static void LoadRadiusAuthenticationSourceSettings(ClientConfiguration configuration, AppSettingsSection appSettings)
         {
-            var appSettings = ConfigurationManager.AppSettings;
-            
-            var serviceClientEndpointSetting = appSettings["adapter-client-endpoint"];
-            var npsEndpointSetting = appSettings["nps-server-endpoint"];
+            var serviceClientEndpointSetting        = appSettings.Settings["adapter-client-endpoint"]?.Value;
+            var npsEndpointSetting                  = appSettings.Settings["nps-server-endpoint"]?.Value;
 
             if (string.IsNullOrEmpty(serviceClientEndpointSetting))
             {
@@ -313,14 +303,13 @@ namespace MultiFactor.Radius.Adapter
             configuration.NpsServerEndpoint = npsEndpoint;
         }
 
-        private static void LoadRadiusReplyAttributes(Configuration configuration, IRadiusDictionary dictionary)
+        private static void LoadRadiusReplyAttributes(ClientConfiguration configuration, IRadiusDictionary dictionary, RadiusReplyAttributesSection radiusReplyAttributesSection)
         {
             var replyAttributes = new Dictionary<string, List<RadiusReplyAttributeValue>>();
-            var section = ConfigurationManager.GetSection("RadiusReply") as RadiusReplyAttributesSection;
 
-            if (section != null)
+            if (radiusReplyAttributesSection != null)
             {
-                foreach (var member in section.Members)
+                foreach (var member in radiusReplyAttributesSection.Members)
                 {
                     var attribute = member as RadiusReplyAttributeElement;
                     var radiusAttribute = dictionary.GetAttribute(attribute.Name);
@@ -397,64 +386,6 @@ namespace MultiFactor.Radius.Adapter
             }
 
             throw new FormatException($"Failed to parse {text} to IPEndPoint");
-        }
-    }
-
-    public enum AuthenticationSource
-    {
-        ActiveDirectory,
-        Radius,
-        Ldap,
-        None
-    }
-
-    public class RadiusReplyAttributeElement : ConfigurationElement
-    {
-        [ConfigurationProperty("name", IsKey = false, IsRequired = true)]
-        public string Name
-        {
-            get { return (string)this["name"]; }
-        }
-
-        [ConfigurationProperty("value", IsKey = false, IsRequired = false)]
-        public string Value
-        {
-            get { return (string)this["value"]; }
-        }
-
-        [ConfigurationProperty("when", IsKey = false, IsRequired = false)]
-        public string When
-        {
-            get { return (string)this["when"]; }
-        }
-
-        [ConfigurationProperty("from", IsKey = false, IsRequired = false)]
-        public string From
-        {
-            get { return (string)this["from"]; }
-        }
-    }
-
-    public class RadiusReplyAttributesCollection : ConfigurationElementCollection
-    {
-        protected override ConfigurationElement CreateNewElement()
-        {
-            return new RadiusReplyAttributeElement();
-        }
-
-        protected override object GetElementKey(ConfigurationElement element)
-        {
-            var attribute = (RadiusReplyAttributeElement)element;
-            return $"{attribute.Name}:{attribute.Value}:{attribute.From}";
-        }
-    }
-
-    public class RadiusReplyAttributesSection : ConfigurationSection
-    {
-        [ConfigurationProperty("Attributes")]
-        public RadiusReplyAttributesCollection Members
-        {
-            get { return (RadiusReplyAttributesCollection)this["Attributes"]; }
         }
     }
 }

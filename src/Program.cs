@@ -1,9 +1,9 @@
 using System;
 using System.IO;
 using System.Text;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using MultiFactor.Radius.Adapter.Configuration;
 using MultiFactor.Radius.Adapter.Core;
 using MultiFactor.Radius.Adapter.Server;
 using MultiFactor.Radius.Adapter.Services;
@@ -80,7 +80,7 @@ namespace MultiFactor.Radius.Adapter
             var dictionary = new RadiusDictionary(dictionaryPath, Log.Logger);
 
             //init configuration
-            var configuration = Configuration.Load(dictionary);
+            var configuration = ServiceConfiguration.Load(dictionary, Log.Logger);
 
             SetLogLevel(configuration.LogLevel, levelSwitch);
 
@@ -117,7 +117,6 @@ namespace MultiFactor.Radius.Adapter
                     levelSwitch.MinimumLevel = LogEventLevel.Error;
                     break;
             }
-
             Log.Logger.Information($"Logging level: {levelSwitch.MinimumLevel}");
         }
 
@@ -144,7 +143,7 @@ namespace MultiFactor.Radius.Adapter
 
         private static ITextFormatter GetLogFormatter()
         {
-            var format = Configuration.GetLogFormat();
+            var format = ServiceConfiguration.GetLogFormat();
             switch (format?.ToLower())
             {
                 case "json":

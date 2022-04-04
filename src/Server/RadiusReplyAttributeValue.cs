@@ -50,6 +50,17 @@ namespace MultiFactor.Radius.Adapter.Server
         /// </summary>
         public string LdapAttributeName { get; set; }
 
+        /// <summary>
+        /// Is list of all user groups attribute
+        /// </summary>
+        public bool IsMemberOf
+        {
+            get
+            {
+                return LdapAttributeName?.ToLower() == "memberof";
+            }
+        }
+
 
         /// <summary>
         /// User group condition
@@ -74,6 +85,13 @@ namespace MultiFactor.Radius.Adapter.Server
             //if exist ldap attr value
             if (FromLdap)
             {
+                //if list of all groups
+                if (IsMemberOf)
+                {
+                    return request.UserGroups?.Count > 0;
+                }
+
+                //just attribute
                 return request.LdapAttrs?[LdapAttributeName] != null;
             }
 
@@ -103,14 +121,19 @@ namespace MultiFactor.Radius.Adapter.Server
             return true; //without conditions
         }
 
-        public object GetValue(PendingRequest request)
+        public object[] GetValues(PendingRequest request)
         {
-            if (FromLdap)
+            if (IsMemberOf)
             {
-                return request.LdapAttrs[LdapAttributeName];
+                return request.UserGroups.ToArray();
             }
 
-            return Value;
+            if (FromLdap)
+            {
+                return new object[] { request.LdapAttrs[LdapAttributeName] };
+            }
+
+            return new object[] { Value };
         }
 
         private void ParseConditionClause(string clause)

@@ -3,6 +3,7 @@
 //https://github.com/MultifactorLab/multifactor-radius-adapter/blob/main/LICENSE.md
 
 
+using MultiFactor.Radius.Adapter.Configuration;
 using MultiFactor.Radius.Adapter.Core;
 using MultiFactor.Radius.Adapter.Server;
 using Newtonsoft.Json;
@@ -12,6 +13,7 @@ using System.Linq;
 using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 
 namespace MultiFactor.Radius.Adapter.Services
 {
@@ -20,16 +22,16 @@ namespace MultiFactor.Radius.Adapter.Services
     /// </summary>
     public class MultiFactorApiClient
     {
-        private Configuration _configuration;
+        private ServiceConfiguration _serviceConfiguration;
         private ILogger _logger;
 
-        public MultiFactorApiClient(Configuration configuration, ILogger logger)
+        public MultiFactorApiClient(ServiceConfiguration serviceConfiguration, ILogger logger)
         {
-            _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+            _serviceConfiguration = serviceConfiguration ?? throw new ArgumentNullException(nameof(serviceConfiguration));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
-        public PacketCode CreateSecondFactorRequest(PendingRequest request)
+        public async Task<PacketCode> CreateSecondFactorRequest(PendingRequest request, ClientConfiguration clientConfig)
         {
             var userName = request.RequestPacket.UserName;
             var userPassword = request.RequestPacket.UserPassword;
@@ -38,14 +40,15 @@ namespace MultiFactor.Radius.Adapter.Services
             var userPhone = request.UserPhone;
             var callingStationId = request.RequestPacket.CallingStationId;
             
-            var url = _configuration.ApiUrl + "/access/requests/ra";
+            var url = _serviceConfiguration.ApiUrl + "/access/requests/ra";
+
             var payload = new
             {
                 Identity = userName,
                 Name = displayName,
                 Email = email,
                 Phone = userPhone,
-                PassCode = GetPassCodeOrNull(userPassword),
+                PassCode = GetPassCodeOrNull(userPassword, clientConfig),
                 CallingStationId = callingStationId,
                 Capabilities = new
                 {
@@ -53,7 +56,7 @@ namespace MultiFactor.Radius.Adapter.Services
                 }
             };
 
-            var response = SendRequest(url, payload);
+            var response = await SendRequest(url, payload, clientConfig);
             var responseCode = ConvertToRadiusCode(response);
 
             request.State = response?.Id;
@@ -74,9 +77,9 @@ namespace MultiFactor.Radius.Adapter.Services
             return responseCode;
         }
 
-        public PacketCode Challenge(PendingRequest request, string userName, string answer, string state)
+        public async Task<PacketCode> Challenge(PendingRequest request, string userName, string answer, string state)
         {
-            var url = _configuration.ApiUrl + "/access/requests/ra/challenge";
+            var url = _serviceConfiguration.ApiUrl + "/access/requests/ra/challenge";
             var payload = new
             {
                 Identity = userName,
@@ -84,7 +87,7 @@ namespace MultiFactor.Radius.Adapter.Services
                 RequestId = state
             };
 
-            var response = SendRequest(url, payload);
+            var response = await SendRequest(url, payload, _serviceConfiguration.GetClient(request.RemoteEndpoint.Address));
             var responseCode = ConvertToRadiusCode(response);
 
             request.ReplyMessage = response.ReplyMessage;
@@ -97,14 +100,13 @@ namespace MultiFactor.Radius.Adapter.Services
             return responseCode;
         }
 
-        private MultiFactorAccessRequest SendRequest(string url, object payload)
+        private async Task<MultiFactorAccessRequest> SendRequest(string url, object payload, ClientConfiguration clientConfiguration)
         {
             try
             {
                 //make sure we can communicate securely
                 ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
                 ServicePointManager.DefaultConnectionLimit = 100;
-
 
                 _logger.Debug("Sending request to API: {@payload}", payload);
 
@@ -113,20 +115,20 @@ namespace MultiFactor.Radius.Adapter.Services
                 byte[] responseData = null;
 
                 //basic authorization
-                var auth = Convert.ToBase64String(Encoding.ASCII.GetBytes(_configuration.NasIdentifier + ":" + _configuration.MultiFactorSharedSecret));
+                var auth = Convert.ToBase64String(Encoding.ASCII.GetBytes(clientConfiguration.NasIdentifier + ":" + clientConfiguration.MultiFactorSharedSecret));
 
                 using (var web = new WebClient())
                 {
                     web.Headers.Add("Content-Type", "application/json");
                     web.Headers.Add("Authorization", "Basic " + auth);
 
-                    if (!string.IsNullOrEmpty(_configuration.ApiProxy))
+                    if (!string.IsNullOrEmpty(_serviceConfiguration.ApiProxy))
                     {
-                        _logger.Debug("Using proxy " + _configuration.ApiProxy);
-                        web.Proxy = new WebProxy(_configuration.ApiProxy);
+                        _logger.Debug("Using proxy " + _serviceConfiguration.ApiProxy);
+                        web.Proxy = new WebProxy(_serviceConfiguration.ApiProxy);
                     }
 
-                    responseData = web.UploadData(url, "POST", requestData);
+                    responseData = await web.UploadDataTaskAsync(url, "POST", requestData);
                 }
 
                 json = Encoding.UTF8.GetString(responseData);
@@ -143,9 +145,9 @@ namespace MultiFactor.Radius.Adapter.Services
             }
             catch (Exception ex)
             {
-                _logger.Error(ex, $"Multifactor API host unreachable: {url}");
+                _logger.Error($"Multifactor API host unreachable: {url}\n{ex.Message}");
 
-                if (_configuration.BypassSecondFactorWhenApiUnreachable)
+                if (clientConfiguration.BypassSecondFactorWhenApiUnreachable)
                 {
                     _logger.Warning("Bypass second factor");
                     return MultiFactorAccessRequest.Bypass;
@@ -176,10 +178,10 @@ namespace MultiFactor.Radius.Adapter.Services
             }
         }
 
-        private string GetPassCodeOrNull(string userPassword)
+        private string GetPassCodeOrNull(string userPassword, ClientConfiguration clientConfiguration)
         {
             //only if first authentication factor is None, assuming that Password contains OTP code
-            if (_configuration.FirstFactorAuthenticationSource != AuthenticationSource.None)
+            if (clientConfiguration.FirstFactorAuthenticationSource != AuthenticationSource.None)
             {
                 return null;
             }

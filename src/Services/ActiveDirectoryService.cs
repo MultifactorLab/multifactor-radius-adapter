@@ -3,11 +3,14 @@
 //https://github.com/MultifactorLab/multifactor-radius-adapter/blob/main/LICENSE.md
 
 using LdapForNet;
+using MultiFactor.Radius.Adapter.Configuration;
 using MultiFactor.Radius.Adapter.Core.Services.Ldap;
 using MultiFactor.Radius.Adapter.Services.Ldap;
 using Serilog;
 using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using static LdapForNet.Native.Native;
 
 namespace MultiFactor.Radius.Adapter.Services
@@ -19,11 +22,11 @@ namespace MultiFactor.Radius.Adapter.Services
     {
         protected override LdapNames Names => new LdapNames(LdapServerType.ActiveDirectory);
 
-        public ActiveDirectoryService(Configuration configuration, ILogger logger) : base(configuration, logger)
+        public ActiveDirectoryService(ServiceConfiguration serviceConfiguration, ILogger logger) : base(serviceConfiguration, logger)
         {
         }
 
-        protected override string FormatBindDn(LdapIdentity user)
+        protected override string FormatBindDn(LdapIdentity user, ClientConfiguration clientConfig)
         {
             if (user.Type == IdentityType.UserPrincipalName)
             {
@@ -31,9 +34,9 @@ namespace MultiFactor.Radius.Adapter.Services
             }
 
             //try create upn from domain name
-            if (Uri.IsWellFormedUriString(_configuration.ActiveDirectoryDomain, UriKind.Absolute))
+            if (Uri.IsWellFormedUriString(clientConfig.ActiveDirectoryDomain, UriKind.Absolute))
             {
-                var uri = new Uri(_configuration.ActiveDirectoryDomain);
+                var uri = new Uri(clientConfig.ActiveDirectoryDomain);
                 if (uri.PathAndQuery != null && uri.PathAndQuery != "/")
                 {
                     var fqdn = LdapIdentity.DnToFqdn(uri.PathAndQuery);
@@ -44,20 +47,11 @@ namespace MultiFactor.Radius.Adapter.Services
             return user.Name;
         }
 
-        protected override bool IsMemberOf(LdapConnection connection, LdapIdentity domain, LdapIdentity user, LdapProfile profile, string groupName)
+        protected override async Task LoadAllUserGroups(LdapConnection connection, LdapIdentity domain, LdapProfile profile, ClientConfiguration clientConfig)
         {
-            var isValidGroup = IsValidGroup(connection, domain, groupName, out var group);
-
-            if (!isValidGroup)
-            {
-                _logger.Warning($"Security group '{groupName}' not exists in {domain.Name}");
-                return false;
-            }
-
-            var searchFilter = $"(&({Names.Identity(user)}={user.Name})(memberOf:1.2.840.113556.1.4.1941:={group.Name}))";
-            var response = Query(connection, domain.Name, searchFilter, LdapSearchScope.LDAP_SCOPE_SUB, "DistinguishedName");
-
-            return response.Any();
+            var searchFilter = $"(member:1.2.840.113556.1.4.1941:={profile.DistinguishedName})";
+            var response = await Query(connection, domain.Name, searchFilter, LdapSearchScope.LDAP_SCOPE_SUB, "DistinguishedName");
+            profile.MemberOf = response.Select(entry => entry.Dn).ToList();
         }
     }
 }

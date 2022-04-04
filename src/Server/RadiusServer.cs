@@ -34,6 +34,7 @@ using System.Net.Sockets;
 using MultiFactor.Radius.Adapter.Services;
 using System.Globalization;
 using System.Collections.Generic;
+using MultiFactor.Radius.Adapter.Configuration;
 
 namespace MultiFactor.Radius.Adapter.Server
 {
@@ -46,7 +47,7 @@ namespace MultiFactor.Radius.Adapter.Server
         private int _concurrentHandlerCount = 0;
         private readonly ILogger _logger;
         private RadiusRouter _router;
-        private Configuration _configuration;
+        private ServiceConfiguration _serviceConfiguration;
 
         private CacheService _cacheService;
 
@@ -59,16 +60,16 @@ namespace MultiFactor.Radius.Adapter.Server
         /// <summary>
         /// Create a new server on endpoint with packet handler repository
         /// </summary>
-        public RadiusServer(Configuration configuration, IRadiusDictionary dictionary, IRadiusPacketParser radiusPacketParser, CacheService cacheService, ILogger logger)
+        public RadiusServer(ServiceConfiguration serviceConfiguration, IRadiusDictionary dictionary, IRadiusPacketParser radiusPacketParser, CacheService cacheService, ILogger logger)
         {
-            _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+            _serviceConfiguration = serviceConfiguration ?? throw new ArgumentNullException(nameof(serviceConfiguration));
             _dictionary = dictionary ?? throw new ArgumentNullException(nameof(dictionary));
             _radiusPacketParser = radiusPacketParser ?? throw new ArgumentNullException(nameof(radiusPacketParser));
             _cacheService = cacheService ?? throw new ArgumentNullException(nameof(cacheService));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
-            _localEndpoint = configuration.ServiceServerEndpoint;
-            _router = new RadiusRouter(configuration, radiusPacketParser, logger);
+            _localEndpoint = serviceConfiguration.ServiceServerEndpoint;
+            _router = new RadiusRouter(serviceConfiguration, radiusPacketParser, logger);
         }
 
         /// <summary>
@@ -129,7 +130,7 @@ namespace MultiFactor.Radius.Adapter.Server
                 catch (ObjectDisposedException) { } // This is thrown when udpclient is disposed, can be safely ignored
                 catch (Exception ex)
                 {
-                    _logger.Error(ex, "Something went wrong receiving packet");
+                    _logger.Error($"Something went wrong transmitting packet: {ex.Message}");
                 }
             }
         }
@@ -173,44 +174,50 @@ namespace MultiFactor.Radius.Adapter.Server
                 remoteEndpoint = sourceEndpoint;
             }
 
-            var requestPacket = _radiusPacketParser.Parse(packetBytes, Encoding.UTF8.GetBytes(_configuration.RadiusSharedSecret));
-            var isRetransmission = _cacheService.IsRetransmission(requestPacket, remoteEndpoint);
+            var clientConfiguration = _serviceConfiguration.GetClient(remoteEndpoint.Address);
 
-            if (!isRetransmission)
+            if (clientConfiguration == null)
             {
-                if (proxyEndpoint != null)
-                {
-                    if (requestPacket.Code == PacketCode.StatusServer)
-                    {
-                        _logger.Information("Received {code:l} from {host:l}:{port} proxied by {proxyhost:l}:{proxyport} id={id}", requestPacket.Code.ToString(), remoteEndpoint.Address, remoteEndpoint.Port, proxyEndpoint.Address, proxyEndpoint.Port, requestPacket.Identifier);
-                    }
-                    else
-                    {
-                        _logger.Information("Received {code:l} from {host:l}:{port} proxied by {proxyhost:l}:{proxyport} id={id} user='{user:l}'", requestPacket.Code.ToString(), remoteEndpoint.Address, remoteEndpoint.Port, proxyEndpoint.Address, proxyEndpoint.Port, requestPacket.Identifier, requestPacket.UserName);
-                    }
-                }
-                else
-                {
-                    if (requestPacket.Code == PacketCode.StatusServer)
-                    {
-                        _logger.Debug("Received {code:l} from {host:l}:{port} id={id}", requestPacket.Code.ToString(), remoteEndpoint.Address, remoteEndpoint.Port, requestPacket.Identifier);
-                    }
-                    else
-                    {
-                        _logger.Information("Received {code:l} from {host:l}:{port} id={id} user='{user:l}'", requestPacket.Code.ToString(), remoteEndpoint.Address, remoteEndpoint.Port, requestPacket.Identifier, requestPacket.UserName);
-                    }
-                }
+                _logger.Warning("Received packet from unknown client {host:l}:{port}, ignoring", remoteEndpoint.Address, remoteEndpoint.Port);
+                return; 
             }
+
+            var requestPacket = _radiusPacketParser.Parse(packetBytes, Encoding.UTF8.GetBytes(clientConfiguration.RadiusSharedSecret));
+            var isRetransmission = _cacheService.IsRetransmission(requestPacket, remoteEndpoint);
 
             if (isRetransmission)
             {
-                _logger.Debug("Retransmissed request from {host:l}:{port} id={id}, ignoring", remoteEndpoint.Address, remoteEndpoint.Port, requestPacket.Identifier);
+                _logger.Debug("Retransmissed request from {host:l}:{port} id={id} client '{client:l}', ignoring", remoteEndpoint.Address, remoteEndpoint.Port, requestPacket.Identifier, clientConfiguration.Name);
                 return;
             }
 
+            if (proxyEndpoint != null)
+            {
+                if (requestPacket.Code == PacketCode.StatusServer)
+                {
+                    _logger.Information("Received {code:l} from {host:l}:{port} proxied by {proxyhost:l}:{proxyport} id={id} client '{client:l}'", requestPacket.Code.ToString(), remoteEndpoint.Address, remoteEndpoint.Port, proxyEndpoint.Address, proxyEndpoint.Port, requestPacket.Identifier, clientConfiguration.Name);
+                }
+                else
+                {
+                    _logger.Information("Received {code:l} from {host:l}:{port} proxied by {proxyhost:l}:{proxyport} id={id} user='{user:l}' client '{client:l}'", requestPacket.Code.ToString(), remoteEndpoint.Address, remoteEndpoint.Port, proxyEndpoint.Address, proxyEndpoint.Port, requestPacket.Identifier, requestPacket.UserName, clientConfiguration.Name);
+                }
+            }
+            else
+            {
+                if (requestPacket.Code == PacketCode.StatusServer)
+                {
+                    _logger.Debug("Received {code:l} from {host:l}:{port} id={id} client '{client:l}'", requestPacket.Code.ToString(), remoteEndpoint.Address, remoteEndpoint.Port, requestPacket.Identifier, clientConfiguration.Name);
+                }
+                else
+                {
+                    _logger.Information("Received {code:l} from {host:l}:{port} id={id} user='{user:l}' client '{client:l}'", requestPacket.Code.ToString(), remoteEndpoint.Address, remoteEndpoint.Port, requestPacket.Identifier, requestPacket.UserName, clientConfiguration.Name);
+                }
+            }
+
+
             var request = new PendingRequest { RemoteEndpoint = remoteEndpoint, ProxyEndpoint = proxyEndpoint, RequestPacket = requestPacket };
 
-            Task.Run(() => _router.HandleRequest(request));
+            Task.Run(async () => await _router.HandleRequest(request, clientConfiguration));
         }
 
         /// <summary>
@@ -286,13 +293,14 @@ namespace MultiFactor.Radius.Adapter.Server
                 responsePacket.AddAttribute("State", request.State); //state to match user authentication session
             }
 
+            var clientConfiguration = _serviceConfiguration.GetClient(request.RemoteEndpoint.Address);
             //add custom reply attributes
             if (request.ResponseCode == PacketCode.AccessAccept)
             {
-                foreach (var attr in _configuration.RadiusReplyAttributes)
+                foreach (var attr in clientConfiguration.RadiusReplyAttributes)
                 {
                     //check condition
-                    var matched = attr.Value.Where(val => val.IsMatch(request)).Select(val => val.GetValue(request));
+                    var matched = attr.Value.Where(val => val.IsMatch(request)).SelectMany(val => val.GetValues(request));
                     if (matched.Any())
                     {
                         var convertedValues = new List<object>();

@@ -96,6 +96,15 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap
             var fqdn = ncs.Select(nc => nc.Split(new[] { '=' }, StringSplitOptions.RemoveEmptyEntries)[1].TrimEnd(','));
             return string.Join(".", fqdn);
         }
+
+        /// <summary>
+        /// Extracts CN from DN
+        /// </summary>
+        public static string DnToCn(string dn)
+        {
+            return dn.Split(',')[0].Split("=")[1];
+        }
+
         public string DnToFqdn()
         {
             return DnToFqdn(Name);

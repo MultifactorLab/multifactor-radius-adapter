@@ -2,6 +2,7 @@
 //Please see licence at 
 //https://github.com/MultifactorLab/multifactor-radius-adapter/blob/main/LICENSE.md
 
+using MultiFactor.Radius.Adapter.Configuration;
 using MultiFactor.Radius.Adapter.Core;
 using MultiFactor.Radius.Adapter.Services;
 using MultiFactor.Radius.Adapter.Services.Ldap;
@@ -10,6 +11,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace MultiFactor.Radius.Adapter.Server
 {
@@ -18,7 +20,7 @@ namespace MultiFactor.Radius.Adapter.Server
     /// </summary>
     public class RadiusRouter
     {
-        private Configuration _configuration;
+        private ServiceConfiguration _serviceConfiguration;
         private ILogger _logger;
         private IRadiusPacketParser _packetParser;
         private MultiFactorApiClient _multifactorApiClient;
@@ -29,18 +31,18 @@ namespace MultiFactor.Radius.Adapter.Server
 
         private DateTime _startedAt = DateTime.Now;
 
-        public RadiusRouter(Configuration configuration, IRadiusPacketParser packetParser, ILogger logger)
+        public RadiusRouter(ServiceConfiguration serviceConfiguration, IRadiusPacketParser packetParser, ILogger logger)
         {
-            _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+            _serviceConfiguration = serviceConfiguration ?? throw new ArgumentNullException(nameof(serviceConfiguration));
             _packetParser = packetParser ?? throw new ArgumentNullException(nameof(packetParser));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
-            _multifactorApiClient = new MultiFactorApiClient(configuration, logger);
-            _activeDirectoryService = new ActiveDirectoryService(configuration, logger);
-            _ldapService = new LdapService(configuration, logger);
+            _multifactorApiClient = new MultiFactorApiClient(serviceConfiguration, logger);
+            _activeDirectoryService = new ActiveDirectoryService(serviceConfiguration, logger);
+            _ldapService = new LdapService(serviceConfiguration, logger);
         }
 
-        public void HandleRequest(PendingRequest request)
+        public async Task HandleRequest(PendingRequest request, ClientConfiguration clientConfig)
         {
             try
             {
@@ -67,7 +69,7 @@ namespace MultiFactor.Radius.Adapter.Server
                     if (_stateChallengePendingRequests.ContainsKey(receivedState))
                     {
                         //second request with Multifactor challenge
-                        request.ResponseCode = ProcessChallenge(request, receivedState);
+                        request.ResponseCode = await ProcessChallenge(request, receivedState);
                         request.State = receivedState;  //state for Access-Challenge message if otp is wrong (3 times allowed)
 
                         RequestProcessed?.Invoke(this, request);
@@ -75,7 +77,7 @@ namespace MultiFactor.Radius.Adapter.Server
                     }
                 }
 
-                var firstFactorAuthenticationResultCode = ProcessFirstAuthenticationFactor(request);
+                var firstFactorAuthenticationResultCode = await ProcessFirstAuthenticationFactor(request, clientConfig);
                 if (firstFactorAuthenticationResultCode != PacketCode.AccessAccept)
                 {
                     //first factor authentication rejected
@@ -99,7 +101,7 @@ namespace MultiFactor.Radius.Adapter.Server
                     return;
                 }
 
-                var secondFactorAuthenticationResultCode = ProcessSecondAuthenticationFactor(request);
+                var secondFactorAuthenticationResultCode = await ProcessSecondAuthenticationFactor(request, clientConfig);
 
                 request.ResponseCode = secondFactorAuthenticationResultCode;
 
@@ -117,26 +119,26 @@ namespace MultiFactor.Radius.Adapter.Server
             }
         }
 
-        private PacketCode ProcessFirstAuthenticationFactor(PendingRequest request)
+        private async Task<PacketCode> ProcessFirstAuthenticationFactor(PendingRequest request, ClientConfiguration clientConfig)
         {
-            switch(_configuration.FirstFactorAuthenticationSource)
+            switch(clientConfig.FirstFactorAuthenticationSource)
             {
                 case AuthenticationSource.ActiveDirectory:  //AD auth
                 case AuthenticationSource.Ldap:             //LDAP auth
-                    return ProcessActiveDirectoryAuthentication(request);
+                    return await ProcessActiveDirectoryAuthentication(request, clientConfig);
                 case AuthenticationSource.Radius:           //RADIUS auth
-                    return ProcessRadiusAuthentication(request);
+                    return await ProcessRadiusAuthentication(request, clientConfig);
                 case AuthenticationSource.None:
                     return PacketCode.AccessAccept;         //first factor not required
                 default:                                    //unknown source
-                    throw new NotImplementedException(_configuration.FirstFactorAuthenticationSource.ToString());
+                    throw new NotImplementedException(clientConfig.FirstFactorAuthenticationSource.ToString());
             }
         }
 
         /// <summary>
         /// Authenticate request at Active Directory Domain with user-name and password
         /// </summary>
-        private PacketCode ProcessActiveDirectoryAuthentication(PendingRequest request)
+        private async Task<PacketCode> ProcessActiveDirectoryAuthentication(PendingRequest request, ClientConfiguration clientConfig)
         {
             var userName = request.RequestPacket.UserName;
             var password = request.RequestPacket.UserPassword;
@@ -153,49 +155,49 @@ namespace MultiFactor.Radius.Adapter.Server
                 return PacketCode.AccessReject;
             }
 
-            var isActiveDirectory = _configuration.FirstFactorAuthenticationSource == AuthenticationSource.ActiveDirectory;
+            var isActiveDirectory = clientConfig.FirstFactorAuthenticationSource == AuthenticationSource.ActiveDirectory;
 
             var ldapService = isActiveDirectory ? 
                 _activeDirectoryService : 
                 _ldapService;
 
-            var isValid = ldapService.VerifyCredential(userName, password, request);
+            var isValid = await ldapService.VerifyCredential(userName, password, request, clientConfig);
 
             return isValid ? PacketCode.AccessAccept : PacketCode.AccessReject;
         }
 
         /// <summary>
-        /// Authenticate request at Network Policy Server with user-name and password
+        /// Authenticate request at Remote Radius Server with user-name and password
         /// </summary>
-        private PacketCode ProcessRadiusAuthentication(PendingRequest request)
+        private async Task<PacketCode> ProcessRadiusAuthentication(PendingRequest request, ClientConfiguration clientConfig)
         {
             try
             {
-                //sending request as is to Network Policy Server
-                using (var client = new RadiusClient(_configuration.ServiceClientEndpoint, _logger))
+                //sending request as is to Remote Radius Server
+                using (var client = new RadiusClient(clientConfig.ServiceClientEndpoint, _logger))
                 {
-                    _logger.Debug($"Sending AccessRequest message with id={{id}} to Network Policy Server {_configuration.NpsServerEndpoint}", request.RequestPacket.Identifier);
+                    _logger.Debug($"Sending AccessRequest message with id={{id}} to Remote Radius Server {clientConfig.NpsServerEndpoint}", request.RequestPacket.Identifier);
 
                     var requestBytes = _packetParser.GetBytes(request.RequestPacket);
-                    var response = client.SendPacketAsync(request.RequestPacket.Identifier, requestBytes, _configuration.NpsServerEndpoint, TimeSpan.FromSeconds(5)).Result;
+                    var response = await client.SendPacketAsync(request.RequestPacket.Identifier, requestBytes, clientConfig.NpsServerEndpoint, TimeSpan.FromSeconds(5));
 
                     if (response != null)
                     {
                         var responsePacket = _packetParser.Parse(response, request.RequestPacket.SharedSecret, request.RequestPacket.Authenticator);
-                        _logger.Debug("Received {code:l} message with id={id} from Network Policy Server", responsePacket.Code.ToString(), responsePacket.Identifier);
+                        _logger.Debug("Received {code:l} message with id={id} from Remote Radius Server", responsePacket.Code.ToString(), responsePacket.Identifier);
                         
                         if (responsePacket.Code == PacketCode.AccessAccept)
                         {
                             var userName = request.RequestPacket.UserName;
-                            _logger.Information($"User '{{user:l}}' credential and status verified successfully at {_configuration.NpsServerEndpoint}", userName);
+                            _logger.Information($"User '{{user:l}}' credential and status verified successfully at {clientConfig.NpsServerEndpoint}", userName);
                         }
 
                         request.ResponsePacket = responsePacket;
-                        return responsePacket.Code; //Code received from NPS
+                        return responsePacket.Code; //Code received from remote radius
                     }
                     else
                     {
-                        _logger.Warning("Network Policy Server did not respond on message with id={id}", request.RequestPacket.Identifier);
+                        _logger.Warning("Remote Radius Server did not respond on message with id={id}", request.RequestPacket.Identifier);
                         return PacketCode.AccessReject; //reject by default
                     }
                 }
@@ -211,7 +213,7 @@ namespace MultiFactor.Radius.Adapter.Server
         /// <summary>
         /// Authenticate request at MultiFactor with user-name only
         /// </summary>
-        private PacketCode ProcessSecondAuthenticationFactor(PendingRequest request)
+        private async Task<PacketCode> ProcessSecondAuthenticationFactor(PendingRequest request, ClientConfiguration clientConfig)
         {
             var userName = request.RequestPacket.UserName;
 
@@ -221,7 +223,7 @@ namespace MultiFactor.Radius.Adapter.Server
                 return PacketCode.AccessReject;
             }
 
-            var response = _multifactorApiClient.CreateSecondFactorRequest(request);
+            var response = await _multifactorApiClient.CreateSecondFactorRequest(request, clientConfig);
 
             return response;
         }
@@ -229,7 +231,7 @@ namespace MultiFactor.Radius.Adapter.Server
         /// <summary>
         /// Verify one time password from user input
         /// </summary>
-        private PacketCode ProcessChallenge(PendingRequest request, string state)
+        private async Task<PacketCode> ProcessChallenge(PendingRequest request, string state)
         {
             var userName = request.RequestPacket.UserName;
 
@@ -274,7 +276,7 @@ namespace MultiFactor.Radius.Adapter.Server
                     return PacketCode.AccessReject;
             }
 
-            response = _multifactorApiClient.Challenge(request, userName, userAnswer, state);
+            response = await _multifactorApiClient.Challenge(request, userName, userAnswer, state);
 
             switch (response)
             {
