@@ -60,7 +60,6 @@ namespace MultiFactor.Radius.Adapter.Core
             get;
             internal set;
         }
-
         public bool IsEapMessageChallenge
         {
             get
@@ -68,7 +67,16 @@ namespace MultiFactor.Radius.Adapter.Core
                 return Code == PacketCode.AccessChallenge && AuthenticationType == AuthenticationType.EAP;
             }
         }
-
+        /// <summary>
+        /// ACL and other rules transfer
+        /// </summary>
+        public bool IsVendorAclRequest
+        {
+            get
+            {
+                return UserName?.StartsWith("#ACSACL#-IP") == true;
+            }
+        }
         public AuthenticationType AuthenticationType
         {
             get
@@ -82,9 +90,7 @@ namespace MultiFactor.Radius.Adapter.Core
                 return AuthenticationType.Unknown;
             }
         }
-
         public string UserName => GetString("User-Name");
-
         public string RemoteHostName
         {
             get
@@ -94,9 +100,8 @@ namespace MultiFactor.Radius.Adapter.Core
             }
         }
         public string CallingStationId => GetString("Calling-Station-Id") ?? RemoteHostName;
-
         public string UserPassword => GetString("User-Password");
-
+        public string NasIdentifier => GetString("NAS-Identifier");
         internal RadiusPacket()
         {
         }

@@ -26,7 +26,7 @@ namespace MultiFactor.Radius.Adapter.Services
         {
         }
 
-        protected override string FormatBindDn(LdapIdentity user, ClientConfiguration clientConfig)
+        protected override string FormatBindDn(string ldapUri, LdapIdentity user, ClientConfiguration clientConfig)
         {
             if (user.Type == IdentityType.UserPrincipalName)
             {
@@ -34,9 +34,9 @@ namespace MultiFactor.Radius.Adapter.Services
             }
 
             //try create upn from domain name
-            if (Uri.IsWellFormedUriString(clientConfig.ActiveDirectoryDomain, UriKind.Absolute))
+            if (Uri.IsWellFormedUriString(ldapUri, UriKind.Absolute))
             {
-                var uri = new Uri(clientConfig.ActiveDirectoryDomain);
+                var uri = new Uri(ldapUri);
                 if (uri.PathAndQuery != null && uri.PathAndQuery != "/")
                 {
                     var fqdn = LdapIdentity.DnToFqdn(uri.PathAndQuery);

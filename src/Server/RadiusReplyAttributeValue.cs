@@ -61,7 +61,6 @@ namespace MultiFactor.Radius.Adapter.Server
             }
         }
 
-
         /// <summary>
         /// User group condition
         /// </summary>

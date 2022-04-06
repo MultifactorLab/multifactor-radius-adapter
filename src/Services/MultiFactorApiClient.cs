@@ -77,7 +77,7 @@ namespace MultiFactor.Radius.Adapter.Services
             return responseCode;
         }
 
-        public async Task<PacketCode> Challenge(PendingRequest request, string userName, string answer, string state)
+        public async Task<PacketCode> Challenge(PendingRequest request, ClientConfiguration clientConfig, string userName, string answer, string state)
         {
             var url = _serviceConfiguration.ApiUrl + "/access/requests/ra/challenge";
             var payload = new
@@ -87,7 +87,7 @@ namespace MultiFactor.Radius.Adapter.Services
                 RequestId = state
             };
 
-            var response = await SendRequest(url, payload, _serviceConfiguration.GetClient(request.RemoteEndpoint.Address));
+            var response = await SendRequest(url, payload, clientConfig);
             var responseCode = ConvertToRadiusCode(response);
 
             request.ReplyMessage = response.ReplyMessage;
@@ -115,7 +115,7 @@ namespace MultiFactor.Radius.Adapter.Services
                 byte[] responseData = null;
 
                 //basic authorization
-                var auth = Convert.ToBase64String(Encoding.ASCII.GetBytes(clientConfiguration.NasIdentifier + ":" + clientConfiguration.MultiFactorSharedSecret));
+                var auth = Convert.ToBase64String(Encoding.ASCII.GetBytes(clientConfiguration.MultifactorApiKey + ":" + clientConfiguration.MultiFactorApiSecret));
 
                 using (var web = new WebClient())
                 {

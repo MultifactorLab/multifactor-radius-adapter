@@ -8,7 +8,9 @@ using MultiFactor.Radius.Adapter.Services;
 using MultiFactor.Radius.Adapter.Services.Ldap;
 using Serilog;
 using System;
+using System.Collections;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -24,8 +26,6 @@ namespace MultiFactor.Radius.Adapter.Server
         private ILogger _logger;
         private IRadiusPacketParser _packetParser;
         private MultiFactorApiClient _multifactorApiClient;
-        private ActiveDirectoryService _activeDirectoryService;
-        private LdapService _ldapService;
         public event EventHandler<PendingRequest> RequestProcessed;
         private readonly ConcurrentDictionary<string, PendingRequest> _stateChallengePendingRequests = new ConcurrentDictionary<string, PendingRequest>();
 
@@ -38,8 +38,6 @@ namespace MultiFactor.Radius.Adapter.Server
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
             _multifactorApiClient = new MultiFactorApiClient(serviceConfiguration, logger);
-            _activeDirectoryService = new ActiveDirectoryService(serviceConfiguration, logger);
-            _ldapService = new LdapService(serviceConfiguration, logger);
         }
 
         public async Task HandleRequest(PendingRequest request, ClientConfiguration clientConfig)
@@ -69,7 +67,7 @@ namespace MultiFactor.Radius.Adapter.Server
                     if (_stateChallengePendingRequests.ContainsKey(receivedState))
                     {
                         //second request with Multifactor challenge
-                        request.ResponseCode = await ProcessChallenge(request, receivedState);
+                        request.ResponseCode = await ProcessChallenge(request, clientConfig, receivedState);
                         request.State = receivedState;  //state for Access-Challenge message if otp is wrong (3 times allowed)
 
                         RequestProcessed?.Invoke(this, request);
@@ -125,7 +123,7 @@ namespace MultiFactor.Radius.Adapter.Server
             {
                 case AuthenticationSource.ActiveDirectory:  //AD auth
                 case AuthenticationSource.Ldap:             //LDAP auth
-                    return await ProcessActiveDirectoryAuthentication(request, clientConfig);
+                    return await ProcessLdapAuthentication(request, clientConfig);
                 case AuthenticationSource.Radius:           //RADIUS auth
                     return await ProcessRadiusAuthentication(request, clientConfig);
                 case AuthenticationSource.None:
@@ -136,9 +134,9 @@ namespace MultiFactor.Radius.Adapter.Server
         }
 
         /// <summary>
-        /// Authenticate request at Active Directory Domain with user-name and password
+        /// Authenticate request at LDAP/Active Directory Domain with user-name and password
         /// </summary>
-        private async Task<PacketCode> ProcessActiveDirectoryAuthentication(PendingRequest request, ClientConfiguration clientConfig)
+        private async Task<PacketCode> ProcessLdapAuthentication(PendingRequest request, ClientConfiguration clientConfig)
         {
             var userName = request.RequestPacket.UserName;
             var password = request.RequestPacket.UserPassword;
@@ -155,15 +153,31 @@ namespace MultiFactor.Radius.Adapter.Server
                 return PacketCode.AccessReject;
             }
 
-            var isActiveDirectory = clientConfig.FirstFactorAuthenticationSource == AuthenticationSource.ActiveDirectory;
+            LdapService _service;
+            switch (clientConfig.FirstFactorAuthenticationSource)
+            {
+                case AuthenticationSource.ActiveDirectory:
+                    _service = new ActiveDirectoryService(_serviceConfiguration, _logger);
+                    break;
+                case AuthenticationSource.Ldap:
+                    _service = new LdapService(_serviceConfiguration, _logger);
+                    break;
+                default:
+                    throw new NotImplementedException(clientConfig.FirstFactorAuthenticationSource.ToString());
+            }
 
-            var ldapService = isActiveDirectory ? 
-                _activeDirectoryService : 
-                _ldapService;
+            //check all hosts
+            var ldapUriList = clientConfig.ActiveDirectoryDomain.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
+            foreach(var ldapUri in ldapUriList)
+            {
+                var isValid = await _service.VerifyCredential(userName, password, ldapUri, request, clientConfig);
+                if (isValid)
+                {
+                    return PacketCode.AccessAccept;
+                }
+            }
 
-            var isValid = await ldapService.VerifyCredential(userName, password, request, clientConfig);
-
-            return isValid ? PacketCode.AccessAccept : PacketCode.AccessReject;
+            return PacketCode.AccessReject;
         }
 
         /// <summary>
@@ -223,6 +237,16 @@ namespace MultiFactor.Radius.Adapter.Server
                 return PacketCode.AccessReject;
             }
 
+            if (request.RequestPacket.IsVendorAclRequest == true)
+            {
+                //security check
+                if (clientConfig.FirstFactorAuthenticationSource == AuthenticationSource.Radius)
+                {
+                    _logger.Information("Bypass second factor for user {user:l}", userName);
+                    return PacketCode.AccessAccept;
+                }
+            }
+
             var response = await _multifactorApiClient.CreateSecondFactorRequest(request, clientConfig);
 
             return response;
@@ -231,7 +255,7 @@ namespace MultiFactor.Radius.Adapter.Server
         /// <summary>
         /// Verify one time password from user input
         /// </summary>
-        private async Task<PacketCode> ProcessChallenge(PendingRequest request, string state)
+        private async Task<PacketCode> ProcessChallenge(PendingRequest request, ClientConfiguration clientConfig, string state)
         {
             var userName = request.RequestPacket.UserName;
 
@@ -276,7 +300,7 @@ namespace MultiFactor.Radius.Adapter.Server
                     return PacketCode.AccessReject;
             }
 
-            response = await _multifactorApiClient.Challenge(request, userName, userAnswer, state);
+            response = await _multifactorApiClient.Challenge(request, clientConfig, userName, userAnswer, state);
 
             switch (response)
             {

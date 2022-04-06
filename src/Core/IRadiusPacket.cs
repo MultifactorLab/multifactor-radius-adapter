@@ -52,12 +52,13 @@ namespace MultiFactor.Radius.Adapter.Core
             get;
         }
         bool IsEapMessageChallenge { get; }
+        bool IsVendorAclRequest { get; }
         AuthenticationType AuthenticationType { get; }
         string UserName { get; }
         string UserPassword { get; }
         string RemoteHostName { get; }
         string CallingStationId { get; }
-
+        string NasIdentifier { get; }
         IRadiusPacket CreateResponsePacket(PacketCode responseCode);
 
         T GetAttribute<T>(string name);

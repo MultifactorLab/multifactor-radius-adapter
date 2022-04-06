@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Configuration;
 using System.IO;
+using System.Linq;
 using System.Net;
 
 namespace MultiFactor.Radius.Adapter.Configuration
@@ -19,33 +20,113 @@ namespace MultiFactor.Radius.Adapter.Configuration
     /// </summary>
     public class ServiceConfiguration
     {
-        private IDictionary<IPAddress, ClientConfiguration> _cients;
+        /// <summary>
+        /// List of clients with identification by client ip
+        /// </summary>
+        private IDictionary<IPAddress, ClientConfiguration> _ipClients;
+
+        /// <summary>
+        /// List of clients with identification by NAS-Identifier attr
+        /// </summary>
+        private IDictionary<string, ClientConfiguration> _nasIdClients;
 
         public ServiceConfiguration()
         {
-            _cients = new Dictionary<IPAddress, ClientConfiguration>();
+            _ipClients = new Dictionary<IPAddress, ClientConfiguration>();
+            _nasIdClients = new Dictionary<string, ClientConfiguration>();
         }
 
-        private void AddClient(IPAddress ip, ClientConfiguration client)
+        private void AddClient(ClientConfiguration client)
         {
-            if (_cients.ContainsKey(ip))
+            IPAddress ip = client.Ip;
+            if (ip != null)
             {
-                throw new ConfigurationErrorsException($"Client with IP {ip} already added");
+                if (_ipClients.ContainsKey(ip))
+                {
+                    throw new ConfigurationErrorsException($"Client with IP '{ip}' already added");
+                }
+                _ipClients.Add(ip, client);
             }
-            _cients.Add(ip, client);
+            else
+            {
+                if (_nasIdClients.ContainsKey(client.NasIdentifier))
+                {
+                    throw new ConfigurationErrorsException("Client with NAS-Identifier '" + client.NasIdentifier + "' already added");
+                }
+                _nasIdClients.Add(client.NasIdentifier, client);
+            }
+        }
+
+        public ClientConfiguration GetClient(string nasIdentifier)
+        {
+            if (SingleClientMode)
+            {
+                return _ipClients[IPAddress.Any];
+            }
+            if (string.IsNullOrEmpty(nasIdentifier))
+            {
+                return null;
+            }
+            if (_nasIdClients.ContainsKey(nasIdentifier))
+            {
+                return _nasIdClients[nasIdentifier];
+            }
+            return null;
         }
 
         public ClientConfiguration GetClient(IPAddress ip)
         {
             if (SingleClientMode)
             {
-                return _cients[IPAddress.Any];
+                return _ipClients[IPAddress.Any];
             }
-            if (_cients.ContainsKey(ip))
+            if (_ipClients.ContainsKey(ip))
             {
-                return _cients[ip];
+                return _ipClients[ip];
             }
             return null;
+        }
+
+        public ClientConfiguration GetClient(PendingRequest request)
+        {
+            if (request == null)
+            {
+                throw new ArgumentNullException("request");
+            }
+            if (SingleClientMode)
+            {
+                return _ipClients[IPAddress.Any];
+            }
+            var nasId = request.RequestPacket.NasIdentifier;
+            var ip = request.RemoteEndpoint.Address;
+            return GetClient(nasId) ?? GetClient(ip);
+        }
+
+        /// <summary>
+        /// Unique AD domains from all client confs
+        /// </summary>
+        public IList<string> GetAllActiveDirectoryDomains()
+        {
+            var ret = new List<string>();
+
+            var part1 = _ipClients.Values
+                .Where(client => client.FirstFactorAuthenticationSource == AuthenticationSource.ActiveDirectory)
+                .Select(client => client.ActiveDirectoryDomain);
+
+            var part2 = _nasIdClients.Values
+                .Where(client => client.FirstFactorAuthenticationSource == AuthenticationSource.ActiveDirectory)
+                .Select(client => client.ActiveDirectoryDomain);
+
+            foreach(var part in part1.Union(part2))
+            {
+                var domains = part.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
+                foreach(var domain in domains)
+                {
+                    ret.Add(domain.Trim());
+                }
+            }
+
+            return ret.Distinct().ToArray();
         }
 
         #region common configuration settings
@@ -132,7 +213,8 @@ namespace MultiFactor.Radius.Adapter.Configuration
                 var radiusReplyAttributesSection = ConfigurationManager.GetSection("RadiusReply") as RadiusReplyAttributesSection;
 
                 var client = Load("General", dictionary, appSettings, radiusReplyAttributesSection, false);
-                configuration.AddClient(IPAddress.Any, client);
+                client.Ip = IPAddress.Any;
+                configuration.AddClient(client);
                 configuration.SingleClientMode = true;
             }
             else
@@ -150,21 +232,22 @@ namespace MultiFactor.Radius.Adapter.Configuration
 
                     var client = Load(Path.GetFileNameWithoutExtension(clientConfigFile), dictionary, clientSettings, radiusReplyAttributesSection, true);
 
-                    configuration.AddClient(client.Ip, client);
+                    configuration.AddClient(client);
                 }
             }
 
             return configuration;
         }
 
-        public static ClientConfiguration Load(string name, IRadiusDictionary dictionary, AppSettingsSection appSettings, RadiusReplyAttributesSection radiusReplyAttributesSection, bool requiresClientIp)
-        {       
+        public static ClientConfiguration Load(string name, IRadiusDictionary dictionary, AppSettingsSection appSettings, RadiusReplyAttributesSection radiusReplyAttributesSection, bool requiresClientIdentification)
+        {
+            var radiusClientNasIdentifierSetting                = appSettings.Settings["radius-client-nas-identifier"]?.Value;
             var radiusClientIpSetting                           = appSettings.Settings["radius-client-ip"]?.Value;
             var radiusSharedSecretSetting                       = appSettings.Settings["radius-shared-secret"]?.Value;
             var firstFactorAuthenticationSourceSettings         = appSettings.Settings["first-factor-authentication-source"]?.Value;
             var bypassSecondFactorWhenApiUnreachableSetting     = appSettings.Settings["bypass-second-factor-when-api-unreachable"]?.Value;
-            var nasIdentifierSetting                            = appSettings.Settings["multifactor-nas-identifier"]?.Value;
-            var multiFactorSharedSecretSetting                  = appSettings.Settings["multifactor-shared-secret"]?.Value;
+            var multiFactorApiKeySetting                        = appSettings.Settings["multifactor-nas-identifier"]?.Value;
+            var multiFactorApiSecretSetting                     = appSettings.Settings["multifactor-shared-secret"]?.Value;
 
             if (string.IsNullOrEmpty(firstFactorAuthenticationSourceSettings))
             {
@@ -176,11 +259,11 @@ namespace MultiFactor.Radius.Adapter.Configuration
                 throw new Exception("Configuration error: 'radius-shared-secret' element not found");
             }
 
-            if (string.IsNullOrEmpty(nasIdentifierSetting))
+            if (string.IsNullOrEmpty(multiFactorApiKeySetting))
             {
                 throw new Exception("Configuration error: 'multifactor-nas-identifier' element not found");
             }
-            if (string.IsNullOrEmpty(multiFactorSharedSecretSetting))
+            if (string.IsNullOrEmpty(multiFactorApiSecretSetting))
             {
                 throw new Exception("Configuration error: 'multifactor-shared-secret' element not found");
             }
@@ -195,21 +278,28 @@ namespace MultiFactor.Radius.Adapter.Configuration
                 Name = name,
                 RadiusSharedSecret = radiusSharedSecretSetting,
                 FirstFactorAuthenticationSource = firstFactorAuthenticationSource,
-                NasIdentifier = nasIdentifierSetting,
-                MultiFactorSharedSecret = multiFactorSharedSecretSetting,
+                MultifactorApiKey = multiFactorApiKeySetting,
+                MultiFactorApiSecret = multiFactorApiSecretSetting,
             };
 
-            if (requiresClientIp)
+            if (requiresClientIdentification)
             {
-                if (string.IsNullOrEmpty(radiusClientIpSetting))
+                if (string.IsNullOrEmpty(radiusClientNasIdentifierSetting) && string.IsNullOrEmpty(radiusClientIpSetting))
                 {
-                    throw new Exception("Configuration error: 'radius-client-ip' element not found");
+                    throw new Exception("Configuration error: Either 'radius-client-nas-identifier' or 'radius-client-ip' must be configured");
                 }
-                if (!IPAddress.TryParse(radiusClientIpSetting, out var clientIpAddress))
+                if (!string.IsNullOrEmpty(radiusClientNasIdentifierSetting))
                 {
-                    throw new Exception("Configuration error: Can't parse 'radius-client-ip' value. Must be valid IPv4 address");
+                    configuration.NasIdentifier = radiusClientNasIdentifierSetting;
                 }
-                configuration.Ip = clientIpAddress;
+                else
+                {
+                    if (!IPAddress.TryParse(radiusClientIpSetting, out var clientIpAddress))
+                    {
+                        throw new Exception("Configuration error: Can't parse 'radius-client-ip' value. Must be valid IPv4 address");
+                    }
+                    configuration.Ip = clientIpAddress;
+                }
             }
 
             if (bypassSecondFactorWhenApiUnreachableSetting != null)

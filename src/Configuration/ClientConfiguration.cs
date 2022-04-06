@@ -1,5 +1,4 @@
 ﻿using MultiFactor.Radius.Adapter.Server;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
@@ -19,9 +18,14 @@ namespace MultiFactor.Radius.Adapter.Configuration
         public string Name { get; set; }
 
         /// <summary>
-        /// Client IP address
+        /// Client IP address (used for identification)
         /// </summary>
         public IPAddress? Ip { get; set; }
+
+        /// <summary>
+        /// Client NAS_Identifier (another option used for identification)
+        /// </summary>
+        public string NasIdentifier { get; set; }
 
         /// <summary>
         /// Shared secret between this service and Radius client
@@ -86,13 +90,13 @@ namespace MultiFactor.Radius.Adapter.Configuration
         #endregion
 
         /// <summary>
-        /// Multifactor API KEY
+        /// Multifactor API key
         /// </summary>
-        public string NasIdentifier { get; set; }
+        public string MultifactorApiKey { get; set; }
         /// <summary>
-        /// RADIUS Shared Secret
+        /// Multifactor API secret
         /// </summary>
-        public string MultiFactorSharedSecret { get; set; }
+        public string MultiFactorApiSecret { get; set; }
 
 
         /// <summary>

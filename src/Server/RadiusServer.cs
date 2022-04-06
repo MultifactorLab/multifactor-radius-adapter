@@ -174,7 +174,15 @@ namespace MultiFactor.Radius.Adapter.Server
                 remoteEndpoint = sourceEndpoint;
             }
 
-            var clientConfiguration = _serviceConfiguration.GetClient(remoteEndpoint.Address);
+            ClientConfiguration clientConfiguration = null;
+            if (RadiusPacketNasIdentifierParser.TryParse(packetBytes, out var nasIdentifier))
+            {
+                clientConfiguration = _serviceConfiguration.GetClient(nasIdentifier);
+            }
+            if (clientConfiguration == null)
+            {
+                clientConfiguration = _serviceConfiguration.GetClient(remoteEndpoint.Address);
+            }
 
             if (clientConfiguration == null)
             {
@@ -263,6 +271,15 @@ namespace MultiFactor.Radius.Adapter.Server
                 return; //stop processing
             }
 
+            if (request.RequestPacket.IsVendorAclRequest == true && request.ResponsePacket != null)
+            {
+                //ACL and other rules transfer, just proxy response
+                _logger.Debug("Proxying #ACSACL# to {host:l}:{port} id={id}", request.RemoteEndpoint.Address, request.RemoteEndpoint.Port, request.RequestPacket.Identifier);
+                Send(request.ResponsePacket, request.RequestPacket?.UserName, request.RemoteEndpoint, request.ProxyEndpoint, true);
+
+                return; //stop processing
+            }
+
             var requestPacket = request.RequestPacket;
             var responsePacket = requestPacket.CreateResponsePacket(request.ResponseCode);
 
@@ -293,7 +310,7 @@ namespace MultiFactor.Radius.Adapter.Server
                 responsePacket.AddAttribute("State", request.State); //state to match user authentication session
             }
 
-            var clientConfiguration = _serviceConfiguration.GetClient(request.RemoteEndpoint.Address);
+            var clientConfiguration = _serviceConfiguration.GetClient(request);
             //add custom reply attributes
             if (request.ResponseCode == PacketCode.AccessAccept)
             {

@@ -23,7 +23,6 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap
     {
         protected ServiceConfiguration _serviceConfiguration;
         protected ILogger _logger;
-
         protected virtual LdapNames Names => new LdapNames(LdapServerType.Generic);
 
         public LdapService(ServiceConfiguration serviceConfiguration, ILogger logger)
@@ -35,7 +34,7 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap
         /// <summary>
         /// Verify User Name, Password, User Status and Policy against Active Directory
         /// </summary>
-        public async Task<bool> VerifyCredential(string userName, string password, PendingRequest request, ClientConfiguration clientConfig)
+        public async Task<bool> VerifyCredential(string userName, string password, string ldapUri, PendingRequest request, ClientConfiguration clientConfig)
         {
             if (string.IsNullOrEmpty(userName))
             {
@@ -46,11 +45,15 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap
                 _logger.Error("Empty password provided for user '{user:l}'", userName);
                 return false;
             }
+            if (string.IsNullOrEmpty(ldapUri))
+            {
+                throw new ArgumentNullException(nameof(ldapUri));
+            }
 
             var user = LdapIdentity.ParseUser(userName);
-            var bindDn = FormatBindDn(user, clientConfig);
+            var bindDn = FormatBindDn(ldapUri, user, clientConfig);
 
-            _logger.Debug($"Verifying user '{{user:l}}' credential and status at {clientConfig.ActiveDirectoryDomain}", bindDn);
+            _logger.Debug($"Verifying user '{{user:l}}' credential and status at {ldapUri}", bindDn);
 
             try
             {
@@ -59,14 +62,14 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap
                     //trust self-signed certificates on ldap server
                     connection.TrustAllCertificates();
 
-                    if (Uri.IsWellFormedUriString(clientConfig.ActiveDirectoryDomain, UriKind.Absolute))
+                    if (Uri.IsWellFormedUriString(ldapUri, UriKind.Absolute))
                     {
-                        var uri = new Uri(clientConfig.ActiveDirectoryDomain);
+                        var uri = new Uri(ldapUri);
                         connection.Connect(uri.GetLeftPart(UriPartial.Authority));
                     }
                     else
                     {
-                        connection.Connect(clientConfig.ActiveDirectoryDomain, 389);
+                        connection.Connect(ldapUri, 389);
                     }
                     //do not follow chase referrals
                     connection.SetOption(LdapOption.LDAP_OPT_REFERRALS, IntPtr.Zero);
@@ -77,7 +80,7 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap
                         Password = password
                     });
 
-                    var domain = await WhereAmI(connection, clientConfig);
+                    var domain = await WhereAmI(ldapUri, connection, clientConfig);
 
                     _logger.Information($"User '{{user:l}}' credential and status verified successfully in {domain.Name}", user.Name);
 
@@ -146,22 +149,22 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap
                     var dataReason = ExtractErrorReason(lex.Message);
                     if (dataReason != null)
                     {
-                        _logger.Warning($"Verification user '{{user:l}}' at {clientConfig.ActiveDirectoryDomain} failed: {dataReason}", user.Name);
+                        _logger.Warning($"Verification user '{{user:l}}' at {ldapUri} failed: {dataReason}", user.Name);
                         return false;
                     }
                 }
 
-                _logger.Error(lex, $"Verification user '{{user:l}}' at {clientConfig.ActiveDirectoryDomain} failed", user.Name);
+                _logger.Error(lex, $"Verification user '{{user:l}}' at {ldapUri} failed", user.Name);
             }
             catch (Exception ex)
             {
-                _logger.Error(ex, $"Verification user '{{user:l}}' at {clientConfig.ActiveDirectoryDomain} failed", user.Name);
+                _logger.Error(ex, $"Verification user '{{user:l}}' at {ldapUri} failed", user.Name);
             }
 
             return false;
         }
 
-        protected virtual string FormatBindDn(LdapIdentity user, ClientConfiguration clientConfig)
+        protected virtual string FormatBindDn(string ldapUri, LdapIdentity user, ClientConfiguration clientConfig)
         {
             if (user.Type == IdentityType.UserPrincipalName) 
             {
@@ -177,13 +180,13 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap
             return bindDn;
         }
 
-        protected async Task<LdapIdentity> WhereAmI(LdapConnection connection, ClientConfiguration clientConfig)
+        protected async Task<LdapIdentity> WhereAmI(string host, LdapConnection connection, ClientConfiguration clientConfig)
         {
             var queryResult = await Query(connection, "", "(objectclass=*)", LdapSearchScope.LDAP_SCOPE_BASEOBJECT, "defaultNamingContext");
             var result = queryResult.SingleOrDefault();
             if (result == null)
             {
-                throw new InvalidOperationException($"Unable to query {clientConfig.ActiveDirectoryDomain} for current user");
+                throw new InvalidOperationException($"Unable to query {host} for current user");
             }
 
             var defaultNamingContext = result.DirectoryAttributes["defaultNamingContext"].GetValue<string>();
