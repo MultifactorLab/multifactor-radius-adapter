@@ -60,6 +60,9 @@ namespace MultiFactor.Radius.Adapter.Core
             get;
             internal set;
         }
+        /// <summary>
+        /// EAP session challenge in progress (ie. wpa2-ent)
+        /// </summary>
         public bool IsEapMessageChallenge
         {
             get
