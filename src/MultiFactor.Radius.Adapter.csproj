@@ -29,6 +29,21 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="clients\cisco with ad.config.template">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="clients\cisco with nps.config.template">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="clients\fortigate with ad.config.template">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="clients\ssh.config.template">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="clients\winlogon.config.template">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="content\radius.dictionary">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
