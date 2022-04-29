@@ -49,7 +49,7 @@ namespace MultiFactor.Radius.Adapter.Services
 
         protected override async Task LoadAllUserGroups(LdapConnection connection, LdapIdentity domain, LdapProfile profile, ClientConfiguration clientConfig)
         {
-            var searchFilter = $"(member:1.2.840.113556.1.4.1941:={profile.DistinguishedName})";
+            var searchFilter = $"(member:1.2.840.113556.1.4.1941:={profile.DistinguishedNameEscaped})";
             var response = await Query(connection, domain.Name, searchFilter, LdapSearchScope.LDAP_SCOPE_SUB, "DistinguishedName");
             profile.MemberOf = response.Select(entry => entry.Dn).ToList();
         }

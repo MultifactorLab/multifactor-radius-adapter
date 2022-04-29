@@ -71,6 +71,10 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap
                     {
                         connection.Connect(ldapUri, 389);
                     }
+
+                    var ldapVersion = (int)LdapVersion.LDAP_VERSION3;
+                    connection.SetOption(LdapOption.LDAP_OPT_PROTOCOL_VERSION, ldapVersion);
+
                     //do not follow chase referrals
                     connection.SetOption(LdapOption.LDAP_OPT_REFERRALS, IntPtr.Zero);
 

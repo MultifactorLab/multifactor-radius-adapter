@@ -10,6 +10,17 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap
         }
 
         public string DistinguishedName { get; set; }
+
+        public string DistinguishedNameEscaped
+        {
+            get
+            {
+                return DistinguishedName
+                    .Replace("(", @"\28")
+                    .Replace(")", @"\29");
+            }
+        }
+
         public string DisplayName { get; set; }
         public string Email { get; set; }
         public string Phone { get; set; }
