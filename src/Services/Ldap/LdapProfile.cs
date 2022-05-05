@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Runtime.InteropServices;
 
 namespace MultiFactor.Radius.Adapter.Services.Ldap
 {
@@ -15,9 +16,16 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap
         {
             get
             {
-                return DistinguishedName
+                var ret = DistinguishedName
                     .Replace("(", @"\28")
                     .Replace(")", @"\29");
+                    
+                if (!System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                {
+                    ret = ret.Replace("\"", "\\\""); //quotes
+                }
+
+                return ret;
             }
         }
 
