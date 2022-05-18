@@ -8,7 +8,6 @@ using MultiFactor.Radius.Adapter.Core.Services.Ldap;
 using MultiFactor.Radius.Adapter.Services.Ldap;
 using Serilog;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using static LdapForNet.Native.Native;
@@ -49,9 +48,12 @@ namespace MultiFactor.Radius.Adapter.Services
 
         protected override async Task LoadAllUserGroups(LdapConnection connection, LdapIdentity domain, LdapProfile profile, ClientConfiguration clientConfig)
         {
-            var searchFilter = $"(member:1.2.840.113556.1.4.1941:={profile.DistinguishedNameEscaped})";
-            var response = await Query(connection, domain.Name, searchFilter, LdapSearchScope.LDAP_SCOPE_SUB, "DistinguishedName");
-            profile.MemberOf = response.Select(entry => entry.Dn).ToList();
+            if (clientConfig.LoadActiveDirectoryNestedGroups)
+            {
+                var searchFilter = $"(member:1.2.840.113556.1.4.1941:={profile.DistinguishedNameEscaped})";
+                var response = await Query(connection, domain.Name, searchFilter, LdapSearchScope.LDAP_SCOPE_SUB, "DistinguishedName");
+                profile.MemberOf = response.Select(entry => LdapIdentity.DnToCn(entry.Dn)).ToList();
+            }
         }
     }
 }

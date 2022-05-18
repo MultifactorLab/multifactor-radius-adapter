@@ -10,6 +10,9 @@ namespace MultiFactor.Radius.Adapter.Configuration
         public ClientConfiguration()
         {
             BypassSecondFactorWhenApiUnreachable = true; //by default
+            LoadActiveDirectoryNestedGroups = true;
+            ActiveDirectoryGroup = new string[0];
+            ActiveDirectory2FaGroup = new string[0];
         }
 
         /// <summary>
@@ -47,12 +50,12 @@ namespace MultiFactor.Radius.Adapter.Configuration
         /// <summary>
         /// Only members of this group allowed to access (Optional)
         /// </summary>
-        public string ActiveDirectoryGroup { get; set; }
+        public string[] ActiveDirectoryGroup { get; set; }
 
         /// <summary>
         /// Only members of this group required to pass 2fa to access (Optional)
         /// </summary>
-        public string ActiveDirectory2FaGroup { get; set; }
+        public string[] ActiveDirectory2FaGroup { get; set; }
 
         /// <summary>
         /// Use ActiveDirectory User general properties phone number (Optional)
@@ -63,6 +66,8 @@ namespace MultiFactor.Radius.Adapter.Configuration
         /// Use ActiveDirectory User general properties mobile phone number (Optional)
         /// </summary>
         public bool UseActiveDirectoryMobileUserPhone { get; set; }
+
+        public bool LoadActiveDirectoryNestedGroups { get; set; }
 
         #endregion
 

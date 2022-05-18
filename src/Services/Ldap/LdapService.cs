@@ -94,34 +94,34 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap
                         return false;
                     }
 
-                    var checkGroupMembership = !string.IsNullOrEmpty(clientConfig.ActiveDirectoryGroup);
+                    var checkGroupMembership = clientConfig.ActiveDirectoryGroup.Any();
                     //user must be member of security group
                     if (checkGroupMembership)
                     {
-                        var isMemberOf = await IsMemberOf(connection, domain, user, profile, clientConfig.ActiveDirectoryGroup);
-
-                        if (!isMemberOf)
+                        var accessGroup = clientConfig.ActiveDirectoryGroup.FirstOrDefault(group => IsMemberOf(profile, group));
+                        if (accessGroup != null)
                         {
-                            _logger.Warning($"User '{{user:l}}' is not member of '{clientConfig.ActiveDirectoryGroup}' group in {profile.BaseDn.Name}", user.Name);
-                            return false;
-                        }
-
-                        _logger.Debug($"User '{{user:l}}' is member of '{clientConfig.ActiveDirectoryGroup}' group in {profile.BaseDn.Name}", user.Name);
-                    }
-
-                    var onlyMembersOfGroupMustProcess2faAuthentication = !string.IsNullOrEmpty(clientConfig.ActiveDirectory2FaGroup);
-                    //only users from group must process 2fa
-                    if (onlyMembersOfGroupMustProcess2faAuthentication)
-                    {
-                        var isMemberOf = await IsMemberOf(connection, domain, user, profile, clientConfig.ActiveDirectory2FaGroup);
-
-                        if (isMemberOf)
-                        {
-                            _logger.Debug($"User '{{user:l}}' is member of '{clientConfig.ActiveDirectory2FaGroup}' in {profile.BaseDn.Name}", user.Name);
+                            _logger.Debug($"User '{{user:l}}' is member of '{accessGroup.Trim()}' group in {profile.BaseDn.Name}", user.Name);
                         }
                         else
                         {
-                            _logger.Information($"User '{{user:l}}' is not member of '{clientConfig.ActiveDirectory2FaGroup}' in {profile.BaseDn.Name}", user.Name);
+                            _logger.Warning($"User '{{user:l}}' is not member of '{string.Join(';',clientConfig.ActiveDirectoryGroup)}' group in {profile.BaseDn.Name}", user.Name);
+                            return false;
+                        }
+                    }
+
+                    var onlyMembersOfGroupMustProcess2faAuthentication = clientConfig.ActiveDirectory2FaGroup.Any();
+                    //only users from group must process 2fa
+                    if (onlyMembersOfGroupMustProcess2faAuthentication)
+                    {
+                        var mfaGroup = clientConfig.ActiveDirectory2FaGroup.FirstOrDefault(group => IsMemberOf(profile, group));
+                        if (mfaGroup != null)
+                        {
+                            _logger.Debug($"User '{{user:l}}' is member of '{mfaGroup.Trim()}' in {profile.BaseDn.Name}", user.Name);
+                        }
+                        else
+                        {
+                            _logger.Information($"User '{{user:l}}' is not member of '{string.Join(';', clientConfig.ActiveDirectory2FaGroup)}' in {profile.BaseDn.Name}", user.Name);
                             request.Bypass2Fa = true;
                         }
                     }
@@ -140,7 +140,7 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap
 
                     if (profile.MemberOf != null)
                     {
-                        request.UserGroups = profile.MemberOf.Select(dn => LdapIdentity.DnToCn(dn)).ToList();
+                        request.UserGroups = profile.MemberOf;
                     }
                 }
 
@@ -209,8 +209,11 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap
             {
                 if (!profile.LdapAttrs.ContainsKey(ldapReplyAttribute))
                 {
-                    profile.LdapAttrs.Add(ldapReplyAttribute, null);
-                    queryAttributes.Add(ldapReplyAttribute);
+                    if (!queryAttributes.Contains(ldapReplyAttribute))
+                    {
+                        profile.LdapAttrs.Add(ldapReplyAttribute, null);
+                        queryAttributes.Add(ldapReplyAttribute);
+                    }
                 }
             }
 
@@ -249,7 +252,7 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap
             }
             if (attrs.TryGetValue("memberOf", out var memberOfAttr))
             {
-                profile.MemberOf = memberOfAttr.GetValues<string>().ToList();
+                profile.MemberOf = memberOfAttr.GetValues<string>().Select(dn => LdapIdentity.DnToCn(dn)).ToList();
             }
 
             foreach(var key in profile.LdapAttrs.Keys.ToList()) //to list to avoid collection was modified exception
@@ -257,10 +260,6 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap
                 if (attrs.TryGetValue(key, out var attrValue))
                 {
                     profile.LdapAttrs[key] = attrValue.GetValue<string>();
-                }
-                else
-                {
-                    _logger.Warning($"Can't load attribute '{key}' from user '{entry.Dn}'");
                 }
             }
 
@@ -274,41 +273,9 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap
             return profile;
         }
 
-        protected virtual async Task<bool> IsMemberOf(LdapConnection connection, LdapIdentity domain, LdapIdentity user, LdapProfile profile, string groupName)
+        protected bool IsMemberOf(LdapProfile profile, string group)
         {
-            var group = await FindValidGroup(connection, domain, groupName);
-
-            if (group == null)
-            {
-                _logger.Warning($"Group '{groupName}' not exists in {domain.Name}");
-                return false;
-            }
-
-            return profile.MemberOf?.Any(g => g == group.Name) ?? false;
-        }
-
-        protected async Task<LdapIdentity> FindValidGroup(LdapConnection connection, LdapIdentity domain, string groupName)
-        {
-            var group = LdapIdentity.ParseGroup(groupName);
-            var searchFilter = $"(&({Names.ObjectClass}={Names.GroupClass})({Names.Identity(group)}={group.Name}))";
-            var response = await Query(connection, domain.Name, searchFilter, LdapSearchScope.LDAP_SCOPE_SUB, "DistinguishedName");
-
-            foreach(var entry in response)
-            {
-                var baseDn = LdapIdentity.BaseDn(entry.Dn);
-                if (baseDn.Name == domain.Name) //only from user domain
-                {
-                    var validatedGroup = new LdapIdentity
-                    {
-                        Name = entry.Dn,
-                        Type = IdentityType.DistinguishedName
-                    };
-
-                    return validatedGroup;
-                }
-            }
-
-            return null;
+            return profile.MemberOf?.Any(g => g.ToLower() == group.ToLower().Trim()) ?? false;
         }
 
         protected async Task<IList<LdapEntry>> Query(LdapConnection connection, string baseDn, string filter, LdapSearchScope scope, params string[] attributes)

@@ -20,9 +20,10 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap
                     .Replace("(", @"\28")
                     .Replace(")", @"\29");
                     
-                if (!System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 {
                     ret = ret.Replace("\"", "\\\""); //quotes
+                    ret = ret.Replace("\\,", "\\5C,"); //comma
                 }
 
                 return ret;
