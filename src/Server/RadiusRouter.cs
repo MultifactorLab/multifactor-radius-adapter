@@ -13,6 +13,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace MultiFactor.Radius.Adapter.Server
@@ -60,6 +61,8 @@ namespace MultiFactor.Radius.Adapter.Server
                     return;
                 }
 
+                ProcessUserNameTransformRules(request, clientConfig);
+
                 if (request.RequestPacket.Attributes.ContainsKey("State")) //Access-Challenge response 
                 {
                     var receivedState = request.RequestPacket.GetString("State");
@@ -88,8 +91,8 @@ namespace MultiFactor.Radius.Adapter.Server
 
                 if (request.Bypass2Fa)
                 {
-                    //second factor not trquired
-                    var userName = request.RequestPacket.UserName;
+                    //second factor not required
+                    var userName = request.UserName;
                     _logger.Information("Bypass second factor for user '{user:l}'", userName);
 
                     request.ResponseCode = PacketCode.AccessAccept;
@@ -117,6 +120,27 @@ namespace MultiFactor.Radius.Adapter.Server
             }
         }
 
+        private void ProcessUserNameTransformRules(PendingRequest request, ClientConfiguration clientConfig)
+        {
+            var userName = request.UserName;
+            if (string.IsNullOrEmpty(userName)) return;
+            
+            foreach(var rule in clientConfig.UserNameTransformRules)
+            {
+                var regex = new Regex(rule.Match);
+                if (rule.Count != null)
+                {
+                    userName = regex.Replace(userName, rule.Replace, rule.Count.Value);
+                }
+                else
+                {
+                    userName = regex.Replace(userName, rule.Replace);
+                }
+            }
+
+            request.UserName = userName;
+        }
+
         private async Task<PacketCode> ProcessFirstAuthenticationFactor(PendingRequest request, ClientConfiguration clientConfig)
         {
             switch(clientConfig.FirstFactorAuthenticationSource)
@@ -138,7 +162,7 @@ namespace MultiFactor.Radius.Adapter.Server
         /// </summary>
         private async Task<PacketCode> ProcessLdapAuthentication(PendingRequest request, ClientConfiguration clientConfig)
         {
-            var userName = request.RequestPacket.UserName;
+            var userName = request.UserName;
             var password = request.RequestPacket.UserPassword;
 
             if (string.IsNullOrEmpty(userName))
@@ -202,7 +226,7 @@ namespace MultiFactor.Radius.Adapter.Server
                         
                         if (responsePacket.Code == PacketCode.AccessAccept)
                         {
-                            var userName = request.RequestPacket.UserName;
+                            var userName = request.UserName;
                             _logger.Information($"User '{{user:l}}' credential and status verified successfully at {clientConfig.NpsServerEndpoint}", userName);
                         }
 
@@ -229,7 +253,7 @@ namespace MultiFactor.Radius.Adapter.Server
         /// </summary>
         private async Task<PacketCode> ProcessSecondAuthenticationFactor(PendingRequest request, ClientConfiguration clientConfig)
         {
-            var userName = request.RequestPacket.UserName;
+            var userName = request.UserName;
 
             if (string.IsNullOrEmpty(userName))
             {
@@ -257,7 +281,7 @@ namespace MultiFactor.Radius.Adapter.Server
         /// </summary>
         private async Task<PacketCode> ProcessChallenge(PendingRequest request, ClientConfiguration clientConfig, string state)
         {
-            var userName = request.RequestPacket.UserName;
+            var userName = request.UserName;
 
             if (string.IsNullOrEmpty(userName))
             {

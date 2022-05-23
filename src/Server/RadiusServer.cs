@@ -223,7 +223,7 @@ namespace MultiFactor.Radius.Adapter.Server
             }
 
 
-            var request = new PendingRequest { RemoteEndpoint = remoteEndpoint, ProxyEndpoint = proxyEndpoint, RequestPacket = requestPacket };
+            var request = new PendingRequest { RemoteEndpoint = remoteEndpoint, ProxyEndpoint = proxyEndpoint, RequestPacket = requestPacket, UserName = requestPacket.UserName };
 
             Task.Run(async () => await _router.HandleRequest(request, clientConfiguration));
         }
@@ -308,7 +308,7 @@ namespace MultiFactor.Radius.Adapter.Server
                                 var convertedValues = new List<object>();
                                 foreach (var val in matched.ToList())
                                 {
-                                    _logger.Debug("Added attribute '{attrname:l}:{attrval:l}' to reply", attr.Key, val);
+                                    _logger.Debug("Added attribute '{attrname:l}:{attrval:l}' to reply", attr.Key, val.ToString());
                                     convertedValues.Add(ConvertType(attr.Key, val));
                                 }
                                 responsePacket.Attributes.Add(attr.Key, convertedValues);

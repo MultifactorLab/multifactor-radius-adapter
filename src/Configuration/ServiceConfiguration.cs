@@ -215,8 +215,9 @@ namespace MultiFactor.Radius.Adapter.Configuration
                 }
 
                 var radiusReplyAttributesSection = ConfigurationManager.GetSection("RadiusReply") as RadiusReplyAttributesSection;
+                var userNameTransformRulesSection = ConfigurationManager.GetSection("UserNameTransformRules") as UserNameTransformRulesSection;
 
-                var client = Load("General", dictionary, appSettings, radiusReplyAttributesSection);
+                var client = Load("General", dictionary, appSettings, radiusReplyAttributesSection, userNameTransformRulesSection);
                 configuration.AddClient(IPAddress.Any, client);
                 configuration.SingleClientMode = true;
             }
@@ -232,8 +233,9 @@ namespace MultiFactor.Radius.Adapter.Configuration
                     var config = ConfigurationManager.OpenMappedExeConfiguration(customConfigFileMap, ConfigurationUserLevel.None);
                     var clientSettings = (AppSettingsSection)config.GetSection("appSettings");
                     var radiusReplyAttributesSection = config.GetSection("RadiusReply") as RadiusReplyAttributesSection;
+                    var userNameTransformRulesSection = config.GetSection("UserNameTransformRules") as UserNameTransformRulesSection;
 
-                    var client = Load(Path.GetFileNameWithoutExtension(clientConfigFile), dictionary, clientSettings, radiusReplyAttributesSection);
+                    var client = Load(Path.GetFileNameWithoutExtension(clientConfigFile), dictionary, clientSettings, radiusReplyAttributesSection, userNameTransformRulesSection);
 
                     var radiusClientNasIdentifierSetting    = clientSettings.Settings["radius-client-nas-identifier"]?.Value;
                     var radiusClientIpSetting               = clientSettings.Settings["radius-client-ip"]?.Value;
@@ -263,7 +265,7 @@ namespace MultiFactor.Radius.Adapter.Configuration
             return configuration;
         }
 
-        public static ClientConfiguration Load(string name, IRadiusDictionary dictionary, AppSettingsSection appSettings, RadiusReplyAttributesSection radiusReplyAttributesSection)
+        public static ClientConfiguration Load(string name, IRadiusDictionary dictionary, AppSettingsSection appSettings, RadiusReplyAttributesSection radiusReplyAttributesSection, UserNameTransformRulesSection userNameTransformRulesSection)
         {
             var radiusSharedSecretSetting                       = appSettings.Settings["radius-shared-secret"]?.Value;
             var firstFactorAuthenticationSourceSettings         = appSettings.Settings["first-factor-authentication-source"]?.Value;
@@ -324,6 +326,17 @@ namespace MultiFactor.Radius.Adapter.Configuration
             }
 
             LoadRadiusReplyAttributes(configuration, dictionary, radiusReplyAttributesSection);
+
+            if (userNameTransformRulesSection?.Members != null)
+            {
+                foreach (var member in userNameTransformRulesSection?.Members)
+                {
+                    if (member is UserNameTransformRulesElement rule)
+                    {
+                        configuration.UserNameTransformRules.Add(rule);
+                    }
+                }
+            }
 
             return configuration;
         }
