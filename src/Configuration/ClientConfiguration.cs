@@ -13,6 +13,7 @@ namespace MultiFactor.Radius.Adapter.Configuration
             LoadActiveDirectoryNestedGroups = true;
             ActiveDirectoryGroup = new string[0];
             ActiveDirectory2FaGroup = new string[0];
+            PhoneAttributes = new List<string>(); 
             UserNameTransformRules = new List<UserNameTransformRulesElement>();
         }
 
@@ -59,14 +60,9 @@ namespace MultiFactor.Radius.Adapter.Configuration
         public string[] ActiveDirectory2FaGroup { get; set; }
 
         /// <summary>
-        /// Use ActiveDirectory User general properties phone number (Optional)
+        /// AD attribute name(s) where to search phone number
         /// </summary>
-        public bool UseActiveDirectoryUserPhone { get; set; }
-
-        /// <summary>
-        /// Use ActiveDirectory User general properties mobile phone number (Optional)
-        /// </summary>
-        public bool UseActiveDirectoryMobileUserPhone { get; set; }
+        public IList<string> PhoneAttributes { get; set; }
 
         public bool LoadActiveDirectoryNestedGroups { get; set; }
 

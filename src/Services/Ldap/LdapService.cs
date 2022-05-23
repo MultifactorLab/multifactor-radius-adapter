@@ -125,15 +125,8 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap
                             request.Bypass2Fa = true;
                         }
                     }
-
-                    if (clientConfig.UseActiveDirectoryUserPhone)
-                    {
-                        request.UserPhone = profile.Phone;
-                    }
-                    if (clientConfig.UseActiveDirectoryMobileUserPhone)
-                    {
-                        request.UserPhone = profile.Mobile;
-                    }
+                    
+                    request.UserPhone = profile.Phone;
                     request.DisplayName = profile.DisplayName;
                     request.EmailAddress = profile.Email;
                     request.LdapAttrs = profile.LdapAttrs;
@@ -202,26 +195,24 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap
         {
             var profile = new LdapProfile();
 
-            var queryAttributes = new List<string> { "DistinguishedName", "displayName", "mail", "telephoneNumber", "mobile", "memberOf" };
+            var queryAttributes = new List<string> { "DistinguishedName", "displayName", "mail", "memberOf" };
 
             var ldapReplyAttributes = clientConfig.GetLdapReplyAttributes();
             foreach(var ldapReplyAttribute in ldapReplyAttributes)
             {
                 if (!profile.LdapAttrs.ContainsKey(ldapReplyAttribute))
                 {
-                    if (!queryAttributes.Contains(ldapReplyAttribute))
-                    {
-                        profile.LdapAttrs.Add(ldapReplyAttribute, null);
-                        queryAttributes.Add(ldapReplyAttribute);
-                    }
+                    profile.LdapAttrs.Add(ldapReplyAttribute, null);
+                    queryAttributes.Add(ldapReplyAttribute);
                 }
             }
+            queryAttributes.AddRange(clientConfig.PhoneAttributes);
 
             var searchFilter = $"(&(objectClass={Names.UserClass})({Names.Identity(user)}={user.Name}))";
 
             _logger.Debug($"Querying user '{{user:l}}' in {domain.Name}", user.Name);
 
-            var response = await Query(connection, domain.Name, searchFilter, LdapSearchScope.LDAP_SCOPE_SUB, queryAttributes.ToArray());
+            var response = await Query(connection, domain.Name, searchFilter, LdapSearchScope.LDAP_SCOPE_SUB, queryAttributes.Distinct().ToArray());
 
             var entry = response.SingleOrDefault();
             if (entry == null)
@@ -230,6 +221,7 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap
                 return null;
             }
 
+            //base profile
             profile.BaseDn = LdapIdentity.BaseDn(entry.Dn);
             profile.DistinguishedName = entry.Dn;
 
@@ -242,24 +234,33 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap
             {
                 profile.Email = mailAttr.GetValue<string>();
             }
-            if (attrs.TryGetValue("telephoneNumber", out var phoneAttr))
+
+            //additional attributes for radius response
+            foreach (var key in profile.LdapAttrs.Keys.ToList()) //to list to avoid collection was modified exception
             {
-                profile.Phone = phoneAttr.GetValue<string>();
+                if (attrs.TryGetValue(key, out var attrValue))
+                {
+                    profile.LdapAttrs[key] = attrValue.GetValue<string>();
+                }
             }
-            if (attrs.TryGetValue("mobile", out var mobileAttr))
-            {
-                profile.Mobile = mobileAttr.GetValue<string>();
-            }
+
+            //groups
             if (attrs.TryGetValue("memberOf", out var memberOfAttr))
             {
                 profile.MemberOf = memberOfAttr.GetValues<string>().Select(dn => LdapIdentity.DnToCn(dn)).ToList();
             }
 
-            foreach(var key in profile.LdapAttrs.Keys.ToList()) //to list to avoid collection was modified exception
+            //phone
+            foreach (var phoneAttr in clientConfig.PhoneAttributes)
             {
-                if (attrs.TryGetValue(key, out var attrValue))
+                if (attrs.TryGetValue(phoneAttr, out var phoneValue))
                 {
-                    profile.LdapAttrs[key] = attrValue.GetValue<string>();
+                    var phone = phoneValue.GetValue<string>();
+                    if (!string.IsNullOrEmpty(phone))
+                    {
+                        profile.Phone = phone;
+                        break;
+                    }
                 }
             }
 
