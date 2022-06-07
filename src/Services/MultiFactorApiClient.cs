@@ -39,7 +39,14 @@ namespace MultiFactor.Radius.Adapter.Services
             var email = request.EmailAddress;
             var userPhone = request.UserPhone;
             var callingStationId = request.RequestPacket.CallingStationId;
-            
+
+            string calledStationId = null;
+
+            if (request.RequestPacket.IsWinLogon) //only for winlogon yet
+            {
+                calledStationId = request.RequestPacket.CalledStationId;
+            }
+
             var url = _serviceConfiguration.ApiUrl + "/access/requests/ra";
 
             var payload = new
@@ -50,6 +57,7 @@ namespace MultiFactor.Radius.Adapter.Services
                 Phone = userPhone,
                 PassCode = GetPassCodeOrNull(userPassword, clientConfig),
                 CallingStationId = callingStationId,
+                CalledStationId = calledStationId,
                 Capabilities = new
                 {
                     InlineEnroll = true
