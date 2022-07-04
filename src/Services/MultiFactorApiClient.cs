@@ -47,6 +47,18 @@ namespace MultiFactor.Radius.Adapter.Services
                 calledStationId = request.RequestPacket.CalledStationId;
             }
 
+            //remove user information for privacy
+            switch (clientConfig.PrivacyMode)
+            {
+                case PrivacyMode.Full:
+                    displayName = null;
+                    email = null;
+                    userPhone = null;
+                    callingStationId = "";
+                    calledStationId = null;
+                    break;
+            }
+
             var url = _serviceConfiguration.ApiUrl + "/access/requests/ra";
 
             var payload = new
