@@ -69,6 +69,9 @@ namespace MultiFactor.Radius.Adapter.Configuration
 
         public bool LoadActiveDirectoryNestedGroups { get; set; }
 
+        //Lookup for UPN and use it instead of uid
+        public bool UseUpnAsIdentity { get; set; }
+
         #endregion
 
         #region RADIUS Authentication settings

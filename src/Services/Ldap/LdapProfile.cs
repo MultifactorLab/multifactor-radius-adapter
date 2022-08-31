@@ -11,7 +11,6 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap
         }
 
         public string DistinguishedName { get; set; }
-
         public string DistinguishedNameEscaped
         {
             get
@@ -19,7 +18,7 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap
                 var ret = DistinguishedName
                     .Replace("(", @"\28")
                     .Replace(")", @"\29");
-                    
+
                 if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 {
                     ret = ret.Replace("\"", "\\\""); //quotes
@@ -29,7 +28,7 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap
                 return ret;
             }
         }
-
+        public string Upn { get; set; }
         public string DisplayName { get; set; }
         public string Email { get; set; }
         public string Phone { get; set; }

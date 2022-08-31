@@ -127,6 +127,7 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap
                     }
                     
                     request.UserPhone = profile.Phone;
+                    request.Upn = profile.Upn;
                     request.DisplayName = profile.DisplayName;
                     request.EmailAddress = profile.Email;
                     request.LdapAttrs = profile.LdapAttrs;
@@ -195,7 +196,7 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap
         {
             var profile = new LdapProfile();
 
-            var queryAttributes = new List<string> { "DistinguishedName", "displayName", "mail", "memberOf" };
+            var queryAttributes = new List<string> { "DistinguishedName", "displayName", "mail", "memberOf", "userPrincipalName" };
 
             var ldapReplyAttributes = clientConfig.GetLdapReplyAttributes();
             foreach(var ldapReplyAttribute in ldapReplyAttributes)
@@ -233,6 +234,10 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap
             if (attrs.TryGetValue("mail", out var mailAttr))
             {
                 profile.Email = mailAttr.GetValue<string>();
+            }
+            if (attrs.TryGetValue("userPrincipalName", out var upnAttr))
+            {
+                profile.Upn = upnAttr.GetValue<string>();
             }
 
             //additional attributes for radius response
