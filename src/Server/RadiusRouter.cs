@@ -163,13 +163,14 @@ namespace MultiFactor.Radius.Adapter.Server
         private async Task<PacketCode> ProcessLdapAuthentication(PendingRequest request, ClientConfiguration clientConfig)
         {
             var userName = request.UserName;
-            var password = request.RequestPacket.UserPassword;
 
             if (string.IsNullOrEmpty(userName))
             {
                 _logger.Warning("Can't find User-Name in message id={id} from {host:l}:{port}", request.RequestPacket.Identifier, request.RemoteEndpoint.Address, request.RemoteEndpoint.Port);
                 return PacketCode.AccessReject;
             }
+
+            var password = request.RequestPacket.TryGetUserPassword();
 
             if (string.IsNullOrEmpty(password))
             {

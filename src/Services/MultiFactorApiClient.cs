@@ -34,7 +34,6 @@ namespace MultiFactor.Radius.Adapter.Services
         public async Task<PacketCode> CreateSecondFactorRequest(PendingRequest request, ClientConfiguration clientConfig)
         {
             var userName = request.UserName;
-            var userPassword = request.RequestPacket.UserPassword;
             var displayName = request.DisplayName;
             var email = request.EmailAddress;
             var userPhone = request.UserPhone;
@@ -77,7 +76,7 @@ namespace MultiFactor.Radius.Adapter.Services
                 Name = displayName,
                 Email = email,
                 Phone = userPhone,
-                PassCode = GetPassCodeOrNull(userPassword, clientConfig),
+                PassCode = GetPassCodeOrNull(request, clientConfig),
                 CallingStationId = callingStationId,
                 CalledStationId = calledStationId,
                 Capabilities = new
@@ -215,8 +214,18 @@ namespace MultiFactor.Radius.Adapter.Services
             }
         }
 
-        private string GetPassCodeOrNull(string userPassword, ClientConfiguration clientConfiguration)
+        private string GetPassCodeOrNull(PendingRequest request, ClientConfiguration clientConfiguration)
         {
+            //check static challenge
+            var challenge = request.RequestPacket.TryGetChallenge();
+            if (challenge != null)
+            {
+                return challenge;
+            }
+
+            //check password challenge (otp or passcode)
+            var userPassword = request.RequestPacket.TryGetUserPassword();
+
             //only if first authentication factor is None, assuming that Password contains OTP code
             if (clientConfiguration.FirstFactorAuthenticationSource != AuthenticationSource.None)
             {
