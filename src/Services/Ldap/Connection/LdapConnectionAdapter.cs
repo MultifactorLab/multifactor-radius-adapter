@@ -93,12 +93,7 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.Connection
             instance._connection.SetOption(LdapOption.LDAP_OPT_PROTOCOL_VERSION, (int)LdapVersion.LDAP_VERSION3);
             instance._connection.SetOption(LdapOption.LDAP_OPT_REFERRALS, IntPtr.Zero);
 
-            await instance._connection.BindAsync(LdapAuthType.Simple, new LdapCredential
-            {
-                // TODO: remove it before commit
-                UserName = "ssp.service.user@multifactor.local",
-                Password = "Qwerty123!"
-            });
+            await instance._connection.BindAsync();
             return instance;
         }
 
