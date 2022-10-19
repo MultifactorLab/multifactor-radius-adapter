@@ -6,6 +6,7 @@ using LdapForNet;
 using MultiFactor.Radius.Adapter.Configuration;
 using MultiFactor.Radius.Adapter.Core.Services.Ldap;
 using MultiFactor.Radius.Adapter.Server;
+using MultiFactor.Radius.Adapter.Services.BindIdentityFormatting;
 using MultiFactor.Radius.Adapter.Services.Ldap;
 using MultiFactor.Radius.Adapter.Services.Ldap.Connection;
 using Serilog;
@@ -21,11 +22,13 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.MembershipVerification
     public class MembershipVerifier
     {
         private readonly ProfileLoader _profileLoader;
+        private readonly BindIdentityFormatterFactory _bindIdentityFormatterFactory;
         private readonly ILogger _logger;
 
-        public MembershipVerifier(ProfileLoader profileLoader, ILogger logger)
+        public MembershipVerifier(ProfileLoader profileLoader, BindIdentityFormatterFactory bindIdentityFormatterFactory, ILogger logger)
         {
             _profileLoader = profileLoader ?? throw new ArgumentNullException(nameof(profileLoader));
+            _bindIdentityFormatterFactory = bindIdentityFormatterFactory ?? throw new ArgumentNullException(nameof(bindIdentityFormatterFactory));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
@@ -60,7 +63,8 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.MembershipVerification
                     using (var connAdapter = await LdapConnectionAdapter.CreateAsync(
                         domain, 
                         LdapIdentity.ParseUser(clientConfig.ServiceAccountUser), 
-                        clientConfig.ServiceAccountPassword))
+                        clientConfig.ServiceAccountPassword,
+                        config => config.SetBindIdentityFormatter(_bindIdentityFormatterFactory.CreateFormatter(clientConfig))))
                     {
                         if (profile == null)
                         {

@@ -23,6 +23,7 @@ namespace MultiFactor.Radius.Adapter.Services.BindIdentityFormatting
         {
             switch (clientConfiguration.FirstFactorAuthenticationSource)
             {
+                case AuthenticationSource.None:
                 case AuthenticationSource.ActiveDirectory:
                     return new ActiveDirectoryBindIdentityFormatter();
                 case AuthenticationSource.Ldap:
