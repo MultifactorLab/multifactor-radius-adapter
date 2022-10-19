@@ -42,9 +42,7 @@ namespace MultiFactor.Radius.Adapter.Services
                 }
             }
             queryAttributes.AddRange(clientConfig.PhoneAttributes);
-            var names = new LdapNames(clientConfig.FirstFactorAuthenticationSource == AuthenticationSource.ActiveDirectory
-                ? LdapServerType.ActiveDirectory
-                : LdapServerType.Generic);
+            var names = GetLdapNames(clientConfig.FirstFactorAuthenticationSource);
             var searchFilter = $"(&(objectClass={names.UserClass})({names.Identity(user)}={user.Name}))";
 
             _logger.Debug($"Querying user '{{user:l}}' in {domain.Name}", user.Name);
@@ -118,6 +116,21 @@ namespace MultiFactor.Radius.Adapter.Services
             }
 
             return profile;
+        }
+
+        private static LdapNames GetLdapNames(AuthenticationSource source)
+        {
+            switch (source)
+            {
+                case AuthenticationSource.ActiveDirectory:
+                case AuthenticationSource.Radius:
+                case AuthenticationSource.None:
+                    return new LdapNames(LdapServerType.ActiveDirectory);
+                case AuthenticationSource.Ldap:
+                    return new LdapNames(LdapServerType.Generic);
+                default:
+                    throw new NotImplementedException(source.ToString());
+            }
         }
     }
 }

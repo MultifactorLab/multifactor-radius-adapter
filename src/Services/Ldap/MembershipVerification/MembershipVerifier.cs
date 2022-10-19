@@ -53,13 +53,11 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.MembershipVerification
             //trying to authenticate for each domain/forest
             foreach (var domain in clientConfig.SplittedActiveDirectoryDomains)
             {
-                var domainIdentity = LdapIdentity.FqdnToDn(domain);
-
                 try
                 {
                     var user = LdapIdentity.ParseUser(userName);
 
-                    _logger.Debug($"Verifying user '{{user:l}}' membership at {domainIdentity}", user.Name);
+                    _logger.Debug($"Verifying user '{{user:l}}' membership at {domain}", user.Name);
                     using (var connAdapter = await LdapConnectionAdapter.CreateAsync(
                         domain, 
                         LdapIdentity.ParseUser(clientConfig.ServiceAccountUser), 
@@ -73,13 +71,13 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.MembershipVerification
                         }
                         if (profile == null)
                         {
-                            result.AddDomainResult(MembershipVerificationResult.Create(domainIdentity)
+                            result.AddDomainResult(MembershipVerificationResult.Create(domain)
                                 .SetSuccess(false)
                                 .Build());
                             continue;
                         }
 
-                        var res = VerifyMembership(clientConfig, profile, domainIdentity, user);
+                        var res = VerifyMembership(clientConfig, profile, domain, user);
                         result.AddDomainResult(res);
 
                         if (res.IsSuccess) break;
@@ -88,7 +86,7 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.MembershipVerification
                 catch (UserDomainNotPermittedException ex)
                 {
                     _logger.Warning(ex.Message);
-                    result.AddDomainResult(MembershipVerificationResult.Create(domainIdentity)
+                    result.AddDomainResult(MembershipVerificationResult.Create(domain)
                         .SetSuccess(false)
                         .Build());
                     continue;
@@ -96,16 +94,16 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.MembershipVerification
                 catch (UserNameFormatException ex)
                 {
                     _logger.Warning(ex.Message);
-                    result.AddDomainResult(MembershipVerificationResult.Create(domainIdentity)
+                    result.AddDomainResult(MembershipVerificationResult.Create(domain)
                         .SetSuccess(false)
                         .Build());
                     continue;
                 }
                 catch (Exception ex)
                 {
-                    _logger.Error(ex, $"Verification user '{{user:l}}' membership at {domainIdentity} failed", userName);
+                    _logger.Error(ex, $"Verification user '{{user:l}}' membership at {domain} failed", userName);
                     _logger.Information("Run MultiFactor.Raduis.Adapter as user with domain read permissions (basically any domain user)");
-                    result.AddDomainResult(MembershipVerificationResult.Create(domainIdentity)
+                    result.AddDomainResult(MembershipVerificationResult.Create(domain)
                         .SetSuccess(false)
                         .Build());
                     continue;
@@ -117,7 +115,7 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.MembershipVerification
 
         private MembershipVerificationResult VerifyMembership(ClientConfiguration clientConfig,
             LdapProfile profile,
-            LdapIdentity domain,
+            string domain,
             LdapIdentity user)
         {
             // user must be member of security group

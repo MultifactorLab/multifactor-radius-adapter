@@ -15,7 +15,7 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.MembershipVerification
         /// <summary>
         /// Domain for which the membership verification was performed.
         /// </summary>
-        public LdapIdentity Domain { get; }
+        public string Domain { get; }
 
         /// <summary>
         /// Verification is successfully complete.
@@ -31,12 +31,12 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.MembershipVerification
         /// </summary>
         public LdapProfile Profile { get; private set; }
 
-        protected MembershipVerificationResult(LdapIdentity domain)
+        protected MembershipVerificationResult(string domain)
         {
             Domain = domain;
         }
 
-        public static MembershipVerificationResultBuilder Create(LdapIdentity domain)
+        public static MembershipVerificationResultBuilder Create(string domain)
         {
             if (domain is null) throw new ArgumentNullException(nameof(domain));
             return new MembershipVerificationResultBuilder(new MembershipVerificationResult(domain));
