@@ -57,7 +57,10 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.MembershipVerification
                     var user = LdapIdentity.ParseUser(userName);
 
                     _logger.Debug($"Verifying user '{{user:l}}' membership at {domainIdentity}", user.Name);
-                    using (var connAdapter = await LdapConnectionAdapter.CreateAsync(domain))
+                    using (var connAdapter = await LdapConnectionAdapter.CreateAsync(
+                        domain, 
+                        LdapIdentity.ParseUser(clientConfig.ServiceAccountUser), 
+                        clientConfig.ServiceAccountPassword))
                     {
                         if (profile == null)
                         {

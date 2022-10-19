@@ -86,6 +86,7 @@ namespace MultiFactor.Radius.Adapter
 
             //init configuration
             var configuration = ServiceConfiguration.Load(dictionary, Log.Logger);
+            configuration.Validate();
 
             SetLogLevel(configuration.LogLevel, levelSwitch);
 

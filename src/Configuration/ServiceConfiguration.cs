@@ -30,6 +30,12 @@ namespace MultiFactor.Radius.Adapter.Configuration
         /// </summary>
         private IDictionary<string, ClientConfiguration> _nasIdClients;
 
+        public IReadOnlyList<ClientConfiguration> Clients => _ipClients
+            .Select(x => x.Value)
+            .Concat(_nasIdClients.Select(x => x.Value))
+            .ToList()
+            .AsReadOnly();
+
         public ServiceConfiguration()
         {
             _ipClients = new Dictionary<IPAddress, ClientConfiguration>();
@@ -274,6 +280,9 @@ namespace MultiFactor.Radius.Adapter.Configuration
             var multiFactorApiKeySetting                        = appSettings.Settings["multifactor-nas-identifier"]?.Value;
             var multiFactorApiSecretSetting                     = appSettings.Settings["multifactor-shared-secret"]?.Value;
 
+            var serviceAccountUserSetting                       = appSettings.Settings["service-account-user"]?.Value;
+            var serviceAccountPasswordSetting                   = appSettings.Settings["service-account-password"]?.Value;
+
             if (string.IsNullOrEmpty(firstFactorAuthenticationSourceSettings))
             {
                 throw new Exception("Configuration error: 'first-factor-authentication-source' element not found");
@@ -351,6 +360,9 @@ namespace MultiFactor.Radius.Adapter.Configuration
                     }
                 }
             }
+
+            configuration.ServiceAccountUser = serviceAccountUserSetting ?? string.Empty;
+            configuration.ServiceAccountPassword = serviceAccountPasswordSetting ?? string.Empty;
 
             return configuration;
         }

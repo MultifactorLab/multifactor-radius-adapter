@@ -127,6 +127,10 @@ namespace MultiFactor.Radius.Adapter.Configuration
         /// </summary>
         public string MultiFactorApiSecret { get; set; }
 
+        public string ServiceAccountUser { get; set; }
+
+        public string ServiceAccountPassword { get; set; }
+
 
         /// <summary>
         /// Custom RADIUS reply attributes
