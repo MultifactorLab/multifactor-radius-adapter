@@ -29,7 +29,7 @@ namespace MultiFactor.Radius.Adapter.Services.BindIdentityFormatting
                 case AuthenticationSource.Ldap:
                     return new LdapBindIdentityFormatter(clientConfiguration);
                 default:
-                    throw new NotImplementedException(clientConfiguration.FirstFactorAuthenticationSource.ToString());
+                    return new DefaultBindIdentityFormatter();
             }
         }
     }
