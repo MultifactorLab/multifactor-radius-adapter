@@ -4,15 +4,13 @@
 
 using MultiFactor.Radius.Adapter.Configuration;
 using MultiFactor.Radius.Adapter.Core;
+using MultiFactor.Radius.Adapter.Server.FirstAuthFactorProcessing;
 using MultiFactor.Radius.Adapter.Services;
 using MultiFactor.Radius.Adapter.Services.Ldap;
 using Serilog;
 using System;
 using System.Collections;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
@@ -27,18 +25,26 @@ namespace MultiFactor.Radius.Adapter.Server
         private ILogger _logger;
         private IRadiusPacketParser _packetParser;
         private MultiFactorApiClient _multifactorApiClient;
+        private readonly FirstAuthFactorProcessorProvider _firstAuthFactorProcessorProvider;
+        private readonly ChallengeProcessor _challengeProcessor;
+
         public event EventHandler<PendingRequest> RequestProcessed;
-        private readonly ConcurrentDictionary<string, PendingRequest> _stateChallengePendingRequests = new ConcurrentDictionary<string, PendingRequest>();
 
         private DateTime _startedAt = DateTime.Now;
 
-        public RadiusRouter(ServiceConfiguration serviceConfiguration, IRadiusPacketParser packetParser, ILogger logger)
+        public RadiusRouter(ServiceConfiguration serviceConfiguration, 
+            IRadiusPacketParser packetParser,
+            MultiFactorApiClient multifactorApiClient,
+            FirstAuthFactorProcessorProvider firstAuthFactorProcessorProvider,
+            ChallengeProcessor challengeProcessor,
+            ILogger logger)
         {
             _serviceConfiguration = serviceConfiguration ?? throw new ArgumentNullException(nameof(serviceConfiguration));
             _packetParser = packetParser ?? throw new ArgumentNullException(nameof(packetParser));
+            _multifactorApiClient = multifactorApiClient ?? throw new ArgumentNullException(nameof(multifactorApiClient));
+            _firstAuthFactorProcessorProvider = firstAuthFactorProcessorProvider ?? throw new ArgumentNullException(nameof(firstAuthFactorProcessorProvider));
+            _challengeProcessor = challengeProcessor ?? throw new ArgumentNullException(nameof(challengeProcessor));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-
-            _multifactorApiClient = new MultiFactorApiClient(serviceConfiguration, logger);
         }
 
         public async Task HandleRequest(PendingRequest request, ClientConfiguration clientConfig)
@@ -67,10 +73,10 @@ namespace MultiFactor.Radius.Adapter.Server
                 {
                     var receivedState = request.RequestPacket.GetString("State");
 
-                    if (_stateChallengePendingRequests.ContainsKey(receivedState))
+                    if (_challengeProcessor.HasState(receivedState))
                     {
                         //second request with Multifactor challenge
-                        request.ResponseCode = await ProcessChallenge(request, clientConfig, receivedState);
+                        request.ResponseCode = await _challengeProcessor.ProcessChallenge(request, clientConfig, receivedState);
                         request.State = receivedState;  //state for Access-Challenge message if otp is wrong (3 times allowed)
 
                         RequestProcessed?.Invoke(this, request);
@@ -78,7 +84,8 @@ namespace MultiFactor.Radius.Adapter.Server
                     }
                 }
 
-                var firstFactorAuthenticationResultCode = await ProcessFirstAuthenticationFactor(request, clientConfig);
+                var firstAuthProcessor = _firstAuthFactorProcessorProvider.GetProcessor(clientConfig.FirstFactorAuthenticationSource);
+                var firstFactorAuthenticationResultCode = await firstAuthProcessor.ProcessFirstAuthFactorAsync(request, clientConfig);
                 if (firstFactorAuthenticationResultCode != PacketCode.AccessAccept)
                 {
                     //first factor authentication rejected
@@ -108,7 +115,7 @@ namespace MultiFactor.Radius.Adapter.Server
 
                 if (request.ResponseCode == PacketCode.AccessChallenge)
                 {
-                    AddStateChallengePendingRequest(request.State, request);
+                    _challengeProcessor.AddState(request.State, request);
                 }
 
                 RequestProcessed?.Invoke(this, request);
@@ -141,114 +148,6 @@ namespace MultiFactor.Radius.Adapter.Server
             request.UserName = userName;
         }
 
-        private async Task<PacketCode> ProcessFirstAuthenticationFactor(PendingRequest request, ClientConfiguration clientConfig)
-        {
-            switch(clientConfig.FirstFactorAuthenticationSource)
-            {
-                case AuthenticationSource.ActiveDirectory:  //AD auth
-                case AuthenticationSource.Ldap:             //LDAP auth
-                    return await ProcessLdapAuthentication(request, clientConfig);
-                case AuthenticationSource.Radius:           //RADIUS auth
-                    return await ProcessRadiusAuthentication(request, clientConfig);
-                case AuthenticationSource.None:
-                    return PacketCode.AccessAccept;         //first factor not required
-                default:                                    //unknown source
-                    throw new NotImplementedException(clientConfig.FirstFactorAuthenticationSource.ToString());
-            }
-        }
-
-        /// <summary>
-        /// Authenticate request at LDAP/Active Directory Domain with user-name and password
-        /// </summary>
-        private async Task<PacketCode> ProcessLdapAuthentication(PendingRequest request, ClientConfiguration clientConfig)
-        {
-            var userName = request.UserName;
-
-            if (string.IsNullOrEmpty(userName))
-            {
-                _logger.Warning("Can't find User-Name in message id={id} from {host:l}:{port}", request.RequestPacket.Identifier, request.RemoteEndpoint.Address, request.RemoteEndpoint.Port);
-                return PacketCode.AccessReject;
-            }
-
-            var password = request.RequestPacket.TryGetUserPassword();
-
-            if (string.IsNullOrEmpty(password))
-            {
-                _logger.Warning("Can't find User-Password in message id={id} from {host:l}:{port}", request.RequestPacket.Identifier, request.RemoteEndpoint.Address, request.RemoteEndpoint.Port);
-                return PacketCode.AccessReject;
-            }
-
-            LdapService _service;
-            switch (clientConfig.FirstFactorAuthenticationSource)
-            {
-                case AuthenticationSource.ActiveDirectory:
-                    _service = new ActiveDirectoryService(_serviceConfiguration, _logger);
-                    break;
-                case AuthenticationSource.Ldap:
-                    _service = new LdapService(_serviceConfiguration, _logger);
-                    break;
-                default:
-                    throw new NotImplementedException(clientConfig.FirstFactorAuthenticationSource.ToString());
-            }
-
-            //check all hosts
-            var ldapUriList = clientConfig.ActiveDirectoryDomain.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
-            foreach(var ldapUri in ldapUriList)
-            {
-                var isValid = await _service.VerifyCredential(userName, password, ldapUri, request, clientConfig);
-                if (isValid)
-                {
-                    return PacketCode.AccessAccept;
-                }
-            }
-
-            return PacketCode.AccessReject;
-        }
-
-        /// <summary>
-        /// Authenticate request at Remote Radius Server with user-name and password
-        /// </summary>
-        private async Task<PacketCode> ProcessRadiusAuthentication(PendingRequest request, ClientConfiguration clientConfig)
-        {
-            try
-            {
-                //sending request as is to Remote Radius Server
-                using (var client = new RadiusClient(clientConfig.ServiceClientEndpoint, _logger))
-                {
-                    _logger.Debug($"Sending AccessRequest message with id={{id}} to Remote Radius Server {clientConfig.NpsServerEndpoint}", request.RequestPacket.Identifier);
-
-                    var requestBytes = _packetParser.GetBytes(request.RequestPacket);
-                    var response = await client.SendPacketAsync(request.RequestPacket.Identifier, requestBytes, clientConfig.NpsServerEndpoint, TimeSpan.FromSeconds(5));
-
-                    if (response != null)
-                    {
-                        var responsePacket = _packetParser.Parse(response, request.RequestPacket.SharedSecret, request.RequestPacket.Authenticator);
-                        _logger.Debug("Received {code:l} message with id={id} from Remote Radius Server", responsePacket.Code.ToString(), responsePacket.Identifier);
-                        
-                        if (responsePacket.Code == PacketCode.AccessAccept)
-                        {
-                            var userName = request.UserName;
-                            _logger.Information($"User '{{user:l}}' credential and status verified successfully at {clientConfig.NpsServerEndpoint}", userName);
-                        }
-
-                        request.ResponsePacket = responsePacket;
-                        return responsePacket.Code; //Code received from remote radius
-                    }
-                    else
-                    {
-                        _logger.Warning("Remote Radius Server did not respond on message with id={id}", request.RequestPacket.Identifier);
-                        return PacketCode.AccessReject; //reject by default
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.Error(ex, "Radius authentication error");
-            }
-            
-            return PacketCode.AccessReject; //reject by default
-        }
-
         /// <summary>
         /// Authenticate request at MultiFactor with user-name only
         /// </summary>
@@ -275,109 +174,6 @@ namespace MultiFactor.Radius.Adapter.Server
             var response = await _multifactorApiClient.CreateSecondFactorRequest(request, clientConfig);
 
             return response;
-        }
-
-        /// <summary>
-        /// Verify one time password from user input
-        /// </summary>
-        private async Task<PacketCode> ProcessChallenge(PendingRequest request, ClientConfiguration clientConfig, string state)
-        {
-            var userName = request.UserName;
-
-            if (string.IsNullOrEmpty(userName))
-            {
-                _logger.Warning("Can't find User-Name in message id={id} from {host:l}:{port}", request.RequestPacket.Identifier, request.RemoteEndpoint.Address, request.RemoteEndpoint.Port);
-                return PacketCode.AccessReject;
-            }
-
-            PacketCode response;
-            string userAnswer;
-
-            switch (request.RequestPacket.AuthenticationType)
-            {
-                case AuthenticationType.PAP:
-                    //user-password attribute holds second request challenge from user
-                    userAnswer = request.RequestPacket.GetString("User-Password");
-
-                    if (string.IsNullOrEmpty(userAnswer))
-                    {
-                        _logger.Warning("Can't find User-Password with user response in message id={id} from {host:l}:{port}", request.RequestPacket.Identifier, request.RemoteEndpoint.Address, request.RemoteEndpoint.Port);
-                        return PacketCode.AccessReject;
-                    }
-
-                    break;
-                case AuthenticationType.MSCHAP2:
-                    var msChapResponse = request.RequestPacket.GetAttribute<byte[]>("MS-CHAP2-Response");
-
-                    if (msChapResponse == null)
-                    {
-                        _logger.Warning("Can't find MS-CHAP2-Response in message id={id} from {host:l}:{port}", request.RequestPacket.Identifier, request.RemoteEndpoint.Address, request.RemoteEndpoint.Port);
-                        return PacketCode.AccessReject;
-                    }
-
-                    //forti behaviour
-                    var otpData = msChapResponse.Skip(2).Take(6).ToArray();
-                    userAnswer = Encoding.ASCII.GetString(otpData);
-
-                    break;
-                default:
-                    _logger.Warning("Unable to process {auth} challange in message id={id} from {host:l}:{port}", request.RequestPacket.AuthenticationType, request.RequestPacket.Identifier, request.RemoteEndpoint.Address, request.RemoteEndpoint.Port);
-                    return PacketCode.AccessReject;
-            }
-
-            response = await _multifactorApiClient.Challenge(request, clientConfig, userName, userAnswer, state);
-
-            switch (response)
-            {
-                case PacketCode.AccessAccept:
-                    var stateChallengePendingRequest = GetStateChallengeRequest(state);
-                    if (stateChallengePendingRequest != null)
-                    {
-                        request.UserGroups = stateChallengePendingRequest.UserGroups;
-                        request.ResponsePacket = stateChallengePendingRequest.ResponsePacket;
-                        request.LdapAttrs = stateChallengePendingRequest.LdapAttrs;
-                    }
-                    break;
-                case PacketCode.AccessReject:
-                    RemoveStateChallengeRequest(state);
-                    break;
-            }
-
-            return response;
-        }
-
-        /// <summary>
-        /// Add authenticated request to local cache for otp/challenge
-        /// </summary>
-        private void AddStateChallengePendingRequest(string state, PendingRequest request)
-        {
-            if (!_stateChallengePendingRequests.TryAdd(state, request))
-            {
-                _logger.Error("Unable to cache request id={id}", request.RequestPacket.Identifier);
-            }
-        }
-
-        /// <summary>
-        /// Get authenticated request from local cache for otp/challenge
-        /// </summary>
-        private PendingRequest GetStateChallengeRequest(string state)
-        {
-            if (_stateChallengePendingRequests.TryRemove(state, out PendingRequest request))
-            {
-                return request;
-            }
-
-            _logger.Error($"Unable to get cached request with state={state}");
-            return null;
-        }
-
-        /// <summary>
-        /// Remove authenticated request from local cache
-        /// </summary>
-        /// <param name="state"></param>
-        private void RemoveStateChallengeRequest(string state)
-        {
-            _stateChallengePendingRequests.TryRemove(state, out PendingRequest _);
         }
     }
 }

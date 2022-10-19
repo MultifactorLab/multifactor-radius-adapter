@@ -1,4 +1,5 @@
 ﻿using MultiFactor.Radius.Adapter.Server;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
@@ -17,6 +18,30 @@ namespace MultiFactor.Radius.Adapter.Configuration
             PhoneAttributes = new List<string>(); 
             UserNameTransformRules = new List<UserNameTransformRulesElement>();
         }
+
+        /// <summary>
+        /// Load user profile from AD and check group membership and 
+        /// </summary>
+        public bool CheckMembership
+        {
+            get
+            {
+                return ActiveDirectoryDomain != null &&
+                    (ActiveDirectoryGroup.Any() ||
+                    ActiveDirectory2FaGroup.Any() ||
+                    ActiveDirectory2FaBypassGroup.Any() ||
+                    PhoneAttributes.Any() ||
+                    RadiusReplyAttributes
+                        .Values
+                        .SelectMany(attr => attr)
+                        .Any(attr => attr.FromLdap || attr.IsMemberOf || attr.UserGroupCondition != null));
+            }
+        }
+
+        public string[] SplittedActiveDirectoryDomains =>
+            (ActiveDirectoryDomain ?? string.Empty).Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries)
+            .Distinct()
+            .ToArray();
 
         /// <summary>
         /// Friendly client name

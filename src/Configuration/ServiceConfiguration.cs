@@ -328,10 +328,14 @@ namespace MultiFactor.Radius.Adapter.Configuration
             {
                 case AuthenticationSource.ActiveDirectory:
                 case AuthenticationSource.Ldap:
-                    LoadActiveDirectoryAuthenticationSourceSettings(configuration, appSettings);
+                    LoadActiveDirectoryAuthenticationSourceSettings(configuration, appSettings, true);
                     break;
                 case AuthenticationSource.Radius:
                     LoadRadiusAuthenticationSourceSettings(configuration, appSettings);
+                    LoadActiveDirectoryAuthenticationSourceSettings(configuration, appSettings, false);
+                    break;
+                case AuthenticationSource.None:
+                    LoadActiveDirectoryAuthenticationSourceSettings(configuration, appSettings, false);
                     break;
             }
 
@@ -351,7 +355,7 @@ namespace MultiFactor.Radius.Adapter.Configuration
             return configuration;
         }
 
-        private static void LoadActiveDirectoryAuthenticationSourceSettings(ClientConfiguration configuration, AppSettingsSection appSettings)
+        private static void LoadActiveDirectoryAuthenticationSourceSettings(ClientConfiguration configuration, AppSettingsSection appSettings, bool mandatory)
         {
             var activeDirectoryDomainSetting                        = appSettings.Settings["active-directory-domain"]?.Value;
             var ldapBindDnSetting                                   = appSettings.Settings["ldap-bind-dn"]?.Value;
@@ -364,7 +368,7 @@ namespace MultiFactor.Radius.Adapter.Configuration
             var loadActiveDirectoryNestedGroupsSettings             = appSettings.Settings["load-active-directory-nested-groups"]?.Value;
             var useUpnAsIdentitySetting                             = appSettings.Settings["use-upn-as-identity"]?.Value;
 
-            if (string.IsNullOrEmpty(activeDirectoryDomainSetting))
+            if (mandatory && string.IsNullOrEmpty(activeDirectoryDomainSetting))
             {
                 throw new Exception("Configuration error: 'active-directory-domain' element not found");
             }

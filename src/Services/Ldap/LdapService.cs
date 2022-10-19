@@ -6,10 +6,14 @@ using LdapForNet;
 using MultiFactor.Radius.Adapter.Configuration;
 using MultiFactor.Radius.Adapter.Core.Services.Ldap;
 using MultiFactor.Radius.Adapter.Server;
+using MultiFactor.Radius.Adapter.Services.BindIdentityFormatting;
+using MultiFactor.Radius.Adapter.Services.Ldap.Connection;
+using MultiFactor.Radius.Adapter.Services.Ldap.UserGroupsGetters;
 using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using static LdapForNet.Native.Native;
@@ -21,13 +25,20 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap
     /// </summary>
     public class LdapService
     {
-        protected ServiceConfiguration _serviceConfiguration;
-        protected ILogger _logger;
+        private readonly BindIdentityFormatterFactory _bindIdentityFormatterFactory;
+        private readonly UserGroupsGetterProvider _userGroupsGetterProvider;
+        private readonly ProfileLoader _profileLoader;
+        private readonly ILogger _logger;
         protected virtual LdapNames Names => new LdapNames(LdapServerType.Generic);
 
-        public LdapService(ServiceConfiguration serviceConfiguration, ILogger logger)
+        public LdapService(BindIdentityFormatterFactory bindIdentityFormatterFactory,
+            UserGroupsGetterProvider userGroupsGetterProvider,
+            ProfileLoader profileLoader,
+            ILogger logger)
         {
-            _serviceConfiguration = serviceConfiguration ?? throw new ArgumentNullException(nameof(serviceConfiguration));
+            _bindIdentityFormatterFactory = bindIdentityFormatterFactory ?? throw new ArgumentNullException(nameof(bindIdentityFormatterFactory));
+            _userGroupsGetterProvider = userGroupsGetterProvider ?? throw new ArgumentNullException(nameof(userGroupsGetterProvider));
+            _profileLoader = profileLoader ?? throw new ArgumentNullException(nameof(profileLoader));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
@@ -51,52 +62,30 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap
             }
 
             var user = LdapIdentity.ParseUser(userName);
-            var bindDn = FormatBindDn(ldapUri, user, clientConfig);
+
+            var formatter = _bindIdentityFormatterFactory.CreateFormatter(clientConfig);
+            var bindDn = formatter.FormatIdentity(user, ldapUri);
 
             _logger.Debug($"Verifying user '{{user:l}}' credential and status at {ldapUri}", bindDn);
 
             try
             {
-                using (var connection = new LdapConnection())
+                using (var connection = await LdapConnectionAdapter.CreateAsync(ldapUri, user, password, 
+                    config => config.SetBindIdentityFormatter(_bindIdentityFormatterFactory.CreateFormatter(clientConfig))
+                ))
                 {
-                    //trust self-signed certificates on ldap server
-                    connection.TrustAllCertificates();
-
-                    if (Uri.IsWellFormedUriString(ldapUri, UriKind.Absolute))
-                    {
-                        var uri = new Uri(ldapUri);
-                        connection.Connect(uri.GetLeftPart(UriPartial.Authority));
-                    }
-                    else
-                    {
-                        connection.Connect(ldapUri, 389);
-                    }
-
-                    var ldapVersion = (int)LdapVersion.LDAP_VERSION3;
-                    connection.SetOption(LdapOption.LDAP_OPT_PROTOCOL_VERSION, ldapVersion);
-
-                    //do not follow chase referrals
-                    connection.SetOption(LdapOption.LDAP_OPT_REFERRALS, IntPtr.Zero);
-
-                    await connection.BindAsync(LdapAuthType.Simple, new LdapCredential 
-                    {
-                        UserName = bindDn,
-                        Password = password
-                    });
-
-                    var domain = await WhereAmI(ldapUri, connection, clientConfig);
+                    var domain = await connection.WhereAmIAsync();
 
                     _logger.Information($"User '{{user:l}}' credential and status verified successfully in {domain.Name}", user.Name);
 
-                    var profile = await LoadProfile(connection, domain, user, clientConfig);
+                    var profile = await _profileLoader.LoadAsync(clientConfig, connection, domain, user);
                     if (profile == null)
                     {
                         return false;
                     }
 
-                    var checkGroupMembership = clientConfig.ActiveDirectoryGroup.Any();
                     //user must be member of security group
-                    if (checkGroupMembership)
+                    if (clientConfig.ActiveDirectoryGroup.Any())
                     {
                         var accessGroup = clientConfig.ActiveDirectoryGroup.FirstOrDefault(group => IsMemberOf(profile, group));
                         if (accessGroup != null)
@@ -110,9 +99,8 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap
                         }
                     }
 
-                    var onlyMembersOfGroupMustProcess2faAuthentication = clientConfig.ActiveDirectory2FaGroup.Any();
                     //only users from group must process 2fa
-                    if (onlyMembersOfGroupMustProcess2faAuthentication)
+                    if (clientConfig.ActiveDirectory2FaGroup.Any())
                     {
                         var mfaGroup = clientConfig.ActiveDirectory2FaGroup.FirstOrDefault(group => IsMemberOf(profile, group));
                         if (mfaGroup != null)
@@ -127,8 +115,7 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap
                     }
 
                     //users from group must not process 2fa
-                    var onlyMembersOfGroupMustNotProcess2faAuthentication = clientConfig.ActiveDirectory2FaBypassGroup.Any();
-                    if (!request.Bypass2Fa && onlyMembersOfGroupMustNotProcess2faAuthentication)
+                    if (!request.Bypass2Fa && clientConfig.ActiveDirectory2FaBypassGroup.Any())
                     {
                         var bypassGroup = clientConfig.ActiveDirectory2FaBypassGroup.FirstOrDefault(group => IsMemberOf(profile, group));
 
@@ -179,22 +166,6 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap
             return false;
         }
 
-        protected virtual string FormatBindDn(string ldapUri, LdapIdentity user, ClientConfiguration clientConfig)
-        {
-            if (user.Type == IdentityType.UserPrincipalName) 
-            {
-                return user.Name;
-            }
-            
-            var bindDn = $"{Names.Uid}={user.Name}";
-            if (!string.IsNullOrEmpty(clientConfig.LdapBindDn))
-            {
-                bindDn += "," + clientConfig.LdapBindDn;
-            }
-
-            return bindDn;
-        }
-
         protected async Task<LdapIdentity> WhereAmI(string host, LdapConnection connection, ClientConfiguration clientConfig)
         {
             var queryResult = await Query(connection, "", "(objectclass=*)", LdapSearchScope.LDAP_SCOPE_BASEOBJECT, "defaultNamingContext");
@@ -209,93 +180,6 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap
             return new LdapIdentity { Name = defaultNamingContext, Type = IdentityType.DistinguishedName };
         }
 
-        protected virtual async Task<LdapProfile> LoadProfile(LdapConnection connection, LdapIdentity domain, LdapIdentity user, ClientConfiguration clientConfig)
-        {
-            var profile = new LdapProfile();
-
-            var queryAttributes = new List<string> { "DistinguishedName", "displayName", "mail", "memberOf", "userPrincipalName" };
-
-            var ldapReplyAttributes = clientConfig.GetLdapReplyAttributes();
-            foreach(var ldapReplyAttribute in ldapReplyAttributes)
-            {
-                if (!profile.LdapAttrs.ContainsKey(ldapReplyAttribute))
-                {
-                    profile.LdapAttrs.Add(ldapReplyAttribute, null);
-                    queryAttributes.Add(ldapReplyAttribute);
-                }
-            }
-            queryAttributes.AddRange(clientConfig.PhoneAttributes);
-
-            var searchFilter = $"(&(objectClass={Names.UserClass})({Names.Identity(user)}={user.Name}))";
-
-            _logger.Debug($"Querying user '{{user:l}}' in {domain.Name}", user.Name);
-
-            var response = await Query(connection, domain.Name, searchFilter, LdapSearchScope.LDAP_SCOPE_SUB, queryAttributes.Distinct().ToArray());
-
-            var entry = response.SingleOrDefault();
-            if (entry == null)
-            {
-                _logger.Error($"Unable to find user '{{user:l}}' in {domain.Name}", user.Name);
-                return null;
-            }
-
-            //base profile
-            profile.BaseDn = LdapIdentity.BaseDn(entry.Dn);
-            profile.DistinguishedName = entry.Dn;
-
-            var attrs = entry.DirectoryAttributes;
-            if (attrs.TryGetValue("displayName", out var displayNameAttr))
-            {
-                profile.DisplayName = displayNameAttr.GetValue<string>();
-            }
-            if (attrs.TryGetValue("mail", out var mailAttr))
-            {
-                profile.Email = mailAttr.GetValue<string>();
-            }
-            if (attrs.TryGetValue("userPrincipalName", out var upnAttr))
-            {
-                profile.Upn = upnAttr.GetValue<string>();
-            }
-
-            //additional attributes for radius response
-            foreach (var key in profile.LdapAttrs.Keys.ToList()) //to list to avoid collection was modified exception
-            {
-                if (attrs.TryGetValue(key, out var attrValue))
-                {
-                    profile.LdapAttrs[key] = attrValue.GetValue<string>();
-                }
-            }
-
-            //groups
-            if (attrs.TryGetValue("memberOf", out var memberOfAttr))
-            {
-                profile.MemberOf = memberOfAttr.GetValues<string>().Select(dn => LdapIdentity.DnToCn(dn)).ToList();
-            }
-
-            //phone
-            foreach (var phoneAttr in clientConfig.PhoneAttributes)
-            {
-                if (attrs.TryGetValue(phoneAttr, out var phoneValue))
-                {
-                    var phone = phoneValue.GetValue<string>();
-                    if (!string.IsNullOrEmpty(phone))
-                    {
-                        profile.Phone = phone;
-                        break;
-                    }
-                }
-            }
-
-            _logger.Debug($"User '{{user:l}}' profile loaded: {profile.DistinguishedName}", user.Name);
-
-            if (clientConfig.ShouldLoadUserGroups())
-            {
-                await LoadAllUserGroups(connection, domain, profile, clientConfig);
-            }
-
-            return profile;
-        }
-
         protected bool IsMemberOf(LdapProfile profile, string group)
         {
             return profile.MemberOf?.Any(g => g.ToLower() == group.ToLower().Trim()) ?? false;
@@ -305,12 +189,6 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap
         {
             var results = await connection.SearchAsync(baseDn, filter, attributes, scope);
             return results;
-        }
-
-        protected virtual Task LoadAllUserGroups(LdapConnection connection, LdapIdentity domain, LdapProfile profile, ClientConfiguration clientConfig)
-        {
-            //already loaded from memberOf
-            return Task.CompletedTask;
         }
 
         protected string ExtractErrorReason(string errorMessage)

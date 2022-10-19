@@ -60,7 +60,10 @@ namespace MultiFactor.Radius.Adapter.Server
         /// <summary>
         /// Create a new server on endpoint with packet handler repository
         /// </summary>
-        public RadiusServer(ServiceConfiguration serviceConfiguration, IRadiusDictionary dictionary, IRadiusPacketParser radiusPacketParser, CacheService cacheService, ILogger logger)
+        public RadiusServer(ServiceConfiguration serviceConfiguration, 
+            IRadiusDictionary dictionary, IRadiusPacketParser radiusPacketParser, 
+            CacheService cacheService, RadiusRouter router, 
+            ILogger logger)
         {
             _serviceConfiguration = serviceConfiguration ?? throw new ArgumentNullException(nameof(serviceConfiguration));
             _dictionary = dictionary ?? throw new ArgumentNullException(nameof(dictionary));
@@ -69,7 +72,7 @@ namespace MultiFactor.Radius.Adapter.Server
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
             _localEndpoint = serviceConfiguration.ServiceServerEndpoint;
-            _router = new RadiusRouter(serviceConfiguration, radiusPacketParser, logger);
+            _router = router ?? throw new ArgumentNullException(nameof(router));
         }
 
         /// <summary>
