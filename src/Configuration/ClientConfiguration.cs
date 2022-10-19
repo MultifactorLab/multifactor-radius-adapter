@@ -131,6 +131,15 @@ namespace MultiFactor.Radius.Adapter.Configuration
 
         public string ServiceAccountPassword { get; set; }
 
+        /// <summary>
+        /// Groups to assign to the registered user.Specified groups will be assigned to a new user.
+        /// Syntax: group names (from your Management Portal) separated by semicolons.
+        /// <para>
+        /// Example: group1;Group Name Two;
+        /// </para>
+        /// </summary>
+        public string SignUpGroups { get; set; }
+
 
         /// <summary>
         /// Custom RADIUS reply attributes

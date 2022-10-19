@@ -12,6 +12,7 @@ using System.Configuration;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Text.RegularExpressions;
 
 namespace MultiFactor.Radius.Adapter.Configuration
 {
@@ -364,6 +365,8 @@ namespace MultiFactor.Radius.Adapter.Configuration
             configuration.ServiceAccountUser = serviceAccountUserSetting ?? string.Empty;
             configuration.ServiceAccountPassword = serviceAccountPasswordSetting ?? string.Empty;
 
+            ReadSignUpGroupsSettings(configuration, appSettings);
+
             return configuration;
         }
 
@@ -553,6 +556,26 @@ namespace MultiFactor.Radius.Adapter.Configuration
             }
 
             throw new FormatException($"Failed to parse {text} to IPEndPoint");
+        }
+
+        private static void ReadSignUpGroupsSettings(ClientConfiguration configuration, AppSettingsSection appSettings)
+        {
+            const string signUpGroupsRegex = @"([\wа-я\s\-]+)(\s*;\s*([\wа-я\s\-]+)*)*";
+            const string signUpGroupsToken = "sign-up-groups";
+
+            var signUpGroupsSettings = appSettings.Settings[signUpGroupsToken]?.Value;
+            if (string.IsNullOrWhiteSpace(signUpGroupsSettings))
+            {
+                configuration.SignUpGroups = string.Empty;
+                return;
+            }
+
+            if (!Regex.IsMatch(signUpGroupsSettings, signUpGroupsRegex, RegexOptions.IgnoreCase))
+            {
+                throw new Exception($"Invalid group names. Please check 'sign-up-groups' settings property and fix syntax errors.");
+            }
+
+            configuration.SignUpGroups = signUpGroupsSettings;
         }
     }
 }
