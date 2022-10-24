@@ -114,5 +114,10 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap
         {
             return Name.EndsWith(parent.Name);
         }
+
+        public override string ToString()
+        {
+            return Name;
+        }
     }
 }

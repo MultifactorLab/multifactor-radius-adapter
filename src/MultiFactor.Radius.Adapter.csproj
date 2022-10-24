@@ -36,6 +36,9 @@
     <None Update="clients\cisco with nps.config.template">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="clients\fortigate with none.template">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="clients\fortigate with ad.config.template">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
@@ -51,9 +54,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="clients\" />
+	 <Folder Include="clients\" />
   </ItemGroup>
-
+	
   <ProjectExtensions><VisualStudio><UserProperties appsettings_1json__JsonSchema="" /></VisualStudio></ProjectExtensions>
 
 </Project>

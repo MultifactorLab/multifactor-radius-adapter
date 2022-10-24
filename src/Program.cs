@@ -6,7 +6,12 @@ using Microsoft.Extensions.Hosting;
 using MultiFactor.Radius.Adapter.Configuration;
 using MultiFactor.Radius.Adapter.Core;
 using MultiFactor.Radius.Adapter.Server;
+using MultiFactor.Radius.Adapter.Server.FirstAuthFactorProcessing;
 using MultiFactor.Radius.Adapter.Services;
+using MultiFactor.Radius.Adapter.Services.BindIdentityFormatting;
+using MultiFactor.Radius.Adapter.Services.Ldap;
+using MultiFactor.Radius.Adapter.Services.Ldap.MembershipVerification;
+using MultiFactor.Radius.Adapter.Services.Ldap.UserGroupsGetters;
 using Serilog;
 using Serilog.Core;
 using Serilog.Events;
@@ -81,6 +86,7 @@ namespace MultiFactor.Radius.Adapter
 
             //init configuration
             var configuration = ServiceConfiguration.Load(dictionary, Log.Logger);
+            configuration.Validate();
 
             SetLogLevel(configuration.LogLevel, levelSwitch);
 
@@ -92,7 +98,24 @@ namespace MultiFactor.Radius.Adapter
             services.AddSingleton<IRadiusDictionary>(dictionary);
             services.AddSingleton<IRadiusPacketParser, RadiusPacketParser>();
             services.AddSingleton<CacheService>();
+            services.AddSingleton<MultiFactorApiClient>();
+            services.AddSingleton<RadiusRouter>();
             services.AddSingleton<RadiusServer>();
+            services.AddTransient<ChallengeProcessor>();
+
+            services.AddSingleton<IFirstAuthFactorProcessor, LdapFirstAuthFactorProcessor>();
+            services.AddSingleton<IFirstAuthFactorProcessor, RadiusFirstAuthFactorProcessor>();
+            services.AddSingleton<IFirstAuthFactorProcessor, DefaultFirstAuthFactorProcessor>();
+            services.AddSingleton<FirstAuthFactorProcessorProvider>();
+
+            services.AddSingleton<UserGroupsGetterProvider>();
+            services.AddSingleton<IUserGroupsGetter, ActiveDirectoryUserGroupsGetter>();
+            services.AddSingleton<IUserGroupsGetter, DefaultUserGroupsGetter>();
+
+            services.AddSingleton<BindIdentityFormatterFactory>();
+            services.AddSingleton<ProfileLoader>();
+            services.AddSingleton<LdapService>();
+            services.AddSingleton<MembershipVerifier>();
 
             services.AddHostedService<ServerHost>();
         }

@@ -12,6 +12,7 @@ using System.Configuration;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Text.RegularExpressions;
 
 namespace MultiFactor.Radius.Adapter.Configuration
 {
@@ -29,6 +30,12 @@ namespace MultiFactor.Radius.Adapter.Configuration
         /// List of clients with identification by NAS-Identifier attr
         /// </summary>
         private IDictionary<string, ClientConfiguration> _nasIdClients;
+
+        public IReadOnlyList<ClientConfiguration> Clients => _ipClients
+            .Select(x => x.Value)
+            .Concat(_nasIdClients.Select(x => x.Value))
+            .ToList()
+            .AsReadOnly();
 
         public ServiceConfiguration()
         {
@@ -274,6 +281,9 @@ namespace MultiFactor.Radius.Adapter.Configuration
             var multiFactorApiKeySetting                        = appSettings.Settings["multifactor-nas-identifier"]?.Value;
             var multiFactorApiSecretSetting                     = appSettings.Settings["multifactor-shared-secret"]?.Value;
 
+            var serviceAccountUserSetting                       = appSettings.Settings["service-account-user"]?.Value;
+            var serviceAccountPasswordSetting                   = appSettings.Settings["service-account-password"]?.Value;
+
             if (string.IsNullOrEmpty(firstFactorAuthenticationSourceSettings))
             {
                 throw new Exception("Configuration error: 'first-factor-authentication-source' element not found");
@@ -328,10 +338,14 @@ namespace MultiFactor.Radius.Adapter.Configuration
             {
                 case AuthenticationSource.ActiveDirectory:
                 case AuthenticationSource.Ldap:
-                    LoadActiveDirectoryAuthenticationSourceSettings(configuration, appSettings);
+                    LoadActiveDirectoryAuthenticationSourceSettings(configuration, appSettings, true);
                     break;
                 case AuthenticationSource.Radius:
                     LoadRadiusAuthenticationSourceSettings(configuration, appSettings);
+                    LoadActiveDirectoryAuthenticationSourceSettings(configuration, appSettings, false);
+                    break;
+                case AuthenticationSource.None:
+                    LoadActiveDirectoryAuthenticationSourceSettings(configuration, appSettings, false);
                     break;
             }
 
@@ -348,10 +362,15 @@ namespace MultiFactor.Radius.Adapter.Configuration
                 }
             }
 
+            configuration.ServiceAccountUser = serviceAccountUserSetting ?? string.Empty;
+            configuration.ServiceAccountPassword = serviceAccountPasswordSetting ?? string.Empty;
+
+            ReadSignUpGroupsSettings(configuration, appSettings);
+
             return configuration;
         }
 
-        private static void LoadActiveDirectoryAuthenticationSourceSettings(ClientConfiguration configuration, AppSettingsSection appSettings)
+        private static void LoadActiveDirectoryAuthenticationSourceSettings(ClientConfiguration configuration, AppSettingsSection appSettings, bool mandatory)
         {
             var activeDirectoryDomainSetting                        = appSettings.Settings["active-directory-domain"]?.Value;
             var ldapBindDnSetting                                   = appSettings.Settings["ldap-bind-dn"]?.Value;
@@ -364,7 +383,7 @@ namespace MultiFactor.Radius.Adapter.Configuration
             var loadActiveDirectoryNestedGroupsSettings             = appSettings.Settings["load-active-directory-nested-groups"]?.Value;
             var useUpnAsIdentitySetting                             = appSettings.Settings["use-upn-as-identity"]?.Value;
 
-            if (string.IsNullOrEmpty(activeDirectoryDomainSetting))
+            if (mandatory && string.IsNullOrEmpty(activeDirectoryDomainSetting))
             {
                 throw new Exception("Configuration error: 'active-directory-domain' element not found");
             }
@@ -537,6 +556,26 @@ namespace MultiFactor.Radius.Adapter.Configuration
             }
 
             throw new FormatException($"Failed to parse {text} to IPEndPoint");
+        }
+
+        private static void ReadSignUpGroupsSettings(ClientConfiguration configuration, AppSettingsSection appSettings)
+        {
+            const string signUpGroupsRegex = @"([\wа-я\s\-]+)(\s*;\s*([\wа-я\s\-]+)*)*";
+            const string signUpGroupsToken = "sign-up-groups";
+
+            var signUpGroupsSettings = appSettings.Settings[signUpGroupsToken]?.Value;
+            if (string.IsNullOrWhiteSpace(signUpGroupsSettings))
+            {
+                configuration.SignUpGroups = string.Empty;
+                return;
+            }
+
+            if (!Regex.IsMatch(signUpGroupsSettings, signUpGroupsRegex, RegexOptions.IgnoreCase))
+            {
+                throw new Exception($"Invalid group names. Please check 'sign-up-groups' settings property and fix syntax errors.");
+            }
+
+            configuration.SignUpGroups = signUpGroupsSettings;
         }
     }
 }
