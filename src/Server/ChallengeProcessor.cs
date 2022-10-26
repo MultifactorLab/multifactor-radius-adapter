@@ -4,7 +4,7 @@
 
 using MultiFactor.Radius.Adapter.Configuration;
 using MultiFactor.Radius.Adapter.Core;
-using MultiFactor.Radius.Adapter.Services;
+using MultiFactor.Radius.Adapter.Services.MultiFactorApi;
 using Serilog;
 using System;
 using System.Collections.Concurrent;
