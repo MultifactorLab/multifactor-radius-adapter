@@ -1,4 +1,5 @@
 using System;
+using System.Configuration;
 using System.IO;
 using System.Text;
 using Microsoft.Extensions.DependencyInjection;
@@ -12,6 +13,7 @@ using MultiFactor.Radius.Adapter.Services.BindIdentityFormatting;
 using MultiFactor.Radius.Adapter.Services.Ldap;
 using MultiFactor.Radius.Adapter.Services.Ldap.MembershipVerification;
 using MultiFactor.Radius.Adapter.Services.Ldap.UserGroupsGetters;
+using MultiFactor.Radius.Adapter.Services.MultiFactorApi;
 using Serilog;
 using Serilog.Core;
 using Serilog.Events;
@@ -30,7 +32,7 @@ namespace MultiFactor.Radius.Adapter
             {
                 host = Host
                     .CreateDefaultBuilder(args)
-                    .ConfigureServices(services => ConfigureServices(services))
+                    .ConfigureServices(ConfigureServices)
                     .Build();
 
                 host.Run();
@@ -62,21 +64,10 @@ namespace MultiFactor.Radius.Adapter
             //create logging
             var levelSwitch = new LoggingLevelSwitch(LogEventLevel.Information);
             var loggerConfiguration = new LoggerConfiguration()
-                .MinimumLevel.ControlledBy(levelSwitch);
+                .MinimumLevel.ControlledBy(levelSwitch)
+                .Enrich.FromLogContext();
 
-            var formatter = GetLogFormatter();
-            if (formatter != null)
-            {
-                loggerConfiguration
-                    .WriteTo.Console(formatter)
-                    .WriteTo.File(formatter, $"{path}logs{Path.DirectorySeparatorChar}log-.txt", rollingInterval: RollingInterval.Day);
-            }
-            else
-            {
-                loggerConfiguration
-                    .WriteTo.Console()
-                    .WriteTo.File($"{path}logs{Path.DirectorySeparatorChar}log-.txt", rollingInterval: RollingInterval.Day);
-            }
+            ConfigureLogging(path, loggerConfiguration);
 
             Log.Logger = loggerConfiguration.CreateLogger();
 
@@ -118,6 +109,44 @@ namespace MultiFactor.Radius.Adapter
             services.AddSingleton<MembershipVerifier>();
 
             services.AddHostedService<ServerHost>();
+        }
+
+        private static void ConfigureLogging(string path, LoggerConfiguration loggerConfiguration)
+        {
+            var formatter = GetLogFormatter();
+            if (formatter != null)
+            {
+                loggerConfiguration
+                    .WriteTo.Console(formatter)
+                    .WriteTo.File(formatter, $"{path}logs{Path.DirectorySeparatorChar}log-.txt", rollingInterval: RollingInterval.Day);
+            }
+            else
+            {
+                var consoleTemplate = GetStringSettingOrNull(Core.Constants.Configuration.ConsoleLogOutputTemplate);
+                if (consoleTemplate != null)
+                {
+                    loggerConfiguration.WriteTo.Console(outputTemplate: consoleTemplate);
+                }
+                else
+                {
+                    loggerConfiguration.WriteTo.Console();
+                }
+
+                var fileTemplate = GetStringSettingOrNull(Core.Constants.Configuration.FileLogOutputTemplate);
+                if (fileTemplate != null)
+                {
+                    loggerConfiguration.WriteTo.File(
+                        $"{path}logs{Path.DirectorySeparatorChar}log-.txt", 
+                        rollingInterval: RollingInterval.Day,
+                        outputTemplate: fileTemplate);
+                }
+                else
+                {
+                    loggerConfiguration.WriteTo.File(
+                        $"{path}logs{Path.DirectorySeparatorChar}log-.txt", 
+                        rollingInterval: RollingInterval.Day);
+                }
+            }
         }
 
         private static void SetLogLevel(string level, LoggingLevelSwitch levelSwitch)
@@ -174,6 +203,12 @@ namespace MultiFactor.Radius.Adapter
                 default:
                     return null;
             }
+        }
+
+        private static string GetStringSettingOrNull(string key)
+        {
+            var value = ConfigurationManager.AppSettings[key];
+            return string.IsNullOrWhiteSpace(value) ? null : value;
         }
     }
 }
