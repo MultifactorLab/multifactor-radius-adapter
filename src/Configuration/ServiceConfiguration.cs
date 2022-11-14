@@ -155,6 +155,7 @@ namespace MultiFactor.Radius.Adapter.Configuration
         public string LogLevel { get; set; }
 
         public bool SingleClientMode { get; set; }
+        public RandomWaiterConfig InvalidCredentialDelay { get; set; }
 
         #endregion
 
@@ -208,6 +209,15 @@ namespace MultiFactor.Radius.Adapter.Configuration
                 ApiProxy = apiProxySetting,
                 LogLevel = logLevelSetting
             };
+
+            try
+            {
+                configuration.InvalidCredentialDelay = RandomWaiterConfig.Create(appSettings.Settings[Constants.Configuration.PciDss.InvalidCredentialDelay]?.Value);
+            }
+            catch
+            {
+                throw new Exception($"Configuration error: Can't parse '{Constants.Configuration.PciDss.InvalidCredentialDelay}' value");
+            }
 
             var clientConfigFilesPath = Path.GetDirectoryName(AppDomain.CurrentDomain.BaseDirectory) + Path.DirectorySeparatorChar + "clients";
             var clientConfigFiles = Directory.Exists(clientConfigFilesPath) ? Directory.GetFiles(clientConfigFilesPath, "*.config") : new string[0];

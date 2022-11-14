@@ -108,6 +108,8 @@ namespace MultiFactor.Radius.Adapter
             services.AddSingleton<LdapService>();
             services.AddSingleton<MembershipVerifier>();
 
+            services.AddSingleton(prov => new RandomWaiter(prov.GetRequiredService<ServiceConfiguration>().InvalidCredentialDelay));
+
             services.AddHostedService<ServerHost>();
         }
 

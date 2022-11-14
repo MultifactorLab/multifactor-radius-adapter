@@ -49,6 +49,7 @@ namespace MultiFactor.Radius.Adapter.Server
         private int _concurrentHandlerCount = 0;
         private readonly ILogger _logger;
         private RadiusRouter _router;
+        private readonly RandomWaiter _waiter;
         private ServiceConfiguration _serviceConfiguration;
 
         private CacheService _cacheService;
@@ -64,7 +65,8 @@ namespace MultiFactor.Radius.Adapter.Server
         /// </summary>
         public RadiusServer(ServiceConfiguration serviceConfiguration, 
             IRadiusDictionary dictionary, IRadiusPacketParser radiusPacketParser, 
-            CacheService cacheService, RadiusRouter router, 
+            CacheService cacheService, RadiusRouter router,
+            RandomWaiter waiter,
             ILogger logger)
         {
             _serviceConfiguration = serviceConfiguration ?? throw new ArgumentNullException(nameof(serviceConfiguration));
@@ -75,6 +77,7 @@ namespace MultiFactor.Radius.Adapter.Server
 
             _localEndpoint = serviceConfiguration.ServiceServerEndpoint;
             _router = router ?? throw new ArgumentNullException(nameof(router));
+            _waiter = waiter ?? throw new ArgumentNullException(nameof(waiter));
         }
 
         /// <summary>
@@ -276,7 +279,7 @@ namespace MultiFactor.Radius.Adapter.Server
             }
         }
 
-        private void RouterRequestProcessed(object sender, PendingRequest request)
+        private async void RouterRequestProcessed(object sender, PendingRequest request)
         {
             if (request.ResponsePacket?.IsEapMessageChallenge == true)
             {
@@ -346,6 +349,7 @@ namespace MultiFactor.Radius.Adapter.Server
                             request.ResponsePacket.CopyTo(responsePacket);
                         }
                     }
+                    await _waiter.WaitSomeTimeAsync();
                     break;
                 default:
                     throw new NotImplementedException(request.ResponseCode.ToString());
