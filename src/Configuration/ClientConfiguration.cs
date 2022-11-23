@@ -140,6 +140,7 @@ namespace MultiFactor.Radius.Adapter.Configuration
         /// </summary>
         public string SignUpGroups { get; set; }
 
+        public AuthenticatedClientCacheConfig AuthenticationCacheLifetime { get; set; }
 
         /// <summary>
         /// Custom RADIUS reply attributes

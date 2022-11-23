@@ -109,10 +109,7 @@ namespace MultiFactor.Radius.Adapter.Server
                     return;
                 }
 
-                var secondFactorAuthenticationResultCode = await ProcessSecondAuthenticationFactor(request, clientConfig);
-
-                request.ResponseCode = secondFactorAuthenticationResultCode;
-
+                request.ResponseCode = await ProcessSecondAuthenticationFactor(request, clientConfig);
                 if (request.ResponseCode == PacketCode.AccessChallenge)
                 {
                     _challengeProcessor.AddState(request.State, request);
