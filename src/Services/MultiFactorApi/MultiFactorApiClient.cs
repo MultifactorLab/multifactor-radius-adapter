@@ -23,11 +23,13 @@ namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi
     public class MultiFactorApiClient
     {
         private ServiceConfiguration _serviceConfiguration;
+        private readonly AuthenticatedClientCache _authenticatedClientCache;
         private ILogger _logger;
 
-        public MultiFactorApiClient(ServiceConfiguration serviceConfiguration, ILogger logger)
+        public MultiFactorApiClient(ServiceConfiguration serviceConfiguration, AuthenticatedClientCache authenticatedClientCache, ILogger logger)
         {
             _serviceConfiguration = serviceConfiguration ?? throw new ArgumentNullException(nameof(serviceConfiguration));
+            _authenticatedClientCache = authenticatedClientCache ?? throw new ArgumentNullException(nameof(authenticatedClientCache));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
@@ -68,8 +70,15 @@ namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi
                     break;
             }
 
+            //try to get authenticated client to bypass second factor if configured
+            if (_authenticatedClientCache.TryHitCache(request.RequestPacket.CallingStationId, userName, clientConfig))
+            {
+                _logger.Information("Bypass second factor for user '{user:l}' with calling-station-id {csi:l} from {host:l}:{port}", 
+                    userName, request.RequestPacket.CallingStationId, request.RemoteEndpoint.Address, request.RemoteEndpoint.Port);
+                return PacketCode.AccessAccept;
+            }
+            
             var url = _serviceConfiguration.ApiUrl + "/access/requests/ra";
-
             var payload = new
             {
                 Identity = userName,
@@ -100,6 +109,8 @@ namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi
                 if (responseCode == PacketCode.AccessAccept && !response.Bypassed)
                 {
                     LogGrantedInfo(userName, response, request);
+                    _authenticatedClientCache.SetCache(request.RequestPacket.CallingStationId, userName, clientConfig);
+                    
                 }
 
                 if (responseCode == PacketCode.AccessReject)

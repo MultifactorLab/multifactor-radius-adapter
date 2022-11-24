@@ -11,6 +11,8 @@
             {
                 public const string InvalidCredentialDelay = "invalid-credential-delay";
             }
+
+            public const string AuthenticationCacheLifetime = "authentication-cache-lifetime";
         }
     }
 }

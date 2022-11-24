@@ -377,6 +377,16 @@ namespace MultiFactor.Radius.Adapter.Configuration
 
             ReadSignUpGroupsSettings(configuration, appSettings);
 
+            try
+            {
+                configuration.AuthenticationCacheLifetime = AuthenticatedClientCacheConfig
+                    .Create(appSettings.Settings[Constants.Configuration.AuthenticationCacheLifetime]?.Value);
+            }
+            catch
+            {
+                throw new Exception($"Configuration error: Can't parse '{Constants.Configuration.AuthenticationCacheLifetime}' value");
+            }
+
             return configuration;
         }
 
