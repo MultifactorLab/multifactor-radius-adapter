@@ -21,13 +21,13 @@ namespace MultiFactor.Radius.Adapter.Services
         {
             if (!clientConfiguration.AuthenticationCacheLifetime.Enabled) return false;
 
-            if (string.IsNullOrEmpty(callingStationId))
+            if (!clientConfiguration.AuthenticationCacheLifetime.MinimalMatching && string.IsNullOrEmpty(callingStationId))
             {
                 _logger.Warning($"Remote host parameter miss for user {userName}");
                 return false;
             }
 
-            var id = AuthenticatedClient.ParseId(clientConfiguration.Name, callingStationId, userName);
+            var id = AuthenticatedClient.ParseId(callingStationId, clientConfiguration.Name, userName);
             if (!_authenticatedClients.TryGetValue(id, out var authenticatedClient))
             {
                 return false;
@@ -47,7 +47,8 @@ namespace MultiFactor.Radius.Adapter.Services
 
         public void SetCache(string callingStationId, string userName, ClientConfiguration clientConfiguration)
         {
-            if (!clientConfiguration.AuthenticationCacheLifetime.Enabled || string.IsNullOrEmpty(callingStationId)) return;     
+            if (!clientConfiguration.AuthenticationCacheLifetime.Enabled || 
+                !clientConfiguration.AuthenticationCacheLifetime.MinimalMatching && string.IsNullOrEmpty(callingStationId)) return;     
 
             var client = AuthenticatedClient.Create(callingStationId, clientConfiguration.Name, userName);
             if (!_authenticatedClients.ContainsKey(client.Id))
