@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 
 namespace MultiFactor.Radius.Adapter.Services
 {
@@ -15,18 +16,14 @@ namespace MultiFactor.Radius.Adapter.Services
             _authenticatedAt = authenticatedAt;
         }
 
-        public static AuthenticatedClient Create(string callingStationId, string clientName, string userName)
+        public static AuthenticatedClient Create(params string[] components)
         {
-            if (callingStationId is null) throw new ArgumentNullException(nameof(callingStationId));         
-            if (string.IsNullOrEmpty(userName)) throw new ArgumentException($"'{nameof(userName)}' cannot be null or empty.", nameof(userName));   
-            if (string.IsNullOrEmpty(clientName)) throw new ArgumentException($"'{nameof(clientName)}' cannot be null or empty.", nameof(clientName));
+            if (components is null) throw new ArgumentNullException(nameof(components));
+            if (components.Length == 0) throw new ArgumentException(nameof(components));
 
-            return new AuthenticatedClient(ParseId(callingStationId, clientName, userName), DateTime.Now);
+            return new AuthenticatedClient(ParseId(components), DateTime.Now);
         }
 
-        public static string ParseId(string callingStationId, string userName, string clientName)
-        {
-            return $"{clientName}-{callingStationId}-{userName}";
-        }
+        public static string ParseId(params string[] components) => string.Join('-', components.Where(x => !string.IsNullOrEmpty(x)));      
     }
 }

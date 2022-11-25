@@ -284,15 +284,15 @@ namespace MultiFactor.Radius.Adapter.Configuration
 
         public static ClientConfiguration Load(string name, IRadiusDictionary dictionary, AppSettingsSection appSettings, RadiusReplyAttributesSection radiusReplyAttributesSection, UserNameTransformRulesSection userNameTransformRulesSection)
         {
-            var radiusSharedSecretSetting                       = appSettings.Settings["radius-shared-secret"]?.Value;
-            var firstFactorAuthenticationSourceSettings         = appSettings.Settings["first-factor-authentication-source"]?.Value;
-            var bypassSecondFactorWhenApiUnreachableSetting     = appSettings.Settings["bypass-second-factor-when-api-unreachable"]?.Value;
-            var privacyModeSetting                              = appSettings.Settings["privacy-mode"]?.Value;
-            var multiFactorApiKeySetting                        = appSettings.Settings["multifactor-nas-identifier"]?.Value;
-            var multiFactorApiSecretSetting                     = appSettings.Settings["multifactor-shared-secret"]?.Value;
+            var radiusSharedSecretSetting = appSettings.Settings["radius-shared-secret"]?.Value;
+            var firstFactorAuthenticationSourceSettings = appSettings.Settings["first-factor-authentication-source"]?.Value;
+            var bypassSecondFactorWhenApiUnreachableSetting = appSettings.Settings["bypass-second-factor-when-api-unreachable"]?.Value;
+            var privacyModeSetting = appSettings.Settings["privacy-mode"]?.Value;
+            var multiFactorApiKeySetting = appSettings.Settings["multifactor-nas-identifier"]?.Value;
+            var multiFactorApiSecretSetting = appSettings.Settings["multifactor-shared-secret"]?.Value;
 
-            var serviceAccountUserSetting                       = appSettings.Settings["service-account-user"]?.Value;
-            var serviceAccountPasswordSetting                   = appSettings.Settings["service-account-password"]?.Value;
+            var serviceAccountUserSetting = appSettings.Settings["service-account-user"]?.Value;
+            var serviceAccountPasswordSetting = appSettings.Settings["service-account-password"]?.Value;
 
             if (string.IsNullOrEmpty(firstFactorAuthenticationSourceSettings))
             {
@@ -376,18 +376,32 @@ namespace MultiFactor.Radius.Adapter.Configuration
             configuration.ServiceAccountPassword = serviceAccountPasswordSetting ?? string.Empty;
 
             ReadSignUpGroupsSettings(configuration, appSettings);
+            ReadAuthenticationCacheSettings(appSettings, configuration);
 
+            return configuration;
+        }
+
+        private static void ReadAuthenticationCacheSettings(AppSettingsSection appSettings, ClientConfiguration configuration)
+        {
+            bool minimalMatching = false;
             try
             {
-                configuration.AuthenticationCacheLifetime = AuthenticatedClientCacheConfig
-                    .Create(appSettings.Settings[Constants.Configuration.AuthenticationCacheLifetime]?.Value);
+                minimalMatching = bool.Parse(appSettings.Settings[Constants.Configuration.AuthenticationCacheMinimalMatching]?.Value ?? bool.FalseString);
             }
             catch
             {
-                throw new Exception($"Configuration error: Can't parse '{Constants.Configuration.AuthenticationCacheLifetime}' value");
+                throw new Exception($"Configuration error: Can't parse '{Constants.Configuration.AuthenticationCacheMinimalMatching}' value");
             }
 
-            return configuration;
+            try
+            { 
+                configuration.AuthenticationCacheLifetime = AuthenticatedClientCacheConfig
+                    .Create(appSettings.Settings[Constants.Configuration.AuthenticationCacheLifetime]?.Value, minimalMatching);
+            }
+            catch
+            {
+                throw new Exception($"Configuration error: Can't parse '{appSettings.Settings[Constants.Configuration.AuthenticationCacheLifetime]?.Value}' value");
+            }
         }
 
         private static void LoadActiveDirectoryAuthenticationSourceSettings(ClientConfiguration configuration, AppSettingsSection appSettings, bool mandatory)

@@ -13,6 +13,7 @@
             }
 
             public const string AuthenticationCacheLifetime = "authentication-cache-lifetime";
+            public const string AuthenticationCacheMinimalMatching = "authentication-cache-minimal-matching";
         }
     }
 }
