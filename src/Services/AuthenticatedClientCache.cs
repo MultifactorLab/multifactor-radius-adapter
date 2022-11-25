@@ -49,7 +49,7 @@ namespace MultiFactor.Radius.Adapter.Services
         {
             if (!clientConfiguration.AuthenticationCacheLifetime.Enabled || string.IsNullOrEmpty(callingStationId)) return;     
 
-            var client = AuthenticatedClient.Create(clientConfiguration.Name, callingStationId, userName);
+            var client = AuthenticatedClient.Create(callingStationId, clientConfiguration.Name, userName);
             if (!_authenticatedClients.ContainsKey(client.Id))
             {
                 _authenticatedClients.TryAdd(client.Id, client);

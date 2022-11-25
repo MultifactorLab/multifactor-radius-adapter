@@ -15,13 +15,13 @@ namespace MultiFactor.Radius.Adapter.Services
             _authenticatedAt = authenticatedAt;
         }
 
-        public static AuthenticatedClient Create(string clientName, string callingStationId, string userName)
+        public static AuthenticatedClient Create(string callingStationId, string clientName, string userName)
         {
             if (callingStationId is null) throw new ArgumentNullException(nameof(callingStationId));         
             if (string.IsNullOrEmpty(userName)) throw new ArgumentException($"'{nameof(userName)}' cannot be null or empty.", nameof(userName));   
             if (string.IsNullOrEmpty(clientName)) throw new ArgumentException($"'{nameof(clientName)}' cannot be null or empty.", nameof(clientName));
 
-            return new AuthenticatedClient(ParseId(clientName, callingStationId, userName), DateTime.Now);
+            return new AuthenticatedClient(ParseId(callingStationId, clientName, userName), DateTime.Now);
         }
 
         public static string ParseId(string callingStationId, string userName, string clientName)
