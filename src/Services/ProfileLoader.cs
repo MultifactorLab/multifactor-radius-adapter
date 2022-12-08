@@ -1,5 +1,6 @@
 ﻿using LdapForNet;
 using MultiFactor.Radius.Adapter.Configuration;
+using MultiFactor.Radius.Adapter.Core.Exceptions;
 using MultiFactor.Radius.Adapter.Core.Services.Ldap;
 using MultiFactor.Radius.Adapter.Services.Ldap;
 using MultiFactor.Radius.Adapter.Services.Ldap.Connection;
@@ -52,8 +53,7 @@ namespace MultiFactor.Radius.Adapter.Services
             var entry = response.SingleOrDefault();
             if (entry == null)
             {
-                _logger.Error($"Unable to find user '{{user:l}}' in {domain.Name}", user.Name);
-                return null;
+                throw new LdapUserNotFoundException(user.Name, domain.Name);
             }
 
             //base profile
