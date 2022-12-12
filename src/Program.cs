@@ -11,6 +11,7 @@ using MultiFactor.Radius.Adapter.Server.FirstAuthFactorProcessing;
 using MultiFactor.Radius.Adapter.Services;
 using MultiFactor.Radius.Adapter.Services.BindIdentityFormatting;
 using MultiFactor.Radius.Adapter.Services.Ldap;
+using MultiFactor.Radius.Adapter.Services.Ldap.Connection;
 using MultiFactor.Radius.Adapter.Services.Ldap.MembershipVerification;
 using MultiFactor.Radius.Adapter.Services.Ldap.UserGroupsGetters;
 using MultiFactor.Radius.Adapter.Services.MultiFactorApi;
@@ -104,6 +105,7 @@ namespace MultiFactor.Radius.Adapter
             services.AddSingleton<IUserGroupsGetter, DefaultUserGroupsGetter>();
 
             services.AddSingleton<BindIdentityFormatterFactory>();
+            services.AddSingleton<LdapConnectionAdapterFactory>();
             services.AddSingleton<ProfileLoader>();
             services.AddSingleton<LdapService>();
             services.AddSingleton<MembershipVerifier>();

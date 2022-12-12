@@ -3,17 +3,21 @@
 //https://github.com/MultifactorLab/MultiFactor.Radius.Adapter/blob/master/LICENSE.md
 
 using LdapForNet;
+using Microsoft.VisualBasic;
 using MultiFactor.Radius.Adapter.Configuration;
+using MultiFactor.Radius.Adapter.Core.Exceptions;
 using MultiFactor.Radius.Adapter.Core.Services.Ldap;
 using MultiFactor.Radius.Adapter.Server;
 using MultiFactor.Radius.Adapter.Services.BindIdentityFormatting;
 using MultiFactor.Radius.Adapter.Services.Ldap;
 using MultiFactor.Radius.Adapter.Services.Ldap.Connection;
+using MultiFactor.Radius.Adapter.Services.Ldap.Connection.Exceptions;
 using Serilog;
 using System;
 using System.Linq;
 using System.Net;
 using System.Runtime.InteropServices;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using static LdapForNet.Native.Native;
 
@@ -22,13 +26,15 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.MembershipVerification
     public class MembershipVerifier
     {
         private readonly ProfileLoader _profileLoader;
-        private readonly BindIdentityFormatterFactory _bindIdentityFormatterFactory;
+        private readonly LdapConnectionAdapterFactory _connectionAdapterFactory;
         private readonly ILogger _logger;
 
-        public MembershipVerifier(ProfileLoader profileLoader, BindIdentityFormatterFactory bindIdentityFormatterFactory, ILogger logger)
+        public MembershipVerifier(ProfileLoader profileLoader,
+            LdapConnectionAdapterFactory connectionAdapterFactory,
+            ILogger logger)
         {
             _profileLoader = profileLoader ?? throw new ArgumentNullException(nameof(profileLoader));
-            _bindIdentityFormatterFactory = bindIdentityFormatterFactory ?? throw new ArgumentNullException(nameof(bindIdentityFormatterFactory));
+            _connectionAdapterFactory = connectionAdapterFactory ?? throw new ArgumentNullException(nameof(connectionAdapterFactory));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
@@ -45,7 +51,7 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.MembershipVerification
             var userName = request.UserName;
             if (string.IsNullOrEmpty(userName))
             {
-                _logger.Warning("Can't find User-Name in message id={id} from {host:l}:{port}", request.RequestPacket.Identifier, request.RemoteEndpoint.Address, request.RemoteEndpoint.Port);
+                _logger.Warning("Verification user' membership failed: can't find 'User-Name' attribute (messageId: {id}, from: {host:l}:{port})", request.RequestPacket.Identifier, request.RemoteEndpoint.Address, request.RemoteEndpoint.Port);
                 return result;
             }
 
@@ -57,24 +63,13 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.MembershipVerification
                 {
                     var user = LdapIdentity.ParseUser(userName);
 
-                    _logger.Debug($"Verifying user '{{user:l}}' membership at {domain}", user.Name);
-                    using (var connAdapter = await LdapConnectionAdapter.CreateAsync(
-                        domain, 
-                        LdapIdentity.ParseUser(clientConfig.ServiceAccountUser), 
-                        clientConfig.ServiceAccountPassword,
-                        config => config.SetBindIdentityFormatter(_bindIdentityFormatterFactory.CreateFormatter(clientConfig))))
+                    _logger.Debug("Verifying user '{user:l}' membership at '{domain:l}'", user.Name, domain);
+                    using (var connAdapter = await _connectionAdapterFactory.CreateAdapterAsTechnicalAccAsync(domain, clientConfig))
                     {
                         if (profile == null)
                         {
                             var dmn = await connAdapter.WhereAmIAsync();
                             profile = await _profileLoader.LoadAsync(clientConfig, connAdapter, dmn, user);
-                        }
-                        if (profile == null)
-                        {
-                            result.AddDomainResult(MembershipVerificationResult.Create(domain)
-                                .SetSuccess(false)
-                                .Build());
-                            continue;
                         }
 
                         var res = VerifyMembership(clientConfig, profile, domain, user);
@@ -83,26 +78,9 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.MembershipVerification
                         if (res.IsSuccess) break;
                     }
                 }
-                catch (UserDomainNotPermittedException ex)
-                {
-                    _logger.Warning(ex.Message);
-                    result.AddDomainResult(MembershipVerificationResult.Create(domain)
-                        .SetSuccess(false)
-                        .Build());
-                    continue;
-                }
-                catch (UserNameFormatException ex)
-                {
-                    _logger.Warning(ex.Message);
-                    result.AddDomainResult(MembershipVerificationResult.Create(domain)
-                        .SetSuccess(false)
-                        .Build());
-                    continue;
-                }
                 catch (Exception ex)
                 {
-                    _logger.Error(ex, $"Verification user '{{user:l}}' membership at {domain} failed", userName);
-                    _logger.Information("Run MultiFactor.Raduis.Adapter as user with domain read permissions (basically any domain user)");
+                    _logger.Warning(ex, "Verification user '{user:l}' membership at '{domain:l}' failed: {msg:l}", userName, domain, ex.Message);
                     result.AddDomainResult(MembershipVerificationResult.Create(domain)
                         .SetSuccess(false)
                         .Build());
@@ -124,11 +102,13 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.MembershipVerification
                 var accessGroup = clientConfig.ActiveDirectoryGroup.FirstOrDefault(group => IsMemberOf(profile, group));
                 if (accessGroup != null)
                 {
-                    _logger.Debug($"User '{{user:l}}' is member of '{accessGroup.Trim()}' access group in {profile.BaseDn.Name}", user.Name);
+                    _logger.Debug("User '{user:l}' is a member of the access group '{group:l}' in '{domain:l}'", 
+                        user.Name, accessGroup, profile.BaseDn.Name);
                 }
                 else
                 {
-                    _logger.Warning($"User '{{user:l}}' is not member of '{string.Join(";", clientConfig.ActiveDirectoryGroup)}' access group in {profile.BaseDn.Name}", user.Name);
+                    _logger.Warning("User '{user:l}' is not a member of any access group ({accGroups:l}) in '{domain:l}'", 
+                        user.Name, string.Join(", ", clientConfig.ActiveDirectoryGroup), profile.BaseDn.Name);
                     return MembershipVerificationResult.Create(domain)
                         .SetSuccess(false)
                         .SetProfile(profile)
@@ -140,32 +120,37 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.MembershipVerification
                         .SetSuccess(true)
                         .SetProfile(profile);
 
-            //only users from group must process 2fa
-            if (clientConfig.ActiveDirectory2FaGroup.Any())
+            resBuilder.SetAre2FaGroupsSpecified(clientConfig.ActiveDirectory2FaGroup.Any());
+            if (resBuilder.Subject.Are2FaGroupsSpecified)
             {
                 var mfaGroup = clientConfig.ActiveDirectory2FaGroup.FirstOrDefault(group => IsMemberOf(profile, group));
                 if (mfaGroup != null)
                 {
-                    _logger.Debug($"User '{{user:l}}' is member of '{mfaGroup.Trim()}' 2FA group in {profile.BaseDn.Name}", user.Name);
+                    _logger.Debug("User '{user:l}' is a member of the 2FA group '{group:l}' in '{domain:l}'",
+                        user.Name, mfaGroup.Trim(), profile.BaseDn.Name);
                     resBuilder.SetIsMemberOf2FaGroups(true);
                 }
                 else
                 {
-                    _logger.Information($"User '{{user:l}}' is not member of '{string.Join(";", clientConfig.ActiveDirectory2FaGroup)}' 2FA group in {profile.BaseDn.Name}", user.Name);
+                    _logger.Information("User '{user:l}' is not a member of any 2FA group ({groups:l}) in '{domain:l}'", 
+                        user.Name, string.Join(", ", clientConfig.ActiveDirectory2FaGroup), profile.BaseDn.Name);
                 }
             }
 
-            if (resBuilder.Subject.IsMemberOf2FaGroups && clientConfig.ActiveDirectory2FaBypassGroup.Any())
+            resBuilder.SetAre2FaBypassGroupsSpecified(clientConfig.ActiveDirectory2FaBypassGroup.Any());
+            if (resBuilder.Subject.Are2FaBypassGroupsSpecified)
             {
                 var bypassGroup = clientConfig.ActiveDirectory2FaBypassGroup.FirstOrDefault(group => IsMemberOf(profile, group));
                 if (bypassGroup != null)
                 {
-                    _logger.Information($"User '{{user:l}}' is member of '{bypassGroup.Trim()}' 2FA bypass group in {profile.BaseDn.Name}", user.Name);
+                    _logger.Information("User '{user:l}' is a member of the 2FA bypass group '{group:l}' in '{domain:l}'", 
+                        user.Name, bypassGroup.Trim(), profile.BaseDn.Name);
                     resBuilder.SetIsMemberOf2FaBypassGroup(true);
                 }
                 else
                 {
-                    _logger.Debug($"User '{{user:l}}' is not member of '{string.Join(";", clientConfig.ActiveDirectory2FaBypassGroup)}' 2FA bypass group in {profile.BaseDn.Name}", user.Name);
+                    _logger.Debug("User '{user:l}' is not a member of any 2FA bypass group ({groups:l}) in '{domain:l}'", 
+                        user.Name, string.Join(", ", clientConfig.ActiveDirectory2FaBypassGroup), profile.BaseDn.Name);
                 }
             }
 
