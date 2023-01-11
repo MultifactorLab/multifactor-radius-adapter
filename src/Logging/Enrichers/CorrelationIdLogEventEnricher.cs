@@ -3,7 +3,7 @@ using Serilog.Core;
 using Serilog.Events;
 using System;
 
-namespace MultiFactor.Radius.Adapter.Logging
+namespace MultiFactor.Radius.Adapter.Logging.Enrichers
 {
     /// <summary>
     /// Log enricher. Adds CorrelationId property to log event.
