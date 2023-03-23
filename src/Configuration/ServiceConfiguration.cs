@@ -182,7 +182,7 @@ namespace MultiFactor.Radius.Adapter.Configuration
 
             var serviceServerEndpointSetting    = appSettings.Settings["adapter-server-endpoint"]?.Value;
             var apiUrlSetting                   = appSettings.Settings["multifactor-api-url"]?.Value;
-            var apiProxySetting                 = appSettings.Settings["multifactor-api-proxy"]?.Value;
+            var apiProxySetting                 = appSettings.Settings[Constants.Configuration.MultifactorApiProxy]?.Value;
             var logLevelSetting                 = appSettings.Settings["logging-level"]?.Value;
 
             if (string.IsNullOrEmpty(serviceServerEndpointSetting))
@@ -377,6 +377,12 @@ namespace MultiFactor.Radius.Adapter.Configuration
 
             ReadSignUpGroupsSettings(configuration, appSettings);
             ReadAuthenticationCacheSettings(appSettings, configuration);
+
+            var callindStationIdAttr = appSettings.Settings[Constants.Configuration.CallingStationIdAttribute]?.Value;
+            if (!string.IsNullOrWhiteSpace(callindStationIdAttr))
+            {
+                configuration.CallingStationIdVendorAttribute = callindStationIdAttr;
+            }
 
             return configuration;
         }

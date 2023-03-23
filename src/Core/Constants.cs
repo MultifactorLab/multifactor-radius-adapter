@@ -14,6 +14,9 @@
 
             public const string AuthenticationCacheLifetime = "authentication-cache-lifetime";
             public const string AuthenticationCacheMinimalMatching = "authentication-cache-minimal-matching";
+
+            public const string CallingStationIdAttribute = "calling-station-id-attribute";
+            public const string MultifactorApiProxy = "multifactor-api-proxy";
         }
     }
 }

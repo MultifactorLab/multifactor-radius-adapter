@@ -173,5 +173,7 @@ namespace MultiFactor.Radius.Adapter.Configuration
                     .SelectMany(attr => attr)
                     .Any(attr => attr.IsMemberOf || attr.UserGroupCondition != null);
         }
+
+        public string CallingStationIdVendorAttribute { get; internal set; }
     }
 }
