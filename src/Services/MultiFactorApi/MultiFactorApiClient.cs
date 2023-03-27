@@ -5,6 +5,7 @@
 
 using MultiFactor.Radius.Adapter.Configuration;
 using MultiFactor.Radius.Adapter.Core;
+using MultiFactor.Radius.Adapter.Core.Http;
 using MultiFactor.Radius.Adapter.Server;
 using Newtonsoft.Json;
 using Serilog;
@@ -173,24 +174,22 @@ namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi
                 byte[] responseData = null;
 
                 //basic authorization
-                var auth = Convert.ToBase64String(Encoding.ASCII.GetBytes(clientConfiguration.MultifactorApiKey + ":" + clientConfiguration.MultiFactorApiSecret));
+                var auth = Convert.ToBase64String(Encoding.ASCII.GetBytes($"{clientConfiguration.MultifactorApiKey}:{clientConfiguration.MultiFactorApiSecret}"));
 
                 using (var web = new WebClient())
                 {
                     web.Headers.Add("Content-Type", "application/json");
-                    web.Headers.Add("Authorization", "Basic " + auth);
+                    web.Headers.Add("Authorization", $"Basic {auth}");
 
                     if (!string.IsNullOrEmpty(_serviceConfiguration.ApiProxy))
                     {
-                        _logger.Debug("Using proxy " + _serviceConfiguration.ApiProxy);
-                        var proxyUri = new Uri(_serviceConfiguration.ApiProxy);
-                        web.Proxy = new WebProxy(proxyUri);
-
-                        if (!string.IsNullOrEmpty(proxyUri.UserInfo))
+                        _logger.Debug("Using proxy {p:l}", _serviceConfiguration.ApiProxy);
+                        if (!WebProxyFactory.TryCreateWebProxy(_serviceConfiguration.ApiProxy, out var webProxy))
                         {
-                            var credentials = proxyUri.UserInfo.Split(new[] { ':' }, 2);
-                            web.Proxy.Credentials = new NetworkCredential(credentials[0], credentials[1]);
+                            _logger.Error("Unable to initialize WebProxy: '{pr:l}'", _serviceConfiguration.ApiProxy);
+                            throw new Exception($"Unable to initialize WebProxy. Please, check whether '{Constants.Configuration.MultifactorApiProxy}' URI is valid.");
                         }
+                        web.Proxy = webProxy;
                     }
 
                     responseData = await web.UploadDataTaskAsync(url, "POST", requestData);
@@ -319,14 +318,15 @@ namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi
                 callingStationId = ip.ToString();
             }
 
-            _logger.Information("Second factor for user '{user:l}' verified successfully. Authenticator: '{authenticator:l}', account: '{account:l}', country: '{country:l}', region: '{region:l}', city: '{city:l}', calling-station-id: {clientIp}",
+            _logger.Information("Second factor for user '{user:l}' verified successfully. Authenticator: '{authenticator:l}', account: '{account:l}', country: '{country:l}', region: '{region:l}', city: '{city:l}', calling-station-id: {clientIp}, authenticatorId: {authenticatorId}",
                         userName,
                         response?.Authenticator,
                         response?.Account,
                         countryValue,
                         regionValue,
                         cityValue,
-                        callingStationId);
+                        callingStationId,
+                        response.AuthenticatorId);
         }
     }
 }

@@ -199,7 +199,8 @@ namespace MultiFactor.Radius.Adapter.Server
                 return; 
             }
 
-            var requestPacket = _radiusPacketParser.Parse(packetBytes, Encoding.UTF8.GetBytes(clientConfiguration.RadiusSharedSecret));
+            var requestPacket = _radiusPacketParser.Parse(packetBytes, Encoding.UTF8.GetBytes(clientConfiguration.RadiusSharedSecret),
+                configure: x => x.CallingStationIdAttribute = clientConfiguration.CallingStationIdVendorAttribute);
             var requestScope = new RequestScope(clientConfiguration, remoteEndpoint, proxyEndpoint, requestPacket);
             LoggerScope.Wrap(HandleRequest, requestScope);
         }
