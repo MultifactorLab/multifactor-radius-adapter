@@ -16,6 +16,11 @@ namespace MultiFactor.Radius.Adapter.Configuration
         /// <summary>
         /// Disable all but identity
         /// </summary>
-        Full
+        Full,
+
+        /// <summary>
+        /// Disable all but identity and specified fields.
+        /// </summary>
+        Partial
     }
 }

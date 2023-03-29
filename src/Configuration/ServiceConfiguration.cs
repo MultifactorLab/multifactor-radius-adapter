@@ -335,15 +335,15 @@ namespace MultiFactor.Radius.Adapter.Configuration
                 }
             }
 
-            if (!string.IsNullOrEmpty(privacyModeSetting))
+            try
             {
-                if (!Enum.TryParse<PrivacyMode>(privacyModeSetting, true, out var privacyMode))
-                {
-                    throw new Exception("Configuration error: Can't parse 'privacy-mode' value. Must be one of: Full, None");
-                }
-                configuration.PrivacyMode = privacyMode;
+                configuration.PrivacyMode = PrivacyModeDescriptor.Create(privacyModeSetting);
             }
-
+            catch
+            {
+                throw new Exception("Configuration error: Can't parse 'privacy-mode' value. Must be one of: Full, None, Partial:Field1,Field2");
+            }
+            
             switch (configuration.FirstFactorAuthenticationSource)
             {
                 case AuthenticationSource.ActiveDirectory:
