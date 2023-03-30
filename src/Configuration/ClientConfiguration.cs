@@ -63,7 +63,7 @@ namespace MultiFactor.Radius.Adapter.Configuration
         /// </summary>
         public bool BypassSecondFactorWhenApiUnreachable { get; set; }
 
-        public PrivacyMode PrivacyMode { get; set; }
+        public PrivacyModeDescriptor PrivacyMode { get; set; }
 
 
         #region ActiveDirectory Authentication settings
