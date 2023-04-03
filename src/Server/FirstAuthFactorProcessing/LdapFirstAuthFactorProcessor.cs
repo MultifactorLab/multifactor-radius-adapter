@@ -3,7 +3,9 @@
 //https://github.com/MultifactorLab/multifactor-radius-adapter/blob/main/LICENSE.md
 
 using MultiFactor.Radius.Adapter.Configuration;
+using MultiFactor.Radius.Adapter.Configuration.Core;
 using MultiFactor.Radius.Adapter.Core;
+using MultiFactor.Radius.Adapter.Core.Radius;
 using MultiFactor.Radius.Adapter.Services;
 using MultiFactor.Radius.Adapter.Services.Ldap;
 using Serilog;
@@ -17,11 +19,11 @@ namespace MultiFactor.Radius.Adapter.Server.FirstAuthFactorProcessing
     /// </summary>
     public class LdapFirstAuthFactorProcessor : IFirstAuthFactorProcessor
     {
-        private readonly ServiceConfiguration _serviceConfiguration;
+        private readonly IServiceConfiguration _serviceConfiguration;
         private readonly LdapService _ldapService;
         private readonly ILogger _logger;
 
-        public LdapFirstAuthFactorProcessor(ServiceConfiguration serviceConfiguration,
+        public LdapFirstAuthFactorProcessor(IServiceConfiguration serviceConfiguration,
             LdapService ldapService,
             ILogger logger)
         {
@@ -32,7 +34,7 @@ namespace MultiFactor.Radius.Adapter.Server.FirstAuthFactorProcessing
 
         public AuthenticationSource AuthenticationSource => AuthenticationSource.ActiveDirectory | AuthenticationSource.Ldap;
 
-        public async Task<PacketCode> ProcessFirstAuthFactorAsync(PendingRequest request, ClientConfiguration clientConfig)
+        public async Task<PacketCode> ProcessFirstAuthFactorAsync(PendingRequest request, IClientConfiguration clientConfig)
         {
             var userName = request.UserName;
 

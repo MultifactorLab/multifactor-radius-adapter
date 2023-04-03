@@ -4,6 +4,7 @@
 
 using LdapForNet;
 using MultiFactor.Radius.Adapter.Configuration;
+using MultiFactor.Radius.Adapter.Configuration.Core;
 using MultiFactor.Radius.Adapter.Core;
 using MultiFactor.Radius.Adapter.Core.Services.Ldap;
 using MultiFactor.Radius.Adapter.Server;
@@ -24,7 +25,7 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.UserGroupsGetters
     {
         public AuthenticationSource AuthenticationSource => AuthenticationSource.ActiveDirectory | AuthenticationSource.None;
 
-        public async Task<IReadOnlyList<string>> GetAllUserGroupsAsync(ClientConfiguration clientConfig, 
+        public async Task<IReadOnlyList<string>> GetAllUserGroupsAsync(IClientConfiguration clientConfig, 
             LdapConnectionAdapter connectionAdapter,
             LdapDomain domain, string userDn)
         {

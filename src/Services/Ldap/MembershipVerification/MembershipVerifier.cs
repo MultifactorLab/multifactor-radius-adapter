@@ -5,6 +5,7 @@
 using LdapForNet;
 using Microsoft.VisualBasic;
 using MultiFactor.Radius.Adapter.Configuration;
+using MultiFactor.Radius.Adapter.Configuration.Core;
 using MultiFactor.Radius.Adapter.Core.Exceptions;
 using MultiFactor.Radius.Adapter.Core.Services.Ldap;
 using MultiFactor.Radius.Adapter.Server;
@@ -41,7 +42,7 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.MembershipVerification
         /// <summary>
         /// Validate user membership within Active Directory Domain without password authentication
         /// </summary>
-        public async Task<ComplexMembershipVerificationResult> VerifyMembershipAsync(PendingRequest request, ClientConfiguration clientConfig)
+        public async Task<ComplexMembershipVerificationResult> VerifyMembershipAsync(PendingRequest request, IClientConfiguration clientConfig)
         {
             if (request is null) throw new ArgumentNullException(nameof(request));
             if (clientConfig is null) throw new ArgumentNullException(nameof(clientConfig));
@@ -91,7 +92,7 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.MembershipVerification
             return result;
         }
 
-        private MembershipVerificationResult VerifyMembership(ClientConfiguration clientConfig,
+        private MembershipVerificationResult VerifyMembership(IClientConfiguration clientConfig,
             LdapProfile profile,
             string domain,
             LdapIdentity user)

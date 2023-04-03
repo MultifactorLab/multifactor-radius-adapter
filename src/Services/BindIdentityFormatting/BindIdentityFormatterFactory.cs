@@ -3,6 +3,7 @@
 //https://github.com/MultifactorLab/multifactor-radius-adapter/blob/main/LICENSE.md
 
 using MultiFactor.Radius.Adapter.Configuration;
+using MultiFactor.Radius.Adapter.Configuration.Core;
 using MultiFactor.Radius.Adapter.Core;
 using System;
 using System.Collections.Generic;
@@ -19,7 +20,7 @@ namespace MultiFactor.Radius.Adapter.Services.BindIdentityFormatting
             _formatters = formatters ?? throw new ArgumentNullException(nameof(formatters));
         }
 
-        public IBindIdentityFormatter CreateFormatter(ClientConfiguration clientConfiguration)
+        public IBindIdentityFormatter CreateFormatter(IClientConfiguration clientConfiguration)
         {
             switch (clientConfiguration.FirstFactorAuthenticationSource)
             {

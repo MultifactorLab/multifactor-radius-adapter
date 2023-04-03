@@ -1,4 +1,5 @@
 ﻿using MultiFactor.Radius.Adapter.Configuration;
+using MultiFactor.Radius.Adapter.Configuration.Core;
 using Serilog.Core;
 using Serilog.Events;
 using System;
@@ -26,7 +27,7 @@ namespace MultiFactor.Radius.Adapter.Logging.Enrichers
         /// </summary>
         /// <param name="clientConfiguration">Client configuration.</param>
         /// <returns></returns>
-        public static CorrelationIdLogEventEnricher Create(ClientConfiguration clientConfiguration)
+        public static CorrelationIdLogEventEnricher Create(IClientConfiguration clientConfiguration)
         {
             if (clientConfiguration is null) throw new ArgumentNullException(nameof(clientConfiguration));
 

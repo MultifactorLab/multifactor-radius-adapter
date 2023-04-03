@@ -4,6 +4,7 @@
 
 using LdapForNet;
 using MultiFactor.Radius.Adapter.Configuration;
+using MultiFactor.Radius.Adapter.Configuration.Core;
 using MultiFactor.Radius.Adapter.Core.Exceptions;
 using MultiFactor.Radius.Adapter.Core.Services.Ldap;
 using MultiFactor.Radius.Adapter.Server;
@@ -46,7 +47,7 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap
         /// <summary>
         /// Verify User Name, Password, User Status and Policy against Active Directory
         /// </summary>
-        public async Task<bool> VerifyCredential(string userName, string password, string ldapUri, PendingRequest request, ClientConfiguration clientConfig)
+        public async Task<bool> VerifyCredential(string userName, string password, string ldapUri, PendingRequest request, IClientConfiguration clientConfig)
         {
             if (string.IsNullOrEmpty(userName))
             {

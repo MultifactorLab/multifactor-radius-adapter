@@ -2,12 +2,18 @@
 //Please see licence at 
 //https://github.com/MultifactorLab/multifactor-radius-adapter/blob/main/LICENSE.md
 
+using Microsoft.AspNetCore.Mvc.Formatters;
+using MultiFactor.Radius.Adapter.Configuration.ConfigurationLoading;
+using MultiFactor.Radius.Adapter.Configuration.Core;
+using MultiFactor.Radius.Adapter.Configuration.Features.RandomWaiterFeature;
 using MultiFactor.Radius.Adapter.Core;
 using MultiFactor.Radius.Adapter.Server;
 using NetTools;
 using Serilog;
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Configuration;
 using System.IO;
 using System.Linq;
@@ -16,52 +22,32 @@ using System.Text.RegularExpressions;
 
 namespace MultiFactor.Radius.Adapter.Configuration
 {
-    /// <summary>
-    /// Service configuration
-    /// </summary>
-    public class ServiceConfiguration
+    public class ServiceConfiguration : IServiceConfiguration, IServiceConfigurationBuilder
     {
         /// <summary>
         /// List of clients with identification by client ip
         /// </summary>
-        private IDictionary<IPAddress, ClientConfiguration> _ipClients;
+        private readonly IDictionary<IPAddress, IClientConfiguration> _ipClients = new Dictionary<IPAddress, IClientConfiguration>();
 
         /// <summary>
         /// List of clients with identification by NAS-Identifier attr
         /// </summary>
-        private IDictionary<string, ClientConfiguration> _nasIdClients;
+        private readonly IDictionary<string, IClientConfiguration> _nasIdClients = new Dictionary<string, IClientConfiguration>();
 
-        public IReadOnlyList<ClientConfiguration> Clients => _ipClients
+        public IReadOnlyList<IClientConfiguration> Clients => _ipClients
             .Select(x => x.Value)
             .Concat(_nasIdClients.Select(x => x.Value))
             .ToList()
             .AsReadOnly();
 
-        public ServiceConfiguration()
+        private ServiceConfiguration() { }
+
+        public static IServiceConfigurationBuilder CreateBuilder()
         {
-            _ipClients = new Dictionary<IPAddress, ClientConfiguration>();
-            _nasIdClients = new Dictionary<string, ClientConfiguration>();
+            return new ServiceConfiguration();
         }
 
-        private void AddClient(string nasId, ClientConfiguration client)
-        {
-            if (_nasIdClients.ContainsKey(nasId))
-            {
-                throw new ConfigurationErrorsException($"Client with NAS-Identifier '{nasId} already added from {_nasIdClients[nasId].Name}.config");
-            }
-            _nasIdClients.Add(nasId, client);
-        }
-
-        private void AddClient(IPAddress ip, ClientConfiguration client)
-        {
-            if (_ipClients.ContainsKey(ip))
-            {
-                throw new ConfigurationErrorsException($"Client with IP {ip} already added from {_ipClients[ip].Name}.config");
-            }
-            _ipClients.Add(ip, client);
-        }
-
-        public ClientConfiguration GetClient(string nasIdentifier)
+        public IClientConfiguration GetClient(string nasIdentifier)
         {
             if (SingleClientMode)
             {
@@ -78,7 +64,7 @@ namespace MultiFactor.Radius.Adapter.Configuration
             return null;
         }
 
-        public ClientConfiguration GetClient(IPAddress ip)
+        public IClientConfiguration GetClient(IPAddress ip)
         {
             if (SingleClientMode)
             {
@@ -91,7 +77,7 @@ namespace MultiFactor.Radius.Adapter.Configuration
             return null;
         }
 
-        public ClientConfiguration GetClient(PendingRequest request)
+        public IClientConfiguration GetClient(PendingRequest request)
         {
             if (request == null)
             {
@@ -101,521 +87,85 @@ namespace MultiFactor.Radius.Adapter.Configuration
             {
                 return _ipClients[IPAddress.Any];
             }
+
             var nasId = request.RequestPacket.NasIdentifier;
             var ip = request.RemoteEndpoint.Address;
+
             return GetClient(nasId) ?? GetClient(ip);
         }
 
         /// <summary>
-        /// Unique AD domains from all client confs
-        /// </summary>
-        public IList<string> GetAllActiveDirectoryDomains()
-        {
-            var ret = new List<string>();
-
-            var part1 = _ipClients.Values
-                .Where(client => client.FirstFactorAuthenticationSource == AuthenticationSource.ActiveDirectory)
-                .Select(client => client.ActiveDirectoryDomain);
-
-            var part2 = _nasIdClients.Values
-                .Where(client => client.FirstFactorAuthenticationSource == AuthenticationSource.ActiveDirectory)
-                .Select(client => client.ActiveDirectoryDomain);
-
-            foreach(var part in part1.Union(part2))
-            {
-                var domains = part.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
-                foreach(var domain in domains)
-                {
-                    ret.Add(domain.Trim());
-                }
-            }
-
-            return ret.Distinct().ToArray();
-        }
-
-        #region common configuration settings
-
-        /// <summary>
         /// This service RADIUS UDP Server endpoint
         /// </summary>
-        public IPEndPoint ServiceServerEndpoint { get; set; }
+        public IPEndPoint ServiceServerEndpoint { get; private set; }
 
         /// <summary>
         /// Multifactor API URL
         /// </summary>
-        public string ApiUrl { get; set; }
+        public string ApiUrl { get; private set; }
         /// <summary>
         /// HTTP Proxy for API
         /// </summary>
-        public string ApiProxy { get; set; }
+        public string ApiProxy { get; private set; }
 
-        /// <summary>
-        /// Logging level
-        /// </summary>
-        public string LogLevel { get; set; }
+        public bool SingleClientMode { get; private set; }
+        public RandomWaiterConfig InvalidCredentialDelay { get; private set; }
 
-        public bool SingleClientMode { get; set; }
-        public RandomWaiterConfig InvalidCredentialDelay { get; set; }
-
-        #endregion
-
-        public static string GetLogFormat()
+        public IServiceConfigurationBuilder SetApiProxy(string val)
         {
-            var appSettings = ConfigurationManager.AppSettings;
-            return appSettings?["logging-format"];
+            ApiProxy = val;
+            return this;
         }
 
-        /// <summary>
-        /// Read and load settings from appSettings configuration section
-        /// </summary>
-        public static ServiceConfiguration Load(IRadiusDictionary dictionary, ILogger logger)
+        public IServiceConfigurationBuilder SetApiUrl(string val)
         {
-            if (dictionary == null)
-            {
-                throw new ArgumentNullException(nameof(dictionary));
-            }
-
-            var serviceConfig = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
-
-            var appSettingsSection = serviceConfig.GetSection("appSettings");
-            var appSettings = appSettingsSection as AppSettingsSection;
-
-            var serviceServerEndpointSetting    = appSettings.Settings["adapter-server-endpoint"]?.Value;
-            var apiUrlSetting                   = appSettings.Settings["multifactor-api-url"]?.Value;
-            var apiProxySetting                 = appSettings.Settings[Constants.Configuration.MultifactorApiProxy]?.Value;
-            var logLevelSetting                 = appSettings.Settings["logging-level"]?.Value;
-
-            if (string.IsNullOrEmpty(serviceServerEndpointSetting))
-            {
-                throw new Exception("Configuration error: 'adapter-server-endpoint' element not found");
-            }
-            if (string.IsNullOrEmpty(apiUrlSetting))
-            {
-                throw new Exception("Configuration error: 'multifactor-api-url' element not found");
-            }
-            if (string.IsNullOrEmpty(logLevelSetting))
-            {
-                throw new Exception("Configuration error: 'logging-level' element not found");
-            }
-            if (!TryParseIPEndPoint(serviceServerEndpointSetting, out var serviceServerEndpoint))
-            {
-                throw new Exception("Configuration error: Can't parse 'adapter-server-endpoint' value");
-            }
-
-            var configuration = new ServiceConfiguration
-            {
-                ServiceServerEndpoint = serviceServerEndpoint,
-                ApiUrl = apiUrlSetting,
-                ApiProxy = apiProxySetting,
-                LogLevel = logLevelSetting
-            };
-
-            try
-            {
-                configuration.InvalidCredentialDelay = RandomWaiterConfig.Create(appSettings.Settings[Constants.Configuration.PciDss.InvalidCredentialDelay]?.Value);
-            }
-            catch
-            {
-                throw new Exception($"Configuration error: Can't parse '{Constants.Configuration.PciDss.InvalidCredentialDelay}' value");
-            }
-
-            var clientConfigFilesPath = Path.GetDirectoryName(AppDomain.CurrentDomain.BaseDirectory) + Path.DirectorySeparatorChar + "clients";
-            var clientConfigFiles = Directory.Exists(clientConfigFilesPath) ? Directory.GetFiles(clientConfigFilesPath, "*.config") : new string[0];
-
-            if (clientConfigFiles.Length == 0)
-            {
-                //check if we have anything
-                var ffas = appSettings.Settings["first-factor-authentication-source"]?.Value;
-                if (ffas == null)
-                {
-                    throw new ConfigurationErrorsException("No clients' config files found. Use one of the *.template files in the /clients folder to customize settings. Then save this file as *.config.");
-                }
-
-                var radiusReplyAttributesSection = ConfigurationManager.GetSection("RadiusReply") as RadiusReplyAttributesSection;
-                var userNameTransformRulesSection = ConfigurationManager.GetSection("UserNameTransformRules") as UserNameTransformRulesSection;
-
-                var client = Load("General", dictionary, appSettings, radiusReplyAttributesSection, userNameTransformRulesSection);
-                configuration.AddClient(IPAddress.Any, client);
-                configuration.SingleClientMode = true;
-            }
-            else
-            {
-                foreach (var clientConfigFile in clientConfigFiles)
-                {
-                    logger.Information($"Loading client configuration from {Path.GetFileName(clientConfigFile)}");
-
-                    var customConfigFileMap = new ExeConfigurationFileMap();
-                    customConfigFileMap.ExeConfigFilename = clientConfigFile;
-
-                    var config = ConfigurationManager.OpenMappedExeConfiguration(customConfigFileMap, ConfigurationUserLevel.None);
-                    var clientSettings = (AppSettingsSection)config.GetSection("appSettings");
-                    var radiusReplyAttributesSection = config.GetSection("RadiusReply") as RadiusReplyAttributesSection;
-                    var userNameTransformRulesSection = config.GetSection("UserNameTransformRules") as UserNameTransformRulesSection;
-
-                    var client = Load(Path.GetFileNameWithoutExtension(clientConfigFile), dictionary, clientSettings, radiusReplyAttributesSection, userNameTransformRulesSection);
-
-                    var radiusClientNasIdentifierSetting    = clientSettings.Settings["radius-client-nas-identifier"]?.Value;
-                    var radiusClientIpSetting               = clientSettings.Settings["radius-client-ip"]?.Value;
-
-                    if (!string.IsNullOrEmpty(radiusClientNasIdentifierSetting))
-                    {
-                        configuration.AddClient(radiusClientNasIdentifierSetting, client);
-                        continue;
-                    }
-
-                    if (string.IsNullOrEmpty(radiusClientIpSetting))
-                    {
-                        throw new Exception("Configuration error: Either 'radius-client-nas-identifier' or 'radius-client-ip' must be configured");
-                    }
-
-                    var elements = radiusClientIpSetting.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
-                    foreach(var element in elements)
-                    {
-                        foreach (var ip in IPAddressRange.Parse(element))
-                        {
-                            configuration.AddClient(ip, client);
-                        }
-                    }
-                }
-            }
-
-            return configuration;
+            ApiUrl = val;
+            return this;
         }
 
-        public static ClientConfiguration Load(string name, IRadiusDictionary dictionary, AppSettingsSection appSettings, RadiusReplyAttributesSection radiusReplyAttributesSection, UserNameTransformRulesSection userNameTransformRulesSection)
+        public IServiceConfigurationBuilder AddClient(string nasId, IClientConfiguration client)
         {
-            var radiusSharedSecretSetting = appSettings.Settings["radius-shared-secret"]?.Value;
-            var firstFactorAuthenticationSourceSettings = appSettings.Settings["first-factor-authentication-source"]?.Value;
-            var bypassSecondFactorWhenApiUnreachableSetting = appSettings.Settings["bypass-second-factor-when-api-unreachable"]?.Value;
-            var privacyModeSetting = appSettings.Settings["privacy-mode"]?.Value;
-            var multiFactorApiKeySetting = appSettings.Settings["multifactor-nas-identifier"]?.Value;
-            var multiFactorApiSecretSetting = appSettings.Settings["multifactor-shared-secret"]?.Value;
-
-            var serviceAccountUserSetting = appSettings.Settings["service-account-user"]?.Value;
-            var serviceAccountPasswordSetting = appSettings.Settings["service-account-password"]?.Value;
-
-            if (string.IsNullOrEmpty(firstFactorAuthenticationSourceSettings))
+            if (_nasIdClients.ContainsKey(nasId))
             {
-                throw new Exception("Configuration error: 'first-factor-authentication-source' element not found");
+                throw new ConfigurationErrorsException($"Client with NAS-Identifier '{nasId} already added from {_nasIdClients[nasId].Name}.config");
             }
 
-            if (string.IsNullOrEmpty(radiusSharedSecretSetting))
-            {
-                throw new Exception("Configuration error: 'radius-shared-secret' element not found");
-            }
-
-            if (string.IsNullOrEmpty(multiFactorApiKeySetting))
-            {
-                throw new Exception("Configuration error: 'multifactor-nas-identifier' element not found");
-            }
-            if (string.IsNullOrEmpty(multiFactorApiSecretSetting))
-            {
-                throw new Exception("Configuration error: 'multifactor-shared-secret' element not found");
-            }
-
-            if (!Enum.TryParse<AuthenticationSource>(firstFactorAuthenticationSourceSettings, out var firstFactorAuthenticationSource))
-            {
-                throw new Exception("Configuration error: Can't parse 'first-factor-authentication-source' value. Must be one of: ActiveDirectory, Radius, None");
-            }
-
-            var configuration = new ClientConfiguration
-            {
-                Name = name,
-                RadiusSharedSecret = radiusSharedSecretSetting,
-                FirstFactorAuthenticationSource = firstFactorAuthenticationSource,
-                MultifactorApiKey = multiFactorApiKeySetting,
-                MultiFactorApiSecret = multiFactorApiSecretSetting,
-            };
-
-            if (bypassSecondFactorWhenApiUnreachableSetting != null)
-            {
-                if (bool.TryParse(bypassSecondFactorWhenApiUnreachableSetting, out var bypassSecondFactorWhenApiUnreachable))
-                {
-                    configuration.BypassSecondFactorWhenApiUnreachable = bypassSecondFactorWhenApiUnreachable;
-                }
-            }
-
-            try
-            {
-                configuration.PrivacyMode = PrivacyModeDescriptor.Create(privacyModeSetting);
-            }
-            catch
-            {
-                throw new Exception("Configuration error: Can't parse 'privacy-mode' value. Must be one of: Full, None, Partial:Field1,Field2");
-            }
-            
-            switch (configuration.FirstFactorAuthenticationSource)
-            {
-                case AuthenticationSource.ActiveDirectory:
-                case AuthenticationSource.Ldap:
-                    LoadActiveDirectoryAuthenticationSourceSettings(configuration, appSettings, true);
-                    break;
-                case AuthenticationSource.Radius:
-                    LoadRadiusAuthenticationSourceSettings(configuration, appSettings);
-                    LoadActiveDirectoryAuthenticationSourceSettings(configuration, appSettings, false);
-                    break;
-                case AuthenticationSource.None:
-                    LoadActiveDirectoryAuthenticationSourceSettings(configuration, appSettings, false);
-                    break;
-            }
-
-            LoadRadiusReplyAttributes(configuration, dictionary, radiusReplyAttributesSection);
-
-            if (userNameTransformRulesSection?.Members != null)
-            {
-                foreach (var member in userNameTransformRulesSection?.Members)
-                {
-                    if (member is UserNameTransformRulesElement rule)
-                    {
-                        configuration.UserNameTransformRules.Add(rule);
-                    }
-                }
-            }
-
-            configuration.ServiceAccountUser = serviceAccountUserSetting ?? string.Empty;
-            configuration.ServiceAccountPassword = serviceAccountPasswordSetting ?? string.Empty;
-
-            ReadSignUpGroupsSettings(configuration, appSettings);
-            ReadAuthenticationCacheSettings(appSettings, configuration);
-
-            var callindStationIdAttr = appSettings.Settings[Constants.Configuration.CallingStationIdAttribute]?.Value;
-            if (!string.IsNullOrWhiteSpace(callindStationIdAttr))
-            {
-                configuration.CallingStationIdVendorAttribute = callindStationIdAttr;
-            }
-
-            return configuration;
+            _nasIdClients.Add(nasId, client);
+            return this;
         }
 
-        private static void ReadAuthenticationCacheSettings(AppSettingsSection appSettings, ClientConfiguration configuration)
+        public IServiceConfigurationBuilder AddClient(IPAddress ip, IClientConfiguration client)
         {
-            bool minimalMatching = false;
-            try
+            if (_ipClients.ContainsKey(ip))
             {
-                minimalMatching = bool.Parse(appSettings.Settings[Constants.Configuration.AuthenticationCacheMinimalMatching]?.Value ?? bool.FalseString);
-            }
-            catch
-            {
-                throw new Exception($"Configuration error: Can't parse '{Constants.Configuration.AuthenticationCacheMinimalMatching}' value");
+                throw new ConfigurationErrorsException($"Client with IP {ip} already added from {_ipClients[ip].Name}.config");
             }
 
-            try
-            { 
-                configuration.AuthenticationCacheLifetime = AuthenticatedClientCacheConfig
-                    .Create(appSettings.Settings[Constants.Configuration.AuthenticationCacheLifetime]?.Value, minimalMatching);
-            }
-            catch
-            {
-                throw new Exception($"Configuration error: Can't parse '{appSettings.Settings[Constants.Configuration.AuthenticationCacheLifetime]?.Value}' value");
-            }
+            _ipClients.Add(ip, client);
+            return this;
         }
 
-        private static void LoadActiveDirectoryAuthenticationSourceSettings(ClientConfiguration configuration, AppSettingsSection appSettings, bool mandatory)
+        public IServiceConfigurationBuilder SetInvalidCredentialDelay(RandomWaiterConfig config)
         {
-            var activeDirectoryDomainSetting                        = appSettings.Settings["active-directory-domain"]?.Value;
-            var ldapBindDnSetting                                   = appSettings.Settings["ldap-bind-dn"]?.Value;
-            var activeDirectoryGroupSetting                         = appSettings.Settings["active-directory-group"]?.Value;
-            var activeDirectory2FaGroupSetting                      = appSettings.Settings["active-directory-2fa-group"]?.Value;
-            var activeDirectory2FaBypassGroupSetting                = appSettings.Settings["active-directory-2fa-bypass-group"]?.Value;
-            var useActiveDirectoryUserPhoneSetting                  = appSettings.Settings["use-active-directory-user-phone"]?.Value;
-            var useActiveDirectoryMobileUserPhoneSetting            = appSettings.Settings["use-active-directory-mobile-user-phone"]?.Value;
-            var phoneAttributes                                     = appSettings.Settings["phone-attribute"]?.Value; 
-            var loadActiveDirectoryNestedGroupsSettings             = appSettings.Settings["load-active-directory-nested-groups"]?.Value;
-            var useUpnAsIdentitySetting                             = appSettings.Settings["use-upn-as-identity"]?.Value;
-
-            if (mandatory && string.IsNullOrEmpty(activeDirectoryDomainSetting))
-            {
-                throw new Exception("Configuration error: 'active-directory-domain' element not found");
-            }
-
-            //legacy settings for general phone attribute usage
-            if (bool.TryParse(useActiveDirectoryUserPhoneSetting, out var useActiveDirectoryUserPhone))
-            {
-                if (useActiveDirectoryUserPhone)
-                {
-                    configuration.PhoneAttributes.Add("telephoneNumber");
-                }
-            }
-
-            //legacy settings for mobile phone attribute usage
-            if (bool.TryParse(useActiveDirectoryMobileUserPhoneSetting, out var useActiveDirectoryMobileUserPhone))
-            {
-                if (useActiveDirectoryMobileUserPhone)
-                {
-                    configuration.PhoneAttributes.Add("mobile");
-                }
-            }
-
-            if (!string.IsNullOrEmpty(phoneAttributes))
-            {
-                var attrs = phoneAttributes.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries).Select(attr => attr.Trim()).ToList();
-                configuration.PhoneAttributes = attrs;
-            }
-
-            if (!string.IsNullOrEmpty(loadActiveDirectoryNestedGroupsSettings))
-            {
-                if (!bool.TryParse(loadActiveDirectoryNestedGroupsSettings, out var loadActiveDirectoryNestedGroups))
-                {
-                    throw new Exception("Configuration error: Can't parse 'load-active-directory-nested-groups' value");
-                }
-
-                configuration.LoadActiveDirectoryNestedGroups = loadActiveDirectoryNestedGroups;
-            }
-
-            configuration.ActiveDirectoryDomain = activeDirectoryDomainSetting;
-            configuration.LdapBindDn = ldapBindDnSetting;
-
-            if (!string.IsNullOrEmpty(activeDirectoryGroupSetting))
-            {
-                configuration.ActiveDirectoryGroup = activeDirectoryGroupSetting.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
-            }
-
-            if (!string.IsNullOrEmpty(activeDirectory2FaGroupSetting))
-            {
-                configuration.ActiveDirectory2FaGroup = activeDirectory2FaGroupSetting.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
-            }
-
-            if (!string.IsNullOrEmpty(activeDirectory2FaBypassGroupSetting))
-            {
-                configuration.ActiveDirectory2FaBypassGroup = activeDirectory2FaBypassGroupSetting.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
-            }
-
-            if (bool.TryParse(useUpnAsIdentitySetting, out var useUpnAsIdentity))
-            {
-                configuration.UseUpnAsIdentity = useUpnAsIdentity;
-            }
+            InvalidCredentialDelay = config;
+            return this;
         }
 
-        private static void LoadRadiusAuthenticationSourceSettings(ClientConfiguration configuration, AppSettingsSection appSettings)
+        public IServiceConfigurationBuilder SetServiceServerEndpoint(IPEndPoint endpoint)
         {
-            var serviceClientEndpointSetting        = appSettings.Settings["adapter-client-endpoint"]?.Value;
-            var npsEndpointSetting                  = appSettings.Settings["nps-server-endpoint"]?.Value;
-
-            if (string.IsNullOrEmpty(serviceClientEndpointSetting))
-            {
-                throw new Exception("Configuration error: 'adapter-client-endpoint' element not found");
-            }
-            if (string.IsNullOrEmpty(npsEndpointSetting))
-            {
-                throw new Exception("Configuration error: 'nps-server-endpoint' element not found");
-            }
-
-            if (!TryParseIPEndPoint(serviceClientEndpointSetting, out var serviceClientEndpoint))
-            {
-                throw new Exception("Configuration error: Can't parse 'adapter-client-endpoint' value");
-            }
-            if (!TryParseIPEndPoint(npsEndpointSetting, out var npsEndpoint))
-            {
-                throw new Exception("Configuration error: Can't parse 'nps-server-endpoint' value");
-            }
-
-            configuration.ServiceClientEndpoint = serviceClientEndpoint;
-            configuration.NpsServerEndpoint = npsEndpoint;
+            ServiceServerEndpoint = endpoint;
+            return this;
         }
 
-        private static void LoadRadiusReplyAttributes(ClientConfiguration configuration, IRadiusDictionary dictionary, RadiusReplyAttributesSection radiusReplyAttributesSection)
+        public IServiceConfigurationBuilder IsSingleClientMode(bool single)
         {
-            var replyAttributes = new Dictionary<string, List<RadiusReplyAttributeValue>>();
-
-            if (radiusReplyAttributesSection != null)
-            {
-                foreach (var member in radiusReplyAttributesSection.Members)
-                {
-                    var attribute = member as RadiusReplyAttributeElement;
-                    var radiusAttribute = dictionary.GetAttribute(attribute.Name);
-                    if (radiusAttribute == null)
-                    {
-                        throw new ConfigurationErrorsException($"Unknown attribute '{attribute.Name}' in RadiusReply configuration element, please see dictionary");
-                    }
-                    
-                    if (!replyAttributes.ContainsKey(attribute.Name))
-                    {
-                        replyAttributes.Add(attribute.Name, new List<RadiusReplyAttributeValue>());
-                    }
-
-                    if (!string.IsNullOrEmpty(attribute.From))
-                    {
-                        replyAttributes[attribute.Name].Add(new RadiusReplyAttributeValue(attribute.From));
-                    }
-                    else
-                    {
-                        try
-                        {
-                            var value = ParseRadiusReplyAttributeValue(radiusAttribute, attribute.Value);
-                            replyAttributes[attribute.Name].Add(new RadiusReplyAttributeValue(value, attribute.When));
-                        }
-                        catch (Exception ex)
-                        {
-                            throw new ConfigurationErrorsException($"Error while parsing attribute '{radiusAttribute.Name}' with {radiusAttribute.Type} value '{attribute.Value}' in RadiusReply configuration element: {ex.Message}");
-                        }
-                    }
-                }
-            }
-
-            configuration.RadiusReplyAttributes = replyAttributes;
+            SingleClientMode = single;
+            return this;
         }
 
-        private static object ParseRadiusReplyAttributeValue(DictionaryAttribute attribute, string value)
+        public IServiceConfiguration Build()
         {
-            if (string.IsNullOrEmpty(value))
-            {
-                throw new Exception("Value must be specified");
-            }
-            
-            switch (attribute.Type)
-            {
-                case DictionaryAttribute.TYPE_STRING:
-                case DictionaryAttribute.TYPE_TAGGED_STRING:
-                    return value;
-                case DictionaryAttribute.TYPE_INTEGER:
-                case DictionaryAttribute.TYPE_TAGGED_INTEGER:
-                    return uint.Parse(value);
-                case DictionaryAttribute.TYPE_IPADDR:
-                    return IPAddress.Parse(value);
-                case DictionaryAttribute.TYPE_OCTET:
-                    return Utils.StringToByteArray(value);
-                default:
-                    throw new Exception($"Unknown type {attribute.Type}");
-            }
-        }
-
-        private static bool TryParseIPEndPoint(string text, out IPEndPoint ipEndPoint)
-        {
-            Uri uri;
-            ipEndPoint = null;
-
-            if (Uri.TryCreate(string.Concat("tcp://", text), UriKind.Absolute, out uri))
-            {
-                ipEndPoint = new IPEndPoint(IPAddress.Parse(uri.Host), uri.Port < 0 ? 0 : uri.Port);
-                return true;
-            }
-            if (Uri.TryCreate(string.Concat("tcp://", string.Concat("[", text, "]")), UriKind.Absolute, out uri))
-            {
-                ipEndPoint = new IPEndPoint(IPAddress.Parse(uri.Host), uri.Port < 0 ? 0 : uri.Port);
-                return true;
-            }
-
-            throw new FormatException($"Failed to parse {text} to IPEndPoint");
-        }
-
-        private static void ReadSignUpGroupsSettings(ClientConfiguration configuration, AppSettingsSection appSettings)
-        {
-            const string signUpGroupsRegex = @"([\wа-я\s\-]+)(\s*;\s*([\wа-я\s\-]+)*)*";
-            const string signUpGroupsToken = "sign-up-groups";
-
-            var signUpGroupsSettings = appSettings.Settings[signUpGroupsToken]?.Value;
-            if (string.IsNullOrWhiteSpace(signUpGroupsSettings))
-            {
-                configuration.SignUpGroups = string.Empty;
-                return;
-            }
-
-            if (!Regex.IsMatch(signUpGroupsSettings, signUpGroupsRegex, RegexOptions.IgnoreCase))
-            {
-                throw new Exception($"Invalid group names. Please check 'sign-up-groups' settings property and fix syntax errors.");
-            }
-
-            configuration.SignUpGroups = signUpGroupsSettings;
+            return this;
         }
     }
 }

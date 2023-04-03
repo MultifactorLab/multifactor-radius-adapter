@@ -3,7 +3,8 @@
 //https://github.com/MultifactorLab/multifactor-radius-adapter/blob/main/LICENSE.md
 
 using MultiFactor.Radius.Adapter.Configuration;
-using MultiFactor.Radius.Adapter.Core;
+using MultiFactor.Radius.Adapter.Configuration.Core;
+using MultiFactor.Radius.Adapter.Core.Radius;
 using MultiFactor.Radius.Adapter.Server.FirstAuthFactorProcessing;
 using MultiFactor.Radius.Adapter.Services.Ldap;
 using MultiFactor.Radius.Adapter.Services.MultiFactorApi;
@@ -21,7 +22,7 @@ namespace MultiFactor.Radius.Adapter.Server
     /// </summary>
     public class RadiusRouter
     {
-        private ServiceConfiguration _serviceConfiguration;
+        private IServiceConfiguration _serviceConfiguration;
         private ILogger _logger;
         private IRadiusPacketParser _packetParser;
         private MultiFactorApiClient _multifactorApiClient;
@@ -32,7 +33,7 @@ namespace MultiFactor.Radius.Adapter.Server
 
         private DateTime _startedAt = DateTime.Now;
 
-        public RadiusRouter(ServiceConfiguration serviceConfiguration, 
+        public RadiusRouter(IServiceConfiguration serviceConfiguration, 
             IRadiusPacketParser packetParser,
             MultiFactorApiClient multifactorApiClient,
             FirstAuthFactorProcessorProvider firstAuthFactorProcessorProvider,
@@ -47,7 +48,7 @@ namespace MultiFactor.Radius.Adapter.Server
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
-        public async Task HandleRequest(PendingRequest request, ClientConfiguration clientConfig)
+        public async Task HandleRequest(PendingRequest request, IClientConfiguration clientConfig)
         {
             try
             {
@@ -124,7 +125,7 @@ namespace MultiFactor.Radius.Adapter.Server
             }
         }
 
-        private void ProcessUserNameTransformRules(PendingRequest request, ClientConfiguration clientConfig)
+        private void ProcessUserNameTransformRules(PendingRequest request, IClientConfiguration clientConfig)
         {
             var userName = request.UserName;
             if (string.IsNullOrEmpty(userName)) return;
@@ -148,7 +149,7 @@ namespace MultiFactor.Radius.Adapter.Server
         /// <summary>
         /// Authenticate request at MultiFactor with user-name only
         /// </summary>
-        private async Task<PacketCode> ProcessSecondAuthenticationFactor(PendingRequest request, ClientConfiguration clientConfig)
+        private async Task<PacketCode> ProcessSecondAuthenticationFactor(PendingRequest request, IClientConfiguration clientConfig)
         {
             var userName = request.UserName;
 

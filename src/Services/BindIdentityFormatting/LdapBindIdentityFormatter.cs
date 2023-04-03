@@ -3,6 +3,7 @@
 //https://github.com/MultifactorLab/multifactor-radius-adapter/blob/main/LICENSE.md
 
 using MultiFactor.Radius.Adapter.Configuration;
+using MultiFactor.Radius.Adapter.Configuration.Core;
 using MultiFactor.Radius.Adapter.Core;
 using MultiFactor.Radius.Adapter.Core.Services.Ldap;
 using MultiFactor.Radius.Adapter.Services.Ldap;
@@ -12,9 +13,9 @@ namespace MultiFactor.Radius.Adapter.Services.BindIdentityFormatting
 {
     public class LdapBindIdentityFormatter : IBindIdentityFormatter
     {
-        private readonly ClientConfiguration _clientConfig;
+        private readonly IClientConfiguration _clientConfig;
 
-        public LdapBindIdentityFormatter(ClientConfiguration clientConfig)
+        public LdapBindIdentityFormatter(IClientConfiguration clientConfig)
         {
             _clientConfig = clientConfig ?? throw new ArgumentNullException(nameof(clientConfig));
         }

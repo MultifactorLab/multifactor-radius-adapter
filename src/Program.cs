@@ -1,11 +1,15 @@
 using System;
 using System.Configuration;
-using System.IO;
 using System.Text;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using MultiFactor.Radius.Adapter.Configuration;
+using MultiFactor.Radius.Adapter.Configuration.ConfigurationLoading;
+using MultiFactor.Radius.Adapter.Configuration.Core;
 using MultiFactor.Radius.Adapter.Core;
+using MultiFactor.Radius.Adapter.Core.Radius;
+using MultiFactor.Radius.Adapter.Core.Radius.Attributes;
+using MultiFactor.Radius.Adapter.Logging;
 using MultiFactor.Radius.Adapter.Server;
 using MultiFactor.Radius.Adapter.Server.FirstAuthFactorProcessing;
 using MultiFactor.Radius.Adapter.Services;
@@ -20,6 +24,7 @@ using Serilog.Core;
 using Serilog.Events;
 using Serilog.Formatting;
 using Serilog.Formatting.Compact;
+using static MultiFactor.Radius.Adapter.Core.Literals;
 
 namespace MultiFactor.Radius.Adapter
 {
@@ -56,38 +61,34 @@ namespace MultiFactor.Radius.Adapter
                     host.StopAsync();
                 }
             }
-        }
+        }        
 
         private static void ConfigureServices(IServiceCollection services)
         {
-            var path = Path.GetDirectoryName(AppDomain.CurrentDomain.BaseDirectory) + Path.DirectorySeparatorChar;
+            services.AddSingleton(prov => ApplicationVariablesFactory.Create());
+            services.AddSingleton<IAppConfigurationProvider, DefaultAppConfigurationProvider>();
 
-            //create logging
-            var levelSwitch = new LoggingLevelSwitch(LogEventLevel.Information);
-            var loggerConfiguration = new LoggerConfiguration()
-                .MinimumLevel.ControlledBy(levelSwitch)
-                .Enrich.FromLogContext();
+            services.AddSingleton<SerilogLoggerFactory>();
+            services.AddSingleton(prov => 
+            {
+                var logger = prov.GetRequiredService<SerilogLoggerFactory>().CreateLogger();
+                Log.Logger = logger;
+                return logger;
+            });
 
-            ConfigureLogging(path, loggerConfiguration);
+            services.AddSingleton<IRadiusDictionary, RadiusDictionary>();
 
-            Log.Logger = loggerConfiguration.CreateLogger();
-
-            //load radius attributes dictionary
-            var dictionaryPath = path + "content" + Path.DirectorySeparatorChar + "radius.dictionary";
-            var dictionary = new RadiusDictionary(dictionaryPath, Log.Logger);
-
-            //init configuration
-            var configuration = ServiceConfiguration.Load(dictionary, Log.Logger);
-            configuration.Validate();
-
-            SetLogLevel(configuration.LogLevel, levelSwitch);
-
-            services.AddSingleton(Log.Logger);
-            services.AddSingleton(configuration);
+            services.AddSingleton<ServiceConfigurationFactory>();
+            services.AddSingleton<ClientConfigurationFactory>();
+            services.AddSingleton(prov =>
+            {
+                var config = prov.GetRequiredService<ServiceConfigurationFactory>().CreateConfig();
+                config.Validate();
+                return config;
+            });
 
             services.AddMemoryCache();
 
-            services.AddSingleton<IRadiusDictionary>(dictionary);
             services.AddSingleton<IRadiusPacketParser, RadiusPacketParser>();
             services.AddSingleton<CacheService>();
             services.AddSingleton<MultiFactorApiClient>();
@@ -110,71 +111,10 @@ namespace MultiFactor.Radius.Adapter
             services.AddSingleton<LdapService>();
             services.AddSingleton<MembershipVerifier>();
 
-            services.AddSingleton(prov => new RandomWaiter(prov.GetRequiredService<ServiceConfiguration>().InvalidCredentialDelay));
+            services.AddSingleton(prov => new RandomWaiter(prov.GetRequiredService<IServiceConfiguration>().InvalidCredentialDelay));
             services.AddSingleton<AuthenticatedClientCache>();
 
             services.AddHostedService<ServerHost>();
-        }
-
-        private static void ConfigureLogging(string path, LoggerConfiguration loggerConfiguration)
-        {
-            var formatter = GetLogFormatter();
-            if (formatter != null)
-            {
-                loggerConfiguration
-                    .WriteTo.Console(formatter)
-                    .WriteTo.File(formatter, $"{path}logs{Path.DirectorySeparatorChar}log-.txt", rollingInterval: RollingInterval.Day);
-            }
-            else
-            {
-                var consoleTemplate = GetStringSettingOrNull(Core.Constants.Configuration.ConsoleLogOutputTemplate);
-                if (consoleTemplate != null)
-                {
-                    loggerConfiguration.WriteTo.Console(outputTemplate: consoleTemplate);
-                }
-                else
-                {
-                    loggerConfiguration.WriteTo.Console();
-                }
-
-                var fileTemplate = GetStringSettingOrNull(Core.Constants.Configuration.FileLogOutputTemplate);
-                if (fileTemplate != null)
-                {
-                    loggerConfiguration.WriteTo.File(
-                        $"{path}logs{Path.DirectorySeparatorChar}log-.txt", 
-                        rollingInterval: RollingInterval.Day,
-                        outputTemplate: fileTemplate);
-                }
-                else
-                {
-                    loggerConfiguration.WriteTo.File(
-                        $"{path}logs{Path.DirectorySeparatorChar}log-.txt", 
-                        rollingInterval: RollingInterval.Day);
-                }
-            }
-        }
-
-        private static void SetLogLevel(string level, LoggingLevelSwitch levelSwitch)
-        {
-            switch (level)
-            {
-                case "Verbose":
-                    levelSwitch.MinimumLevel = LogEventLevel.Verbose;
-                    break;
-                case "Debug":
-                    levelSwitch.MinimumLevel = LogEventLevel.Debug;
-                    break;
-                case "Info":
-                    levelSwitch.MinimumLevel = LogEventLevel.Information;
-                    break;
-                case "Warn":
-                    levelSwitch.MinimumLevel = LogEventLevel.Warning;
-                    break;
-                case "Error":
-                    levelSwitch.MinimumLevel = LogEventLevel.Error;
-                    break;
-            }
-            Log.Logger.Information($"Logging level: {levelSwitch.MinimumLevel}");
         }
 
         private static string FlattenException(Exception exception)
@@ -196,24 +136,6 @@ namespace MultiFactor.Radius.Adapter
             }
 
             return stringBuilder.ToString();
-        }
-
-        private static ITextFormatter GetLogFormatter()
-        {
-            var format = ServiceConfiguration.GetLogFormat();
-            switch (format?.ToLower())
-            {
-                case "json":
-                    return new RenderedCompactJsonFormatter();
-                default:
-                    return null;
-            }
-        }
-
-        private static string GetStringSettingOrNull(string key)
-        {
-            var value = ConfigurationManager.AppSettings[key];
-            return string.IsNullOrWhiteSpace(value) ? null : value;
         }
     }
 }

@@ -1,11 +1,12 @@
 ﻿using System.Linq;
 using System.Text;
+using MultiFactor.Radius.Adapter.Configuration.Core;
 
 namespace MultiFactor.Radius.Adapter.Configuration
 {
     public static class ServiceConfigurationExtensions
     {
-        public static void Validate(this ServiceConfiguration serviceConfiguration)
+        public static void Validate(this IServiceConfiguration serviceConfiguration)
         {
             var sources = new[] { AuthenticationSource.Radius, AuthenticationSource.None };
 

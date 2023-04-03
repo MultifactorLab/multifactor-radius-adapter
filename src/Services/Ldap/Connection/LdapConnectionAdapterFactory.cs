@@ -3,6 +3,7 @@
 //https://github.com/MultifactorLab/multifactor-radius-adapter/blob/main/LICENSE.md
 
 using MultiFactor.Radius.Adapter.Configuration;
+using MultiFactor.Radius.Adapter.Configuration.Core;
 using MultiFactor.Radius.Adapter.Services.BindIdentityFormatting;
 using MultiFactor.Radius.Adapter.Services.Ldap.Connection.Exceptions;
 using Serilog;
@@ -22,7 +23,7 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.Connection
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
         
-        public async Task<LdapConnectionAdapter> CreateAdapterAsTechnicalAccAsync(string domain, ClientConfiguration clientConfig)
+        public async Task<LdapConnectionAdapter> CreateAdapterAsTechnicalAccAsync(string domain, IClientConfiguration clientConfig)
         {
             try
             {
@@ -35,7 +36,7 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.Connection
             }
         }
 
-        private void BuildConfig(LdapConnectionAdapterConfigBuilder builder, ClientConfiguration clientConfig)
+        private void BuildConfig(LdapConnectionAdapterConfigBuilder builder, IClientConfiguration clientConfig)
         {
             builder
                 .SetBindIdentityFormatter(_bindIdentityFormatterFactory.CreateFormatter(clientConfig))

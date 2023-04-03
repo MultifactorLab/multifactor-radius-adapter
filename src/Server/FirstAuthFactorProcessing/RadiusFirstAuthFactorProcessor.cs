@@ -3,7 +3,9 @@
 //https://github.com/MultifactorLab/multifactor-radius-adapter/blob/main/LICENSE.md
 
 using MultiFactor.Radius.Adapter.Configuration;
+using MultiFactor.Radius.Adapter.Configuration.Core;
 using MultiFactor.Radius.Adapter.Core;
+using MultiFactor.Radius.Adapter.Core.Radius;
 using MultiFactor.Radius.Adapter.Services.ActiveDirectory.MembershipVerification;
 using MultiFactor.Radius.Adapter.Services.Ldap.MembershipVerification;
 using Serilog;
@@ -32,7 +34,7 @@ namespace MultiFactor.Radius.Adapter.Server.FirstAuthFactorProcessing
 
         public AuthenticationSource AuthenticationSource => AuthenticationSource.Radius | AuthenticationSource.ActiveDirectory;
 
-        public async Task<PacketCode> ProcessFirstAuthFactorAsync(PendingRequest request, ClientConfiguration clientConfig)
+        public async Task<PacketCode> ProcessFirstAuthFactorAsync(PendingRequest request, IClientConfiguration clientConfig)
         {
             var code = await ProcessRadiusAuthAsync(request, clientConfig);
             if (code != PacketCode.AccessAccept) return code;
@@ -46,7 +48,7 @@ namespace MultiFactor.Radius.Adapter.Server.FirstAuthFactorProcessing
             return handler.GetDecision();
         }
 
-        private async Task<PacketCode> ProcessRadiusAuthAsync(PendingRequest request, ClientConfiguration clientConfig)
+        private async Task<PacketCode> ProcessRadiusAuthAsync(PendingRequest request, IClientConfiguration clientConfig)
         {
             try
             {

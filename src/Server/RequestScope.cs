@@ -22,21 +22,22 @@
 //OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 //SOFTWARE.
 
-using MultiFactor.Radius.Adapter.Core;
 using System;
 using System.Net;
 using MultiFactor.Radius.Adapter.Configuration;
+using MultiFactor.Radius.Adapter.Configuration.Core;
+using MultiFactor.Radius.Adapter.Core.Radius;
 
 namespace MultiFactor.Radius.Adapter.Server
 {
     public class RequestScope
     {
-        public ClientConfiguration ClientConfiguration { get; }
+        public IClientConfiguration ClientConfiguration { get; }
         public IPEndPoint RemoteEndpoint { get; }
         public IPEndPoint ProxyEndpoint { get; }
         public IRadiusPacket Packet { get; }
 
-        public RequestScope(ClientConfiguration clientConfiguration, IPEndPoint remoteEndpoint, IPEndPoint proxyEndpoint, IRadiusPacket packet)
+        public RequestScope(IClientConfiguration clientConfiguration, IPEndPoint remoteEndpoint, IPEndPoint proxyEndpoint, IRadiusPacket packet)
         {
             ClientConfiguration = clientConfiguration ?? throw new ArgumentNullException(nameof(clientConfiguration));
             RemoteEndpoint = remoteEndpoint ?? throw new ArgumentNullException(nameof(remoteEndpoint));

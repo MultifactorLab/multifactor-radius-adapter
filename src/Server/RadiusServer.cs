@@ -22,7 +22,6 @@
 //OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 //SOFTWARE.
 
-using MultiFactor.Radius.Adapter.Core;
 using Serilog;
 using System;
 using System.Linq;
@@ -38,6 +37,9 @@ using MultiFactor.Radius.Adapter.Configuration;
 using Serilog.Context;
 using MultiFactor.Radius.Adapter.Logging.Enrichers;
 using MultiFactor.Radius.Adapter.Logging;
+using MultiFactor.Radius.Adapter.Core.Radius;
+using MultiFactor.Radius.Adapter.Core.Radius.Attributes;
+using MultiFactor.Radius.Adapter.Configuration.Core;
 
 namespace MultiFactor.Radius.Adapter.Server
 {
@@ -51,7 +53,7 @@ namespace MultiFactor.Radius.Adapter.Server
         private readonly ILogger _logger;
         private RadiusRouter _router;
         private readonly RandomWaiter _waiter;
-        private ServiceConfiguration _serviceConfiguration;
+        private IServiceConfiguration _serviceConfiguration;
 
         private CacheService _cacheService;
 
@@ -64,7 +66,7 @@ namespace MultiFactor.Radius.Adapter.Server
         /// <summary>
         /// Create a new server on endpoint with packet handler repository
         /// </summary>
-        public RadiusServer(ServiceConfiguration serviceConfiguration, 
+        public RadiusServer(IServiceConfiguration serviceConfiguration, 
             IRadiusDictionary dictionary, IRadiusPacketParser radiusPacketParser, 
             CacheService cacheService, RadiusRouter router,
             RandomWaiter waiter,
@@ -183,7 +185,7 @@ namespace MultiFactor.Radius.Adapter.Server
                 remoteEndpoint = sourceEndpoint;
             }
 
-            ClientConfiguration clientConfiguration = null;
+            IClientConfiguration clientConfiguration = null;
             if (RadiusPacketNasIdentifierParser.TryParse(packetBytes, out var nasIdentifier))
             {
                 clientConfiguration = _serviceConfiguration.GetClient(nasIdentifier);

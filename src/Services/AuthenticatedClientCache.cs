@@ -4,6 +4,7 @@ using System;
 using System.Collections.Concurrent;
 using static System.Collections.Specialized.BitVector32;
 using System.Dynamic;
+using MultiFactor.Radius.Adapter.Configuration.Core;
 
 namespace MultiFactor.Radius.Adapter.Services
 {
@@ -17,7 +18,7 @@ namespace MultiFactor.Radius.Adapter.Services
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
-        public bool TryHitCache(string callingStationId, string userName, ClientConfiguration clientConfiguration)
+        public bool TryHitCache(string callingStationId, string userName, IClientConfiguration clientConfiguration)
         {
             if (!clientConfiguration.AuthenticationCacheLifetime.Enabled) return false;
 
@@ -45,7 +46,7 @@ namespace MultiFactor.Radius.Adapter.Services
             return false;
         }
 
-        public void SetCache(string callingStationId, string userName, ClientConfiguration clientConfiguration)
+        public void SetCache(string callingStationId, string userName, IClientConfiguration clientConfiguration)
         {
             if (!clientConfiguration.AuthenticationCacheLifetime.Enabled || 
                 !clientConfiguration.AuthenticationCacheLifetime.MinimalMatching && string.IsNullOrEmpty(callingStationId)) return;     

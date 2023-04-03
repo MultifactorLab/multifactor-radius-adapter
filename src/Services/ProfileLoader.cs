@@ -1,5 +1,6 @@
 ﻿using LdapForNet;
 using MultiFactor.Radius.Adapter.Configuration;
+using MultiFactor.Radius.Adapter.Configuration.Core;
 using MultiFactor.Radius.Adapter.Core.Exceptions;
 using MultiFactor.Radius.Adapter.Core.Services.Ldap;
 using MultiFactor.Radius.Adapter.Services.Ldap;
@@ -25,7 +26,7 @@ namespace MultiFactor.Radius.Adapter.Services
             _logger = logger ?? throw new System.ArgumentNullException(nameof(logger));
         }
 
-        public async Task<LdapProfile> LoadAsync(ClientConfiguration clientConfig, 
+        public async Task<LdapProfile> LoadAsync(IClientConfiguration clientConfig, 
             LdapConnectionAdapter connAdapter, 
             LdapDomain domain, LdapIdentity user)
         {

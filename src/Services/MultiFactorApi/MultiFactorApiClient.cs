@@ -4,14 +4,19 @@
 
 
 using MultiFactor.Radius.Adapter.Configuration;
+using MultiFactor.Radius.Adapter.Configuration.Core;
+using MultiFactor.Radius.Adapter.Configuration.Features.PrivacyModeFeature;
 using MultiFactor.Radius.Adapter.Core;
 using MultiFactor.Radius.Adapter.Core.Http;
+using MultiFactor.Radius.Adapter.Core.Radius;
+using MultiFactor.Radius.Adapter.Core.Serialization;
 using MultiFactor.Radius.Adapter.Server;
 using Serilog;
 using System;
 using System.Linq;
 using System.Net;
 using System.Text;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
@@ -22,18 +27,18 @@ namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi
     /// </summary>
     public class MultiFactorApiClient
     {
-        private ServiceConfiguration _serviceConfiguration;
+        private IServiceConfiguration _serviceConfiguration;
         private readonly AuthenticatedClientCache _authenticatedClientCache;
         private ILogger _logger;
 
-        public MultiFactorApiClient(ServiceConfiguration serviceConfiguration, AuthenticatedClientCache authenticatedClientCache, ILogger logger)
+        public MultiFactorApiClient(IServiceConfiguration serviceConfiguration, AuthenticatedClientCache authenticatedClientCache, ILogger logger)
         {
             _serviceConfiguration = serviceConfiguration ?? throw new ArgumentNullException(nameof(serviceConfiguration));
             _authenticatedClientCache = authenticatedClientCache ?? throw new ArgumentNullException(nameof(authenticatedClientCache));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
-        public async Task<PacketCode> CreateSecondFactorRequest(PendingRequest request, ClientConfiguration clientConfig)
+        public async Task<PacketCode> CreateSecondFactorRequest(PendingRequest request, IClientConfiguration clientConfig)
         {
             var userName = request.UserName;
             var displayName = request.DisplayName;
@@ -152,7 +157,7 @@ namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi
             }
         }
 
-        public async Task<PacketCode> Challenge(PendingRequest request, ClientConfiguration clientConfig, string userName, string answer, string state)
+        public async Task<PacketCode> Challenge(PendingRequest request, IClientConfiguration clientConfig, string userName, string answer, string state)
         {
             var url = _serviceConfiguration.ApiUrl + "/access/requests/ra/challenge";
             var payload = new
@@ -183,7 +188,7 @@ namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi
             }
         }
 
-        private async Task<MultiFactorAccessRequest> SendRequest(string url, object payload, ClientConfiguration clientConfiguration)
+        private async Task<MultiFactorAccessRequest> SendRequest(string url, object payload, IClientConfiguration clientConfiguration)
         {
             try
             {
@@ -193,7 +198,7 @@ namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi
 
                 _logger.Debug("Sending request to API: {@payload}", payload);
 
-                var json = JsonConvert.SerializeObject(payload);
+                var json = JsonSerializer.Serialize(payload, SerializerOptions.JsonSerializerOptions);
                 var requestData = Encoding.UTF8.GetBytes(json);
                 byte[] responseData = null;
 
@@ -211,7 +216,7 @@ namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi
                         if (!WebProxyFactory.TryCreateWebProxy(_serviceConfiguration.ApiProxy, out var webProxy))
                         {
                             _logger.Error("Unable to initialize WebProxy: '{pr:l}'", _serviceConfiguration.ApiProxy);
-                            throw new Exception($"Unable to initialize WebProxy. Please, check whether '{Constants.Configuration.MultifactorApiProxy}' URI is valid.");
+                            throw new Exception($"Unable to initialize WebProxy. Please, check whether '{Literals.Configuration.MultifactorApiProxy}' URI is valid.");
                         }
                         web.Proxy = webProxy;
                     }
@@ -220,7 +225,7 @@ namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi
                 }
 
                 json = Encoding.UTF8.GetString(responseData);
-                var response = JsonConvert.DeserializeObject<MultiFactorApiResponse<MultiFactorAccessRequest>>(json);
+                var response = JsonSerializer.Deserialize<MultiFactorApiResponse<MultiFactorAccessRequest>>(json, SerializerOptions.JsonSerializerOptions);
 
                 _logger.Debug("Received response from API: {@response}", response);
 
@@ -237,7 +242,7 @@ namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi
             }
         }
 
-        private PacketCode HandleException(Exception ex, string username, PendingRequest request, ClientConfiguration clientConfig)
+        private PacketCode HandleException(Exception ex, string username, PendingRequest request, IClientConfiguration clientConfig)
         {
             if (ex is MultifactorApiUnreachableException apiEx)
             {
@@ -281,7 +286,7 @@ namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi
             }
         }
 
-        private string GetPassCodeOrNull(PendingRequest request, ClientConfiguration clientConfiguration)
+        private string GetPassCodeOrNull(PendingRequest request, IClientConfiguration clientConfiguration)
         {
             //check static challenge
             var challenge = request.RequestPacket.TryGetChallenge();
