@@ -7,7 +7,6 @@ using MultiFactor.Radius.Adapter.Configuration;
 using MultiFactor.Radius.Adapter.Core;
 using MultiFactor.Radius.Adapter.Core.Http;
 using MultiFactor.Radius.Adapter.Server;
-using Newtonsoft.Json;
 using Serilog;
 using System;
 using System.Linq;
