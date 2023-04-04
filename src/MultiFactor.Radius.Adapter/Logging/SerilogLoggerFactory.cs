@@ -9,6 +9,7 @@ using Serilog.Events;
 using Serilog.Formatting.Compact;
 using Serilog.Formatting;
 using MultiFactor.Radius.Adapter.Core;
+using MultiFactor.Radius.Adapter.Core.Exceptions;
 
 namespace MultiFactor.Radius.Adapter.Logging
 {
@@ -44,7 +45,7 @@ namespace MultiFactor.Radius.Adapter.Logging
             var level = config.AppSettings.Settings["logging-level"]?.Value;
             if (string.IsNullOrWhiteSpace(level))
             {
-                throw new Exception("Configuration error: 'logging-level' element not found");
+                throw new InvalidConfigurationException("'logging-level' element not found");
             }
 
             SetLogLevel(level, levelSwitch);

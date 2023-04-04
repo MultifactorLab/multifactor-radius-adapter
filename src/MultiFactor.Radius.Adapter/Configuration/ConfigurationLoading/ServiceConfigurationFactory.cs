@@ -7,6 +7,7 @@ using MultiFactor.Radius.Adapter.Configuration.Features.RadiusReplyAttributeFeat
 using MultiFactor.Radius.Adapter.Configuration.Features.RandomWaiterFeature;
 using MultiFactor.Radius.Adapter.Configuration.Features.UserNameTransformFeature;
 using MultiFactor.Radius.Adapter.Core;
+using MultiFactor.Radius.Adapter.Core.Exceptions;
 using MultiFactor.Radius.Adapter.Core.Radius.Attributes;
 using NetTools;
 using Serilog;
@@ -50,15 +51,15 @@ namespace MultiFactor.Radius.Adapter.Configuration.ConfigurationLoading
 
             if (string.IsNullOrEmpty(serviceServerEndpointSetting))
             {
-                throw new Exception("Configuration error: 'adapter-server-endpoint' element not found");
+                throw new InvalidConfigurationException("'adapter-server-endpoint' element not found");
             }
             if (string.IsNullOrEmpty(apiUrlSetting))
             {
-                throw new Exception("Configuration error: 'multifactor-api-url' element not found");
+                throw new InvalidConfigurationException("'multifactor-api-url' element not found");
             }
             if (!IPEndPointFactory.TryParse(serviceServerEndpointSetting, out var serviceServerEndpoint))
             {
-                throw new Exception("Configuration error: Can't parse 'adapter-server-endpoint' value");
+                throw new InvalidConfigurationException("Can't parse 'adapter-server-endpoint' value");
             }
 
             var builder = ServiceConfiguration.CreateBuilder()
@@ -73,7 +74,7 @@ namespace MultiFactor.Radius.Adapter.Configuration.ConfigurationLoading
             }
             catch
             {
-                throw new Exception($"Configuration error: Can't parse '{Literals.Configuration.PciDss.InvalidCredentialDelay}' value");
+                throw new InvalidConfigurationException($"Can't parse '{Literals.Configuration.PciDss.InvalidCredentialDelay}' value");
             }
 
             var clientConfigs = _clientConfigurationsProvider.GetClientConfigurations();
@@ -83,7 +84,7 @@ namespace MultiFactor.Radius.Adapter.Configuration.ConfigurationLoading
                 var ffas = rootConfig.AppSettings.Settings["first-factor-authentication-source"]?.Value;
                 if (ffas == null)
                 {
-                    throw new ConfigurationErrorsException("No clients' config files found. Use one of the *.template files in the /clients folder to customize settings. Then save this file as *.config.");
+                    throw new InvalidConfigurationException("No clients' config files found. Use one of the *.template files in the /clients folder to customize settings. Then save this file as *.config.");
                 }
 
                 var radiusReplyAttributesSection = rootConfig.GetSection("RadiusReply") as RadiusReplyAttributesSection;
@@ -120,7 +121,7 @@ namespace MultiFactor.Radius.Adapter.Configuration.ConfigurationLoading
 
                 if (string.IsNullOrEmpty(radiusClientIpSetting))
                 {
-                    throw new Exception("Configuration error: Either 'radius-client-nas-identifier' or 'radius-client-ip' must be configured");
+                    throw new InvalidConfigurationException("Either 'radius-client-nas-identifier' or 'radius-client-ip' must be configured");
                 }
 
                 var elements = radiusClientIpSetting.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries);

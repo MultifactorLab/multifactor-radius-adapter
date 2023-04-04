@@ -16,12 +16,17 @@ namespace MultiFactor.Radius.Adapter.Configuration.ConfigurationLoading
 
             if (Uri.TryCreate(string.Concat("tcp://", text), UriKind.Absolute, out uri))
             {
-                ipEndPoint = new IPEndPoint(IPAddress.Parse(uri.Host), uri.Port < 0 ? 0 : uri.Port);
+                if (!IPAddress.TryParse(uri.Host, out var parsed)) return false;
+
+                ipEndPoint = new IPEndPoint(parsed, uri.Port < 0 ? 0 : uri.Port);
                 return true;
             }
+
             if (Uri.TryCreate(string.Concat("tcp://", string.Concat("[", text, "]")), UriKind.Absolute, out uri))
             {
-                ipEndPoint = new IPEndPoint(IPAddress.Parse(uri.Host), uri.Port < 0 ? 0 : uri.Port);
+                if (!IPAddress.TryParse(uri.Host, out var parsed)) return false;
+
+                ipEndPoint = new IPEndPoint(parsed, uri.Port < 0 ? 0 : uri.Port);
                 return true;
             }
 

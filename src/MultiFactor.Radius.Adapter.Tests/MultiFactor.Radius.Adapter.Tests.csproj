@@ -9,11 +9,65 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="Assets\default-root.config" />
+    <None Remove="Assets\root-empty-adapter-server-endpoint.config" />
+    <None Remove="Assets\root-empty-first-factor-authentication-source.config" />
+    <None Remove="Assets\root-empty-logging-level.config" />
+    <None Remove="Assets\root-empty-multifactor-api-url.config" />
+    <None Remove="Assets\root-empty-multifactor-nas-identifier.config" />
+    <None Remove="Assets\root-empty-multifactor-shared-secret.config" />
+    <None Remove="Assets\root-minimal-multi.config" />
+    <None Remove="Assets\root-minimal-single.config" />
+    <None Remove="Assets\root-wrong-adapter-server-endpoint.config" />
+    <None Remove="Assets\root-wrong-invalid-credential-delay.config" />
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="Assets\default-root.config">
+    <Content Include="Assets\root-empty-multifactor-nas-identifier.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <Content Include="Assets\root-empty-multifactor-shared-secret.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <Content Include="Assets\root-wrong-invalid-credential-delay.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <Content Include="Assets\root-wrong-adapter-server-endpoint.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <Content Include="Assets\root-empty-adapter-server-endpoint.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <Content Include="Assets\root-minimal-multi.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <Content Include="Assets\root-empty-multifactor-api-url.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <Content Include="Assets\root-empty-logging-level.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <Content Include="Assets\root-empty-first-factor-authentication-source.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <Content Include="Assets\root-minimal-single.config">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
@@ -41,7 +95,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="Assets\clients\with-nas-identifier.config">
+    <None Update="Assets\clients\client-empty-identifier-and-ip.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Assets\clients\client-minimal.config">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>

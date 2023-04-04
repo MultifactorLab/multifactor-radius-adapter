@@ -8,6 +8,7 @@ using MultiFactor.Radius.Adapter.Configuration.Features.PrivacyModeFeature;
 using MultiFactor.Radius.Adapter.Configuration.Features.RadiusReplyAttributeFeature;
 using MultiFactor.Radius.Adapter.Configuration.Features.UserNameTransformFeature;
 using MultiFactor.Radius.Adapter.Core;
+using MultiFactor.Radius.Adapter.Core.Exceptions;
 using MultiFactor.Radius.Adapter.Core.Radius.Attributes;
 using MultiFactor.Radius.Adapter.Server;
 using System;
@@ -42,26 +43,26 @@ namespace MultiFactor.Radius.Adapter.Configuration.ConfigurationLoading
 
             if (string.IsNullOrEmpty(firstFactorAuthenticationSourceSettings))
             {
-                throw new Exception("Configuration error: 'first-factor-authentication-source' element not found");
+                throw new InvalidConfigurationException("'first-factor-authentication-source' element not found");
             }
 
             if (string.IsNullOrEmpty(radiusSharedSecretSetting))
             {
-                throw new Exception("Configuration error: 'radius-shared-secret' element not found");
+                throw new InvalidConfigurationException("'radius-shared-secret' element not found");
             }
 
             if (string.IsNullOrEmpty(multiFactorApiKeySetting))
             {
-                throw new Exception("Configuration error: 'multifactor-nas-identifier' element not found");
+                throw new InvalidConfigurationException("'multifactor-nas-identifier' element not found");
             }
             if (string.IsNullOrEmpty(multiFactorApiSecretSetting))
             {
-                throw new Exception("Configuration error: 'multifactor-shared-secret' element not found");
+                throw new InvalidConfigurationException("'multifactor-shared-secret' element not found");
             }
 
             if (!Enum.TryParse<AuthenticationSource>(firstFactorAuthenticationSourceSettings, out var firstFactorAuthenticationSource))
             {
-                throw new Exception("Configuration error: Can't parse 'first-factor-authentication-source' value. Must be one of: ActiveDirectory, Radius, None");
+                throw new InvalidConfigurationException("Can't parse 'first-factor-authentication-source' value. Must be one of: ActiveDirectory, Radius, None");
             }
 
             var builder = ClientConfiguration.CreateBuilder(name, radiusSharedSecretSetting, firstFactorAuthenticationSource, 
@@ -81,7 +82,7 @@ namespace MultiFactor.Radius.Adapter.Configuration.ConfigurationLoading
             }
             catch
             {
-                throw new Exception("Configuration error: Can't parse 'privacy-mode' value. Must be one of: Full, None, Partial:Field1,Field2");
+                throw new InvalidConfigurationException("Can't parse 'privacy-mode' value. Must be one of: Full, None, Partial:Field1,Field2");
             }
 
             switch (builder.Build().FirstFactorAuthenticationSource)
@@ -142,7 +143,7 @@ namespace MultiFactor.Radius.Adapter.Configuration.ConfigurationLoading
 
             if (mandatory && string.IsNullOrEmpty(activeDirectoryDomainSetting))
             {
-                throw new Exception("Configuration error: 'active-directory-domain' element not found");
+                throw new InvalidConfigurationException("'active-directory-domain' element not found");
             }
 
             //legacy settings for general phone attribute usage
@@ -173,7 +174,7 @@ namespace MultiFactor.Radius.Adapter.Configuration.ConfigurationLoading
             {
                 if (!bool.TryParse(loadActiveDirectoryNestedGroupsSettings, out var loadActiveDirectoryNestedGroups))
                 {
-                    throw new Exception("Configuration error: Can't parse 'load-active-directory-nested-groups' value");
+                    throw new InvalidConfigurationException("Can't parse 'load-active-directory-nested-groups' value");
                 }
 
                 builder.SetLoadActiveDirectoryNestedGroups(loadActiveDirectoryNestedGroups);
@@ -210,20 +211,20 @@ namespace MultiFactor.Radius.Adapter.Configuration.ConfigurationLoading
 
             if (string.IsNullOrEmpty(serviceClientEndpointSetting))
             {
-                throw new Exception("Configuration error: 'adapter-client-endpoint' element not found");
+                throw new InvalidConfigurationException("'adapter-client-endpoint' element not found");
             }
             if (string.IsNullOrEmpty(npsEndpointSetting))
             {
-                throw new Exception("Configuration error: 'nps-server-endpoint' element not found");
+                throw new InvalidConfigurationException("'nps-server-endpoint' element not found");
             }
 
             if (!IPEndPointFactory.TryParse(serviceClientEndpointSetting, out var serviceClientEndpoint))
             {
-                throw new Exception("Configuration error: Can't parse 'adapter-client-endpoint' value");
+                throw new InvalidConfigurationException("Can't parse 'adapter-client-endpoint' value");
             }
             if (!IPEndPointFactory.TryParse(npsEndpointSetting, out var npsEndpoint))
             {
-                throw new Exception("Configuration error: Can't parse 'nps-server-endpoint' value");
+                throw new InvalidConfigurationException("Can't parse 'nps-server-endpoint' value");
             }
 
             builder.SetServiceClientEndpoint(serviceClientEndpoint);
@@ -244,7 +245,7 @@ namespace MultiFactor.Radius.Adapter.Configuration.ConfigurationLoading
 
             if (!Regex.IsMatch(signUpGroupsSettings, signUpGroupsRegex, RegexOptions.IgnoreCase))
             {
-                throw new Exception($"Invalid group names. Please check 'sign-up-groups' settings property and fix syntax errors.");
+                throw new InvalidConfigurationException($"Invalid group names. Please check 'sign-up-groups' settings property and fix syntax errors.");
             }
 
             builder.SetSignUpGroups(signUpGroupsSettings);
@@ -259,7 +260,7 @@ namespace MultiFactor.Radius.Adapter.Configuration.ConfigurationLoading
             }
             catch
             {
-                throw new Exception($"Configuration error: Can't parse '{Literals.Configuration.AuthenticationCacheMinimalMatching}' value");
+                throw new InvalidConfigurationException($"Can't parse '{Literals.Configuration.AuthenticationCacheMinimalMatching}' value");
             }
 
             try
@@ -269,7 +270,7 @@ namespace MultiFactor.Radius.Adapter.Configuration.ConfigurationLoading
             }
             catch
             {
-                throw new Exception($"Configuration error: Can't parse '{appSettings.Settings[Literals.Configuration.AuthenticationCacheLifetime]?.Value}' value");
+                throw new InvalidConfigurationException($"Can't parse '{appSettings.Settings[Literals.Configuration.AuthenticationCacheLifetime]?.Value}' value");
             }
         }
 
@@ -285,7 +286,7 @@ namespace MultiFactor.Radius.Adapter.Configuration.ConfigurationLoading
                     var radiusAttribute = dictionary.GetAttribute(attribute.Name);
                     if (radiusAttribute == null)
                     {
-                        throw new ConfigurationErrorsException($"Unknown attribute '{attribute.Name}' in RadiusReply configuration element, please see dictionary");
+                        throw new InvalidConfigurationException($"Unknown attribute '{attribute.Name}' in RadiusReply configuration element, please see dictionary");
                     }
 
                     if (!replyAttributes.ContainsKey(attribute.Name))
@@ -306,7 +307,7 @@ namespace MultiFactor.Radius.Adapter.Configuration.ConfigurationLoading
                         }
                         catch (Exception ex)
                         {
-                            throw new ConfigurationErrorsException($"Error while parsing attribute '{radiusAttribute.Name}' with {radiusAttribute.Type} value '{attribute.Value}' in RadiusReply configuration element: {ex.Message}");
+                            throw new InvalidConfigurationException($"Error while parsing attribute '{radiusAttribute.Name}' with {radiusAttribute.Type} value '{attribute.Value}' in RadiusReply configuration element: {ex.Message}");
                         }
                     }
                 }

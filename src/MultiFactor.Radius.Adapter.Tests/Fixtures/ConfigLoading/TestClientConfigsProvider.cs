@@ -15,10 +15,7 @@ namespace MultiFactor.Radius.Adapter.Tests.Fixtures.ConfigLoading
 
         public System.Configuration.Configuration[] GetClientConfigurations()
         {
-            var clientConfigFilesPath = GetFolderPath();
-            var clientConfigFiles = Directory.Exists(clientConfigFilesPath) 
-                ? Directory.GetFiles(clientConfigFilesPath, "*.config") 
-                : Array.Empty<string>();
+            var clientConfigFiles = GetFiles().ToArray();
             if (clientConfigFiles.Length == 0) return Array.Empty<System.Configuration.Configuration>();
 
             var list = new List<System.Configuration.Configuration>();
@@ -34,13 +31,25 @@ namespace MultiFactor.Radius.Adapter.Tests.Fixtures.ConfigLoading
             return list.ToArray();
         }
 
-        private string GetFolderPath()
+        private IEnumerable<string> GetFiles()
         {
-            if (!string.IsNullOrWhiteSpace(_options.ClientConfigsFolderPath))
+            if (_options.ClientConfigFilePaths != null && _options.ClientConfigFilePaths.Length != 0)
             {
-                return _options.ClientConfigsFolderPath;
+                foreach (var f in _options.ClientConfigFilePaths)
+                {
+                    if (File.Exists(f)) yield return f;
+                }
+
+                yield break;
             }
-            return "clients";
+
+            if (string.IsNullOrWhiteSpace(_options.ClientConfigsFolderPath)) yield break;
+            if (!Directory.Exists(_options.ClientConfigsFolderPath)) yield break;
+
+            foreach (var f in Directory.GetFiles(_options.ClientConfigsFolderPath, "*.config"))
+            {
+                yield return f;
+            }
         }
     }
 }

@@ -29,7 +29,7 @@
 
         public static string GetAssetPath(TestAssetLocation location, string fileName)
         {
-            if (!string.IsNullOrWhiteSpace(fileName)) return GetAssetPath(location);
+            if (string.IsNullOrWhiteSpace(fileName)) return GetAssetPath(location);
             return $"{GetAssetPath(location)}{Path.DirectorySeparatorChar}{fileName}";
         }
     }

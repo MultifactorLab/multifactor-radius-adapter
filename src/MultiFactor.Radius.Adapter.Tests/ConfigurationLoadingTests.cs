@@ -2,12 +2,12 @@ using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using MultiFactor.Radius.Adapter.Configuration.ConfigurationLoading;
 using MultiFactor.Radius.Adapter.Configuration.Core;
+using MultiFactor.Radius.Adapter.Core.Exceptions;
 using MultiFactor.Radius.Adapter.Tests.Fixtures;
 using MultiFactor.Radius.Adapter.Tests.Fixtures.ConfigLoading;
 
 namespace MultiFactor.Radius.Adapter.Tests
 {
-
     public class ConfigurationLoadingTests
     {
         [Fact]
@@ -19,8 +19,11 @@ namespace MultiFactor.Radius.Adapter.Tests
                 services.RemoveService<IClientConfigurationsProvider>().AddSingleton<IClientConfigurationsProvider, TestClientConfigsProvider>();
                 services.Configure<TestConfigProviderOptions>(x =>
                 {
-                    x.RootConfigFilePath = TestEnvironment.GetAssetPath("default-root.config");
-                    x.ClientConfigsFolderPath = TestEnvironment.GetAssetPath(TestAssetLocation.ClientsDirectory);
+                    x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-multi.config");
+                    x.ClientConfigFilePaths = new[]
+                    {
+                        TestEnvironment.GetAssetPath(TestAssetLocation.ClientsDirectory, "client-minimal.config")
+                    };
                 });
             });
 
@@ -28,11 +31,11 @@ namespace MultiFactor.Radius.Adapter.Tests
 
             conf.Should().NotBeNull();
             conf.SingleClientMode.Should().BeFalse();
-            conf.Clients.Should().NotBeNullOrEmpty().And.ContainSingle();
+            conf.Clients.Should().NotBeNullOrEmpty().And.ContainSingle(x => x.Name == "client-minimal");
         }
         
         [Fact]
-        public async Task ReadConfiguration_ShouldReturnSingleConfig()
+        public void ReadConfiguration_ShouldReturnSingleConfig()
         {
             var host = TestHostFactory.CreateHost(services =>
             {
@@ -40,13 +43,63 @@ namespace MultiFactor.Radius.Adapter.Tests
                 services.RemoveService<IClientConfigurationsProvider>().AddSingleton<IClientConfigurationsProvider, TestClientConfigsProvider>();
                 services.Configure<TestConfigProviderOptions>(x =>
                 {
-                    x.RootConfigFilePath = TestEnvironment.GetAssetPath("default-root.config");
-                    x.ClientConfigsFolderPath = TestEnvironment.GetAssetPath(TestAssetLocation.ClientsDirectory);
+                    x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-single.config");
                 });
             });
 
             var conf = host.Services.GetRequiredService<IServiceConfiguration>();
+            conf.Should().NotBeNull();
+            conf.SingleClientMode.Should().BeTrue();
+            conf.Clients.Should().NotBeEmpty().And.ContainSingle(x => x.Name == "General");
         }
         
+        [Theory]
+        [InlineData("root-empty-adapter-server-endpoint.config", "Configuration error: 'adapter-server-endpoint' element not found")]
+        [InlineData("root-wrong-adapter-server-endpoint.config", "Configuration error: Can't parse 'adapter-server-endpoint' value")]
+        [InlineData("root-empty-multifactor-api-url.config", "Configuration error: 'multifactor-api-url' element not found")]
+        [InlineData("root-empty-multifactor-nas-identifier.config", "Configuration error: 'multifactor-nas-identifier' element not found")]
+        [InlineData("root-empty-multifactor-shared-secret.config", "Configuration error: 'multifactor-shared-secret' element not found")]
+        [InlineData("root-empty-logging-level.config", "Configuration error: 'logging-level' element not found")]
+        [InlineData("root-empty-first-factor-authentication-source.config", "Configuration error: No clients' config files found. Use one of the *.template files in the /clients folder to customize settings. Then save this file as *.config.")]
+        [InlineData("root-wrong-invalid-credential-delay.config", "Configuration error: Can't parse 'invalid-credential-delay' value")]
+        public void ReadConfiguration_SingleModeAndInvalidSettings_ShouldThrow(string asset, string msg)
+        {
+            var host = TestHostFactory.CreateHost(services =>
+            {
+                services.RemoveService<IRootConfigurationProvider>().AddSingleton<IRootConfigurationProvider, TestRootConfigProvider>();
+                services.RemoveService<IClientConfigurationsProvider>().AddSingleton<IClientConfigurationsProvider, TestClientConfigsProvider>();
+                services.Configure<TestConfigProviderOptions>(x =>
+                {
+                    x.RootConfigFilePath = TestEnvironment.GetAssetPath(asset);
+                });
+            });
+
+            var act = () => host.Services.GetRequiredService<IServiceConfiguration>();
+
+            act.Should().Throw<InvalidConfigurationException>().WithMessage(msg);
+        }
+        
+        [Theory]
+        [InlineData("client-empty-identifier-and-ip.config", "Configuration error: Either 'radius-client-nas-identifier' or 'radius-client-ip' must be configured")]
+        public void ReadConfiguration_MultiModeAndInvalidSettings_ShouldThrow(string asset, string msg)
+        {
+            var host = TestHostFactory.CreateHost(services =>
+            {
+                services.RemoveService<IRootConfigurationProvider>().AddSingleton<IRootConfigurationProvider, TestRootConfigProvider>();
+                services.RemoveService<IClientConfigurationsProvider>().AddSingleton<IClientConfigurationsProvider, TestClientConfigsProvider>();
+                services.Configure<TestConfigProviderOptions>(x =>
+                {
+                    x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-multi.config");
+                    x.ClientConfigFilePaths = new[]
+                    {
+                        TestEnvironment.GetAssetPath(TestAssetLocation.ClientsDirectory, asset)
+                    };
+                });
+            });
+
+            var act = () => host.Services.GetRequiredService<IServiceConfiguration>();
+
+            act.Should().Throw<InvalidConfigurationException>().WithMessage(msg);
+        }
     }
 }
