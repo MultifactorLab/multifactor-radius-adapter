@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Configuration;
 using System.IO;
 using Microsoft.Extensions.DependencyInjection;
 using MultiFactor.Radius.Adapter.Configuration;
@@ -15,17 +14,20 @@ namespace MultiFactor.Radius.Adapter.Logging
 {
     public class SerilogLoggerFactory
     {
-        private readonly ApplicationVariables _variables;
-        private readonly IAppConfigurationProvider _appConfigurationProvider;
+        private readonly Lazy<System.Configuration.Configuration> _rootConfig;
 
-        public SerilogLoggerFactory(ApplicationVariables variables, IAppConfigurationProvider appConfigurationProvider)
+        private readonly ApplicationVariables _variables;
+        private readonly IRootConfigurationProvider _rootConfigurationProvider;
+
+        public SerilogLoggerFactory(ApplicationVariables variables, IRootConfigurationProvider rootConfigurationProvider)
         {
             if (variables is null)
             {
                 throw new ArgumentNullException(nameof(variables));
             }
             _variables = variables;
-            _appConfigurationProvider = appConfigurationProvider ?? throw new ArgumentNullException(nameof(appConfigurationProvider));
+            _rootConfigurationProvider = rootConfigurationProvider ?? throw new ArgumentNullException(nameof(rootConfigurationProvider));
+            _rootConfig = new Lazy<System.Configuration.Configuration>(() => _rootConfigurationProvider.GetRootConfiguration());
         }
 
         public ILogger CreateLogger()
@@ -38,12 +40,8 @@ namespace MultiFactor.Radius.Adapter.Logging
 
             ConfigureLogging(_variables.AppPath, loggerConfiguration);
 
-            var config = _appConfigurationProvider.GetRootConfiguration();
-
-            var appSettingsSection = config.GetSection("appSettings");
-            var appSettings = appSettingsSection as AppSettingsSection;
-
-            var level = appSettings.Settings["logging-level"]?.Value;
+            var config = _rootConfigurationProvider.GetRootConfiguration();
+            var level = config.AppSettings.Settings["logging-level"]?.Value;
             if (string.IsNullOrWhiteSpace(level))
             {
                 throw new Exception("Configuration error: 'logging-level' element not found");
@@ -55,7 +53,7 @@ namespace MultiFactor.Radius.Adapter.Logging
             return logger;
         }
 
-        private static void ConfigureLogging(string path, LoggerConfiguration loggerConfiguration)
+        private void ConfigureLogging(string path, LoggerConfiguration loggerConfiguration)
         {
             var formatter = GetLogFormatter();
             if (formatter != null)
@@ -116,9 +114,11 @@ namespace MultiFactor.Radius.Adapter.Logging
             Log.Logger.Information($"Logging level: {levelSwitch.MinimumLevel}");
         }
 
-        private static ITextFormatter GetLogFormatter()
+        private ITextFormatter GetLogFormatter()
         {
-            var format = ConfigurationManager.AppSettings?["logging-format"];
+            var root = _rootConfigurationProvider.GetRootConfiguration();
+            
+            var format = root.AppSettings.Settings["logging-format"]?.Value;
             switch (format?.ToLower())
             {
                 case "json":
@@ -128,9 +128,10 @@ namespace MultiFactor.Radius.Adapter.Logging
             }
         }
 
-        private static string GetStringSettingOrNull(string key)
+        private string GetStringSettingOrNull(string key)
         {
-            var value = ConfigurationManager.AppSettings[key];
+            var config = _rootConfigurationProvider.GetRootConfiguration();
+            var value = config.AppSettings.Settings[key]?.Value;
             return string.IsNullOrWhiteSpace(value) ? null : value;
         }
     }

@@ -4,9 +4,8 @@
 
 namespace MultiFactor.Radius.Adapter.Configuration.ConfigurationLoading
 {
-    public interface IAppConfigurationProvider
+    public interface IClientConfigurationsProvider
     {
-        System.Configuration.Configuration GetRootConfiguration();
-        System.Configuration.Configuration GetClientConfiguration(string path);
+        System.Configuration.Configuration[] GetClientConfigurations();
     }
 }

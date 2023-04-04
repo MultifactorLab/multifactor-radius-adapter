@@ -18,9 +18,14 @@
     <CodeAnalysisRuleSet />
   </PropertyGroup>
 
+	<PropertyGroup>
+		<ServerGarbageCollection>true</ServerGarbageCollection>
+	</PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="IPAddressRange" Version="4.2.0" />
     <PackageReference Include="LdapForNet" Version="2.7.11" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="7.0.1" />
     <PackageReference Include="Serilog" Version="2.10.0" />
     <PackageReference Include="Serilog.Formatting.Compact" Version="1.1.0" />
     <PackageReference Include="Serilog.Sinks.Console" Version="4.0.0" />
@@ -55,6 +60,11 @@
   <ItemGroup>
 	 <Folder Include="clients\" />
   </ItemGroup>
+
+    <ItemGroup>
+	    <InternalsVisibleTo Include="MultiFactor.Radius.Adapter.Tests" />
+    </ItemGroup>
+	
 	
   <ProjectExtensions><VisualStudio><UserProperties appsettings_1json__JsonSchema="" /></VisualStudio></ProjectExtensions>
 

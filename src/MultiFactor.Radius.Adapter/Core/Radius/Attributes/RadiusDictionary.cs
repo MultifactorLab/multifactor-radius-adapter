@@ -47,7 +47,7 @@ namespace MultiFactor.Radius.Adapter.Core.Radius.Attributes
         {
             _logger = logger;
 
-            using (var sr = new StreamReader($"{variables.AppPath}content{Path.DirectorySeparatorChar}radius.dictionary"))
+            using (var sr = new StreamReader($"{variables.AppPath}{Path.DirectorySeparatorChar}content{Path.DirectorySeparatorChar}radius.dictionary"))
             {
                 while (sr.Peek() >= 0)
                 {

@@ -9,7 +9,7 @@ namespace MultiFactor.Radius.Adapter.Core
         {
             return new ApplicationVariables
             {
-                AppPath = $"{Path.GetDirectoryName(AppDomain.CurrentDomain.BaseDirectory)}{Path.DirectorySeparatorChar}"
+                AppPath = $"{Path.GetDirectoryName(AppDomain.CurrentDomain.BaseDirectory)}"
             };
         }
     }
