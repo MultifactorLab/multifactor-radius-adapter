@@ -190,8 +190,15 @@ namespace MultiFactor.Radius.Adapter.Configuration.ConfigurationLoading
                 builder.SetLoadActiveDirectoryNestedGroups(loadActiveDirectoryNestedGroups);
             }
 
-            builder.SetActiveDirectoryDomain(activeDirectoryDomainSetting);
-            builder.SetLdapBindDn(ldapBindDnSetting);
+            if (!string.IsNullOrWhiteSpace(activeDirectoryDomainSetting))
+            {
+                builder.SetActiveDirectoryDomain(activeDirectoryDomainSetting);
+            }
+
+            if (!string.IsNullOrWhiteSpace(ldapBindDnSetting))
+            {
+                builder.SetLdapBindDn(ldapBindDnSetting);
+            }
 
             if (!string.IsNullOrEmpty(activeDirectoryGroupSetting))
             {
@@ -200,12 +207,12 @@ namespace MultiFactor.Radius.Adapter.Configuration.ConfigurationLoading
 
             if (!string.IsNullOrEmpty(activeDirectory2FaGroupSetting))
             {
-                builder.SetActiveDirectory2FaGroup(activeDirectory2FaGroupSetting.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries));
+                builder.AddActiveDirectory2FaGroups(activeDirectory2FaGroupSetting.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries));
             }
 
             if (!string.IsNullOrEmpty(activeDirectory2FaBypassGroupSetting))
             {
-                builder.SetActiveDirectory2FaBypassGroup(activeDirectory2FaBypassGroupSetting.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries));
+                builder.AddActiveDirectory2FaBypassGroups(activeDirectory2FaBypassGroupSetting.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries));
             }
 
             if (bool.TryParse(useUpnAsIdentitySetting, out var useUpnAsIdentity))

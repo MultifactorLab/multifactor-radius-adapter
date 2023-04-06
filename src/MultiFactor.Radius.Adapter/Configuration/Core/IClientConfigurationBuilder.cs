@@ -13,12 +13,19 @@ namespace MultiFactor.Radius.Adapter.Configuration.Core
         IClientConfigurationBuilder SetPrivacyMode(PrivacyModeDescriptor val);
         IClientConfigurationBuilder SetActiveDirectoryDomain(string val);
         IClientConfigurationBuilder SetLdapBindDn(string val);
+
         IClientConfigurationBuilder AddActiveDirectoryGroup(string val);
-        IClientConfigurationBuilder AddActiveDirectoryGroups(string[] values);
-        IClientConfigurationBuilder SetActiveDirectory2FaGroup(string[] val);
-        IClientConfigurationBuilder SetActiveDirectory2FaBypassGroup(string[] val);
+        IClientConfigurationBuilder AddActiveDirectoryGroups(IEnumerable<string> values);
+
+        IClientConfigurationBuilder AddActiveDirectory2FaGroup(string val);
+        IClientConfigurationBuilder AddActiveDirectory2FaGroups(IEnumerable<string> values);
+
+        IClientConfigurationBuilder AddActiveDirectory2FaBypassGroup(string val);
+        IClientConfigurationBuilder AddActiveDirectory2FaBypassGroups(IEnumerable<string> values);
+
         IClientConfigurationBuilder AddPhoneAttribute(string phoneAttr);
         IClientConfigurationBuilder AddPhoneAttributes(IEnumerable<string> attributes);
+
         IClientConfigurationBuilder SetLoadActiveDirectoryNestedGroups(bool val);
         IClientConfigurationBuilder SetUseUpnAsIdentity(bool val);
         IClientConfigurationBuilder SetServiceClientEndpoint(IPEndPoint val);
@@ -27,7 +34,9 @@ namespace MultiFactor.Radius.Adapter.Configuration.Core
         IClientConfigurationBuilder SetServiceAccountPassword(string val);
         IClientConfigurationBuilder SetSignUpGroups(string val);
         IClientConfigurationBuilder SetAuthenticationCacheLifetime(AuthenticatedClientCacheConfig val);
+
         IClientConfigurationBuilder SetRadiusReplyAttributes(IDictionary<string, List<RadiusReplyAttributeValue>> val);
+
         IClientConfigurationBuilder AddUserNameTransformRule(UserNameTransformRulesElement rule);
         IClientConfigurationBuilder SetCallingStationIdVendorAttribute(string val);
 

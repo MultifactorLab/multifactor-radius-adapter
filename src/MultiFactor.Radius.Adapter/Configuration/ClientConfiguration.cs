@@ -29,8 +29,6 @@ namespace MultiFactor.Radius.Adapter.Configuration
 
             BypassSecondFactorWhenApiUnreachable = true; //by default
             LoadActiveDirectoryNestedGroups = true;
-            ActiveDirectory2FaGroup = new string[0];
-            ActiveDirectory2FaBypassGroup = new string[0];
 
             Name = name;
             RadiusSharedSecret = rdsSharedSecret;
@@ -110,21 +108,27 @@ namespace MultiFactor.Radius.Adapter.Configuration
         /// </summary>
         public string LdapBindDn { get; private set; }
 
+
         private readonly List<string> _activeDirectoryGroups = new ();
         /// <summary>
         /// Only members of this group allowed to access (Optional)
         /// </summary>
         public string[] ActiveDirectoryGroups => _activeDirectoryGroups.ToArray();
 
+
+        private readonly List<string> _activeDirectory2FaGroup = new();
         /// <summary>
         /// Only members of this group required to pass 2fa to access (Optional)
         /// </summary>
-        public string[] ActiveDirectory2FaGroup { get; private set; }
+        public string[] ActiveDirectory2FaGroup => _activeDirectory2FaGroup.ToArray();
 
+
+        private readonly List<string> _activeDirectory2FaBypassGroup = new();
         /// <summary>
         /// Members of this group should not pass 2fa to access (Optional)
         /// </summary>
-        public string[] ActiveDirectory2FaBypassGroup { get; private set; }
+        public string[] ActiveDirectory2FaBypassGroup => _activeDirectory2FaBypassGroup.ToArray();
+
 
         private readonly List<string> _phoneAttrs = new();
         /// <summary>
@@ -172,6 +176,9 @@ namespace MultiFactor.Radius.Adapter.Configuration
         /// </summary>
         public UserNameTransformRulesElement[] UserNameTransformRules => _userNameTransformRules.ToArray();
 
+        public string CallingStationIdVendorAttribute { get; private set; }
+
+
         public IList<string> GetLdapReplyAttributes()
         {
             return RadiusReplyAttributes
@@ -208,48 +215,110 @@ namespace MultiFactor.Radius.Adapter.Configuration
 
         public IClientConfigurationBuilder SetActiveDirectoryDomain(string val)
         {
+            if (string.IsNullOrWhiteSpace(val))
+            {
+                throw new ArgumentException($"'{nameof(val)}' cannot be null or whitespace.", nameof(val));
+            }
+
             ActiveDirectoryDomain = val;
             return this;
         }
 
         public IClientConfigurationBuilder SetLdapBindDn(string val)
         {
+            if (string.IsNullOrWhiteSpace(val))
+            {
+                throw new ArgumentException($"'{nameof(val)}' cannot be null or whitespace.", nameof(val));
+            }
+
             LdapBindDn = val;
             return this;
         }
 
         public IClientConfigurationBuilder AddActiveDirectoryGroup(string val)
         {
+            if (string.IsNullOrWhiteSpace(val))
+            {
+                throw new ArgumentException($"'{nameof(val)}' cannot be null or whitespace.", nameof(val));
+            }
+
             _activeDirectoryGroups.Add(val);
             return this;
         }
         
-        public IClientConfigurationBuilder AddActiveDirectoryGroups(string[] values)
+        public IClientConfigurationBuilder AddActiveDirectoryGroups(IEnumerable<string> values)
         {
+            if (values is null)
+            {
+                throw new ArgumentNullException(nameof(values));
+            }
+
             _activeDirectoryGroups.AddRange(values);
             return this;
         }
 
-        public IClientConfigurationBuilder SetActiveDirectory2FaGroup(string[] val)
+        public IClientConfigurationBuilder AddActiveDirectory2FaGroup(string val)
         {
-            ActiveDirectory2FaGroup = val; 
+            if (string.IsNullOrWhiteSpace(val))
+            {
+                throw new ArgumentException($"'{nameof(val)}' cannot be null or whitespace.", nameof(val));
+            }
+
+            _activeDirectory2FaGroup.Add(val);
             return this;
         }
 
-        public IClientConfigurationBuilder SetActiveDirectory2FaBypassGroup(string[] val)
+        public IClientConfigurationBuilder AddActiveDirectory2FaGroups(IEnumerable<string> values)
         {
-            ActiveDirectory2FaBypassGroup = val;
+            if (values is null)
+            {
+                throw new ArgumentNullException(nameof(values));
+            }
+
+            _activeDirectory2FaGroup.AddRange(values); 
+            return this;
+        }
+
+        public IClientConfigurationBuilder AddActiveDirectory2FaBypassGroup(string val)
+        {
+            if (string.IsNullOrWhiteSpace(val))
+            {
+                throw new ArgumentException($"'{nameof(val)}' cannot be null or whitespace.", nameof(val));
+            }
+
+            _activeDirectory2FaBypassGroup.Add(val);
+            return this;
+        }
+        
+        public IClientConfigurationBuilder AddActiveDirectory2FaBypassGroups(IEnumerable<string> values)
+        {
+            if (values is null)
+            {
+                throw new ArgumentNullException(nameof(values));
+            }
+
+            _activeDirectory2FaBypassGroup.AddRange(values);
             return this;
         }
 
         public IClientConfigurationBuilder AddPhoneAttribute(string phoneAttr)
         {
+            if (string.IsNullOrWhiteSpace(phoneAttr))
+            {
+                throw new ArgumentException($"'{nameof(phoneAttr)}' cannot be null or whitespace.", nameof(phoneAttr));
+            }
+
             _phoneAttrs.Add(phoneAttr);
             return this;
         }
         
         public IClientConfigurationBuilder AddPhoneAttributes(IEnumerable<string> attributes)
         {
+            if (attributes is null)
+            {
+                throw new ArgumentNullException(nameof(attributes));
+            }
+
             _phoneAttrs.AddRange(attributes);
             return this;
         }
@@ -304,23 +373,31 @@ namespace MultiFactor.Radius.Adapter.Configuration
 
         public IClientConfigurationBuilder SetRadiusReplyAttributes(IDictionary<string, List<RadiusReplyAttributeValue>> val)
         {
-            RadiusReplyAttributes = val;
+            RadiusReplyAttributes = val ?? throw new ArgumentNullException(nameof(val));
             return this;
         }
 
         public IClientConfigurationBuilder AddUserNameTransformRule(UserNameTransformRulesElement rule)
         {
+            if (rule is null)
+            {
+                throw new ArgumentNullException(nameof(rule));
+            }
+
             _userNameTransformRules.Add(rule);
             return this;
         }
 
         public IClientConfigurationBuilder SetCallingStationIdVendorAttribute(string val)
         {
+            if (string.IsNullOrWhiteSpace(val))
+            {
+                throw new ArgumentException($"'{nameof(val)}' cannot be null or whitespace.", nameof(val));
+            }
+
             CallingStationIdVendorAttribute = val;
             return this;
         }
-
-        public string CallingStationIdVendorAttribute { get; private set; }
 
         public IClientConfiguration Build() => this;
     }
