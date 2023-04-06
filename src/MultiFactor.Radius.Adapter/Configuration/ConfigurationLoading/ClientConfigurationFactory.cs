@@ -17,6 +17,8 @@ using System.Configuration;
 using System.Linq;
 using System.Net;
 using System.Text.RegularExpressions;
+using Config = System.Configuration.Configuration;
+
 
 namespace MultiFactor.Radius.Adapter.Configuration.ConfigurationLoading
 {
@@ -29,8 +31,9 @@ namespace MultiFactor.Radius.Adapter.Configuration.ConfigurationLoading
             _dictionary = dictionary;
         }
 
-        public IClientConfiguration CreateConfig(string name, AppSettingsSection appSettings, RadiusReplyAttributesSection radiusReplyAttributesSection, UserNameTransformRulesSection userNameTransformRulesSection)
+        public IClientConfiguration CreateConfig(string name, Config configuration)
         {
+            var appSettings = configuration.AppSettings;
             var radiusSharedSecretSetting = appSettings.Settings["radius-shared-secret"]?.Value;
             var firstFactorAuthenticationSourceSettings = appSettings.Settings["first-factor-authentication-source"]?.Value;
             var bypassSecondFactorWhenApiUnreachableSetting = appSettings.Settings["bypass-second-factor-when-api-unreachable"]?.Value;
@@ -60,12 +63,13 @@ namespace MultiFactor.Radius.Adapter.Configuration.ConfigurationLoading
                 throw new InvalidConfigurationException("'multifactor-shared-secret' element not found");
             }
 
-            if (!Enum.TryParse<AuthenticationSource>(firstFactorAuthenticationSourceSettings, out var firstFactorAuthenticationSource))
+            var isDigit = int.TryParse(firstFactorAuthenticationSourceSettings, out _);
+            if (isDigit || !Enum.TryParse<AuthenticationSource>(firstFactorAuthenticationSourceSettings, true, out var firstFactorAuthenticationSource))
             {
                 throw new InvalidConfigurationException("Can't parse 'first-factor-authentication-source' value. Must be one of: ActiveDirectory, Radius, None");
             }
 
-            var builder = ClientConfiguration.CreateBuilder(name, radiusSharedSecretSetting, firstFactorAuthenticationSource, 
+            var builder = ClientConfiguration.CreateBuilder(name, radiusSharedSecretSetting, firstFactorAuthenticationSource,
                 multiFactorApiKeySetting, multiFactorApiSecretSetting);
 
             if (bypassSecondFactorWhenApiUnreachableSetting != null)
@@ -100,18 +104,8 @@ namespace MultiFactor.Radius.Adapter.Configuration.ConfigurationLoading
                     break;
             }
 
-            LoadRadiusReplyAttributes(builder, _dictionary, radiusReplyAttributesSection);
-
-            if (userNameTransformRulesSection?.Members != null)
-            {
-                foreach (var member in userNameTransformRulesSection?.Members)
-                {
-                    if (member is UserNameTransformRulesElement rule)
-                    {
-                        builder.AddUserNameTransformRule(rule);
-                    }
-                }
-            }
+            LoadRadiusReplyAttributes(builder, _dictionary, configuration.GetSection("RadiusReply") as RadiusReplyAttributesSection);
+            LoadUserNameTransformRulesSection(configuration, builder);
 
             builder.SetServiceAccountUser(serviceAccountUserSetting ?? string.Empty);
             builder.SetServiceAccountPassword(serviceAccountPasswordSetting ?? string.Empty);
@@ -126,6 +120,22 @@ namespace MultiFactor.Radius.Adapter.Configuration.ConfigurationLoading
             }
 
             return builder.Build();
+        }
+
+        private static void LoadUserNameTransformRulesSection(Config configuration, IClientConfigurationBuilder builder)
+        {
+            var userNameTransformRulesSection = configuration.GetSection("UserNameTransformRules") as UserNameTransformRulesSection;
+
+            if (userNameTransformRulesSection?.Members != null)
+            {
+                foreach (var member in userNameTransformRulesSection?.Members)
+                {
+                    if (member is UserNameTransformRulesElement rule)
+                    {
+                        builder.AddUserNameTransformRule(rule);
+                    }
+                }
+            }
         }
 
         private static void LoadActiveDirectoryAuthenticationSourceSettings(IClientConfigurationBuilder builder, AppSettingsSection appSettings, bool mandatory)
@@ -185,7 +195,7 @@ namespace MultiFactor.Radius.Adapter.Configuration.ConfigurationLoading
 
             if (!string.IsNullOrEmpty(activeDirectoryGroupSetting))
             {
-                builder.SetActiveDirectoryGroup(activeDirectoryGroupSetting.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries));
+                builder.AddActiveDirectoryGroups(activeDirectoryGroupSetting.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries));
             }
 
             if (!string.IsNullOrEmpty(activeDirectory2FaGroupSetting))

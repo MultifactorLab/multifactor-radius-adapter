@@ -1,12 +1,11 @@
-﻿using MultiFactor.Radius.Adapter.Configuration.Core;
-using MultiFactor.Radius.Adapter.Configuration.Features.AuthenticatedClientCacheFeature;
+﻿using MultiFactor.Radius.Adapter.Configuration.Features.AuthenticatedClientCacheFeature;
 using MultiFactor.Radius.Adapter.Configuration.Features.PrivacyModeFeature;
 using MultiFactor.Radius.Adapter.Configuration.Features.UserNameTransformFeature;
 using MultiFactor.Radius.Adapter.Server;
 using System.Collections.Generic;
 using System.Net;
 
-namespace MultiFactor.Radius.Adapter.Configuration
+namespace MultiFactor.Radius.Adapter.Configuration.Core
 {
     public interface IClientConfigurationBuilder
     {
@@ -14,7 +13,8 @@ namespace MultiFactor.Radius.Adapter.Configuration
         IClientConfigurationBuilder SetPrivacyMode(PrivacyModeDescriptor val);
         IClientConfigurationBuilder SetActiveDirectoryDomain(string val);
         IClientConfigurationBuilder SetLdapBindDn(string val);
-        IClientConfigurationBuilder SetActiveDirectoryGroup(string[] val);
+        IClientConfigurationBuilder AddActiveDirectoryGroup(string val);
+        IClientConfigurationBuilder AddActiveDirectoryGroups(string[] values);
         IClientConfigurationBuilder SetActiveDirectory2FaGroup(string[] val);
         IClientConfigurationBuilder SetActiveDirectory2FaBypassGroup(string[] val);
         IClientConfigurationBuilder AddPhoneAttribute(string phoneAttr);

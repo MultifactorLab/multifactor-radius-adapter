@@ -19,20 +19,20 @@ namespace MultiFactor.Radius.Adapter.Server.FirstAuthFactorProcessing
     /// </summary>
     public class RadiusFirstAuthFactorProcessor : IFirstAuthFactorProcessor
     {
-        private readonly MembershipVerifier _membershipVerifier;
+        private readonly MembershipProcessor _membershipProcessor;
         private readonly IRadiusPacketParser _packetParser;
         private readonly ILogger _logger;
 
-        public RadiusFirstAuthFactorProcessor(MembershipVerifier membershipVerifier,
+        public RadiusFirstAuthFactorProcessor(MembershipProcessor membershipProcessor,
             IRadiusPacketParser packetParser,
             ILogger logger)
         {
-            _membershipVerifier = membershipVerifier ?? throw new ArgumentNullException(nameof(membershipVerifier));
+            _membershipProcessor = membershipProcessor ?? throw new ArgumentNullException(nameof(membershipProcessor));
             _packetParser = packetParser ?? throw new ArgumentNullException(nameof(packetParser));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
-        public AuthenticationSource AuthenticationSource => AuthenticationSource.Radius | AuthenticationSource.ActiveDirectory;
+        public AuthenticationSource AuthenticationSource => AuthenticationSource.Radius;
 
         public async Task<PacketCode> ProcessFirstAuthFactorAsync(PendingRequest request, IClientConfiguration clientConfig)
         {
@@ -41,8 +41,8 @@ namespace MultiFactor.Radius.Adapter.Server.FirstAuthFactorProcessing
 
             if (!clientConfig.CheckMembership) return PacketCode.AccessAccept;
 
-            var result = await _membershipVerifier.VerifyMembershipAsync(request, clientConfig);
-            var handler = new MembershipVerificationResultHandler(result);
+            var result = await _membershipProcessor.ProcessMembershipAsync(request, clientConfig);
+            var handler = new MembershipProcessingResultHandler(result);
 
             handler.EnrichRequest(request);
             return handler.GetDecision();

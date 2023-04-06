@@ -29,7 +29,6 @@ namespace MultiFactor.Radius.Adapter.Configuration
 
             BypassSecondFactorWhenApiUnreachable = true; //by default
             LoadActiveDirectoryNestedGroups = true;
-            ActiveDirectoryGroup = new string[0];
             ActiveDirectory2FaGroup = new string[0];
             ActiveDirectory2FaBypassGroup = new string[0];
 
@@ -78,7 +77,7 @@ namespace MultiFactor.Radius.Adapter.Configuration
             get
             {
                 return ActiveDirectoryDomain != null &&
-                    (ActiveDirectoryGroup.Any() ||
+                    (ActiveDirectoryGroups.Any() ||
                     ActiveDirectory2FaGroup.Any() ||
                     ActiveDirectory2FaBypassGroup.Any() ||
                     PhoneAttributes.Any() ||
@@ -111,10 +110,11 @@ namespace MultiFactor.Radius.Adapter.Configuration
         /// </summary>
         public string LdapBindDn { get; private set; }
 
+        private readonly List<string> _activeDirectoryGroups = new ();
         /// <summary>
         /// Only members of this group allowed to access (Optional)
         /// </summary>
-        public string[] ActiveDirectoryGroup { get; private set; }
+        public string[] ActiveDirectoryGroups => _activeDirectoryGroups.ToArray();
 
         /// <summary>
         /// Only members of this group required to pass 2fa to access (Optional)
@@ -185,7 +185,7 @@ namespace MultiFactor.Radius.Adapter.Configuration
         public bool ShouldLoadUserGroups()
         {
             return
-                ActiveDirectoryGroup.Any() ||
+                ActiveDirectoryGroups.Any() ||
                 ActiveDirectory2FaGroup.Any() ||
                 ActiveDirectory2FaBypassGroup.Any() ||
                 RadiusReplyAttributes
@@ -218,9 +218,15 @@ namespace MultiFactor.Radius.Adapter.Configuration
             return this;
         }
 
-        public IClientConfigurationBuilder SetActiveDirectoryGroup(string[] val)
+        public IClientConfigurationBuilder AddActiveDirectoryGroup(string val)
         {
-            ActiveDirectoryGroup = val;
+            _activeDirectoryGroups.Add(val);
+            return this;
+        }
+        
+        public IClientConfigurationBuilder AddActiveDirectoryGroups(string[] values)
+        {
+            _activeDirectoryGroups.AddRange(values);
             return this;
         }
 

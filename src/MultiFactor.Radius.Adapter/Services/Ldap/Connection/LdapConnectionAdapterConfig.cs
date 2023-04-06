@@ -1,4 +1,4 @@
-﻿using MultiFactor.Radius.Adapter.Core;
+﻿using MultiFactor.Radius.Adapter.Core.Ldap;
 using MultiFactor.Radius.Adapter.Services.BindIdentityFormatting;
 using Serilog;
 

@@ -80,20 +80,14 @@ namespace MultiFactor.Radius.Adapter.Configuration.ConfigurationLoading
             var clientConfigs = _clientConfigurationsProvider.GetClientConfigurations();
             if (clientConfigs.Length == 0)
             {
-                //check if we have anything
+                // check if we have anything
                 var ffas = rootConfig.AppSettings.Settings["first-factor-authentication-source"]?.Value;
                 if (ffas == null)
                 {
                     throw new InvalidConfigurationException("No clients' config files found. Use one of the *.template files in the /clients folder to customize settings. Then save this file as *.config.");
                 }
 
-                var radiusReplyAttributesSection = rootConfig.GetSection("RadiusReply") as RadiusReplyAttributesSection;
-                var userNameTransformRulesSection = rootConfig.GetSection("UserNameTransformRules") as UserNameTransformRulesSection;
-
-                var client = _clientConfigFactory.CreateConfig("General",
-                    rootConfig.AppSettings,
-                    radiusReplyAttributesSection,
-                    userNameTransformRulesSection);
+                var client = _clientConfigFactory.CreateConfig("General", rootConfig);
                 builder.AddClient(IPAddress.Any, client).IsSingleClientMode(true);
 
                 return builder.Build();
@@ -101,15 +95,9 @@ namespace MultiFactor.Radius.Adapter.Configuration.ConfigurationLoading
                    
             foreach (var clientConfig in clientConfigs)
             {
-                var clientSettings = (AppSettingsSection)clientConfig.GetSection("appSettings");
-                var radiusReplyAttributesSection = clientConfig.GetSection("RadiusReply") as RadiusReplyAttributesSection;
-                var userNameTransformRulesSection = clientConfig.GetSection("UserNameTransformRules") as UserNameTransformRulesSection;
+                var client = _clientConfigFactory.CreateConfig(Path.GetFileNameWithoutExtension(clientConfig.FilePath), clientConfig);
 
-                var client = _clientConfigFactory.CreateConfig(Path.GetFileNameWithoutExtension(clientConfig.FilePath), 
-                    clientSettings, 
-                    radiusReplyAttributesSection, 
-                    userNameTransformRulesSection);
-
+                var clientSettings = clientConfig.AppSettings;
                 var radiusClientNasIdentifierSetting = clientSettings.Settings["radius-client-nas-identifier"]?.Value;
                 var radiusClientIpSetting = clientSettings.Settings["radius-client-ip"]?.Value;
 

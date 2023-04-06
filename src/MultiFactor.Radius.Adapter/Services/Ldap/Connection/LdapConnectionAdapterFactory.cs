@@ -4,6 +4,7 @@
 
 using MultiFactor.Radius.Adapter.Configuration;
 using MultiFactor.Radius.Adapter.Configuration.Core;
+using MultiFactor.Radius.Adapter.Core.Ldap;
 using MultiFactor.Radius.Adapter.Services.BindIdentityFormatting;
 using MultiFactor.Radius.Adapter.Services.Ldap.Connection.Exceptions;
 using Serilog;
@@ -23,7 +24,7 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.Connection
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
         
-        public async Task<LdapConnectionAdapter> CreateAdapterAsTechnicalAccAsync(string domain, IClientConfiguration clientConfig)
+        public async Task<ILdapConnectionAdapter> CreateAdapterAsTechnicalAccAsync(string domain, IClientConfiguration clientConfig)
         {
             try
             {

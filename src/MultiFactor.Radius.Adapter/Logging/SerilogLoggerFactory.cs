@@ -2,7 +2,6 @@
 using System.IO;
 using Microsoft.Extensions.DependencyInjection;
 using MultiFactor.Radius.Adapter.Configuration;
-using MultiFactor.Radius.Adapter.Configuration.ConfigurationLoading;
 using Serilog;
 using Serilog.Core;
 using Serilog.Events;
@@ -10,6 +9,7 @@ using Serilog.Formatting.Compact;
 using Serilog.Formatting;
 using MultiFactor.Radius.Adapter.Core;
 using MultiFactor.Radius.Adapter.Core.Exceptions;
+using MultiFactor.Radius.Adapter.Configuration.Core;
 
 namespace MultiFactor.Radius.Adapter.Logging
 {

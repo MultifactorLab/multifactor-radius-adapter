@@ -5,7 +5,7 @@
 using MultiFactor.Radius.Adapter.Configuration;
 using MultiFactor.Radius.Adapter.Services.Ldap;
 
-namespace MultiFactor.Radius.Adapter.Core
+namespace MultiFactor.Radius.Adapter.Core.Ldap
 {
     public interface IBindIdentityFormatter
     {

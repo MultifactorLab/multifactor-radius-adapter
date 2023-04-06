@@ -15,12 +15,12 @@ namespace MultiFactor.Radius.Adapter.Server.FirstAuthFactorProcessing
 {
     public class DefaultFirstAuthFactorProcessor : IFirstAuthFactorProcessor
     {
-        private readonly MembershipVerifier _membershipVerifier;
+        private readonly MembershipProcessor _membershipProcessor;
         private readonly ILogger _logger;
 
-        public DefaultFirstAuthFactorProcessor(MembershipVerifier membershipVerifier, ILogger logger)
+        public DefaultFirstAuthFactorProcessor(MembershipProcessor membershipProcessor, ILogger logger)
         {
-            _membershipVerifier = membershipVerifier ?? throw new System.ArgumentNullException(nameof(membershipVerifier));
+            _membershipProcessor = membershipProcessor ?? throw new System.ArgumentNullException(nameof(membershipProcessor));
             _logger = logger ?? throw new System.ArgumentNullException(nameof(logger));
         }
 
@@ -34,8 +34,8 @@ namespace MultiFactor.Radius.Adapter.Server.FirstAuthFactorProcessing
             }
 
             // check membership without AD authentication
-            var result = await _membershipVerifier.VerifyMembershipAsync(request, clientConfig);
-            var handler = new MembershipVerificationResultHandler(result);
+            var result = await _membershipProcessor.ProcessMembershipAsync(request, clientConfig);
+            var handler = new MembershipProcessingResultHandler(result);
 
             handler.EnrichRequest(request);
             return handler.GetDecision();

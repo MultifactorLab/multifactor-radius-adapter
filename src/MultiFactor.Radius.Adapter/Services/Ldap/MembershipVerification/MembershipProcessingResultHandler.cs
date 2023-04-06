@@ -10,13 +10,13 @@ using System.Linq;
 
 namespace MultiFactor.Radius.Adapter.Services.ActiveDirectory.MembershipVerification
 {
-    public class MembershipVerificationResultHandler
+    public class MembershipProcessingResultHandler
     {
-        private readonly ComplexMembershipVerificationResult _verificationResult;
+        private readonly IMembershipProcessingResult _processingResult;
 
-        public MembershipVerificationResultHandler(ComplexMembershipVerificationResult verificationResult)
+        public MembershipProcessingResultHandler(IMembershipProcessingResult processingResult)
         {
-            _verificationResult = verificationResult ?? throw new ArgumentNullException(nameof(verificationResult));
+            _processingResult = processingResult ?? throw new ArgumentNullException(nameof(processingResult));
         }
 
         /// <summary>
@@ -25,7 +25,7 @@ namespace MultiFactor.Radius.Adapter.Services.ActiveDirectory.MembershipVerifica
         /// <returns><see cref="PacketCode.AccessAccept"/> or <see cref="PacketCode.AccessReject"/></returns>
         public PacketCode GetDecision()
         {
-            return _verificationResult.Succeeded.Any()
+            return _processingResult.Succeeded.Any()
                 ? PacketCode.AccessAccept
                 : PacketCode.AccessReject;
         }
@@ -36,7 +36,7 @@ namespace MultiFactor.Radius.Adapter.Services.ActiveDirectory.MembershipVerifica
         /// <param name="request">Pending request.</param>
         public void EnrichRequest(PendingRequest request)
         {
-            var profile = _verificationResult.Succeeded.Select(x => x.Profile).FirstOrDefault(x => x != null);
+            var profile = _processingResult.Succeeded.Select(x => x.Profile).FirstOrDefault(x => x != null);
             if (profile == null) return;
 
             request.Bypass2Fa = IsBypassed();
@@ -54,7 +54,7 @@ namespace MultiFactor.Radius.Adapter.Services.ActiveDirectory.MembershipVerifica
 
         private bool IsBypassed()
         {
-            var succeeded = _verificationResult.Succeeded.ToList();
+            var succeeded = _processingResult.Succeeded.ToList();
 
             if (!succeeded.Any()) return false;
             if (succeeded.Any(x => x.IsMemberOf2FaBypassGroup)) return true;

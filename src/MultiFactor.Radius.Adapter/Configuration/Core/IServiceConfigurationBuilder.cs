@@ -3,10 +3,9 @@
 //https://github.com/MultifactorLab/multifactor-radius-adapter/blob/main/LICENSE.md
 
 using System.Net;
-using MultiFactor.Radius.Adapter.Configuration.Core;
 using MultiFactor.Radius.Adapter.Configuration.Features.RandomWaiterFeature;
 
-namespace MultiFactor.Radius.Adapter.Configuration.ConfigurationLoading
+namespace MultiFactor.Radius.Adapter.Configuration.Core
 {
     public interface IServiceConfigurationBuilder
     {

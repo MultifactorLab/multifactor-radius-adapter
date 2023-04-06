@@ -12,7 +12,7 @@ namespace MultiFactor.Radius.Adapter.Configuration.Core
         string[] ActiveDirectory2FaBypassGroup { get; }
         string[] ActiveDirectory2FaGroup { get; }
         string ActiveDirectoryDomain { get; }
-        string[] ActiveDirectoryGroup { get; }
+        string[] ActiveDirectoryGroups { get; }
         AuthenticatedClientCacheConfig AuthenticationCacheLifetime { get; }
         bool BypassSecondFactorWhenApiUnreachable { get; }
         string CallingStationIdVendorAttribute { get; }

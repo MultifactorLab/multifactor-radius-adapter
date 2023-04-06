@@ -2,10 +2,11 @@
 using MultiFactor.Radius.Adapter.Configuration;
 using MultiFactor.Radius.Adapter.Configuration.Core;
 using MultiFactor.Radius.Adapter.Core.Exceptions;
+using MultiFactor.Radius.Adapter.Core.Ldap;
 using MultiFactor.Radius.Adapter.Core.Services.Ldap;
 using MultiFactor.Radius.Adapter.Services.Ldap;
 using MultiFactor.Radius.Adapter.Services.Ldap.Connection;
-using MultiFactor.Radius.Adapter.Services.Ldap.UserGroupsGetters;
+using MultiFactor.Radius.Adapter.Services.Ldap.UserGroupsReading;
 using Serilog;
 using System;
 using System.Collections.Generic;
@@ -17,18 +18,16 @@ namespace MultiFactor.Radius.Adapter.Services
 {
     public class ProfileLoader
     {
-        private readonly UserGroupsGetterProvider _userGroupsGetterProvider;
+        private readonly UserGroupsSource _userGroupsSource;
         private readonly ILogger _logger;
 
-        public ProfileLoader(UserGroupsGetterProvider userGroupsGetterProvider, ILogger logger)
+        public ProfileLoader(UserGroupsSource userGroupsSource, ILogger logger)
         {
-            _userGroupsGetterProvider = userGroupsGetterProvider ?? throw new ArgumentNullException(nameof(userGroupsGetterProvider));
+            _userGroupsSource = userGroupsSource ?? throw new ArgumentNullException(nameof(userGroupsSource));
             _logger = logger ?? throw new System.ArgumentNullException(nameof(logger));
         }
 
-        public async Task<LdapProfile> LoadAsync(IClientConfiguration clientConfig, 
-            LdapConnectionAdapter connAdapter, 
-            LdapDomain domain, LdapIdentity user)
+        public async Task<LdapProfile> LoadAsync(IClientConfiguration clientConfig, ILdapConnectionAdapter adapter, LdapIdentity user)
         {
             var profile = new LdapProfile();
 
@@ -47,9 +46,10 @@ namespace MultiFactor.Radius.Adapter.Services
             var names = GetLdapNames(clientConfig.FirstFactorAuthenticationSource);
             var searchFilter = $"(&(objectClass={names.UserClass})({names.Identity(user)}={user.Name}))";
 
+            var domain = await adapter.WhereAmIAsync();
             _logger.Debug($"Querying user '{{user:l}}' in {domain.Name}", user.Name);
 
-            var response = await connAdapter.SearchQueryAsync(domain.Name, searchFilter, LdapSearchScope.LDAP_SCOPE_SUB, queryAttributes.Distinct().ToArray());
+            var response = await adapter.SearchQueryAsync(domain.Name, searchFilter, LdapSearchScope.LDAP_SCOPE_SUB, queryAttributes.Distinct().ToArray());
 
             var entry = response.SingleOrDefault();
             if (entry == null)
@@ -108,8 +108,7 @@ namespace MultiFactor.Radius.Adapter.Services
 
             if (clientConfig.ShouldLoadUserGroups())
             {
-                var getter = _userGroupsGetterProvider.GetUserGroupsGetter(clientConfig.FirstFactorAuthenticationSource);
-                var groups = await getter.GetAllUserGroupsAsync(clientConfig, connAdapter, domain, profile.DistinguishedName);
+                var groups = await _userGroupsSource.GetAllGroupsAsync(clientConfig, adapter, profile.DistinguishedName);
                 if (groups.Any())
                 {
                     profile.MemberOf = groups.ToList();

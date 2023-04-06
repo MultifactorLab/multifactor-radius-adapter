@@ -10,7 +10,6 @@ using MultiFactor.Radius.Adapter.Core.Services.Ldap;
 using MultiFactor.Radius.Adapter.Server;
 using MultiFactor.Radius.Adapter.Services.BindIdentityFormatting;
 using MultiFactor.Radius.Adapter.Services.Ldap.Connection;
-using MultiFactor.Radius.Adapter.Services.Ldap.UserGroupsGetters;
 using Serilog;
 using System;
 using System.Collections.Generic;
@@ -28,18 +27,15 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap
     public class LdapService
     {
         private readonly BindIdentityFormatterFactory _bindIdentityFormatterFactory;
-        private readonly UserGroupsGetterProvider _userGroupsGetterProvider;
         private readonly ProfileLoader _profileLoader;
         private readonly ILogger _logger;
         protected virtual LdapNames Names => new LdapNames(LdapServerType.Generic);
 
         public LdapService(BindIdentityFormatterFactory bindIdentityFormatterFactory,
-            UserGroupsGetterProvider userGroupsGetterProvider,
             ProfileLoader profileLoader,
             ILogger logger)
         {
             _bindIdentityFormatterFactory = bindIdentityFormatterFactory ?? throw new ArgumentNullException(nameof(bindIdentityFormatterFactory));
-            _userGroupsGetterProvider = userGroupsGetterProvider ?? throw new ArgumentNullException(nameof(userGroupsGetterProvider));
             _profileLoader = profileLoader ?? throw new ArgumentNullException(nameof(profileLoader));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
@@ -82,12 +78,12 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap
                     _logger.Information("User '{user:l}' credential and status verified successfully in '{domain:l}'", 
                         user.Name, domain.Name);
 
-                    var profile = await _profileLoader.LoadAsync(clientConfig, connection, domain, user);
+                    var profile = await _profileLoader.LoadAsync(clientConfig, connection, user);
 
                     //user must be member of security group
-                    if (clientConfig.ActiveDirectoryGroup.Any())
+                    if (clientConfig.ActiveDirectoryGroups.Any())
                     {
-                        var accessGroup = clientConfig.ActiveDirectoryGroup.FirstOrDefault(group => IsMemberOf(profile, group));
+                        var accessGroup = clientConfig.ActiveDirectoryGroups.FirstOrDefault(group => IsMemberOf(profile, group));
                         if (accessGroup != null)
                         {
                             _logger.Debug("User '{user:l}' is a member of the access group '{group:l}' in {domain:l}", 
@@ -96,7 +92,7 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap
                         else
                         {
                             _logger.Warning("User '{user:l}' is not a member of any access group ({accGroups:l}) in '{domain:l}'", 
-                                user.Name, string.Join(", ", clientConfig.ActiveDirectoryGroup), profile.BaseDn.Name);
+                                user.Name, string.Join(", ", clientConfig.ActiveDirectoryGroups), profile.BaseDn.Name);
                             return false;
                         }
                     }

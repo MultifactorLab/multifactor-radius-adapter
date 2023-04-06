@@ -5,7 +5,7 @@
 using LdapForNet;
 using MultiFactor.Radius.Adapter.Configuration;
 using MultiFactor.Radius.Adapter.Configuration.Core;
-using MultiFactor.Radius.Adapter.Core;
+using MultiFactor.Radius.Adapter.Core.Ldap;
 using MultiFactor.Radius.Adapter.Core.Services.Ldap;
 using MultiFactor.Radius.Adapter.Server;
 using MultiFactor.Radius.Adapter.Services.BindIdentityFormatting;
@@ -19,22 +19,21 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using static LdapForNet.Native.Native;
 
-namespace MultiFactor.Radius.Adapter.Services.Ldap.UserGroupsGetters
+namespace MultiFactor.Radius.Adapter.Services.Ldap.UserGroupsReading
 {
     public class ActiveDirectoryUserGroupsGetter : IUserGroupsGetter
     {
         public AuthenticationSource AuthenticationSource => AuthenticationSource.ActiveDirectory | AuthenticationSource.None;
 
-        public async Task<IReadOnlyList<string>> GetAllUserGroupsAsync(IClientConfiguration clientConfig, 
-            LdapConnectionAdapter connectionAdapter,
-            LdapDomain domain, string userDn)
+        public async Task<IReadOnlyList<string>> GetAllUserGroupsAsync(IClientConfiguration clientConfig, ILdapConnectionAdapter adapter, string userDn)
         {
             if (!clientConfig.LoadActiveDirectoryNestedGroups)
             {
                 return Array.Empty<string>();
             }
             var searchFilter = $"(member:1.2.840.113556.1.4.1941:={EscapeUserDn(userDn)})";
-            var response = await connectionAdapter.SearchQueryAsync(domain.Name, searchFilter, LdapSearchScope.LDAP_SCOPE_SUB, "DistinguishedName");
+            var domain = await adapter.WhereAmIAsync();
+            var response = await adapter.SearchQueryAsync(domain.Name, searchFilter, LdapSearchScope.LDAP_SCOPE_SUB, "DistinguishedName");
             return response.Select(entry => LdapIdentity.DnToCn(entry.Dn)).ToList().AsReadOnly();
         }
 

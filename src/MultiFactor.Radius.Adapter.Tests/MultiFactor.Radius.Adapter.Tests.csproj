@@ -15,10 +15,16 @@
     <None Remove="Assets\root-empty-multifactor-api-url.config" />
     <None Remove="Assets\root-empty-multifactor-nas-identifier.config" />
     <None Remove="Assets\root-empty-multifactor-shared-secret.config" />
+    <None Remove="Assets\root-ffa-is-ad-and-empty-domain.config" />
+    <None Remove="Assets\root-first-factor-authentication-source-is-digit.config" />
+    <None Remove="Assets\root-first-factor-authentication-source-is-invalid.config" />
     <None Remove="Assets\root-minimal-multi.config" />
     <None Remove="Assets\root-minimal-single.config" />
+    <None Remove="Assets\root-single-ffa-ad.config" />
     <None Remove="Assets\root-wrong-adapter-server-endpoint.config" />
     <None Remove="Assets\root-wrong-invalid-credential-delay.config" />
+    <None Remove="Assets\root-wrong-load-active-directory-nested-groups.config" />
+    <None Remove="Assets\root-wrong-privacy-mode.config" />
   </ItemGroup>
 
   <ItemGroup>
@@ -28,6 +34,36 @@
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
     </Content>
     <Content Include="Assets\root-empty-multifactor-shared-secret.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <Content Include="Assets\root-ffa-is-ad-and-empty-domain.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <Content Include="Assets\root-first-factor-authentication-source-is-invalid.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <Content Include="Assets\root-first-factor-authentication-source-is-digit.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <Content Include="Assets\root-single-ffa-ad.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <Content Include="Assets\root-wrong-privacy-mode.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <Content Include="Assets\root-wrong-load-active-directory-nested-groups.config">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
@@ -96,6 +132,9 @@
 
   <ItemGroup>
     <None Update="Assets\clients\client-empty-identifier-and-ip.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Assets\clients\client-ad-group.config">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="Assets\clients\client-minimal.config">

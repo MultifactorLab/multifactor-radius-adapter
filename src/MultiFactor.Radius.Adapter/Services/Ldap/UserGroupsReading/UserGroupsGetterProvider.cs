@@ -3,12 +3,12 @@
 //https://github.com/MultifactorLab/multifactor-radius-adapter/blob/main/LICENSE.md
 
 using MultiFactor.Radius.Adapter.Configuration;
-using MultiFactor.Radius.Adapter.Core;
+using MultiFactor.Radius.Adapter.Core.Ldap;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace MultiFactor.Radius.Adapter.Services.Ldap.UserGroupsGetters
+namespace MultiFactor.Radius.Adapter.Services.Ldap.UserGroupsReading
 {
     public class UserGroupsGetterProvider
     {

@@ -3,6 +3,7 @@ using MultiFactor.Radius.Adapter.Configuration;
 using MultiFactor.Radius.Adapter.Configuration.ConfigurationLoading;
 using MultiFactor.Radius.Adapter.Configuration.Core;
 using MultiFactor.Radius.Adapter.Core;
+using MultiFactor.Radius.Adapter.Core.Ldap;
 using MultiFactor.Radius.Adapter.Core.Radius;
 using MultiFactor.Radius.Adapter.Core.Radius.Attributes;
 using MultiFactor.Radius.Adapter.Logging;
@@ -13,7 +14,7 @@ using MultiFactor.Radius.Adapter.Services.BindIdentityFormatting;
 using MultiFactor.Radius.Adapter.Services.Ldap;
 using MultiFactor.Radius.Adapter.Services.Ldap.Connection;
 using MultiFactor.Radius.Adapter.Services.Ldap.MembershipVerification;
-using MultiFactor.Radius.Adapter.Services.Ldap.UserGroupsGetters;
+using MultiFactor.Radius.Adapter.Services.Ldap.UserGroupsReading;
 using MultiFactor.Radius.Adapter.Services.MultiFactorApi;
 using Serilog;
 using System;
@@ -68,6 +69,7 @@ internal static class ServicesConfiguration
         services.AddSingleton<FirstAuthFactorProcessorProvider>();
 
         services.AddSingleton<UserGroupsGetterProvider>();
+        services.AddSingleton<UserGroupsSource>();
         services.AddSingleton<IUserGroupsGetter, ActiveDirectoryUserGroupsGetter>();
         services.AddSingleton<IUserGroupsGetter, DefaultUserGroupsGetter>();
 
@@ -76,6 +78,7 @@ internal static class ServicesConfiguration
         services.AddSingleton<ProfileLoader>();
         services.AddSingleton<LdapService>();
         services.AddSingleton<MembershipVerifier>();
+        services.AddSingleton<MembershipProcessor>();
 
         services.AddSingleton(prov => new RandomWaiter(prov.GetRequiredService<IServiceConfiguration>().InvalidCredentialDelay));
         services.AddSingleton<AuthenticatedClientCache>();

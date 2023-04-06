@@ -1,9 +1,8 @@
-﻿namespace MultiFactor.Radius.Adapter.Tests.Fixtures.ConfigLoading
+﻿namespace MultiFactor.Radius.Adapter.Tests.Fixtures.ConfigLoading;
+
+internal class TestConfigProviderOptions
 {
-    internal class TestConfigProviderOptions
-    {
-        public string? RootConfigFilePath { get; set; }
-        public string? ClientConfigsFolderPath { get; set; }
-        public string[] ClientConfigFilePaths { get; set; } = Array.Empty<string>();
-    }
+    public string? RootConfigFilePath { get; set; }
+    public string? ClientConfigsFolderPath { get; set; }
+    public string[] ClientConfigFilePaths { get; set; } = Array.Empty<string>();
 }

@@ -3,7 +3,6 @@
 //https://github.com/MultifactorLab/multifactor-radius-adapter/blob/main/LICENSE.md
 
 using Microsoft.AspNetCore.Mvc.Formatters;
-using MultiFactor.Radius.Adapter.Configuration.ConfigurationLoading;
 using MultiFactor.Radius.Adapter.Configuration.Core;
 using MultiFactor.Radius.Adapter.Configuration.Features.RandomWaiterFeature;
 using MultiFactor.Radius.Adapter.Core;

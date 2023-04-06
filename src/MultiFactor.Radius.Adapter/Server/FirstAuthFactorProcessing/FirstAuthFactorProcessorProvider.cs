@@ -22,6 +22,12 @@ namespace MultiFactor.Radius.Adapter.Server.FirstAuthFactorProcessing
         /// <exception cref="NotImplementedException"></exception>
         public IFirstAuthFactorProcessor GetProcessor(AuthenticationSource authSource)
         {
+            if (authSource == AuthenticationSource.None)
+            {
+                return _processors.FirstOrDefault(x => x.AuthenticationSource == AuthenticationSource.None)
+                    ?? throw new NotImplementedException($"Unexpected authentication source '{authSource}'.");
+            }
+
             return _processors
                 .FirstOrDefault(x => x.AuthenticationSource.HasFlag(authSource))
                 ?? throw new NotImplementedException($"Unexpected authentication source '{authSource}'.");

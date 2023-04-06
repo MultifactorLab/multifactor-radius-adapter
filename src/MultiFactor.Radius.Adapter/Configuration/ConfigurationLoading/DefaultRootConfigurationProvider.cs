@@ -4,19 +4,20 @@
 
 using System;
 using System.Configuration;
+using MultiFactor.Radius.Adapter.Configuration.Core;
+using Config = System.Configuration.Configuration;
 
-namespace MultiFactor.Radius.Adapter.Configuration.ConfigurationLoading
+namespace MultiFactor.Radius.Adapter.Configuration.ConfigurationLoading;
+
+public class DefaultRootConfigurationProvider : IRootConfigurationProvider
 {
-    public class DefaultRootConfigurationProvider : IRootConfigurationProvider
+    private Lazy<Config> _rootConfig = new Lazy<Config>(() =>
     {
-        private Lazy<System.Configuration.Configuration> _rootConfig = new Lazy<System.Configuration.Configuration>(() =>
-        {
-            return ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
-        });
+        return ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
+    });
 
-        public System.Configuration.Configuration GetRootConfiguration()
-        {
-            return _rootConfig.Value;
-        }
+    public Config GetRootConfiguration()
+    {
+        return _rootConfig.Value;
     }
 }
