@@ -35,7 +35,7 @@ namespace MultiFactor.Radius.Adapter.Configuration.Core
         IClientConfigurationBuilder SetSignUpGroups(string val);
         IClientConfigurationBuilder SetAuthenticationCacheLifetime(AuthenticatedClientCacheConfig val);
 
-        IClientConfigurationBuilder SetRadiusReplyAttributes(IDictionary<string, List<RadiusReplyAttributeValue>> val);
+        IClientConfigurationBuilder AddRadiusReplyAttribute(string attr, IEnumerable<RadiusReplyAttributeValue> values);
 
         IClientConfigurationBuilder AddUserNameTransformRule(UserNameTransformRulesElement rule);
         IClientConfigurationBuilder SetCallingStationIdVendorAttribute(string val);

@@ -102,7 +102,15 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap
         /// </summary>
         public static string DnToCn(string dn)
         {
-            return dn.Split(',')[0].Split("=")[1];
+            if (string.IsNullOrWhiteSpace(dn)) throw new ArgumentException($"'{nameof(dn)}' cannot be null or whitespace.", nameof(dn));
+            
+            var splitted = dn.Split(',');
+            if (splitted.Length == 0) throw new ArgumentException("Incorrect DistinguishedName format");
+
+            var parts = splitted[0].Split("=");
+            if (parts.Length < 2) throw new ArgumentException("Incorrect DistinguishedName format");
+
+            return parts[1];
         }
 
         public string DnToFqdn()
@@ -118,6 +126,22 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap
         public override string ToString()
         {
             return Name;
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (obj is null) return false;
+
+            var other = obj as LdapIdentity;
+            if (other == null) return false;
+            if (other == this) return true;
+
+            return other.Name == Name && other.Type == Type;
+        }
+
+        public override int GetHashCode()
+        {
+            return Name.GetHashCode() + 23 + Type.GetHashCode();
         }
     }
 }

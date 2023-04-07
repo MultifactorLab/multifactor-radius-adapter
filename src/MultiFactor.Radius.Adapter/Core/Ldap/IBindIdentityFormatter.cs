@@ -5,10 +5,9 @@
 using MultiFactor.Radius.Adapter.Configuration;
 using MultiFactor.Radius.Adapter.Services.Ldap;
 
-namespace MultiFactor.Radius.Adapter.Core.Ldap
+namespace MultiFactor.Radius.Adapter.Core.Ldap;
+
+public interface IBindIdentityFormatter
 {
-    public interface IBindIdentityFormatter
-    {
-        string FormatIdentity(LdapIdentity user, string ldapUri);
-    }
+    string FormatIdentity(LdapIdentity user, string ldapUri);
 }

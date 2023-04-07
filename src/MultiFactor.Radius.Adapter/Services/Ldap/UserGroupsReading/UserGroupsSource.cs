@@ -20,7 +20,7 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.UserGroupsReading
             _provider = provider ?? throw new ArgumentNullException(nameof(provider));
         }
 
-        public async Task<IReadOnlyList<string>> GetAllGroupsAsync(IClientConfiguration clientConfig, ILdapConnectionAdapter connectionAdapter, string userDn)
+        public async Task<string[]> GetUserGroupsAsync(IClientConfiguration clientConfig, ILdapConnectionAdapter connectionAdapter, string userDn)
         {
             var getter = _provider.GetUserGroupsGetter(clientConfig.FirstFactorAuthenticationSource);
             return await getter.GetAllUserGroupsAsync(clientConfig, connectionAdapter, userDn);

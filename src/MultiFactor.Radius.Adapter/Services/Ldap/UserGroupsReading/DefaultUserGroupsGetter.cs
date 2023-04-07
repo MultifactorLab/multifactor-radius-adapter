@@ -16,9 +16,9 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.UserGroupsReading
     {
         public AuthenticationSource AuthenticationSource => AuthenticationSource.Ldap;
 
-        public Task<IReadOnlyList<string>> GetAllUserGroupsAsync(IClientConfiguration clientConfig, ILdapConnectionAdapter adapter, string userDn)
+        public Task<string[]> GetAllUserGroupsAsync(IClientConfiguration clientConfig, ILdapConnectionAdapter adapter, string userDn)
         {
-            return Task.FromResult<IReadOnlyList<string>>(Array.Empty<string>());
+            return Task.FromResult<string[]>(Array.Empty<string>());
         }
     }
 }

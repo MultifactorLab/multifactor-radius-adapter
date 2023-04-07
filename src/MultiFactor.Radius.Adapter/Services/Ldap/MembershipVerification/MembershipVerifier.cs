@@ -3,6 +3,8 @@
 //https://github.com/MultifactorLab/MultiFactor.Radius.Adapter/blob/master/LICENSE.md
 
 using MultiFactor.Radius.Adapter.Configuration.Core;
+using MultiFactor.Radius.Adapter.Core.Ldap;
+using MultiFactor.Radius.Adapter.Services.Ldap.ProfileLoading;
 using Serilog;
 using System;
 using System.Linq;
@@ -18,7 +20,7 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.MembershipVerification
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
-        public MembershipVerificationResult VerifyMembership(IClientConfiguration clientConfig, LdapProfile profile, string domain, LdapIdentity user)
+        public MembershipVerificationResult VerifyMembership(IClientConfiguration clientConfig, ILdapProfile profile, string domain, LdapIdentity user)
         {
             if (clientConfig is null) throw new ArgumentNullException(nameof(clientConfig));
             if (profile is null) throw new ArgumentNullException(nameof(profile));
@@ -86,7 +88,7 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.MembershipVerification
             return resBuilder.Build();
         }
 
-        private bool IsMemberOf(LdapProfile profile, string group)
+        private bool IsMemberOf(ILdapProfile profile, string group)
         {
             return profile.MemberOf?.Any(g => g.ToLower() == group.ToLower().Trim()) ?? false;
         }

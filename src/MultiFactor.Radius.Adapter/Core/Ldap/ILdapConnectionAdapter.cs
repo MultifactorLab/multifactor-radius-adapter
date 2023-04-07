@@ -9,18 +9,17 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using static LdapForNet.Native.Native;
 
-namespace MultiFactor.Radius.Adapter.Core.Ldap
+namespace MultiFactor.Radius.Adapter.Core.Ldap;
+
+public interface ILdapConnectionAdapter : IDisposable
 {
-    public interface ILdapConnectionAdapter : IDisposable
-    {
-        string Uri { get; }
+    string Uri { get; }
 
-        /// <summary>
-        /// Returns user that has been successfully binded with LDAP directory.
-        /// </summary>
-        LdapIdentity BindedUser { get; }
+    /// <summary>
+    /// Returns user that has been successfully binded with LDAP directory.
+    /// </summary>
+    LdapIdentity BindedUser { get; }
 
-        Task<LdapDomain> WhereAmIAsync();
-        Task<IList<LdapEntry>> SearchQueryAsync(string baseDn, string filter, LdapSearchScope scope, params string[] attributes);
-    }
+    Task<LdapDomain> WhereAmIAsync();
+    Task<LdapEntry[]> SearchQueryAsync(string baseDn, string filter, LdapSearchScope scope, params string[] attributes);
 }

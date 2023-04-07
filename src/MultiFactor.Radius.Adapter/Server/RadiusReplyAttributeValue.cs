@@ -12,7 +12,32 @@ namespace MultiFactor.Radius.Adapter.Server
     /// </summary>
     public class RadiusReplyAttributeValue
     {
-        public bool FromLdap { get; set; }
+        public bool FromLdap { get; }
+
+        /// <summary>
+        /// Attribute Value
+        /// </summary>
+        public object Value { get; }
+
+        /// <summary>
+        /// Ldap attr name to proxy value from
+        /// </summary>
+        public string LdapAttributeName { get; }
+
+        /// <summary>
+        /// Is list of all user groups attribute
+        /// </summary>
+        public bool IsMemberOf => LdapAttributeName?.ToLower() == "memberof";    
+
+        /// <summary>
+        /// User group condition
+        /// </summary>
+        public string UserGroupCondition { get; private set; }
+
+        /// <summary>
+        /// User name condition
+        /// </summary>
+        public string UserNameCondition { get; private set; }
 
         /// <summary>
         /// Const value with optional condition
@@ -39,37 +64,6 @@ namespace MultiFactor.Radius.Adapter.Server
             LdapAttributeName = ldapAttributeName;
             FromLdap = true;
         }
-
-        /// <summary>
-        /// Attribute Value
-        /// </summary>
-        public object Value { get; }
-
-        /// <summary>
-        /// Ldap attr name to proxy value from
-        /// </summary>
-        public string LdapAttributeName { get; set; }
-
-        /// <summary>
-        /// Is list of all user groups attribute
-        /// </summary>
-        public bool IsMemberOf
-        {
-            get
-            {
-                return LdapAttributeName?.ToLower() == "memberof";
-            }
-        }
-
-        /// <summary>
-        /// User group condition
-        /// </summary>
-        public string UserGroupCondition { get; set; }
-
-        /// <summary>
-        /// User name condition
-        /// </summary>
-        public string UserNameCondition { get; set; }
 
         /// <summary>
         /// Is match condition

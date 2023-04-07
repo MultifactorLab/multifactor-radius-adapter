@@ -330,7 +330,11 @@ namespace MultiFactor.Radius.Adapter.Configuration.ConfigurationLoading
                 }
             }
 
-            builder.SetRadiusReplyAttributes(replyAttributes);
+            foreach (var attr in replyAttributes)
+            {
+                builder.AddRadiusReplyAttribute(attr.Key, attr.Value);
+
+            }
         }
 
         private static object ParseRadiusReplyAttributeValue(DictionaryAttribute attribute, string value)

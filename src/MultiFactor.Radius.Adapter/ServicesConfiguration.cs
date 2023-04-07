@@ -14,6 +14,7 @@ using MultiFactor.Radius.Adapter.Services.BindIdentityFormatting;
 using MultiFactor.Radius.Adapter.Services.Ldap;
 using MultiFactor.Radius.Adapter.Services.Ldap.Connection;
 using MultiFactor.Radius.Adapter.Services.Ldap.MembershipVerification;
+using MultiFactor.Radius.Adapter.Services.Ldap.ProfileLoading;
 using MultiFactor.Radius.Adapter.Services.Ldap.UserGroupsReading;
 using MultiFactor.Radius.Adapter.Services.MultiFactorApi;
 using Serilog;

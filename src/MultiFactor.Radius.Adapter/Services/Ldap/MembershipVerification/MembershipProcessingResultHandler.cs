@@ -44,7 +44,7 @@ namespace MultiFactor.Radius.Adapter.Services.ActiveDirectory.MembershipVerifica
             request.DisplayName = profile.DisplayName;
             request.EmailAddress = profile.Email;
             request.UserPhone = profile.Phone;
-            request.LdapAttrs = profile.LdapAttrs;
+            request.LdapAttrs = profile.LdapAttrs.ToDictionary(k => k.Key, v => v.Value);
 
             if (profile.MemberOf != null)
             {

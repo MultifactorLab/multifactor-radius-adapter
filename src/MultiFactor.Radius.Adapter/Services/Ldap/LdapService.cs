@@ -6,10 +6,12 @@ using LdapForNet;
 using MultiFactor.Radius.Adapter.Configuration;
 using MultiFactor.Radius.Adapter.Configuration.Core;
 using MultiFactor.Radius.Adapter.Core.Exceptions;
+using MultiFactor.Radius.Adapter.Core.Ldap;
 using MultiFactor.Radius.Adapter.Core.Services.Ldap;
 using MultiFactor.Radius.Adapter.Server;
 using MultiFactor.Radius.Adapter.Services.BindIdentityFormatting;
 using MultiFactor.Radius.Adapter.Services.Ldap.Connection;
+using MultiFactor.Radius.Adapter.Services.Ldap.ProfileLoading;
 using Serilog;
 using System;
 using System.Collections.Generic;
@@ -136,7 +138,7 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap
                     request.Upn = profile.Upn;
                     request.DisplayName = profile.DisplayName;
                     request.EmailAddress = profile.Email;
-                    request.LdapAttrs = profile.LdapAttrs;
+                    request.LdapAttrs = profile.LdapAttrs.ToDictionary(k => k.Key, v => v.Value);
 
                     if (profile.MemberOf != null)
                     {
@@ -187,7 +189,7 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap
             return new LdapIdentity { Name = defaultNamingContext, Type = IdentityType.DistinguishedName };
         }
 
-        protected bool IsMemberOf(LdapProfile profile, string group)
+        protected bool IsMemberOf(ILdapProfile profile, string group)
         {
             return profile.MemberOf?.Any(g => g.ToLower() == group.ToLower().Trim()) ?? false;
         }

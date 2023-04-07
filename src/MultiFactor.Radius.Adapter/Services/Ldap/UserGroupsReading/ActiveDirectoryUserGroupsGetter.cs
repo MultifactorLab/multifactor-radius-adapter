@@ -25,7 +25,7 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.UserGroupsReading
     {
         public AuthenticationSource AuthenticationSource => AuthenticationSource.ActiveDirectory | AuthenticationSource.None;
 
-        public async Task<IReadOnlyList<string>> GetAllUserGroupsAsync(IClientConfiguration clientConfig, ILdapConnectionAdapter adapter, string userDn)
+        public async Task<string[]> GetAllUserGroupsAsync(IClientConfiguration clientConfig, ILdapConnectionAdapter adapter, string userDn)
         {
             if (!clientConfig.LoadActiveDirectoryNestedGroups)
             {
@@ -34,7 +34,7 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.UserGroupsReading
             var searchFilter = $"(member:1.2.840.113556.1.4.1941:={EscapeUserDn(userDn)})";
             var domain = await adapter.WhereAmIAsync();
             var response = await adapter.SearchQueryAsync(domain.Name, searchFilter, LdapSearchScope.LDAP_SCOPE_SUB, "DistinguishedName");
-            return response.Select(entry => LdapIdentity.DnToCn(entry.Dn)).ToList().AsReadOnly();
+            return response.Select(entry => LdapIdentity.DnToCn(entry.Dn)).ToArray();
         }
 
         public string EscapeUserDn(string userDn)

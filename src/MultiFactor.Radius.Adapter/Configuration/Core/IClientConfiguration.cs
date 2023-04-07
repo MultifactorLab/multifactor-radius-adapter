@@ -26,7 +26,7 @@ namespace MultiFactor.Radius.Adapter.Configuration.Core
         IPEndPoint NpsServerEndpoint { get; }
         string[] PhoneAttributes { get; }
         PrivacyModeDescriptor PrivacyMode { get; }
-        IDictionary<string, List<RadiusReplyAttributeValue>> RadiusReplyAttributes { get; }
+        IReadOnlyDictionary<string, RadiusReplyAttributeValue[]> RadiusReplyAttributes { get; }
         string RadiusSharedSecret { get; }
         string ServiceAccountPassword { get; }
         string ServiceAccountUser { get; }
@@ -35,7 +35,7 @@ namespace MultiFactor.Radius.Adapter.Configuration.Core
         string[] SplittedActiveDirectoryDomains { get; }
         UserNameTransformRulesElement[] UserNameTransformRules { get; }
         bool UseUpnAsIdentity { get; }
-        IList<string> GetLdapReplyAttributes();
+        string[] GetLdapReplyAttributes();
         bool ShouldLoadUserGroups();
     }
 }

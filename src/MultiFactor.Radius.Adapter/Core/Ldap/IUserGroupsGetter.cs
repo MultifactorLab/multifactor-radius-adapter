@@ -9,11 +9,10 @@ using MultiFactor.Radius.Adapter.Services.Ldap.Connection;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace MultiFactor.Radius.Adapter.Core.Ldap
+namespace MultiFactor.Radius.Adapter.Core.Ldap;
+
+public interface IUserGroupsGetter
 {
-    public interface IUserGroupsGetter
-    {
-        AuthenticationSource AuthenticationSource { get; }
-        Task<IReadOnlyList<string>> GetAllUserGroupsAsync(IClientConfiguration clientConfig, ILdapConnectionAdapter connectionAdapter, string userDn);
-    }
+    AuthenticationSource AuthenticationSource { get; }
+    Task<string[]> GetAllUserGroupsAsync(IClientConfiguration clientConfig, ILdapConnectionAdapter connectionAdapter, string userDn);
 }

@@ -165,10 +165,12 @@ namespace MultiFactor.Radius.Adapter.Configuration
 
         public AuthenticatedClientCacheConfig AuthenticationCacheLifetime { get; private set; }
 
+        private readonly Dictionary<string, RadiusReplyAttributeValue[]> _radiusReplyAttributes = new();
+
         /// <summary>
         /// Custom RADIUS reply attributes
         /// </summary>
-        public IDictionary<string, List<RadiusReplyAttributeValue>> RadiusReplyAttributes { get; private set; }
+        public IReadOnlyDictionary<string, RadiusReplyAttributeValue[]> RadiusReplyAttributes => _radiusReplyAttributes;
 
         private readonly List<UserNameTransformRulesElement> _userNameTransformRules = new();
         /// <summary>
@@ -179,14 +181,14 @@ namespace MultiFactor.Radius.Adapter.Configuration
         public string CallingStationIdVendorAttribute { get; private set; }
 
 
-        public IList<string> GetLdapReplyAttributes()
+        public string[] GetLdapReplyAttributes()
         {
             return RadiusReplyAttributes
                 .Values
                 .SelectMany(attr => attr)
                 .Where(attr => attr.FromLdap)
                 .Select(attr => attr.LdapAttributeName)
-                .ToList();
+                .ToArray();
         }
 
         public bool ShouldLoadUserGroups()
@@ -371,9 +373,19 @@ namespace MultiFactor.Radius.Adapter.Configuration
             return this;
         }
 
-        public IClientConfigurationBuilder SetRadiusReplyAttributes(IDictionary<string, List<RadiusReplyAttributeValue>> val)
+        public IClientConfigurationBuilder AddRadiusReplyAttribute(string attr, IEnumerable<RadiusReplyAttributeValue> values)
         {
-            RadiusReplyAttributes = val ?? throw new ArgumentNullException(nameof(val));
+            if (string.IsNullOrWhiteSpace(attr))
+            {
+                throw new ArgumentException($"'{nameof(attr)}' cannot be null or whitespace.", nameof(attr));
+            }
+
+            if (values is null)
+            {
+                throw new ArgumentNullException(nameof(values));
+            }
+
+            _radiusReplyAttributes[attr] = values.ToArray();
             return this;
         }
 

@@ -50,7 +50,7 @@ public class LdapConnectionAdapter : ILdapConnectionAdapter
         return _whereAmI;
     }
 
-    public async Task<IList<LdapEntry>> SearchQueryAsync(string baseDn, string filter, LdapSearchScope scope, params string[] attributes)
+    public async Task<LdapEntry[]> SearchQueryAsync(string baseDn, string filter, LdapSearchScope scope, params string[] attributes)
     {
         var sw = Stopwatch.StartNew();
         var searchResult = await _connection.SearchAsync(baseDn, filter, attributes, scope);
@@ -60,7 +60,7 @@ public class LdapConnectionAdapter : ILdapConnectionAdapter
             _config.Logger?.Warning("Slow response while querying {baseDn:l}. Time elapsed {elapsed}", baseDn, sw.Elapsed);
         }
 
-        return searchResult;
+        return searchResult.ToArray();
     }
 
     public static async Task<ILdapConnectionAdapter> CreateAsync(string uri, LdapIdentity user, string password,
