@@ -202,13 +202,10 @@ namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi
                 var requestData = Encoding.UTF8.GetBytes(json);
                 byte[] responseData = null;
 
-                //basic authorization
-                var auth = Convert.ToBase64String(Encoding.ASCII.GetBytes($"{clientConfiguration.MultifactorApiKey}:{clientConfiguration.MultiFactorApiSecret}"));
-
                 using (var web = new WebClient())
                 {
                     web.Headers.Add("Content-Type", "application/json");
-                    web.Headers.Add("Authorization", $"Basic {auth}");
+                    web.Headers.Add("Authorization", $"Basic {clientConfiguration.ApiCredential.GetHttpBasicAuthorizationHeaderValue()}");
 
                     if (!string.IsNullOrEmpty(_serviceConfiguration.ApiProxy))
                     {

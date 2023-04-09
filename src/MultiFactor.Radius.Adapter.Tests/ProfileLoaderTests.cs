@@ -6,6 +6,7 @@ using MultiFactor.Radius.Adapter.Configuration;
 using MultiFactor.Radius.Adapter.Configuration.Core;
 using MultiFactor.Radius.Adapter.Core.Exceptions;
 using MultiFactor.Radius.Adapter.Core.Ldap;
+using MultiFactor.Radius.Adapter.Server;
 using MultiFactor.Radius.Adapter.Services.Ldap;
 using MultiFactor.Radius.Adapter.Services.Ldap.ProfileLoading;
 using MultiFactor.Radius.Adapter.Tests.Fixtures;
@@ -107,5 +108,52 @@ public class ProfileLoaderTests
         profile.Upn.Should().Be(expectedProfile.Upn);
         profile.LdapAttrs.Should().BeEmpty();
         profile.MemberOf.Should().BeEquivalentTo(expectedProfile.MemberOf);
+    }
+
+    [Fact]
+    public async Task Load_HasReplyAttrs_ShouldLoadReplyAttrs()
+    {
+        var host = TestHostFactory.CreateHost(services =>
+        {
+            services.RemoveService<IRootConfigurationProvider>().AddSingleton<IRootConfigurationProvider, TestRootConfigProvider>();
+            services.RemoveService<IClientConfigurationsProvider>().AddSingleton<IClientConfigurationsProvider, TestClientConfigsProvider>();
+            services.Configure<TestConfigProviderOptions>(x =>
+            {
+                x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-single.config");
+            });
+        });
+
+        var expectedProfile = LdapProfile.CreateBuilder(LdapIdentity.BaseDn("CN=User Name,CN=Users,DC=domain,DC=local"), "CN=User Name,CN=Users,DC=domain,DC=local")
+            .AddLdapAttr("givenName", "User")
+            .AddLdapAttr("displayName", "User Name")
+            .Build();
+
+        var entry = LdapEntryFactory.Create("CN=User Name,CN=Users,DC=domain,DC=local", x =>
+        {
+            x.Add("displayName", "User Name").Add("givenName", "User");
+        });
+        var domain = LdapDomain.Parse("dc=domain,dc=local");
+
+        var adapter = new Mock<ILdapConnectionAdapter>();
+        adapter.Setup(x => x.WhereAmIAsync()).ReturnsAsync(domain);
+        adapter.Setup(x => x.SearchQueryAsync(It.Is<string>(x => x == domain.Name),
+            It.IsAny<string>(),
+            It.Is<LdapSearchScope>(x => x == LdapSearchScope.LDAP_SCOPE_SUB),
+            It.IsAny<string[]>()))
+            .ReturnsAsync(new[] { entry });
+
+        var clientConfig = ClientConfiguration.CreateBuilder("custom", "shared_secret", AuthenticationSource.ActiveDirectory, "key", "secret")
+            .AddRadiusReplyAttribute("givenName", new[] 
+            { 
+                new RadiusReplyAttributeValue("givenName"),
+                new RadiusReplyAttributeValue("displayName")
+            })
+            .SetLoadActiveDirectoryNestedGroups(false)
+            .Build();
+        var loader = host.Services.GetRequiredService<ProfileLoader>();
+
+        var profile = await loader.LoadAsync(clientConfig, adapter.Object, LdapIdentity.ParseUser("some.user@domain.local"));
+
+        profile.LdapAttrs.Should().BeEquivalentTo(expectedProfile.LdapAttrs);
     }
 }

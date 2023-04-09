@@ -34,39 +34,38 @@ namespace MultiFactor.Radius.Adapter.Configuration.ConfigurationLoading
         public IClientConfiguration CreateConfig(string name, Config configuration)
         {
             var appSettings = configuration.AppSettings;
-            var radiusSharedSecretSetting = appSettings.Settings["radius-shared-secret"]?.Value;
-            var firstFactorAuthenticationSourceSettings = appSettings.Settings["first-factor-authentication-source"]?.Value;
-            var bypassSecondFactorWhenApiUnreachableSetting = appSettings.Settings["bypass-second-factor-when-api-unreachable"]?.Value;
-            var privacyModeSetting = appSettings.Settings["privacy-mode"]?.Value;
-            var multiFactorApiKeySetting = appSettings.Settings["multifactor-nas-identifier"]?.Value;
-            var multiFactorApiSecretSetting = appSettings.Settings["multifactor-shared-secret"]?.Value;
+            var radiusSharedSecretSetting = appSettings.Settings[Literals.Configuration.RadiusSharedSecret]?.Value;
+            var firstFactorAuthenticationSourceSettings = appSettings.Settings[Literals.Configuration.FirstFactorAuthSource]?.Value;
+            var bypassSecondFactorWhenApiUnreachableSetting = appSettings.Settings[Literals.Configuration.BypassSecondFactorWhenApiUnreachable]?.Value;
+            var multiFactorApiKeySetting = appSettings.Settings[Literals.Configuration.MultifactorNasIdentifier]?.Value;
+            var multiFactorApiSecretSetting = appSettings.Settings[Literals.Configuration.MultifactorSharedSecret]?.Value;
 
-            var serviceAccountUserSetting = appSettings.Settings["service-account-user"]?.Value;
-            var serviceAccountPasswordSetting = appSettings.Settings["service-account-password"]?.Value;
+            var serviceAccountUserSetting = appSettings.Settings[Literals.Configuration.ServiceAccountUser]?.Value;
+            var serviceAccountPasswordSetting = appSettings.Settings[Literals.Configuration.ServiceAccountPassword]?.Value;
 
             if (string.IsNullOrEmpty(firstFactorAuthenticationSourceSettings))
             {
-                throw new InvalidConfigurationException("'first-factor-authentication-source' element not found");
+                throw new InvalidConfigurationException($"'{Literals.Configuration.FirstFactorAuthSource}' element not found");
             }
 
             if (string.IsNullOrEmpty(radiusSharedSecretSetting))
             {
-                throw new InvalidConfigurationException("'radius-shared-secret' element not found");
+                throw new InvalidConfigurationException($"'{Literals.Configuration.RadiusSharedSecret}' element not found");
             }
 
             if (string.IsNullOrEmpty(multiFactorApiKeySetting))
             {
-                throw new InvalidConfigurationException("'multifactor-nas-identifier' element not found");
+                throw new InvalidConfigurationException($"'{Literals.Configuration.MultifactorNasIdentifier}' element not found");
             }
             if (string.IsNullOrEmpty(multiFactorApiSecretSetting))
             {
-                throw new InvalidConfigurationException("'multifactor-shared-secret' element not found");
+                throw new InvalidConfigurationException($"'{Literals.Configuration.MultifactorSharedSecret}' element not found");
             }
 
             var isDigit = int.TryParse(firstFactorAuthenticationSourceSettings, out _);
             if (isDigit || !Enum.TryParse<AuthenticationSource>(firstFactorAuthenticationSourceSettings, true, out var firstFactorAuthenticationSource))
             {
-                throw new InvalidConfigurationException("Can't parse 'first-factor-authentication-source' value. Must be one of: ActiveDirectory, Radius, None");
+                throw new InvalidConfigurationException($"Can't parse '{Literals.Configuration.FirstFactorAuthSource}' value. Must be one of: ActiveDirectory, Radius, None");
             }
 
             var builder = ClientConfiguration.CreateBuilder(name, radiusSharedSecretSetting, firstFactorAuthenticationSource,
@@ -82,11 +81,11 @@ namespace MultiFactor.Radius.Adapter.Configuration.ConfigurationLoading
 
             try
             {
-                builder.SetPrivacyMode(PrivacyModeDescriptor.Create(privacyModeSetting));
+                builder.SetPrivacyMode(PrivacyModeDescriptor.Create(appSettings.Settings[Literals.Configuration.PrivacyMode]?.Value));
             }
             catch
             {
-                throw new InvalidConfigurationException("Can't parse 'privacy-mode' value. Must be one of: Full, None, Partial:Field1,Field2");
+                throw new InvalidConfigurationException($"Can't parse '{Literals.Configuration.PrivacyMode}' value. Must be one of: Full, None, Partial:Field1,Field2");
             }
 
             switch (builder.Build().FirstFactorAuthenticationSource)

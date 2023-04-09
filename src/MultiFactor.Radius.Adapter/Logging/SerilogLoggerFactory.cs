@@ -42,10 +42,10 @@ namespace MultiFactor.Radius.Adapter.Logging
             ConfigureLogging(_variables.AppPath, loggerConfiguration);
 
             var config = _rootConfigurationProvider.GetRootConfiguration();
-            var level = config.AppSettings.Settings["logging-level"]?.Value;
+            var level = config.AppSettings.Settings[Literals.Configuration.LoggingLevel]?.Value;
             if (string.IsNullOrWhiteSpace(level))
             {
-                throw new InvalidConfigurationException("'logging-level' element not found");
+                throw new InvalidConfigurationException($"'{Literals.Configuration.LoggingLevel}' element not found");
             }
 
             SetLogLevel(level, levelSwitch);
@@ -119,7 +119,7 @@ namespace MultiFactor.Radius.Adapter.Logging
         {
             var root = _rootConfigurationProvider.GetRootConfiguration();
             
-            var format = root.AppSettings.Settings["logging-format"]?.Value;
+            var format = root.AppSettings.Settings[Literals.Configuration.LoggingFormat]?.Value;
             switch (format?.ToLower())
             {
                 case "json":

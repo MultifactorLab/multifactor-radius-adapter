@@ -30,8 +30,7 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.ProfileLoading
         {
             var queryAttributes = new List<string> { "DistinguishedName", "displayName", "mail", "memberOf", "userPrincipalName" };
 
-            var ldapReplyAttributes = clientConfig.GetLdapReplyAttributes();
-            foreach (var ldapReplyAttribute in ldapReplyAttributes)
+            foreach (var ldapReplyAttribute in GetLdapReplyAttributes(clientConfig))
             {
                 queryAttributes.Add(ldapReplyAttribute);
             }
@@ -63,7 +62,7 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.ProfileLoading
             }
 
             // additional attributes for radius response
-            foreach (var attr in clientConfig.GetLdapReplyAttributes())
+            foreach (var attr in GetLdapReplyAttributes(clientConfig))
             {
                 if (attrs.TryGetValue(attr, out var attrValue))
                 {
@@ -106,6 +105,16 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.ProfileLoading
             }
 
             return profile.Build();
+        }
+
+        private static string[] GetLdapReplyAttributes(IClientConfiguration config)
+        {
+            return config.RadiusReplyAttributes
+                .Values
+                .SelectMany(attr => attr)
+                .Where(attr => attr.FromLdap)
+                .Select(attr => attr.LdapAttributeName)
+                .ToArray();
         }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using MultiFactor.Radius.Adapter.Configuration.Features.AuthenticatedClientCacheFeature;
 using MultiFactor.Radius.Adapter.Configuration.Features.PrivacyModeFeature;
 using MultiFactor.Radius.Adapter.Configuration.Features.UserNameTransformFeature;
+using MultiFactor.Radius.Adapter.Core;
 using MultiFactor.Radius.Adapter.Server;
 using System.Collections.Generic;
 using System.Net;
@@ -20,8 +21,7 @@ namespace MultiFactor.Radius.Adapter.Configuration.Core
         AuthenticationSource FirstFactorAuthenticationSource { get; }
         string LdapBindDn { get; }
         bool LoadActiveDirectoryNestedGroups { get; }
-        string MultifactorApiKey { get; }
-        string MultiFactorApiSecret { get; }
+        MultifactorApiCredential ApiCredential { get; }
         string Name { get; }
         IPEndPoint NpsServerEndpoint { get; }
         string[] PhoneAttributes { get; }
@@ -35,7 +35,6 @@ namespace MultiFactor.Radius.Adapter.Configuration.Core
         string[] SplittedActiveDirectoryDomains { get; }
         UserNameTransformRulesElement[] UserNameTransformRules { get; }
         bool UseUpnAsIdentity { get; }
-        string[] GetLdapReplyAttributes();
         bool ShouldLoadUserGroups();
     }
 }

@@ -44,22 +44,23 @@ namespace MultiFactor.Radius.Adapter.Configuration.ConfigurationLoading
         public IServiceConfiguration CreateConfig()
         {
             var rootConfig = _appConfigurationProvider.GetRootConfiguration();
+            var appsettings = rootConfig.AppSettings.Settings;
 
-            var serviceServerEndpointSetting = rootConfig.AppSettings.Settings["adapter-server-endpoint"]?.Value;
-            var apiUrlSetting = rootConfig.AppSettings.Settings["multifactor-api-url"]?.Value;
-            var apiProxySetting = rootConfig.AppSettings.Settings[Literals.Configuration.MultifactorApiProxy]?.Value;
+            var serviceServerEndpointSetting = appsettings[Literals.Configuration.AdapterServerEndpoint]?.Value;
+            var apiUrlSetting = appsettings[Literals.Configuration.MultifactorApiUrl]?.Value;
+            var apiProxySetting = appsettings[Literals.Configuration.MultifactorApiProxy]?.Value;
 
             if (string.IsNullOrEmpty(serviceServerEndpointSetting))
             {
-                throw new InvalidConfigurationException("'adapter-server-endpoint' element not found");
-            }
-            if (string.IsNullOrEmpty(apiUrlSetting))
-            {
-                throw new InvalidConfigurationException("'multifactor-api-url' element not found");
+                throw new InvalidConfigurationException($"'{Literals.Configuration.AdapterServerEndpoint}' element not found");
             }
             if (!IPEndPointFactory.TryParse(serviceServerEndpointSetting, out var serviceServerEndpoint))
             {
-                throw new InvalidConfigurationException("Can't parse 'adapter-server-endpoint' value");
+                throw new InvalidConfigurationException($"Can't parse '{Literals.Configuration.AdapterServerEndpoint}' value");
+            }
+            if (string.IsNullOrEmpty(apiUrlSetting))
+            {
+                throw new InvalidConfigurationException($"'{Literals.Configuration.MultifactorApiUrl}' element not found");
             }
 
             var builder = ServiceConfiguration.CreateBuilder()
@@ -69,19 +70,19 @@ namespace MultiFactor.Radius.Adapter.Configuration.ConfigurationLoading
 
             try
             {
-                var waiterConfig = RandomWaiterConfig.Create(rootConfig.AppSettings.Settings[Literals.Configuration.PciDss.InvalidCredentialDelay]?.Value);
+                var waiterConfig = RandomWaiterConfig.Create(appsettings[Literals.Configuration.InvalidCredentialDelay]?.Value);
                 builder.SetInvalidCredentialDelay(waiterConfig);
             }
             catch
             {
-                throw new InvalidConfigurationException($"Can't parse '{Literals.Configuration.PciDss.InvalidCredentialDelay}' value");
+                throw new InvalidConfigurationException($"Can't parse '{Literals.Configuration.InvalidCredentialDelay}' value");
             }
 
             var clientConfigs = _clientConfigurationsProvider.GetClientConfigurations();
             if (clientConfigs.Length == 0)
             {
                 // check if we have anything
-                var ffas = rootConfig.AppSettings.Settings["first-factor-authentication-source"]?.Value;
+                var ffas = appsettings[Literals.Configuration.FirstFactorAuthSource]?.Value;
                 if (ffas == null)
                 {
                     throw new InvalidConfigurationException("No clients' config files found. Use one of the *.template files in the /clients folder to customize settings. Then save this file as *.config.");
@@ -98,8 +99,8 @@ namespace MultiFactor.Radius.Adapter.Configuration.ConfigurationLoading
                 var client = _clientConfigFactory.CreateConfig(Path.GetFileNameWithoutExtension(clientConfig.FilePath), clientConfig);
 
                 var clientSettings = clientConfig.AppSettings;
-                var radiusClientNasIdentifierSetting = clientSettings.Settings["radius-client-nas-identifier"]?.Value;
-                var radiusClientIpSetting = clientSettings.Settings["radius-client-ip"]?.Value;
+                var radiusClientNasIdentifierSetting = clientSettings.Settings[Literals.Configuration.RadiusClientNasIdentifier]?.Value;
+                var radiusClientIpSetting = clientSettings.Settings[Literals.Configuration.RadiusClientIp]?.Value;
 
                 if (!string.IsNullOrEmpty(radiusClientNasIdentifierSetting))
                 {
@@ -109,7 +110,7 @@ namespace MultiFactor.Radius.Adapter.Configuration.ConfigurationLoading
 
                 if (string.IsNullOrEmpty(radiusClientIpSetting))
                 {
-                    throw new InvalidConfigurationException("Either 'radius-client-nas-identifier' or 'radius-client-ip' must be configured");
+                    throw new InvalidConfigurationException($"Either '{Literals.Configuration.RadiusClientNasIdentifier}' or '{Literals.Configuration.RadiusClientIp}' must be configured");
                 }
 
                 var elements = radiusClientIpSetting.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries);

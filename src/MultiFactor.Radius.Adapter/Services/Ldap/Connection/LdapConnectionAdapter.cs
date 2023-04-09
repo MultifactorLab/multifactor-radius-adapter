@@ -21,7 +21,7 @@ public class LdapConnectionAdapter : ILdapConnectionAdapter
     public string Uri { get; }
     private readonly LdapConnectionAdapterConfig _config;
 
-    private LdapDomain? _whereAmI;
+    private LdapDomain _whereAmI;
 
     /// <summary>
     /// Returns user that has been successfully binded with LDAP directory.

@@ -2,6 +2,7 @@
 using MultiFactor.Radius.Adapter.Configuration.Features.AuthenticatedClientCacheFeature;
 using MultiFactor.Radius.Adapter.Configuration.Features.PrivacyModeFeature;
 using MultiFactor.Radius.Adapter.Configuration.Features.UserNameTransformFeature;
+using MultiFactor.Radius.Adapter.Core;
 using MultiFactor.Radius.Adapter.Server;
 using System;
 using System.Collections.Generic;
@@ -33,8 +34,7 @@ namespace MultiFactor.Radius.Adapter.Configuration
             Name = name;
             RadiusSharedSecret = rdsSharedSecret;
             FirstFactorAuthenticationSource = firstFactorAuthSource;
-            MultifactorApiKey = apiKey;
-            MultiFactorApiSecret = apiSecret;
+            ApiCredential = new MultifactorApiCredential(apiKey, apiSecret);
         }
 
         public static IClientConfigurationBuilder CreateBuilder(string name, string rdsSharedSecret, AuthenticationSource firstFactorAuthSource, 
@@ -58,14 +58,7 @@ namespace MultiFactor.Radius.Adapter.Configuration
         /// </summary>
         public AuthenticationSource FirstFactorAuthenticationSource { get; }
 
-        /// <summary>
-        /// Multifactor API key
-        /// </summary>
-        public string MultifactorApiKey { get; }
-        /// <summary>
-        /// Multifactor API secret
-        /// </summary>
-        public string MultiFactorApiSecret { get; }
+        public MultifactorApiCredential ApiCredential { get; }
 
         /// <summary>
         /// Load user profile from AD and check group membership and 
@@ -179,17 +172,6 @@ namespace MultiFactor.Radius.Adapter.Configuration
         public UserNameTransformRulesElement[] UserNameTransformRules => _userNameTransformRules.ToArray();
 
         public string CallingStationIdVendorAttribute { get; private set; }
-
-
-        public string[] GetLdapReplyAttributes()
-        {
-            return RadiusReplyAttributes
-                .Values
-                .SelectMany(attr => attr)
-                .Where(attr => attr.FromLdap)
-                .Select(attr => attr.LdapAttributeName)
-                .ToArray();
-        }
 
         public bool ShouldLoadUserGroups()
         {
