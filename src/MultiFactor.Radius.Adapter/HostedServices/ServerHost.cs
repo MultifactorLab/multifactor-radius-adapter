@@ -5,8 +5,9 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace MultiFactor.Radius.Adapter
+namespace MultiFactor.Radius.Adapter.HostedServices
 {
+
     public class ServerHost : IHostedService
     {
         private Task _executingTask;
@@ -61,8 +62,7 @@ namespace MultiFactor.Radius.Adapter
             finally
             {
                 // Wait until the task completes or the stop token triggers
-                await Task.WhenAny(_executingTask, Task.Delay(Timeout.Infinite,
-                                                          cancellationToken));
+                await Task.WhenAny(_executingTask, Task.Delay(Timeout.Infinite, cancellationToken));
             }
         }
 

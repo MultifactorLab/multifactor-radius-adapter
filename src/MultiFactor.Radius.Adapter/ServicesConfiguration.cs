@@ -4,11 +4,14 @@ using MultiFactor.Radius.Adapter.Configuration.ConfigurationLoading;
 using MultiFactor.Radius.Adapter.Configuration.Core;
 using MultiFactor.Radius.Adapter.Core;
 using MultiFactor.Radius.Adapter.Core.Ldap;
+using MultiFactor.Radius.Adapter.Core.Pipeline;
 using MultiFactor.Radius.Adapter.Core.Radius;
 using MultiFactor.Radius.Adapter.Core.Radius.Attributes;
+using MultiFactor.Radius.Adapter.HostedServices;
 using MultiFactor.Radius.Adapter.Logging;
 using MultiFactor.Radius.Adapter.Server;
 using MultiFactor.Radius.Adapter.Server.FirstAuthFactorProcessing;
+using MultiFactor.Radius.Adapter.Server.Pipeline;
 using MultiFactor.Radius.Adapter.Services;
 using MultiFactor.Radius.Adapter.Services.BindIdentityFormatting;
 using MultiFactor.Radius.Adapter.Services.Ldap;
@@ -62,7 +65,8 @@ internal static class ServicesConfiguration
         services.AddSingleton<MultiFactorApiClient>();
         services.AddSingleton<RadiusRouter>();
         services.AddSingleton<RadiusServer>();
-        services.AddTransient<ChallengeProcessor>();
+        services.AddSingleton<RadiusContextFactory>();
+        services.AddSingleton<ChallengeProcessor>();
 
         services.AddSingleton<IFirstAuthFactorProcessor, LdapFirstAuthFactorProcessor>();
         services.AddSingleton<IFirstAuthFactorProcessor, RadiusFirstAuthFactorProcessor>();
@@ -85,6 +89,22 @@ internal static class ServicesConfiguration
         services.AddSingleton<AuthenticatedClientCache>();
 
         services.AddHostedService<ServerHost>();
+        services.AddHostedService<Starter>();
+        services.AddSingleton<ServerInfo>();
+
+        services.AddRadiusPipeline(builder =>
+        {
+            builder.Use<StatusServerMiddleware>();
+            builder.Use<AccessRequestFilterMiddleware>();
+            builder.Use<TransformUserNameMiddleware>();
+            builder.Use<AccessChallengeMiddleware>();
+            builder.Use<FirstFactorAuthenticationMiddleware>();
+            builder.Use<Bypass2FaMidleware>();
+            builder.Use<SecondFactorAuthenticationMiddleware>();
+        });
+
+        services.AddSingleton<RadiusRequestPostProcessor>();
+        services.AddSingleton<RadiusResponseSenderFactory>();
 
         configure?.Invoke(services);
         return services;

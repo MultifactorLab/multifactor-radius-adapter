@@ -19,7 +19,7 @@ namespace MultiFactor.Radius.Adapter.Configuration.Core
         bool SingleClientMode { get; }
 
         IClientConfiguration GetClient(IPAddress ip);
-        IClientConfiguration GetClient(PendingRequest request);
+        IClientConfiguration GetClient(RadiusContext request);
         IClientConfiguration GetClient(string nasIdentifier);
     }
 }

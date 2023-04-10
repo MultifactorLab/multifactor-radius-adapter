@@ -46,37 +46,36 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.MembershipVerification
         /// <summary>
         /// Validate user membership within Active Directory Domain without password authentication
         /// </summary>
-        public async Task<IMembershipProcessingResult> ProcessMembershipAsync(PendingRequest request, IClientConfiguration clientConfig)
+        public async Task<IMembershipProcessingResult> ProcessMembershipAsync(RadiusContext context)
         {
-            if (request is null) throw new ArgumentNullException(nameof(request));
-            if (clientConfig is null) throw new ArgumentNullException(nameof(clientConfig));
+            if (context is null) throw new ArgumentNullException(nameof(context));
 
             var result = new MembershipProcessingResult();
 
-            var userName = request.UserName;
+            var userName = context.UserName;
             if (string.IsNullOrEmpty(userName))
             {
-                _logger.Warning("Verification user' membership failed: can't find 'User-Name' attribute (messageId: {id}, from: {host:l}:{port})", request.RequestPacket.Identifier, request.RemoteEndpoint.Address, request.RemoteEndpoint.Port);
+                _logger.Warning("Verification user' membership failed: can't find 'User-Name' attribute (messageId: {id}, from: {host:l}:{port})", context.RequestPacket.Identifier, context.RemoteEndpoint.Address, context.RemoteEndpoint.Port);
                 return result;
             }
 
             ILdapProfile profile = null;
             //trying to authenticate for each domain/forest
-            foreach (var domain in clientConfig.SplittedActiveDirectoryDomains)
+            foreach (var domain in context.ClientConfiguration.SplittedActiveDirectoryDomains)
             {
                 try
                 {
                     var user = LdapIdentity.ParseUser(userName);
 
                     _logger.Debug("Verifying user '{user:l}' membership at '{domain:l}'", user.Name, domain);
-                    using (var connAdapter = await _connectionAdapterFactory.CreateAdapterAsTechnicalAccAsync(domain, clientConfig))
+                    using (var connAdapter = await _connectionAdapterFactory.CreateAdapterAsTechnicalAccAsync(domain, context.ClientConfiguration))
                     {
                         if (profile == null)
                         {
-                            profile = await _profileLoader.LoadAsync(clientConfig, connAdapter, user);
+                            profile = await _profileLoader.LoadAsync(context.ClientConfiguration, connAdapter, user);
                         }
 
-                        var res = _membershipVerifier.VerifyMembership(clientConfig, profile, domain, user);
+                        var res = _membershipVerifier.VerifyMembership(context.ClientConfiguration, profile, domain, user);
                         result.AddDomainResult(res);
 
                         if (res.IsSuccess) break;

@@ -14,6 +14,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace MultiFactor.Radius.Adapter.Server
 {
@@ -29,7 +30,7 @@ namespace MultiFactor.Radius.Adapter.Server
         private readonly FirstAuthFactorProcessorProvider _firstAuthFactorProcessorProvider;
         private readonly ChallengeProcessor _challengeProcessor;
 
-        public event EventHandler<PendingRequest> RequestProcessed;
+        public event EventHandler<RadiusContext> RequestProcessed;
 
         private DateTime _startedAt = DateTime.Now;
 
@@ -48,75 +49,75 @@ namespace MultiFactor.Radius.Adapter.Server
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
-        public async Task HandleRequest(PendingRequest request, IClientConfiguration clientConfig)
+        public async Task HandleRequest(RadiusContext context)
         {
             try
             {
-                if (request.RequestPacket.Code == PacketCode.StatusServer)
+                if (context.RequestPacket.Code == PacketCode.StatusServer)
                 {
                     //status
                     var uptime = (DateTime.Now - _startedAt);
-                    request.ReplyMessage = $"Server up {uptime.Days} days {uptime.ToString("hh\\:mm\\:ss")}";
-                    request.ResponseCode = PacketCode.AccessAccept;
-                    RequestProcessed?.Invoke(this, request);
+                    context.ReplyMessage = $"Server up {uptime.Days} days {uptime.ToString("hh\\:mm\\:ss")}";
+                    context.ResponseCode = PacketCode.AccessAccept;
+                    RequestProcessed?.Invoke(this, context);
                     return;
                 }
 
-                if (request.RequestPacket.Code != PacketCode.AccessRequest)
+                if (context.RequestPacket.Code != PacketCode.AccessRequest)
                 {
-                    _logger.Warning("Unprocessable packet type: {code}", request.RequestPacket.Code);
+                    _logger.Warning("Unprocessable packet type: {code}", context.RequestPacket.Code);
                     return;
                 }
 
-                ProcessUserNameTransformRules(request, clientConfig);
+                ProcessUserNameTransformRules(context);
 
-                if (request.RequestPacket.Attributes.ContainsKey("State")) //Access-Challenge response 
+                if (context.RequestPacket.Attributes.ContainsKey("State")) //Access-Challenge response 
                 {
-                    var receivedState = request.RequestPacket.GetString("State");
+                    var identifier = new ChallengeRequestIdentifier(context.ClientConfiguration, context.RequestPacket.GetString("State"));
 
-                    if (_challengeProcessor.HasState(receivedState))
+                    if (_challengeProcessor.HasState(identifier))
                     {
                         //second request with Multifactor challenge
-                        request.ResponseCode = await _challengeProcessor.ProcessChallenge(request, clientConfig, receivedState);
-                        request.State = receivedState;  //state for Access-Challenge message if otp is wrong (3 times allowed)
+                        context.ResponseCode = await _challengeProcessor.ProcessChallenge(identifier, context);
+                        context.State = identifier.RequestId;  //state for Access-Challenge message if otp is wrong (3 times allowed)
 
-                        RequestProcessed?.Invoke(this, request);
+                        RequestProcessed?.Invoke(this, context);
                         return; //stop authentication process after otp code verification
                     }
                 }
 
-                var firstAuthProcessor = _firstAuthFactorProcessorProvider.GetProcessor(clientConfig.FirstFactorAuthenticationSource);
-                var firstFactorAuthenticationResultCode = await firstAuthProcessor.ProcessFirstAuthFactorAsync(request, clientConfig);
+                var firstAuthProcessor = _firstAuthFactorProcessorProvider.GetProcessor(context.ClientConfiguration.FirstFactorAuthenticationSource);
+                var firstFactorAuthenticationResultCode = await firstAuthProcessor.ProcessFirstAuthFactorAsync(context);
                 if (firstFactorAuthenticationResultCode != PacketCode.AccessAccept)
                 {
                     //first factor authentication rejected
-                    request.ResponseCode = firstFactorAuthenticationResultCode;
-                    RequestProcessed?.Invoke(this, request);
+                    context.ResponseCode = firstFactorAuthenticationResultCode;
+                    RequestProcessed?.Invoke(this, context);
 
                     //stop authencation process
                     return;
                 }
 
-                if (request.Bypass2Fa)
+                if (context.Bypass2Fa)
                 {
                     //second factor not required
-                    var userName = request.UserName;
+                    var userName = context.UserName;
                     _logger.Information("Bypass second factor for user '{user:l}'", userName);
 
-                    request.ResponseCode = PacketCode.AccessAccept;
-                    RequestProcessed?.Invoke(this, request);
+                    context.ResponseCode = PacketCode.AccessAccept;
+                    RequestProcessed?.Invoke(this, context);
 
                     //stop authencation process
                     return;
                 }
 
-                request.ResponseCode = await ProcessSecondAuthenticationFactor(request, clientConfig);
-                if (request.ResponseCode == PacketCode.AccessChallenge)
+                context.ResponseCode = await ProcessSecondAuthenticationFactor(context);
+                if (context.ResponseCode == PacketCode.AccessChallenge)
                 {
-                    _challengeProcessor.AddState(request.State, request);
+                    _challengeProcessor.AddState(new ChallengeRequestIdentifier(context.ClientConfiguration, context.State), context);
                 }
 
-                RequestProcessed?.Invoke(this, request);
+                RequestProcessed?.Invoke(this, context);
 
             }
             catch(Exception ex)
@@ -125,12 +126,12 @@ namespace MultiFactor.Radius.Adapter.Server
             }
         }
 
-        private void ProcessUserNameTransformRules(PendingRequest request, IClientConfiguration clientConfig)
+        private void ProcessUserNameTransformRules(RadiusContext request)
         {
             var userName = request.UserName;
             if (string.IsNullOrEmpty(userName)) return;
             
-            foreach(var rule in clientConfig.UserNameTransformRules)
+            foreach(var rule in request.ClientConfiguration.UserNameTransformRules)
             {
                 var regex = new Regex(rule.Match);
                 if (rule.Count != null)
@@ -149,7 +150,7 @@ namespace MultiFactor.Radius.Adapter.Server
         /// <summary>
         /// Authenticate request at MultiFactor with user-name only
         /// </summary>
-        private async Task<PacketCode> ProcessSecondAuthenticationFactor(PendingRequest request, IClientConfiguration clientConfig)
+        private async Task<PacketCode> ProcessSecondAuthenticationFactor(RadiusContext request)
         {
             var userName = request.UserName;
 
@@ -162,14 +163,14 @@ namespace MultiFactor.Radius.Adapter.Server
             if (request.RequestPacket.IsVendorAclRequest == true)
             {
                 //security check
-                if (clientConfig.FirstFactorAuthenticationSource == AuthenticationSource.Radius)
+                if (request.ClientConfiguration.FirstFactorAuthenticationSource == AuthenticationSource.Radius)
                 {
                     _logger.Information("Bypass second factor for user {user:l}", userName);
                     return PacketCode.AccessAccept;
                 }
             }
 
-            var response = await _multifactorApiClient.CreateSecondFactorRequest(request, clientConfig);
+            var response = await _multifactorApiClient.CreateSecondFactorRequest(request);
 
             return response;
         }

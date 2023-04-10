@@ -22,27 +22,32 @@
 //OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 //SOFTWARE.
 
+using Serilog;
 using System;
-using Serilog.Context;
-using MultiFactor.Radius.Adapter.Logging.Enrichers;
-using Serilog.Core;
-using MultiFactor.Radius.Adapter.Server;
+using System.Net.Sockets;
+using MultiFactor.Radius.Adapter.Core.Radius;
 
-namespace MultiFactor.Radius.Adapter.Logging
+namespace MultiFactor.Radius.Adapter.Server
 {
-    public static class LoggerScope
+    public class RadiusResponseSenderFactory
     {
-        public static void Wrap(Action<RadiusContext> action, RadiusContext context)
+        private readonly IRadiusPacketParser _radiusPacketParser;
+        private readonly ILogger _logger;
+
+        public RadiusResponseSenderFactory(IRadiusPacketParser radiusPacketParser, ILogger logger)
         {
-            var enrichers = new ILogEventEnricher[]
+            _radiusPacketParser = radiusPacketParser ?? throw new ArgumentNullException(nameof(radiusPacketParser));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        }
+
+        public RadiusResponseSender CreateSender(UdpClient udpClient)
+        {
+            if (udpClient is null)
             {
-                CorrelationIdLogEventEnricher.Create(context.ClientConfiguration),
-                RadiusPacketLogEventEnricher.Create(context)
-            };
-            using (LogContext.Push(enrichers))
-            {
-                action(context);
+                throw new ArgumentNullException(nameof(udpClient));
             }
+
+            return new RadiusResponseSender(udpClient, _radiusPacketParser, _logger);
         }
     }
 }

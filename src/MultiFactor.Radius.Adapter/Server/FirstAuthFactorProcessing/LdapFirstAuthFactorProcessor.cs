@@ -34,29 +34,29 @@ namespace MultiFactor.Radius.Adapter.Server.FirstAuthFactorProcessing
 
         public AuthenticationSource AuthenticationSource => AuthenticationSource.ActiveDirectory | AuthenticationSource.Ldap;
 
-        public async Task<PacketCode> ProcessFirstAuthFactorAsync(PendingRequest request, IClientConfiguration clientConfig)
+        public async Task<PacketCode> ProcessFirstAuthFactorAsync(RadiusContext context)
         {
-            var userName = request.UserName;
+            var userName = context.UserName;
 
             if (string.IsNullOrEmpty(userName))
             {
-                _logger.Warning("Can't find User-Name in message id={id} from {host:l}:{port}", request.RequestPacket.Identifier, request.RemoteEndpoint.Address, request.RemoteEndpoint.Port);
+                _logger.Warning("Can't find User-Name in message id={id} from {host:l}:{port}", context.RequestPacket.Identifier, context.RemoteEndpoint.Address, context.RemoteEndpoint.Port);
                 return PacketCode.AccessReject;
             }
 
-            var password = request.RequestPacket.TryGetUserPassword();
+            var password = context.RequestPacket.TryGetUserPassword();
 
             if (string.IsNullOrEmpty(password))
             {
-                _logger.Warning("Can't find User-Password in message id={id} from {host:l}:{port}", request.RequestPacket.Identifier, request.RemoteEndpoint.Address, request.RemoteEndpoint.Port);
+                _logger.Warning("Can't find User-Password in message id={id} from {host:l}:{port}", context.RequestPacket.Identifier, context.RemoteEndpoint.Address, context.RemoteEndpoint.Port);
                 return PacketCode.AccessReject;
             }
 
             //check all hosts
-            var ldapUriList = clientConfig.ActiveDirectoryDomain.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
+            var ldapUriList = context.ClientConfiguration.ActiveDirectoryDomain.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
             foreach (var ldapUri in ldapUriList)
             {
-                var isValid = await _ldapService.VerifyCredential(userName, password, ldapUri, request, clientConfig);
+                var isValid = await _ldapService.VerifyCredential(userName, password, ldapUri, context);
                 if (isValid)
                 {
                     return PacketCode.AccessAccept;

@@ -34,7 +34,7 @@ namespace MultiFactor.Radius.Adapter.Services.ActiveDirectory.MembershipVerifica
         /// Sets some request's property values.
         /// </summary>
         /// <param name="request">Pending request.</param>
-        public void EnrichRequest(PendingRequest request)
+        public void EnrichRequest(RadiusContext request)
         {
             var profile = _processingResult.Succeeded.Select(x => x.Profile).FirstOrDefault(x => x != null);
             if (profile == null) return;

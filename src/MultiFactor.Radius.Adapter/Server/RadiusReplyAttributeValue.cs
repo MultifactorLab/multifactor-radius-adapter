@@ -68,7 +68,7 @@ namespace MultiFactor.Radius.Adapter.Server
         /// <summary>
         /// Is match condition
         /// </summary>
-        public bool IsMatch(PendingRequest request)
+        public bool IsMatch(RadiusContext request)
         {
             if (request == null)
             {
@@ -114,7 +114,7 @@ namespace MultiFactor.Radius.Adapter.Server
             return true; //without conditions
         }
 
-        public object[] GetValues(PendingRequest request)
+        public object[] GetValues(RadiusContext request)
         {
             if (IsMemberOf)
             {

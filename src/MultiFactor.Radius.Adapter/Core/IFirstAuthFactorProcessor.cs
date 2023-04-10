@@ -23,9 +23,9 @@ namespace MultiFactor.Radius.Adapter.Core
         /// <summary>
         /// Performs first authentication factor processing and returns <see cref="PacketCode"/> as a result.
         /// </summary>
-        /// <param name="request">The pending request for which the authentication factor should be processed.</param>
+        /// <param name="context">The pending request for which the authentication factor should be processed.</param>
         /// <param name="clientConfig">Current client configuration.</param>
         /// <returns><see cref="PacketCode"/> as a result of processing.</returns>
-        Task<PacketCode> ProcessFirstAuthFactorAsync(PendingRequest request, IClientConfiguration clientConfig);
+        Task<PacketCode> ProcessFirstAuthFactorAsync(RadiusContext context);
     }
 }

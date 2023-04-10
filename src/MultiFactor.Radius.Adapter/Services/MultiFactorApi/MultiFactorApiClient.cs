@@ -38,33 +38,33 @@ namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
-        public async Task<PacketCode> CreateSecondFactorRequest(PendingRequest request, IClientConfiguration clientConfig)
+        public async Task<PacketCode> CreateSecondFactorRequest(RadiusContext context)
         {
-            var userName = request.UserName;
-            var displayName = request.DisplayName;
-            var email = request.EmailAddress;
-            var userPhone = request.UserPhone;
-            var callingStationId = request.RequestPacket.CallingStationId;
+            var userName = context.UserName;
+            var displayName = context.DisplayName;
+            var email = context.EmailAddress;
+            var userPhone = context.UserPhone;
+            var callingStationId = context.RequestPacket.CallingStationId;
 
             string calledStationId = null;
 
-            if (request.RequestPacket.IsWinLogon) //only for winlogon yet
+            if (context.RequestPacket.IsWinLogon) //only for winlogon yet
             {
-                calledStationId = request.RequestPacket.CalledStationId;
+                calledStationId = context.RequestPacket.CalledStationId;
             }
 
-            if (clientConfig.UseUpnAsIdentity)
+            if (context.ClientConfiguration.UseUpnAsIdentity)
             {
-                if (string.IsNullOrEmpty(request.Upn))
+                if (string.IsNullOrEmpty(context.Upn))
                 {
                     throw new ArgumentNullException("UserPrincipalName");
                 }
 
-                userName = request.Upn;
+                userName = context.Upn;
             }
 
             //remove user information for privacy
-            switch (clientConfig.PrivacyMode.Mode)
+            switch (context.ClientConfiguration.PrivacyMode.Mode)
             {
                 case PrivacyMode.Full:
                     displayName = null;
@@ -75,22 +75,22 @@ namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi
                     break;
 
                 case PrivacyMode.Partial:
-                    if (!clientConfig.PrivacyMode.HasField("Name"))
+                    if (!context.ClientConfiguration.PrivacyMode.HasField("Name"))
                     {
                         displayName = null;
                     }
                     
-                    if (!clientConfig.PrivacyMode.HasField("Email"))
+                    if (!context.ClientConfiguration.PrivacyMode.HasField("Email"))
                     {
                         email = null;
                     }
                     
-                    if (!clientConfig.PrivacyMode.HasField("Phone"))
+                    if (!context.ClientConfiguration.PrivacyMode.HasField("Phone"))
                     {
                         userPhone = null;
                     }
                     
-                    if (!clientConfig.PrivacyMode.HasField("RemoteHost"))
+                    if (!context.ClientConfiguration.PrivacyMode.HasField("RemoteHost"))
                     {
                         callingStationId = "";
                     }
@@ -101,10 +101,10 @@ namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi
             }
 
             //try to get authenticated client to bypass second factor if configured
-            if (_authenticatedClientCache.TryHitCache(request.RequestPacket.CallingStationId, userName, clientConfig))
+            if (_authenticatedClientCache.TryHitCache(context.RequestPacket.CallingStationId, userName, context.ClientConfiguration))
             {
                 _logger.Information("Bypass second factor for user '{user:l}' with calling-station-id {csi:l} from {host:l}:{port}", 
-                    userName, request.RequestPacket.CallingStationId, request.RemoteEndpoint.Address, request.RemoteEndpoint.Port);
+                    userName, context.RequestPacket.CallingStationId, context.RemoteEndpoint.Address, context.RemoteEndpoint.Port);
                 return PacketCode.AccessAccept;
             }
             
@@ -115,7 +115,7 @@ namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi
                 Name = displayName,
                 Email = email,
                 Phone = userPhone,
-                PassCode = GetPassCodeOrNull(request, clientConfig),
+                PassCode = GetPassCodeOrNull(context),
                 CallingStationId = callingStationId,
                 CalledStationId = calledStationId,
                 Capabilities = new
@@ -124,67 +124,67 @@ namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi
                 },
                 GroupPolicyPreset = new
                 {
-                    clientConfig.SignUpGroups
+                    context.ClientConfiguration.SignUpGroups
                 }
             };
 
             try
             {
-                var response = await SendRequest(url, payload, clientConfig);
+                var response = await SendRequest(url, payload, context.ClientConfiguration);
                 var responseCode = ConvertToRadiusCode(response);
 
-                request.State = response?.Id;
-                request.ReplyMessage = response?.ReplyMessage;
+                context.State = response?.Id;
+                context.ReplyMessage = response?.ReplyMessage;
 
                 if (responseCode == PacketCode.AccessAccept && !response.Bypassed)
                 {
-                    LogGrantedInfo(userName, response, request);
-                    _authenticatedClientCache.SetCache(request.RequestPacket.CallingStationId, userName, clientConfig);                  
+                    LogGrantedInfo(userName, response, context);
+                    _authenticatedClientCache.SetCache(context.RequestPacket.CallingStationId, userName, context.ClientConfiguration);                  
                 }
 
                 if (responseCode == PacketCode.AccessReject)
                 {
                     var reason = response?.ReplyMessage;
                     var phone = response?.Phone;
-                    _logger.Warning("Second factor verification for user '{user:l}' from {host:l}:{port} failed with reason='{reason:l}'. User phone {phone:l}", userName, request.RemoteEndpoint.Address, request.RemoteEndpoint.Port, reason, phone);
+                    _logger.Warning("Second factor verification for user '{user:l}' from {host:l}:{port} failed with reason='{reason:l}'. User phone {phone:l}", userName, context.RemoteEndpoint.Address, context.RemoteEndpoint.Port, reason, phone);
                 }
 
                 return responseCode;
             }
             catch (Exception ex)
             {
-                return HandleException(ex, userName, request, clientConfig);
+                return HandleException(ex, userName, context);
             }
         }
 
-        public async Task<PacketCode> Challenge(PendingRequest request, IClientConfiguration clientConfig, string userName, string answer, string state)
+        public async Task<PacketCode> Challenge(RadiusContext context, string userName, string answer, ChallengeRequestIdentifier identifier)
         {
             var url = _serviceConfiguration.ApiUrl + "/access/requests/ra/challenge";
             var payload = new
             {
                 Identity = userName,
                 Challenge = answer,
-                RequestId = state
+                RequestId = identifier.RequestId
             };
 
             try
             {
-                var response = await SendRequest(url, payload, clientConfig);
+                var response = await SendRequest(url, payload, context.ClientConfiguration);
                 var responseCode = ConvertToRadiusCode(response);
 
-                request.ReplyMessage = response.ReplyMessage;
+                context.ReplyMessage = response.ReplyMessage;
 
                 if (responseCode == PacketCode.AccessAccept && !response.Bypassed)
                 {
-                    LogGrantedInfo(userName, response, request);
-                    _authenticatedClientCache.SetCache(request.RequestPacket.CallingStationId, userName, clientConfig);
+                    LogGrantedInfo(userName, response, context);
+                    _authenticatedClientCache.SetCache(context.RequestPacket.CallingStationId, userName, context.ClientConfiguration);
                 }
 
                 return responseCode;
             }
             catch (Exception ex)
             {
-                return HandleException(ex, userName, request, clientConfig);
+                return HandleException(ex, userName, context);
             }
         }
 
@@ -239,22 +239,22 @@ namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi
             }
         }
 
-        private PacketCode HandleException(Exception ex, string username, PendingRequest request, IClientConfiguration clientConfig)
+        private PacketCode HandleException(Exception ex, string username, RadiusContext context)
         {
             if (ex is MultifactorApiUnreachableException apiEx)
             {
                 _logger.Error("Error occured while requesting API for user '{user:l}' from {host:l}:{port}, {msg:l}",
                     username,
-                    request.RemoteEndpoint.Address,
-                    request.RemoteEndpoint.Port,
+                    context.RemoteEndpoint.Address,
+                    context.RemoteEndpoint.Port,
                     apiEx.Message);
 
-                if (clientConfig.BypassSecondFactorWhenApiUnreachable)
+                if (context.ClientConfiguration.BypassSecondFactorWhenApiUnreachable)
                 {
                     _logger.Warning("Bypass second factor for user '{user:l}' from {host:l}:{port}",
                         username,
-                        request.RemoteEndpoint.Address,
-                        request.RemoteEndpoint.Port);
+                        context.RemoteEndpoint.Address,
+                        context.RemoteEndpoint.Port);
                     return ConvertToRadiusCode(MultiFactorAccessRequest.Bypass);
                 }
             }
@@ -283,20 +283,20 @@ namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi
             }
         }
 
-        private string GetPassCodeOrNull(PendingRequest request, IClientConfiguration clientConfiguration)
+        private string GetPassCodeOrNull(RadiusContext context)
         {
             //check static challenge
-            var challenge = request.RequestPacket.TryGetChallenge();
+            var challenge = context.RequestPacket.TryGetChallenge();
             if (challenge != null)
             {
                 return challenge;
             }
 
             //check password challenge (otp or passcode)
-            var userPassword = request.RequestPacket.TryGetUserPassword();
+            var userPassword = context.RequestPacket.TryGetUserPassword();
 
             //only if first authentication factor is None, assuming that Password contains OTP code
-            if (clientConfiguration.FirstFactorAuthenticationSource != AuthenticationSource.None)
+            if (context.ClientConfiguration.FirstFactorAuthenticationSource != AuthenticationSource.None)
             {
                 return null;
             }
@@ -329,7 +329,7 @@ namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi
             return null;
         }
 
-        private void LogGrantedInfo(string userName, MultiFactorAccessRequest response, PendingRequest request)
+        private void LogGrantedInfo(string userName, MultiFactorAccessRequest response, RadiusContext request)
         {
             string countryValue = null;
             string regionValue = null;

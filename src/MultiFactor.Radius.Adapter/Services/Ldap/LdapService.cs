@@ -45,7 +45,7 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap
         /// <summary>
         /// Verify User Name, Password, User Status and Policy against Active Directory
         /// </summary>
-        public async Task<bool> VerifyCredential(string userName, string password, string ldapUri, PendingRequest request, IClientConfiguration clientConfig)
+        public async Task<bool> VerifyCredential(string userName, string password, string ldapUri, RadiusContext context)
         {
             if (string.IsNullOrEmpty(userName))
             {
@@ -63,7 +63,7 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap
 
             var user = LdapIdentity.ParseUser(userName);
 
-            var formatter = _bindIdentityFormatterFactory.CreateFormatter(clientConfig);
+            var formatter = _bindIdentityFormatterFactory.CreateFormatter(context.ClientConfiguration);
             var bindDn = formatter.FormatIdentity(user, ldapUri);
 
             _logger.Debug("Verifying user '{user:l}' credential and status at '{ldapUri:l}'", 
@@ -72,7 +72,7 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap
             try
             {
                 using (var connection = await LdapConnectionAdapter.CreateAsync(ldapUri, user, password, 
-                    config => config.SetBindIdentityFormatter(_bindIdentityFormatterFactory.CreateFormatter(clientConfig))
+                    config => config.SetBindIdentityFormatter(_bindIdentityFormatterFactory.CreateFormatter(context.ClientConfiguration))
                 ))
                 {
                     var domain = await connection.WhereAmIAsync();
@@ -80,12 +80,12 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap
                     _logger.Information("User '{user:l}' credential and status verified successfully in '{domain:l}'", 
                         user.Name, domain.Name);
 
-                    var profile = await _profileLoader.LoadAsync(clientConfig, connection, user);
+                    var profile = await _profileLoader.LoadAsync(context.ClientConfiguration, connection, user);
 
                     //user must be member of security group
-                    if (clientConfig.ActiveDirectoryGroups.Any())
+                    if (context.ClientConfiguration.ActiveDirectoryGroups.Any())
                     {
-                        var accessGroup = clientConfig.ActiveDirectoryGroups.FirstOrDefault(group => IsMemberOf(profile, group));
+                        var accessGroup = context.ClientConfiguration.ActiveDirectoryGroups.FirstOrDefault(group => IsMemberOf(profile, group));
                         if (accessGroup != null)
                         {
                             _logger.Debug("User '{user:l}' is a member of the access group '{group:l}' in {domain:l}", 
@@ -94,15 +94,15 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap
                         else
                         {
                             _logger.Warning("User '{user:l}' is not a member of any access group ({accGroups:l}) in '{domain:l}'", 
-                                user.Name, string.Join(", ", clientConfig.ActiveDirectoryGroups), profile.BaseDn.Name);
+                                user.Name, string.Join(", ", context.ClientConfiguration.ActiveDirectoryGroups), profile.BaseDn.Name);
                             return false;
                         }
                     }
 
                     //only users from group must process 2fa
-                    if (clientConfig.ActiveDirectory2FaGroup.Any())
+                    if (context.ClientConfiguration.ActiveDirectory2FaGroup.Any())
                     {
-                        var mfaGroup = clientConfig.ActiveDirectory2FaGroup.FirstOrDefault(group => IsMemberOf(profile, group));
+                        var mfaGroup = context.ClientConfiguration.ActiveDirectory2FaGroup.FirstOrDefault(group => IsMemberOf(profile, group));
                         if (mfaGroup != null)
                         {
                             _logger.Debug("User '{user:l}' is a member of the 2FA group '{group:l}' in '{domain:l}'", 
@@ -111,38 +111,38 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap
                         else
                         {
                             _logger.Information("User '{user:l}' is not a member of any 2FA group ({groups:l}) in '{domain:l}'", 
-                                user.Name, string.Join(", ", clientConfig.ActiveDirectory2FaGroup), profile.BaseDn.Name);
-                            request.Bypass2Fa = true;
+                                user.Name, string.Join(", ", context.ClientConfiguration.ActiveDirectory2FaGroup), profile.BaseDn.Name);
+                            context.Bypass2Fa = true;
                         }
                     }
 
                     //users from group must not process 2fa
-                    if (!request.Bypass2Fa && clientConfig.ActiveDirectory2FaBypassGroup.Any())
+                    if (!context.Bypass2Fa && context.ClientConfiguration.ActiveDirectory2FaBypassGroup.Any())
                     {
-                        var bypassGroup = clientConfig.ActiveDirectory2FaBypassGroup.FirstOrDefault(group => IsMemberOf(profile, group));
+                        var bypassGroup = context.ClientConfiguration.ActiveDirectory2FaBypassGroup.FirstOrDefault(group => IsMemberOf(profile, group));
 
                         if (bypassGroup != null)
                         {
                             _logger.Information("User '{user:l}' is a member of the 2FA bypass group '{group:l}' in '{domain:l}'", 
                                 user.Name, bypassGroup.Trim(), profile.BaseDn.Name);
-                            request.Bypass2Fa = true;
+                            context.Bypass2Fa = true;
                         }
                         else
                         {
                             _logger.Debug("User '{user:l}' is not a member of any 2FA bypass group ({groups:l}) in '{domain:l}'", 
-                                user.Name, string.Join(", ", clientConfig.ActiveDirectory2FaBypassGroup), profile.BaseDn.Name);
+                                user.Name, string.Join(", ", context.ClientConfiguration.ActiveDirectory2FaBypassGroup), profile.BaseDn.Name);
                         }
                     }
 
-                    request.UserPhone = profile.Phone;
-                    request.Upn = profile.Upn;
-                    request.DisplayName = profile.DisplayName;
-                    request.EmailAddress = profile.Email;
-                    request.LdapAttrs = profile.LdapAttrs.ToDictionary(k => k.Key, v => v.Value);
+                    context.UserPhone = profile.Phone;
+                    context.Upn = profile.Upn;
+                    context.DisplayName = profile.DisplayName;
+                    context.EmailAddress = profile.Email;
+                    context.LdapAttrs = profile.LdapAttrs.ToDictionary(k => k.Key, v => v.Value);
 
                     if (profile.MemberOf != null)
                     {
-                        request.UserGroups = profile.MemberOf;
+                        context.UserGroups = profile.MemberOf;
                     }
                 }
 

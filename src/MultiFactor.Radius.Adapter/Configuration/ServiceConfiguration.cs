@@ -76,7 +76,7 @@ namespace MultiFactor.Radius.Adapter.Configuration
             return null;
         }
 
-        public IClientConfiguration GetClient(PendingRequest request)
+        public IClientConfiguration GetClient(RadiusContext request)
         {
             if (request == null)
             {

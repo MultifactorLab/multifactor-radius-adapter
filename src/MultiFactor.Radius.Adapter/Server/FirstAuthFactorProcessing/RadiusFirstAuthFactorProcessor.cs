@@ -34,49 +34,49 @@ namespace MultiFactor.Radius.Adapter.Server.FirstAuthFactorProcessing
 
         public AuthenticationSource AuthenticationSource => AuthenticationSource.Radius;
 
-        public async Task<PacketCode> ProcessFirstAuthFactorAsync(PendingRequest request, IClientConfiguration clientConfig)
+        public async Task<PacketCode> ProcessFirstAuthFactorAsync(RadiusContext context)
         {
-            var code = await ProcessRadiusAuthAsync(request, clientConfig);
+            var code = await ProcessRadiusAuthAsync(context);
             if (code != PacketCode.AccessAccept) return code;
 
-            if (!clientConfig.CheckMembership) return PacketCode.AccessAccept;
+            if (!context.ClientConfiguration.CheckMembership) return PacketCode.AccessAccept;
 
-            var result = await _membershipProcessor.ProcessMembershipAsync(request, clientConfig);
+            var result = await _membershipProcessor.ProcessMembershipAsync(context);
             var handler = new MembershipProcessingResultHandler(result);
 
-            handler.EnrichRequest(request);
+            handler.EnrichRequest(context);
             return handler.GetDecision();
         }
 
-        private async Task<PacketCode> ProcessRadiusAuthAsync(PendingRequest request, IClientConfiguration clientConfig)
+        private async Task<PacketCode> ProcessRadiusAuthAsync(RadiusContext context)
         {
             try
             {
                 //sending request as is to Remote Radius Server
-                using (var client = new RadiusClient(clientConfig.ServiceClientEndpoint, _logger))
+                using (var client = new RadiusClient(context.ClientConfiguration.ServiceClientEndpoint, _logger))
                 {
-                    _logger.Debug($"Sending AccessRequest message with id={{id}} to Remote Radius Server {clientConfig.NpsServerEndpoint}", request.RequestPacket.Identifier);
+                    _logger.Debug($"Sending AccessRequest message with id={{id}} to Remote Radius Server {context.ClientConfiguration.NpsServerEndpoint}", context.RequestPacket.Identifier);
 
-                    var requestBytes = _packetParser.GetBytes(request.RequestPacket);
-                    var response = await client.SendPacketAsync(request.RequestPacket.Identifier, requestBytes, clientConfig.NpsServerEndpoint, TimeSpan.FromSeconds(5));
+                    var requestBytes = _packetParser.GetBytes(context.RequestPacket);
+                    var response = await client.SendPacketAsync(context.RequestPacket.Identifier, requestBytes, context.ClientConfiguration.NpsServerEndpoint, TimeSpan.FromSeconds(5));
 
                     if (response != null)
                     {
-                        var responsePacket = _packetParser.Parse(response, request.RequestPacket.SharedSecret, request.RequestPacket.Authenticator);
+                        var responsePacket = _packetParser.Parse(response, context.RequestPacket.SharedSecret, context.RequestPacket.Authenticator);
                         _logger.Debug("Received {code:l} message with id={id} from Remote Radius Server", responsePacket.Code.ToString(), responsePacket.Identifier);
 
                         if (responsePacket.Code == PacketCode.AccessAccept)
                         {
-                            var userName = request.UserName;
-                            _logger.Information($"User '{{user:l}}' credential and status verified successfully at {clientConfig.NpsServerEndpoint}", userName);
+                            var userName = context.UserName;
+                            _logger.Information($"User '{{user:l}}' credential and status verified successfully at {context.ClientConfiguration.NpsServerEndpoint}", userName);
                         }
 
-                        request.ResponsePacket = responsePacket;
+                        context.ResponsePacket = responsePacket;
                         return responsePacket.Code; //Code received from remote radius
                     }
                     else
                     {
-                        _logger.Warning("Remote Radius Server did not respond on message with id={id}", request.RequestPacket.Identifier);
+                        _logger.Warning("Remote Radius Server did not respond on message with id={id}", context.RequestPacket.Identifier);
                         return PacketCode.AccessReject; //reject by default
                     }
                 }

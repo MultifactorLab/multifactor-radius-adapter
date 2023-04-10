@@ -26,18 +26,18 @@ namespace MultiFactor.Radius.Adapter.Server.FirstAuthFactorProcessing
 
         public AuthenticationSource AuthenticationSource => AuthenticationSource.None;
 
-        public async Task<PacketCode> ProcessFirstAuthFactorAsync(PendingRequest request, IClientConfiguration clientConfig)
+        public async Task<PacketCode> ProcessFirstAuthFactorAsync(RadiusContext context)
         {
-            if (!clientConfig.CheckMembership)
+            if (!context.ClientConfiguration.CheckMembership)
             {
                 return PacketCode.AccessAccept;
             }
 
             // check membership without AD authentication
-            var result = await _membershipProcessor.ProcessMembershipAsync(request, clientConfig);
+            var result = await _membershipProcessor.ProcessMembershipAsync(context);
             var handler = new MembershipProcessingResultHandler(result);
 
-            handler.EnrichRequest(request);
+            handler.EnrichRequest(context);
             return handler.GetDecision();
         }
     }

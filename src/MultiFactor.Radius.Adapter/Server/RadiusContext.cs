@@ -2,6 +2,7 @@
 //Please see licence at 
 //https://github.com/MultifactorLab/multifactor-radius-adapter/blob/main/LICENSE.md
 
+using MultiFactor.Radius.Adapter.Configuration.Core;
 using MultiFactor.Radius.Adapter.Core.Radius;
 using System;
 using System.Collections.Generic;
@@ -9,13 +10,16 @@ using System.Net;
 
 namespace MultiFactor.Radius.Adapter.Server
 {
-    public class PendingRequest
+    public class RadiusContext
     {
-        public PendingRequest()
+        public RadiusContext(IClientConfiguration clientConfiguration, RadiusResponseSender radiusResponseSender, IServiceProvider provider)
         {
             ReceivedAt = DateTime.Now;
             ResponseCode = PacketCode.AccessReject;
             UserGroups = new List<string>();
+            ClientConfiguration = clientConfiguration ?? throw new ArgumentNullException(nameof(clientConfiguration));
+            ResponseSender = radiusResponseSender ?? throw new ArgumentNullException(nameof(radiusResponseSender));
+            RequestServices = provider ?? throw new ArgumentNullException(nameof(provider));
         }
         public IPEndPoint RemoteEndpoint { get; set; }
         public IPEndPoint ProxyEndpoint { get; set; }
@@ -33,5 +37,8 @@ namespace MultiFactor.Radius.Adapter.Server
         public bool Bypass2Fa { get; set; }
         public IList<string> UserGroups { get; set; }
         public IDictionary<string, object> LdapAttrs { get; set; }
+        public IServiceProvider RequestServices { get; set; }
+        public IClientConfiguration ClientConfiguration { get; }
+        public RadiusResponseSender ResponseSender { get; }
     }
 }

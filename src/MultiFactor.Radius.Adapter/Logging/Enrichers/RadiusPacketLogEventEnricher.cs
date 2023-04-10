@@ -9,22 +9,22 @@ namespace MultiFactor.Radius.Adapter.Logging.Enrichers
     {
         private const string _callingStationIdToken = "CallingStationId";
 
-        private readonly RequestScope _requestScope;
+        private readonly RadiusContext _context;
 
-        private RadiusPacketLogEventEnricher(RequestScope requestScope)
+        private RadiusPacketLogEventEnricher(RadiusContext context)
         {
-            _requestScope = requestScope;
+            _context = context;
         }
 
-        public static RadiusPacketLogEventEnricher Create(RequestScope requestScope)
+        public static RadiusPacketLogEventEnricher Create(RadiusContext context)
         {
-            if (requestScope is null) throw new ArgumentNullException(nameof(requestScope));
-            return new RadiusPacketLogEventEnricher(requestScope);
+            if (context is null) throw new ArgumentNullException(nameof(context));
+            return new RadiusPacketLogEventEnricher(context);
         }
 
         public void Enrich(LogEvent logEvent, ILogEventPropertyFactory propertyFactory)
         {
-            var property = propertyFactory.CreateProperty(_callingStationIdToken, _requestScope.Packet.CallingStationId);
+            var property = propertyFactory.CreateProperty(_callingStationIdToken, _context.RequestPacket.CallingStationId);
             logEvent.AddOrUpdateProperty(property);
         }
     }
