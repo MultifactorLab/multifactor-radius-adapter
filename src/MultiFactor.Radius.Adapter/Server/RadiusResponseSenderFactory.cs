@@ -40,7 +40,7 @@ namespace MultiFactor.Radius.Adapter.Server
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
-        public RadiusResponseSender CreateSender(UdpClient udpClient)
+        public IRadiusResponseSender CreateSender(UdpClient udpClient)
         {
             if (udpClient is null)
             {

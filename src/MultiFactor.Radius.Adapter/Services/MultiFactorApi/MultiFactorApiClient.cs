@@ -329,12 +329,12 @@ namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi
             return null;
         }
 
-        private void LogGrantedInfo(string userName, MultiFactorAccessRequest response, RadiusContext request)
+        private void LogGrantedInfo(string userName, MultiFactorAccessRequest response, RadiusContext context)
         {
             string countryValue = null;
             string regionValue = null;
             string cityValue = null;
-            string callingStationId = request?.RequestPacket?.CallingStationId;
+            string callingStationId = context?.RequestPacket?.CallingStationId;
 
             if (response != null && IPAddress.TryParse(callingStationId, out var ip))
             {

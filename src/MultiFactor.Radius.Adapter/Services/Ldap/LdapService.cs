@@ -134,10 +134,7 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap
                         }
                     }
 
-                    context.UserPhone = profile.Phone;
-                    context.Upn = profile.Upn;
-                    context.DisplayName = profile.DisplayName;
-                    context.EmailAddress = profile.Email;
+                    context.SetProfile(profile);
                     context.LdapAttrs = profile.LdapAttrs.ToDictionary(k => k.Key, v => v.Value);
 
                     if (profile.MemberOf != null)

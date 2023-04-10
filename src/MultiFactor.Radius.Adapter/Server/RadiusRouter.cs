@@ -126,12 +126,12 @@ namespace MultiFactor.Radius.Adapter.Server
             }
         }
 
-        private void ProcessUserNameTransformRules(RadiusContext request)
+        private void ProcessUserNameTransformRules(RadiusContext context)
         {
-            var userName = request.UserName;
+            var userName = context.UserName;
             if (string.IsNullOrEmpty(userName)) return;
             
-            foreach(var rule in request.ClientConfiguration.UserNameTransformRules)
+            foreach(var rule in context.ClientConfiguration.UserNameTransformRules)
             {
                 var regex = new Regex(rule.Match);
                 if (rule.Count != null)
@@ -144,7 +144,7 @@ namespace MultiFactor.Radius.Adapter.Server
                 }
             }
 
-            request.UserName = userName;
+            context.UserName = userName;
         }
 
         /// <summary>

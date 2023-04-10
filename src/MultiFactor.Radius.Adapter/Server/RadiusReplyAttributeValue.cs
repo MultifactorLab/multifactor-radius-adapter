@@ -68,11 +68,11 @@ namespace MultiFactor.Radius.Adapter.Server
         /// <summary>
         /// Is match condition
         /// </summary>
-        public bool IsMatch(RadiusContext request)
+        public bool IsMatch(RadiusContext context)
         {
-            if (request == null)
+            if (context == null)
             {
-                throw new ArgumentNullException(nameof(request));
+                throw new ArgumentNullException(nameof(context));
             }
 
             //if exist ldap attr value
@@ -81,17 +81,17 @@ namespace MultiFactor.Radius.Adapter.Server
                 //if list of all groups
                 if (IsMemberOf)
                 {
-                    return request.UserGroups?.Count > 0;
+                    return context.UserGroups?.Count > 0;
                 }
 
                 //just attribute
-                return request.LdapAttrs?[LdapAttributeName] != null;
+                return context.LdapAttrs?[LdapAttributeName] != null;
             }
 
             //if matched user name condition
             if (!string.IsNullOrEmpty(UserNameCondition))
             {
-                var userName = request.UserName;
+                var userName = context.UserName;
                 var isCanonical = Utils.IsCanicalUserName(UserNameCondition);
                 if (isCanonical)
                 {
@@ -104,7 +104,7 @@ namespace MultiFactor.Radius.Adapter.Server
             //if matched user group condition
             if (!string.IsNullOrEmpty(UserGroupCondition))
             {
-                var isInGroup = request
+                var isInGroup = context
                     .UserGroups
                     .Any(g => string.Compare(g, UserGroupCondition, StringComparison.InvariantCultureIgnoreCase) == 0);
 

@@ -23,4 +23,9 @@ internal static class RadiusPacketFactory
     {
         return new RadiusPacket(PacketCode.AccessReject, 0, "secret");
     }
+    
+    public static IRadiusPacket StatusServer()
+    {
+        return new RadiusPacket(PacketCode.StatusServer, 0, "secret");
+    }
 }

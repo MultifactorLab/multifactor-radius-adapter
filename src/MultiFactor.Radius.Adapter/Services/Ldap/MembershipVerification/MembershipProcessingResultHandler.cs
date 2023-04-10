@@ -33,22 +33,19 @@ namespace MultiFactor.Radius.Adapter.Services.ActiveDirectory.MembershipVerifica
         /// <summary>
         /// Sets some request's property values.
         /// </summary>
-        /// <param name="request">Pending request.</param>
-        public void EnrichRequest(RadiusContext request)
+        /// <param name="context">Pending request.</param>
+        public void EnrichRequest(RadiusContext context)
         {
             var profile = _processingResult.Succeeded.Select(x => x.Profile).FirstOrDefault(x => x != null);
             if (profile == null) return;
 
-            request.Bypass2Fa = IsBypassed();
-            request.Upn = profile.Upn;
-            request.DisplayName = profile.DisplayName;
-            request.EmailAddress = profile.Email;
-            request.UserPhone = profile.Phone;
-            request.LdapAttrs = profile.LdapAttrs.ToDictionary(k => k.Key, v => v.Value);
+            context.SetProfile(profile);
+            context.Bypass2Fa = IsBypassed();
+            context.LdapAttrs = profile.LdapAttrs.ToDictionary(k => k.Key, v => v.Value);
 
             if (profile.MemberOf != null)
             {
-                request.UserGroups = profile.MemberOf;
+                context.UserGroups = profile.MemberOf;
             }
         }
 

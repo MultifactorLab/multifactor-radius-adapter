@@ -90,7 +90,7 @@ internal static class ServicesConfiguration
 
         services.AddHostedService<ServerHost>();
         services.AddHostedService<Starter>();
-        services.AddSingleton<ServerInfo>();
+        services.AddSingleton<IServerInfo, ServerInfo>();
 
         services.AddRadiusPipeline(builder =>
         {

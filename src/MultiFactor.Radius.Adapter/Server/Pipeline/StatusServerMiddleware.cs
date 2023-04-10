@@ -12,10 +12,10 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline
 {
     public class StatusServerMiddleware : IRadiusMiddleware
     {
-        private readonly ServerInfo _serverInfo;
+        private readonly IServerInfo _serverInfo;
         private readonly RadiusRequestPostProcessor _requestPostProcessor;
 
-        public StatusServerMiddleware(ServerInfo serverInfo, RadiusRequestPostProcessor requestPostProcessor)
+        public StatusServerMiddleware(IServerInfo serverInfo, RadiusRequestPostProcessor requestPostProcessor)
         {
             _serverInfo = serverInfo ?? throw new ArgumentNullException(nameof(serverInfo));
             _requestPostProcessor = requestPostProcessor ?? throw new ArgumentNullException(nameof(requestPostProcessor));
@@ -30,7 +30,8 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline
             }
 
             var uptime = _serverInfo.GetUptime();
-            context.ReplyMessage = $"Server up {uptime.Days} days {uptime.ToString("hh\\:mm\\:ss")}";
+            var version = _serverInfo.GetVersion();
+            context.ReplyMessage = $"Server up {uptime.Days} days {uptime.ToString("hh\\:mm\\:ss")}, ver.: {version}";
             context.ResponseCode = PacketCode.AccessAccept;
 
             await _requestPostProcessor.InvokeAsync(context);

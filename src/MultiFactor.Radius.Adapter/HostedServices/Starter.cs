@@ -8,9 +8,9 @@ namespace MultiFactor.Radius.Adapter.HostedServices
 {
     public class Starter : IHostedService
     {
-        private readonly ServerInfo _serverInfo;
+        private readonly IServerInfo _serverInfo;
 
-        public Starter(ServerInfo serverInfo)
+        public Starter(IServerInfo serverInfo)
         {
             _serverInfo = serverInfo ?? throw new ArgumentNullException(nameof(serverInfo));
         }

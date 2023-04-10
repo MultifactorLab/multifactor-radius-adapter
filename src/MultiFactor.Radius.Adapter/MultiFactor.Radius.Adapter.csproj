@@ -8,6 +8,7 @@
     <AssemblyName>multifactor-radius-adapter</AssemblyName>
     <Authors>MultlFactor</Authors>
     <Description>Multifactor Radus Adapter</Description>
+	<Version>1.5.0</Version>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
@@ -22,7 +23,7 @@
 		<ServerGarbageCollection>true</ServerGarbageCollection>
 	</PropertyGroup>
 
-  <ItemGroup>
+	<ItemGroup>
     <PackageReference Include="IPAddressRange" Version="4.2.0" />
     <PackageReference Include="LdapForNet" Version="2.7.11" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="7.0.1" />
