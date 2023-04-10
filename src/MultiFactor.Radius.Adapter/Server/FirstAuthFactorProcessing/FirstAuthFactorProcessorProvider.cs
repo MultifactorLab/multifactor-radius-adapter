@@ -6,7 +6,7 @@ using System.Linq;
 
 namespace MultiFactor.Radius.Adapter.Server.FirstAuthFactorProcessing
 {
-    public class FirstAuthFactorProcessorProvider
+    public class FirstAuthFactorProcessorProvider : IFirstAuthFactorProcessorProvider
     {
         private readonly IEnumerable<IFirstAuthFactorProcessor> _processors;
 

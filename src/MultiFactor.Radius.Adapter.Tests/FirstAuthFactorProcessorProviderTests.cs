@@ -23,7 +23,7 @@ namespace MultiFactor.Radius.Adapter.Tests
                 });
             });
 
-            var prov = host.Services.GetRequiredService<FirstAuthFactorProcessorProvider>();
+            var prov = host.Services.GetRequiredService<IFirstAuthFactorProcessorProvider>();
             var getter = prov.GetProcessor(AuthenticationSource.None);
 
             getter.Should().NotBeNull().And.BeOfType<DefaultFirstAuthFactorProcessor>();
@@ -44,7 +44,7 @@ namespace MultiFactor.Radius.Adapter.Tests
                 });
             });
 
-            var prov = host.Services.GetRequiredService<FirstAuthFactorProcessorProvider>();
+            var prov = host.Services.GetRequiredService<IFirstAuthFactorProcessorProvider>();
             var getter = prov.GetProcessor(source);
 
             getter.Should().NotBeNull().And.BeOfType<LdapFirstAuthFactorProcessor>();
@@ -63,7 +63,7 @@ namespace MultiFactor.Radius.Adapter.Tests
                 });
             });
 
-            var prov = host.Services.GetRequiredService<FirstAuthFactorProcessorProvider>();
+            var prov = host.Services.GetRequiredService<IFirstAuthFactorProcessorProvider>();
             var getter = prov.GetProcessor(AuthenticationSource.Radius);
 
             getter.Should().NotBeNull().And.BeOfType<RadiusFirstAuthFactorProcessor>();

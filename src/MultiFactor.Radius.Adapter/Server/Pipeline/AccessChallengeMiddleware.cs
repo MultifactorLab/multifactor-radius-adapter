@@ -10,10 +10,10 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline
 {
     public class AccessChallengeMiddleware : IRadiusMiddleware
     {
-        private readonly ChallengeProcessor _challengeProcessor;
-        private readonly RadiusRequestPostProcessor _requestPostProcessor;
+        private readonly IChallengeProcessor _challengeProcessor;
+        private readonly IRadiusRequestPostProcessor _requestPostProcessor;
 
-        public AccessChallengeMiddleware(ChallengeProcessor challengeProcessor, RadiusRequestPostProcessor requestPostProcessor)
+        public AccessChallengeMiddleware(IChallengeProcessor challengeProcessor, IRadiusRequestPostProcessor requestPostProcessor)
         {
             _challengeProcessor = challengeProcessor ?? throw new ArgumentNullException(nameof(challengeProcessor));
             _requestPostProcessor = requestPostProcessor ?? throw new ArgumentNullException(nameof(requestPostProcessor));

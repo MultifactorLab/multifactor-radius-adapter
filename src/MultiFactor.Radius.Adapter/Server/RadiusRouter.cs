@@ -27,8 +27,8 @@ namespace MultiFactor.Radius.Adapter.Server
         private ILogger _logger;
         private IRadiusPacketParser _packetParser;
         private MultiFactorApiClient _multifactorApiClient;
-        private readonly FirstAuthFactorProcessorProvider _firstAuthFactorProcessorProvider;
-        private readonly ChallengeProcessor _challengeProcessor;
+        private readonly IFirstAuthFactorProcessorProvider _firstAuthFactorProcessorProvider;
+        private readonly IChallengeProcessor _challengeProcessor;
 
         public event EventHandler<RadiusContext> RequestProcessed;
 
@@ -37,8 +37,8 @@ namespace MultiFactor.Radius.Adapter.Server
         public RadiusRouter(IServiceConfiguration serviceConfiguration, 
             IRadiusPacketParser packetParser,
             MultiFactorApiClient multifactorApiClient,
-            FirstAuthFactorProcessorProvider firstAuthFactorProcessorProvider,
-            ChallengeProcessor challengeProcessor,
+            IFirstAuthFactorProcessorProvider firstAuthFactorProcessorProvider,
+            IChallengeProcessor challengeProcessor,
             ILogger logger)
         {
             _serviceConfiguration = serviceConfiguration ?? throw new ArgumentNullException(nameof(serviceConfiguration));

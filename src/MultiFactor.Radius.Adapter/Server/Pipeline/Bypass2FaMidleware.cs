@@ -13,9 +13,9 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline
     public class Bypass2FaMidleware : IRadiusMiddleware
     {
         private readonly ILogger _logger;
-        private readonly RadiusRequestPostProcessor _requestPostProcessor;
+        private readonly IRadiusRequestPostProcessor _requestPostProcessor;
 
-        public Bypass2FaMidleware(ILogger logger, RadiusRequestPostProcessor requestPostProcessor)
+        public Bypass2FaMidleware(ILogger logger, IRadiusRequestPostProcessor requestPostProcessor)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _requestPostProcessor = requestPostProcessor ?? throw new ArgumentNullException(nameof(requestPostProcessor));

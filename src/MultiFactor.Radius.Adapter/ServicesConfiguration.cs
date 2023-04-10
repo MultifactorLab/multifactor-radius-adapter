@@ -66,12 +66,12 @@ internal static class ServicesConfiguration
         services.AddSingleton<RadiusRouter>();
         services.AddSingleton<RadiusServer>();
         services.AddSingleton<RadiusContextFactory>();
-        services.AddSingleton<ChallengeProcessor>();
+        services.AddSingleton<IChallengeProcessor, ChallengeProcessor>();
 
         services.AddSingleton<IFirstAuthFactorProcessor, LdapFirstAuthFactorProcessor>();
         services.AddSingleton<IFirstAuthFactorProcessor, RadiusFirstAuthFactorProcessor>();
         services.AddSingleton<IFirstAuthFactorProcessor, DefaultFirstAuthFactorProcessor>();
-        services.AddSingleton<FirstAuthFactorProcessorProvider>();
+        services.AddSingleton<IFirstAuthFactorProcessorProvider, FirstAuthFactorProcessorProvider>();
 
         services.AddSingleton<UserGroupsGetterProvider>();
         services.AddSingleton<UserGroupsSource>();
@@ -103,7 +103,7 @@ internal static class ServicesConfiguration
             builder.Use<SecondFactorAuthenticationMiddleware>();
         });
 
-        services.AddSingleton<RadiusRequestPostProcessor>();
+        services.AddSingleton<IRadiusRequestPostProcessor, RadiusRequestPostProcessor>();
         services.AddSingleton<RadiusResponseSenderFactory>();
 
         configure?.Invoke(services);

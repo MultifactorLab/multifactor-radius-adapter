@@ -16,13 +16,13 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline
 {
     public class SecondFactorAuthenticationMiddleware : IRadiusMiddleware
     {
-        private readonly ChallengeProcessor _challengeProcessor;
+        private readonly IChallengeProcessor _challengeProcessor;
         private readonly MultiFactorApiClient _multiFactorApiClient;
-        private readonly RadiusRequestPostProcessor _requestPostProcessor;
+        private readonly IRadiusRequestPostProcessor _requestPostProcessor;
         private readonly ILogger _logger;
 
-        public SecondFactorAuthenticationMiddleware(ChallengeProcessor challengeProcessor, MultiFactorApiClient multiFactorApiClient, 
-            RadiusRequestPostProcessor requestPostProcessor, ILogger logger)
+        public SecondFactorAuthenticationMiddleware(IChallengeProcessor challengeProcessor, MultiFactorApiClient multiFactorApiClient,
+            IRadiusRequestPostProcessor requestPostProcessor, ILogger logger)
         {
             _challengeProcessor = challengeProcessor ?? throw new ArgumentNullException(nameof(challengeProcessor));
             _multiFactorApiClient = multiFactorApiClient ?? throw new ArgumentNullException(nameof(multiFactorApiClient));

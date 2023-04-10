@@ -13,9 +13,9 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline
     public class StatusServerMiddleware : IRadiusMiddleware
     {
         private readonly IServerInfo _serverInfo;
-        private readonly RadiusRequestPostProcessor _requestPostProcessor;
+        private readonly IRadiusRequestPostProcessor _requestPostProcessor;
 
-        public StatusServerMiddleware(IServerInfo serverInfo, RadiusRequestPostProcessor requestPostProcessor)
+        public StatusServerMiddleware(IServerInfo serverInfo, IRadiusRequestPostProcessor requestPostProcessor)
         {
             _serverInfo = serverInfo ?? throw new ArgumentNullException(nameof(serverInfo));
             _requestPostProcessor = requestPostProcessor ?? throw new ArgumentNullException(nameof(requestPostProcessor));

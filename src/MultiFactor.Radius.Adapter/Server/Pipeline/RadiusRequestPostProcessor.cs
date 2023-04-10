@@ -19,7 +19,7 @@ using MultiFactor.Radius.Adapter.Core.Radius.Attributes;
 
 namespace MultiFactor.Radius.Adapter.Server.Pipeline
 {
-    public class RadiusRequestPostProcessor
+    public class RadiusRequestPostProcessor : IRadiusRequestPostProcessor
     {
         private readonly IServiceConfiguration _serviceConfiguration;
         private readonly RandomWaiter _waiter;
