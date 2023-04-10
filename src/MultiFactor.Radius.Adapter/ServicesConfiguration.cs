@@ -63,7 +63,6 @@ internal static class ServicesConfiguration
         services.AddSingleton<IRadiusPacketParser, RadiusPacketParser>();
         services.AddSingleton<CacheService>();
         services.AddSingleton<IMultiFactorApiClient, MultiFactorApiClient>();
-        services.AddSingleton<RadiusRouter>();
         services.AddSingleton<RadiusServer>();
         services.AddSingleton<RadiusContextFactory>();
         services.AddSingleton<IChallengeProcessor, ChallengeProcessor>();
