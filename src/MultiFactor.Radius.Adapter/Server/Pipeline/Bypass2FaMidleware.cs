@@ -30,8 +30,7 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline
             }
 
             // second factor not required
-            var userName = context.UserName;
-            _logger.Information("Bypass second factor for user '{user:l}'", userName);
+            _logger.Information("Bypass second factor for user '{user:l}'", context.UserName);
 
             context.ResponseCode = PacketCode.AccessAccept;
             // stop authencation process

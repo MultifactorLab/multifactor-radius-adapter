@@ -12,62 +12,57 @@ using System;
 using System.Diagnostics;
 using System.Threading.Tasks;
 
-namespace MultiFactor.Radius.Adapter.Server.Pipeline
+namespace MultiFactor.Radius.Adapter.Server.Pipeline;
+
+public class SecondFactorAuthenticationMiddleware : IRadiusMiddleware
 {
-    public class SecondFactorAuthenticationMiddleware : IRadiusMiddleware
+    private readonly IChallengeProcessor _challengeProcessor;
+    private readonly IMultiFactorApiClient _multiFactorApiClient;
+    private readonly IRadiusRequestPostProcessor _requestPostProcessor;
+    private readonly ILogger _logger;
+
+    public SecondFactorAuthenticationMiddleware(IChallengeProcessor challengeProcessor, IMultiFactorApiClient multiFactorApiClient,
+        IRadiusRequestPostProcessor requestPostProcessor, ILogger logger)
     {
-        private readonly IChallengeProcessor _challengeProcessor;
-        private readonly MultiFactorApiClient _multiFactorApiClient;
-        private readonly IRadiusRequestPostProcessor _requestPostProcessor;
-        private readonly ILogger _logger;
+        _challengeProcessor = challengeProcessor ?? throw new ArgumentNullException(nameof(challengeProcessor));
+        _multiFactorApiClient = multiFactorApiClient ?? throw new ArgumentNullException(nameof(multiFactorApiClient));
+        _requestPostProcessor = requestPostProcessor ?? throw new ArgumentNullException(nameof(requestPostProcessor));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    }
 
-        public SecondFactorAuthenticationMiddleware(IChallengeProcessor challengeProcessor, MultiFactorApiClient multiFactorApiClient,
-            IRadiusRequestPostProcessor requestPostProcessor, ILogger logger)
+    public async Task InvokeAsync(RadiusContext context, RadiusRequestDelegate next)
+    {
+        context.ResponseCode = await ProcessSecondAuthenticationFactor(context);
+        if (context.ResponseCode == PacketCode.AccessChallenge)
         {
-            _challengeProcessor = challengeProcessor ?? throw new ArgumentNullException(nameof(challengeProcessor));
-            _multiFactorApiClient = multiFactorApiClient ?? throw new ArgumentNullException(nameof(multiFactorApiClient));
-            _requestPostProcessor = requestPostProcessor ?? throw new ArgumentNullException(nameof(requestPostProcessor));
-            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _challengeProcessor.AddState(new ChallengeRequestIdentifier(context.ClientConfiguration, context.State), context);
         }
 
-        public async Task InvokeAsync(RadiusContext context, RadiusRequestDelegate next)
-        {
-            context.ResponseCode = await ProcessSecondAuthenticationFactor(context);
-            if (context.ResponseCode == PacketCode.AccessChallenge)
-            {
-                _challengeProcessor.AddState(new ChallengeRequestIdentifier(context.ClientConfiguration, context.State), context);
-            }
+        await _requestPostProcessor.InvokeAsync(context);
+        await next(context);
+    }
 
-            await _requestPostProcessor.InvokeAsync(context);
-            await next(context);
+    /// <summary>
+    /// Authenticate request at MultiFactor with user-name only
+    /// </summary>
+    private async Task<PacketCode> ProcessSecondAuthenticationFactor(RadiusContext context)
+    {
+        if (string.IsNullOrEmpty(context.UserName))
+        {
+            _logger.Warning("Can't find User-Name in message id={id} from {host:l}:{port}", context.RequestPacket.Identifier, context.RemoteEndpoint.Address, context.RemoteEndpoint.Port);
+            return PacketCode.AccessReject;
         }
 
-        /// <summary>
-        /// Authenticate request at MultiFactor with user-name only
-        /// </summary>
-        private async Task<PacketCode> ProcessSecondAuthenticationFactor(RadiusContext request)
+        if (context.RequestPacket.IsVendorAclRequest == true)
         {
-            var userName = request.UserName;
-
-            if (string.IsNullOrEmpty(userName))
+            // security check
+            if (context.ClientConfiguration.FirstFactorAuthenticationSource == AuthenticationSource.Radius)
             {
-                _logger.Warning("Can't find User-Name in message id={id} from {host:l}:{port}", request.RequestPacket.Identifier, request.RemoteEndpoint.Address, request.RemoteEndpoint.Port);
-                return PacketCode.AccessReject;
+                _logger.Information("Bypass second factor for user {user:l}", context.UserName);
+                return PacketCode.AccessAccept;
             }
-
-            if (request.RequestPacket.IsVendorAclRequest == true)
-            {
-                //security check
-                if (request.ClientConfiguration.FirstFactorAuthenticationSource == AuthenticationSource.Radius)
-                {
-                    _logger.Information("Bypass second factor for user {user:l}", userName);
-                    return PacketCode.AccessAccept;
-                }
-            }
-
-            var response = await _multiFactorApiClient.CreateSecondFactorRequest(request);
-
-            return response;
         }
+
+        return await _multiFactorApiClient.CreateSecondFactorRequest(context);
     }
 }

@@ -26,7 +26,7 @@ namespace MultiFactor.Radius.Adapter.Server
         private IServiceConfiguration _serviceConfiguration;
         private ILogger _logger;
         private IRadiusPacketParser _packetParser;
-        private MultiFactorApiClient _multifactorApiClient;
+        private IMultiFactorApiClient _multifactorApiClient;
         private readonly IFirstAuthFactorProcessorProvider _firstAuthFactorProcessorProvider;
         private readonly IChallengeProcessor _challengeProcessor;
 
@@ -36,7 +36,7 @@ namespace MultiFactor.Radius.Adapter.Server
 
         public RadiusRouter(IServiceConfiguration serviceConfiguration, 
             IRadiusPacketParser packetParser,
-            MultiFactorApiClient multifactorApiClient,
+            IMultiFactorApiClient multifactorApiClient,
             IFirstAuthFactorProcessorProvider firstAuthFactorProcessorProvider,
             IChallengeProcessor challengeProcessor,
             ILogger logger)

@@ -19,10 +19,10 @@ namespace MultiFactor.Radius.Adapter.Server
     {
         private readonly ConcurrentDictionary<ChallengeRequestIdentifier, RadiusContext> _stateChallengePendingRequests = new();
 
-        private readonly MultiFactorApiClient _multiFactorApiClient;
+        private readonly IMultiFactorApiClient _multiFactorApiClient;
         private readonly ILogger _logger;
 
-        public ChallengeProcessor(MultiFactorApiClient multiFactorApiClient, ILogger logger)
+        public ChallengeProcessor(IMultiFactorApiClient multiFactorApiClient, ILogger logger)
         {
             _multiFactorApiClient = multiFactorApiClient ?? throw new ArgumentNullException(nameof(multiFactorApiClient));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));

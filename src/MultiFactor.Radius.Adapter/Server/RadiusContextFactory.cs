@@ -28,43 +28,42 @@ using System.Net.Sockets;
 using MultiFactor.Radius.Adapter.Core.Radius;
 using MultiFactor.Radius.Adapter.Configuration.Core;
 
-namespace MultiFactor.Radius.Adapter.Server
+namespace MultiFactor.Radius.Adapter.Server;
+
+public class RadiusContextFactory
 {
-    public class RadiusContextFactory
+    private readonly IServiceProvider _serviceProvider;
+    private readonly RadiusResponseSenderFactory _radiusResponseSenderFactory;
+
+    public RadiusContextFactory(IServiceProvider serviceProvider, RadiusResponseSenderFactory radiusResponseSenderFactory)
     {
-        private readonly IServiceProvider _serviceProvider;
-        private readonly RadiusResponseSenderFactory _radiusResponseSenderFactory;
+        _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
+        _radiusResponseSenderFactory = radiusResponseSenderFactory ?? throw new ArgumentNullException(nameof(radiusResponseSenderFactory));
+    }
 
-        public RadiusContextFactory(IServiceProvider serviceProvider, RadiusResponseSenderFactory radiusResponseSenderFactory)
+    public RadiusContext CreateContext(IClientConfiguration client, IRadiusPacket packet, UdpClient udpClient, IPEndPoint remote, IPEndPoint proxy)
+    {
+        if (client is null)
         {
-            _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
-            _radiusResponseSenderFactory = radiusResponseSenderFactory ?? throw new ArgumentNullException(nameof(radiusResponseSenderFactory));
+            throw new ArgumentNullException(nameof(client));
         }
 
-        public RadiusContext CreateContext(IClientConfiguration client, IRadiusPacket packet, UdpClient udpClient, IPEndPoint remote, IPEndPoint proxy)
+        if (packet is null)
         {
-            if (client is null)
-            {
-                throw new ArgumentNullException(nameof(client));
-            }
-
-            if (packet is null)
-            {
-                throw new ArgumentNullException(nameof(packet));
-            }
-
-            if (udpClient is null)
-            {
-                throw new ArgumentNullException(nameof(udpClient));
-            }
-
-            return new RadiusContext(client, _radiusResponseSenderFactory.CreateSender(udpClient), _serviceProvider)
-            {
-                RemoteEndpoint = remote,
-                ProxyEndpoint = proxy,
-                RequestPacket = packet,
-                UserName = packet.UserName
-            };
+            throw new ArgumentNullException(nameof(packet));
         }
+
+        if (udpClient is null)
+        {
+            throw new ArgumentNullException(nameof(udpClient));
+        }
+
+        return new RadiusContext(client, _radiusResponseSenderFactory.CreateSender(udpClient), _serviceProvider)
+        {
+            RemoteEndpoint = remote,
+            ProxyEndpoint = proxy,
+            RequestPacket = packet,
+            UserName = packet.UserName
+        };
     }
 }

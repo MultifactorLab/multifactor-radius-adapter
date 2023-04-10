@@ -25,7 +25,7 @@ namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi
     /// <summary>
     /// Service to interact with multifactor web api
     /// </summary>
-    public class MultiFactorApiClient
+    public class MultiFactorApiClient : IMultiFactorApiClient
     {
         private IServiceConfiguration _serviceConfiguration;
         private readonly AuthenticatedClientCache _authenticatedClientCache;
@@ -79,17 +79,17 @@ namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi
                     {
                         displayName = null;
                     }
-                    
+
                     if (!context.ClientConfiguration.PrivacyMode.HasField("Email"))
                     {
                         email = null;
                     }
-                    
+
                     if (!context.ClientConfiguration.PrivacyMode.HasField("Phone"))
                     {
                         userPhone = null;
                     }
-                    
+
                     if (!context.ClientConfiguration.PrivacyMode.HasField("RemoteHost"))
                     {
                         callingStationId = "";
@@ -103,11 +103,11 @@ namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi
             //try to get authenticated client to bypass second factor if configured
             if (_authenticatedClientCache.TryHitCache(context.RequestPacket.CallingStationId, userName, context.ClientConfiguration))
             {
-                _logger.Information("Bypass second factor for user '{user:l}' with calling-station-id {csi:l} from {host:l}:{port}", 
+                _logger.Information("Bypass second factor for user '{user:l}' with calling-station-id {csi:l} from {host:l}:{port}",
                     userName, context.RequestPacket.CallingStationId, context.RemoteEndpoint.Address, context.RemoteEndpoint.Port);
                 return PacketCode.AccessAccept;
             }
-            
+
             var url = _serviceConfiguration.ApiUrl + "/access/requests/ra";
             var payload = new
             {
@@ -139,7 +139,7 @@ namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi
                 if (responseCode == PacketCode.AccessAccept && !response.Bypassed)
                 {
                     LogGrantedInfo(userName, response, context);
-                    _authenticatedClientCache.SetCache(context.RequestPacket.CallingStationId, userName, context.ClientConfiguration);                  
+                    _authenticatedClientCache.SetCache(context.RequestPacket.CallingStationId, userName, context.ClientConfiguration);
                 }
 
                 if (responseCode == PacketCode.AccessReject)
