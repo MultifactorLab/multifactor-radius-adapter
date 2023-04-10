@@ -1,0 +1,33 @@
+version: 1.5.{build}-beta
+image: Ubuntu
+branches:
+  only:
+  - feature/dotnet6
+dotnet_csproj:
+  patch: true
+  file: '**\*.csproj'
+  version: '{version}'
+before_build:
+  # Display .NET Core version
+  - cmd: dotnet --version
+  # Display minimal restore text
+  - cmd: dotnet restore ./src/MultiFactor.Radius.Adapter.csproj --verbosity m
+build_script:
+  - cmd: dotnet publish ./src/MultiFactor.Radius.Adapter.csproj -f -c Release -r linux-x64 -f net6.0 --self-contained false --force
+artifacts:
+ - path: '\src\bin\Release\dotnet6\publish'
+   name: WebSite
+clone_depth: 1
+test_script:
+  - cmd: dotnet restore ./src/MultiFactor.Radius.Adapter.Tests.csproj --verbosity m
+  #- cmd: cd tests
+  - cmd: dotnet xunit
+deploy:
+- provider: GitHub
+  release: $(APPVEYOR_BUILD_VERSION)
+  auth_token:
+    secure: BR+G0m54LYvkZ8oGuKDYjjgdcKKEkDE5nUPx/KHBJJ5nMi5SR8pW26dAdqEt3FtA
+  draft: true
+  prerelease: false
+  on:
+    branch: feature/dotnet6
