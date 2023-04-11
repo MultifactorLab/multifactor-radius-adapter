@@ -31,7 +31,7 @@ namespace MultiFactor.Radius.Adapter.Server
         /// <summary>
         /// Verify one time password from user input
         /// </summary>
-        public async Task<PacketCode> ProcessChallenge(ChallengeRequestIdentifier identifier, RadiusContext context)
+        public async Task<PacketCode> ProcessChallengeAsync(ChallengeRequestIdentifier identifier, RadiusContext context)
         {
             var userName = context.UserName;
 
@@ -41,7 +41,6 @@ namespace MultiFactor.Radius.Adapter.Server
                 return PacketCode.AccessReject;
             }
 
-            PacketCode response;
             string userAnswer;
 
             switch (context.RequestPacket.AuthenticationType)
@@ -76,8 +75,7 @@ namespace MultiFactor.Radius.Adapter.Server
                     return PacketCode.AccessReject;
             }
 
-            response = await _multiFactorApiClient.Challenge(context, userName, userAnswer, identifier);
-
+            PacketCode response = await _multiFactorApiClient.Challenge(context, userName, userAnswer, identifier);
             switch (response)
             {
                 case PacketCode.AccessAccept:

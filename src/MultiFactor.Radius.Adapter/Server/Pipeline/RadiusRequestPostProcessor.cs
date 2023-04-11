@@ -45,8 +45,8 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline
                 return; //stop processing
             }
 
-            if (context.RequestPacket.IsVendorAclRequest == true && context.ResponsePacket != null)
-            {
+            if (context.RequestPacket.IsVendorAclRequest && context.ResponsePacket != null)
+            { 
                 //ACL and other rules transfer, just proxy response
                 _logger.Debug("Proxying #ACSACL# to {host:l}:{port} id={id}", context.RemoteEndpoint.Address, context.RemoteEndpoint.Port, context.RequestPacket.Identifier);
                 context.ResponseSender.Send(context.ResponsePacket, context.RequestPacket?.UserName, context.RemoteEndpoint, context.ProxyEndpoint, true);

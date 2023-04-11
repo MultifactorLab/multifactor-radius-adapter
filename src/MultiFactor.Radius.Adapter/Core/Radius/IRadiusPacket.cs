@@ -75,10 +75,7 @@ namespace MultiFactor.Radius.Adapter.Core.Radius
 
         void CopyTo(IRadiusPacket packet);
 
-        IDictionary<string, List<object>> Attributes
-        {
-            get; set;
-        }
+        IDictionary<string, List<object>> Attributes { get; set; }
 
         string CreateUniqueKey(IPEndPoint remoteEndpoint);
     }

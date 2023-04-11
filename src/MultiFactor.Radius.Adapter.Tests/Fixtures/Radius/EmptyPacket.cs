@@ -1,31 +1,34 @@
 ﻿using MultiFactor.Radius.Adapter.Core.Radius;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace MultiFactor.Radius.Adapter.Tests.Fixtures.Radius;
 
 internal static class RadiusPacketFactory
 {
-    public static IRadiusPacket AccessRequest()
+    public static IRadiusPacket AccessRequest(Action<IRadiusPacket>? configurePacket = null)
     {
-        return new RadiusPacket(PacketCode.AccessRequest, 0, "secret");
+        var packet = new RadiusPacket(PacketCode.AccessRequest, 0, "secret");
+        configurePacket?.Invoke(packet);
+        return packet;
     }
     
-    public static IRadiusPacket AccessChallenge()
+    public static IRadiusPacket AccessChallenge(Action<IRadiusPacket>? configurePacket = null)
     {
-        return new RadiusPacket(PacketCode.AccessChallenge, 0, "secret");
+        var packet = new RadiusPacket(PacketCode.AccessChallenge, 0, "secret");
+        configurePacket?.Invoke(packet);
+        return packet;
     }
     
-    public static IRadiusPacket AccessReject()
+    public static IRadiusPacket AccessReject(Action<IRadiusPacket>? configurePacket = null)
     {
-        return new RadiusPacket(PacketCode.AccessReject, 0, "secret");
+        var packet = new RadiusPacket(PacketCode.AccessReject, 0, "secret");
+        configurePacket?.Invoke(packet);
+        return packet;
     }
     
-    public static IRadiusPacket StatusServer()
+    public static IRadiusPacket StatusServer(Action<IRadiusPacket>? configurePacket = null)
     {
-        return new RadiusPacket(PacketCode.StatusServer, 0, "secret");
+        var packet = new RadiusPacket(PacketCode.StatusServer, 0, "secret");
+        configurePacket?.Invoke(packet);
+        return packet;
     }
 }

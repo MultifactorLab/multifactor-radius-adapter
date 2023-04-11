@@ -28,7 +28,7 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline
                 if (_challengeProcessor.HasState(identifier))
                 {
                     // second request with Multifactor challenge
-                    context.ResponseCode = await _challengeProcessor.ProcessChallenge(identifier, context);
+                    context.ResponseCode = await _challengeProcessor.ProcessChallengeAsync(identifier, context);
                     context.State = identifier.RequestId;  //state for Access-Challenge message if otp is wrong (3 times allowed)
 
                     // stop authentication process after otp code verification

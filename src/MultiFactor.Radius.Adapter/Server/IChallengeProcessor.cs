@@ -11,6 +11,6 @@ namespace MultiFactor.Radius.Adapter.Server
     {
         void AddState(ChallengeRequestIdentifier identifier, RadiusContext context);
         bool HasState(ChallengeRequestIdentifier identifier);
-        Task<PacketCode> ProcessChallenge(ChallengeRequestIdentifier identifier, RadiusContext context);
+        Task<PacketCode> ProcessChallengeAsync(ChallengeRequestIdentifier identifier, RadiusContext context);
     }
 }

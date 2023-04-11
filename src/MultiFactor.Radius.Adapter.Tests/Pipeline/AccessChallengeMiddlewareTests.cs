@@ -118,6 +118,6 @@ public class AccessChallengeMiddlewareTests
 
         nextDelegate.Verify(v => v.Invoke(It.IsAny<RadiusContext>()), Times.Never);
         postProcessor.Verify(v => v.InvokeAsync(It.Is<RadiusContext>(x => x == context)), Times.Once);
-        chProc.Verify(v => v.ProcessChallenge(It.Is<ChallengeRequestIdentifier>(x => x.Equals(expectedIdentifier)), It.Is<RadiusContext>(x => x == context)), Times.Once);
+        chProc.Verify(v => v.ProcessChallengeAsync(It.Is<ChallengeRequestIdentifier>(x => x.Equals(expectedIdentifier)), It.Is<RadiusContext>(x => x == context)), Times.Once);
     }
 }
