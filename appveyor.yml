@@ -11,7 +11,7 @@ before_build:
   # Display .NET Core version
   - cmd: dotnet --version
   # Display minimal restore text
-  - cmd: dotnet restore src/MultiFactor.Radius.Adapter.csproj --verbosity m
+  - cmd: dotnet restore src/MultiFactor.Radius.Adapter/MultiFactor.Radius.Adapter.csproj --verbosity m
 build_script:
   - cmd: dotnet publish src/MultiFactor.Radius.Adapter.csproj -f -c Release -r linux-x64 -f net6.0 --self-contained false --force
 artifacts:
