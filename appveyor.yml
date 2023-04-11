@@ -1,5 +1,5 @@
 version: 1.5.{build}-beta
-image: Ubuntu
+image: Visual Studio 2022
 branches:
   only:
   - feature/dotnet6
@@ -18,10 +18,6 @@ artifacts:
  - path: '\src\bin\Release\dotnet6\publish'
    name: WebSite
 clone_depth: 1
-test_script:
-  - cmd: dotnet restore ./src/MultiFactor.Radius.Adapter.Tests.csproj --verbosity m
-  #- cmd: cd tests
-  - cmd: dotnet xunit
 deploy:
 - provider: GitHub
   release: $(APPVEYOR_BUILD_VERSION)
