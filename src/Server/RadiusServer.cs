@@ -95,6 +95,7 @@ namespace MultiFactor.Radius.Adapter.Server
                 var receiveTask = Receive();
 
                 _router.RequestProcessed += RouterRequestProcessed;
+                _router.RequestWillNotBeProcessed += RouterRequestWillNotBeProcessed;
 
                 _logger.Information("Server started");
             }
@@ -115,6 +116,7 @@ namespace MultiFactor.Radius.Adapter.Server
                 Running = false;
                 _server?.Close();
                 _router.RequestProcessed -= RouterRequestProcessed;
+                _router.RequestWillNotBeProcessed -= RouterRequestWillNotBeProcessed;
                 _logger.Information("Stopped");
             }
             else
@@ -404,6 +406,8 @@ namespace MultiFactor.Radius.Adapter.Server
             //request processed, clear all
             //GC.Collect();
         }
+
+        private void RouterRequestWillNotBeProcessed(object sender, PendingRequest request) { }
 
         private bool IsProxyProtocol(byte[] request, out IPEndPoint sourceEndpoint, out byte[] requestWithoutProxyHeader)
         {
