@@ -23,7 +23,7 @@ namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi
         {
             get
             {
-                return new MultiFactorAccessRequest { Status = "Granted", Bypassed = true };
+                return new MultiFactorAccessRequest { Status = Literals.RadiusCode.Granted, Bypassed = true };
             }
         }
     }

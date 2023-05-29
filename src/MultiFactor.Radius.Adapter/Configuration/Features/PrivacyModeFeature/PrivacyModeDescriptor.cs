@@ -12,6 +12,8 @@ public class PrivacyModeDescriptor
     private readonly string[] _fields;
     public PrivacyMode Mode { get; }
 
+    public static PrivacyModeDescriptor None => new PrivacyModeDescriptor(PrivacyMode.None);
+
     public bool HasField(string field)
     {
         if (string.IsNullOrWhiteSpace(field))

@@ -8,7 +8,7 @@ using MultiFactor.Radius.Adapter.Configuration.Core;
 
 namespace MultiFactor.Radius.Adapter.Services
 {
-    public class AuthenticatedClientCache
+    public class AuthenticatedClientCache : IAuthenticatedClientCache
     {
         private static readonly ConcurrentDictionary<string, AuthenticatedClient> _authenticatedClients = new ConcurrentDictionary<string, AuthenticatedClient>();
         private readonly ILogger _logger;
@@ -48,8 +48,8 @@ namespace MultiFactor.Radius.Adapter.Services
 
         public void SetCache(string callingStationId, string userName, IClientConfiguration clientConfiguration)
         {
-            if (!clientConfiguration.AuthenticationCacheLifetime.Enabled || 
-                !clientConfiguration.AuthenticationCacheLifetime.MinimalMatching && string.IsNullOrEmpty(callingStationId)) return;     
+            if (!clientConfiguration.AuthenticationCacheLifetime.Enabled ||
+                !clientConfiguration.AuthenticationCacheLifetime.MinimalMatching && string.IsNullOrEmpty(callingStationId)) return;
 
             var client = AuthenticatedClient.Create(callingStationId, clientConfiguration.Name, userName);
             if (!_authenticatedClients.ContainsKey(client.Id))

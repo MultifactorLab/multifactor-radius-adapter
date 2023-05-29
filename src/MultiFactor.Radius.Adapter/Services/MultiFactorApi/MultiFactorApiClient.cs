@@ -13,6 +13,7 @@ using MultiFactor.Radius.Adapter.Core.Serialization;
 using MultiFactor.Radius.Adapter.Server;
 using Serilog;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Text;
@@ -27,15 +28,15 @@ namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi
     /// </summary>
     public class MultiFactorApiClient : IMultiFactorApiClient
     {
-        private IServiceConfiguration _serviceConfiguration;
-        private readonly AuthenticatedClientCache _authenticatedClientCache;
+        private readonly IAuthenticatedClientCache _authenticatedClientCache;
         private ILogger _logger;
+        private readonly IHttpClientAdapter _httpClientAdapter;
 
-        public MultiFactorApiClient(IServiceConfiguration serviceConfiguration, AuthenticatedClientCache authenticatedClientCache, ILogger logger)
+        public MultiFactorApiClient(IAuthenticatedClientCache authenticatedClientCache, ILogger logger, IHttpClientAdapter httpClientAdapter)
         {
-            _serviceConfiguration = serviceConfiguration ?? throw new ArgumentNullException(nameof(serviceConfiguration));
             _authenticatedClientCache = authenticatedClientCache ?? throw new ArgumentNullException(nameof(authenticatedClientCache));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _httpClientAdapter = httpClientAdapter ?? throw new ArgumentNullException(nameof(httpClientAdapter));
         }
 
         public async Task<PacketCode> CreateSecondFactorRequest(RadiusContext context)
@@ -108,7 +109,6 @@ namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi
                 return PacketCode.AccessAccept;
             }
 
-            var url = _serviceConfiguration.ApiUrl + "/access/requests/ra";
             var payload = new
             {
                 Identity = userName,
@@ -130,7 +130,7 @@ namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi
 
             try
             {
-                var response = await SendRequest(url, payload, context.ClientConfiguration);
+                var response = await SendRequest("access/requests/ra", payload, context.ClientConfiguration);
                 var responseCode = ConvertToRadiusCode(response);
 
                 context.State = response?.Id;
@@ -159,7 +159,6 @@ namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi
 
         public async Task<PacketCode> Challenge(RadiusContext context, string userName, string answer, ChallengeRequestIdentifier identifier)
         {
-            var url = _serviceConfiguration.ApiUrl + "/access/requests/ra/challenge";
             var payload = new
             {
                 Identity = userName,
@@ -169,7 +168,7 @@ namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi
 
             try
             {
-                var response = await SendRequest(url, payload, context.ClientConfiguration);
+                var response = await SendRequest("access/requests/ra/challenge", payload, context.ClientConfiguration);
                 var responseCode = ConvertToRadiusCode(response);
 
                 context.ReplyMessage = response.ReplyMessage;
@@ -190,42 +189,18 @@ namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi
 
         private async Task<MultiFactorAccessRequest> SendRequest(string url, object payload, IClientConfiguration clientConfiguration)
         {
+            var headers = new Dictionary<string, string>
+            {
+                {"Authorization", $"Basic {clientConfiguration.ApiCredential.GetHttpBasicAuthorizationHeaderValue()}" }
+            };
+
             try
             {
                 //make sure we can communicate securely
                 ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
                 ServicePointManager.DefaultConnectionLimit = 100;
 
-                _logger.Debug("Sending request to API: {@payload}", payload);
-
-                var json = JsonSerializer.Serialize(payload, SerializerOptions.JsonSerializerOptions);
-                var requestData = Encoding.UTF8.GetBytes(json);
-                byte[] responseData = null;
-
-                using (var web = new WebClient())
-                {
-                    web.Headers.Add("Content-Type", "application/json");
-                    web.Headers.Add("Authorization", $"Basic {clientConfiguration.ApiCredential.GetHttpBasicAuthorizationHeaderValue()}");
-
-                    if (!string.IsNullOrEmpty(_serviceConfiguration.ApiProxy))
-                    {
-                        _logger.Debug("Using proxy {p:l}", _serviceConfiguration.ApiProxy);
-                        if (!WebProxyFactory.TryCreateWebProxy(_serviceConfiguration.ApiProxy, out var webProxy))
-                        {
-                            _logger.Error("Unable to initialize WebProxy: '{pr:l}'", _serviceConfiguration.ApiProxy);
-                            throw new Exception($"Unable to initialize WebProxy. Please, check whether '{Literals.Configuration.MultifactorApiProxy}' URI is valid.");
-                        }
-                        web.Proxy = webProxy;
-                    }
-
-                    responseData = await web.UploadDataTaskAsync(url, "POST", requestData);
-                }
-
-                json = Encoding.UTF8.GetString(responseData);
-                var response = JsonSerializer.Deserialize<MultiFactorApiResponse<MultiFactorAccessRequest>>(json, SerializerOptions.JsonSerializerOptions);
-
-                _logger.Debug("Received response from API: {@response}", response);
-
+                var response = await _httpClientAdapter.PostAsync<MultiFactorApiResponse<MultiFactorAccessRequest>>(url, payload, headers);
                 if (!response.Success)
                 {
                     _logger.Warning("Got unsuccessful response from API: {@response}", response);
@@ -235,7 +210,9 @@ namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi
             }
             catch (Exception ex)
             {
-                throw new MultifactorApiUnreachableException($"Multifactor API host unreachable: {url}. Reason: {ex.Message}", ex);
+                var message = ex is TaskCanceledException ? "Timed out" : ex.Message;
+                var err = $"Multifactor API host unreachable: {url}. Reason: {message}";
+                throw new MultifactorApiUnreachableException(err, ex);
             }
         }
 
@@ -271,11 +248,11 @@ namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi
 
             switch (multifactorAccessRequest.Status)
             {
-                case "Granted":     //authenticated by push
+                case Literals.RadiusCode.Granted:     //authenticated by push
                     return PacketCode.AccessAccept;
-                case "Denied":
+                case Literals.RadiusCode.Denied:
                     return PacketCode.AccessReject; //access denied
-                case "AwaitingAuthentication":
+                case Literals.RadiusCode.AwaitingAuthentication:
                     return PacketCode.AccessChallenge;  //otp code required
                 default:
                     _logger.Warning($"Got unexpected status from API: {multifactorAccessRequest.Status}");

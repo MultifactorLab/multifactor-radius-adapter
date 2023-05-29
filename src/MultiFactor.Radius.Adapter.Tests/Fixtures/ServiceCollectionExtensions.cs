@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace MultiFactor.Radius.Adapter.Tests.Fixtures;
 
@@ -6,9 +7,7 @@ internal static class ServiceCollectionExtensions
 {
     public static IServiceCollection RemoveService<TService>(this IServiceCollection services) where TService : class
     {
-        var descr = services.FirstOrDefault(x => x.ServiceType == typeof(TService));
-        if (descr == null) return services;
-        services.Remove(descr);
+        services.RemoveAll<TService>();
         return services;
     }
 

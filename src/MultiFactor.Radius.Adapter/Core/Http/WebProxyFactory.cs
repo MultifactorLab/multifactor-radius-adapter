@@ -7,6 +7,12 @@ namespace MultiFactor.Radius.Adapter.Core.Http
     {
         public static bool TryCreateWebProxy(string proxyAddress, out WebProxy proxy)
         {
+            if (proxyAddress == null)
+            {
+                proxy = null;
+                return false;
+            }
+
             if (!TryParseUri(proxyAddress, out var proxyUri))
             {
                 proxy = null;
