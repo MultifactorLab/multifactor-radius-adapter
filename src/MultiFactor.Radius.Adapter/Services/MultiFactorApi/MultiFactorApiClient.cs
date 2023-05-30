@@ -3,6 +3,7 @@
 //https://github.com/MultifactorLab/multifactor-radius-adapter/blob/main/LICENSE.md
 
 
+using Microsoft.Extensions.Logging;
 using MultiFactor.Radius.Adapter.Configuration;
 using MultiFactor.Radius.Adapter.Configuration.Core;
 using MultiFactor.Radius.Adapter.Configuration.Features.PrivacyModeFeature;
@@ -11,7 +12,6 @@ using MultiFactor.Radius.Adapter.Core.Http;
 using MultiFactor.Radius.Adapter.Core.Radius;
 using MultiFactor.Radius.Adapter.Core.Serialization;
 using MultiFactor.Radius.Adapter.Server;
-using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -32,7 +32,7 @@ namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi
         private ILogger _logger;
         private readonly IHttpClientAdapter _httpClientAdapter;
 
-        public MultiFactorApiClient(IAuthenticatedClientCache authenticatedClientCache, ILogger logger, IHttpClientAdapter httpClientAdapter)
+        public MultiFactorApiClient(IAuthenticatedClientCache authenticatedClientCache, ILogger<MultiFactorApiClient> logger, IHttpClientAdapter httpClientAdapter)
         {
             _authenticatedClientCache = authenticatedClientCache ?? throw new ArgumentNullException(nameof(authenticatedClientCache));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -104,7 +104,7 @@ namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi
             //try to get authenticated client to bypass second factor if configured
             if (_authenticatedClientCache.TryHitCache(context.RequestPacket.CallingStationId, userName, context.ClientConfiguration))
             {
-                _logger.Information("Bypass second factor for user '{user:l}' with calling-station-id {csi:l} from {host:l}:{port}",
+                _logger.LogInformation("Bypass second factor for user '{user:l}' with calling-station-id {csi:l} from {host:l}:{port}",
                     userName, context.RequestPacket.CallingStationId, context.RemoteEndpoint.Address, context.RemoteEndpoint.Port);
                 return PacketCode.AccessAccept;
             }
@@ -146,7 +146,7 @@ namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi
                 {
                     var reason = response?.ReplyMessage;
                     var phone = response?.Phone;
-                    _logger.Warning("Second factor verification for user '{user:l}' from {host:l}:{port} failed with reason='{reason:l}'. User phone {phone:l}", userName, context.RemoteEndpoint.Address, context.RemoteEndpoint.Port, reason, phone);
+                    _logger.LogWarning("Second factor verification for user '{user:l}' from {host:l}:{port} failed with reason='{reason:l}'. User phone {phone:l}", userName, context.RemoteEndpoint.Address, context.RemoteEndpoint.Port, reason, phone);
                 }
 
                 return responseCode;
@@ -196,14 +196,10 @@ namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi
 
             try
             {
-                //make sure we can communicate securely
-                ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
-                ServicePointManager.DefaultConnectionLimit = 100;
-
                 var response = await _httpClientAdapter.PostAsync<MultiFactorApiResponse<MultiFactorAccessRequest>>(url, payload, headers);
                 if (!response.Success)
                 {
-                    _logger.Warning("Got unsuccessful response from API: {@response}", response);
+                    _logger.LogWarning("Got unsuccessful response from API: {@response}", response);
                 }
 
                 return response.Model;
@@ -220,7 +216,7 @@ namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi
         {
             if (ex is MultifactorApiUnreachableException apiEx)
             {
-                _logger.Error("Error occured while requesting API for user '{user:l}' from {host:l}:{port}, {msg:l}",
+                _logger.LogError("Error occured while requesting API for user '{user:l}' from {host:l}:{port}, {msg:l}",
                     username,
                     context.RemoteEndpoint.Address,
                     context.RemoteEndpoint.Port,
@@ -228,7 +224,7 @@ namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi
 
                 if (context.ClientConfiguration.BypassSecondFactorWhenApiUnreachable)
                 {
-                    _logger.Warning("Bypass second factor for user '{user:l}' from {host:l}:{port}",
+                    _logger.LogWarning("Bypass second factor for user '{user:l}' from {host:l}:{port}",
                         username,
                         context.RemoteEndpoint.Address,
                         context.RemoteEndpoint.Port);
@@ -255,7 +251,7 @@ namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi
                 case Literals.RadiusCode.AwaitingAuthentication:
                     return PacketCode.AccessChallenge;  //otp code required
                 default:
-                    _logger.Warning($"Got unexpected status from API: {multifactorAccessRequest.Status}");
+                    _logger.LogWarning($"Got unexpected status from API: {multifactorAccessRequest.Status}");
                     return PacketCode.AccessReject; //access denied
             }
         }
@@ -321,7 +317,7 @@ namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi
                 callingStationId = ip.ToString();
             }
 
-            _logger.Information("Second factor for user '{user:l}' verified successfully. Authenticator: '{authenticator:l}', account: '{account:l}', country: '{country:l}', region: '{region:l}', city: '{city:l}', calling-station-id: {clientIp}, authenticatorId: {authenticatorId}",
+            _logger.LogInformation("Second factor for user '{user:l}' verified successfully. Authenticator: '{authenticator:l}', account: '{account:l}', country: '{country:l}', region: '{region:l}', city: '{city:l}', calling-station-id: {clientIp}, authenticatorId: {authenticatorId}",
                         userName,
                         response?.Authenticator,
                         response?.Account,

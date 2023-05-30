@@ -3,6 +3,7 @@
 //https://github.com/MultifactorLab/multifactor-radius-adapter/blob/main/LICENSE.md
 
 using LdapForNet;
+using Microsoft.Extensions.Logging;
 using MultiFactor.Radius.Adapter.Configuration;
 using MultiFactor.Radius.Adapter.Configuration.Core;
 using MultiFactor.Radius.Adapter.Core.Exceptions;
@@ -12,7 +13,6 @@ using MultiFactor.Radius.Adapter.Server;
 using MultiFactor.Radius.Adapter.Services.BindIdentityFormatting;
 using MultiFactor.Radius.Adapter.Services.Ldap.Connection;
 using MultiFactor.Radius.Adapter.Services.Ldap.ProfileLoading;
-using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -35,7 +35,7 @@ public class LdapService
 
     public LdapService(BindIdentityFormatterFactory bindIdentityFormatterFactory,
         ProfileLoader profileLoader,
-        ILogger logger)
+        ILogger<LdapService> logger)
     {
         _bindIdentityFormatterFactory = bindIdentityFormatterFactory ?? throw new ArgumentNullException(nameof(bindIdentityFormatterFactory));
         _profileLoader = profileLoader ?? throw new ArgumentNullException(nameof(profileLoader));
@@ -53,7 +53,7 @@ public class LdapService
         }
         if (string.IsNullOrEmpty(password))
         {
-            _logger.Error("Empty password provided for user '{user:l}'", userName);
+            _logger.LogError("Empty password provided for user '{user:l}'", userName);
             return false;
         }
         if (string.IsNullOrEmpty(ldapUri))
@@ -66,7 +66,7 @@ public class LdapService
         var formatter = _bindIdentityFormatterFactory.CreateFormatter(context.ClientConfiguration);
         var bindDn = formatter.FormatIdentity(user, ldapUri);
 
-        _logger.Debug("Verifying user '{user:l}' credential and status at '{ldapUri:l}'", 
+        _logger.LogDebug("Verifying user '{user:l}' credential and status at '{ldapUri:l}'", 
             bindDn, ldapUri);
 
         try
@@ -77,7 +77,7 @@ public class LdapService
             {
                 var domain = await connection.WhereAmIAsync();
 
-                _logger.Information("User '{user:l}' credential and status verified successfully in '{domain:l}'", 
+                _logger.LogInformation("User '{user:l}' credential and status verified successfully in '{domain:l}'", 
                     user.Name, domain.Name);
 
                 var profile = await _profileLoader.LoadAsync(context.ClientConfiguration, connection, user);
@@ -88,12 +88,12 @@ public class LdapService
                     var accessGroup = context.ClientConfiguration.ActiveDirectoryGroups.FirstOrDefault(group => IsMemberOf(profile, group));
                     if (accessGroup != null)
                     {
-                        _logger.Debug("User '{user:l}' is a member of the access group '{group:l}' in {domain:l}", 
+                        _logger.LogDebug("User '{user:l}' is a member of the access group '{group:l}' in {domain:l}", 
                             user.Name, accessGroup.Trim(), profile.BaseDn.Name);
                     }
                     else
                     {
-                        _logger.Warning("User '{user:l}' is not a member of any access group ({accGroups:l}) in '{domain:l}'", 
+                        _logger.LogWarning("User '{user:l}' is not a member of any access group ({accGroups:l}) in '{domain:l}'", 
                             user.Name, string.Join(", ", context.ClientConfiguration.ActiveDirectoryGroups), profile.BaseDn.Name);
                         return false;
                     }
@@ -105,12 +105,12 @@ public class LdapService
                     var mfaGroup = context.ClientConfiguration.ActiveDirectory2FaGroup.FirstOrDefault(group => IsMemberOf(profile, group));
                     if (mfaGroup != null)
                     {
-                        _logger.Debug("User '{user:l}' is a member of the 2FA group '{group:l}' in '{domain:l}'", 
+                        _logger.LogDebug("User '{user:l}' is a member of the 2FA group '{group:l}' in '{domain:l}'", 
                             user.Name, mfaGroup.Trim(), profile.BaseDn.Name);
                     }
                     else
                     {
-                        _logger.Information("User '{user:l}' is not a member of any 2FA group ({groups:l}) in '{domain:l}'", 
+                        _logger.LogInformation("User '{user:l}' is not a member of any 2FA group ({groups:l}) in '{domain:l}'", 
                             user.Name, string.Join(", ", context.ClientConfiguration.ActiveDirectory2FaGroup), profile.BaseDn.Name);
                         context.Bypass2Fa = true;
                     }
@@ -123,13 +123,13 @@ public class LdapService
 
                     if (bypassGroup != null)
                     {
-                        _logger.Information("User '{user:l}' is a member of the 2FA bypass group '{group:l}' in '{domain:l}'", 
+                        _logger.LogInformation("User '{user:l}' is a member of the 2FA bypass group '{group:l}' in '{domain:l}'", 
                             user.Name, bypassGroup.Trim(), profile.BaseDn.Name);
                         context.Bypass2Fa = true;
                     }
                     else
                     {
-                        _logger.Debug("User '{user:l}' is not a member of any 2FA bypass group ({groups:l}) in '{domain:l}'", 
+                        _logger.LogDebug("User '{user:l}' is not a member of any 2FA bypass group ({groups:l}) in '{domain:l}'", 
                             user.Name, string.Join(", ", context.ClientConfiguration.ActiveDirectory2FaBypassGroup), profile.BaseDn.Name);
                     }
                 }
@@ -147,7 +147,7 @@ public class LdapService
         }
         catch (LdapUserNotFoundException ex)
         {
-            _logger.Warning(ex, "Verification user '{user:l}' at '{ldapUri:l}' failed: {msg:l}", user.Name, ldapUri, ex.Message);
+            _logger.LogWarning(ex, "Verification user '{user:l}' at '{ldapUri:l}' failed: {msg:l}", user.Name, ldapUri, ex.Message);
             return false;
         }
         catch (LdapException lex)
@@ -157,16 +157,16 @@ public class LdapService
                 var dataReason = ExtractErrorReason(lex.Message);
                 if (dataReason != null)
                 {
-                    _logger.Warning(lex, $"Verification user '{{user:l}}' at {ldapUri} failed: {dataReason}", user.Name);
+                    _logger.LogWarning(lex, $"Verification user '{{user:l}}' at {ldapUri} failed: {dataReason}", user.Name);
                     return false;
                 }
             }
 
-            _logger.Error(lex, $"Verification user '{{user:l}}' at {ldapUri} failed", user.Name);
+            _logger.LogError(lex, $"Verification user '{{user:l}}' at {ldapUri} failed", user.Name);
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, $"Verification user '{{user:l}}' at {ldapUri} failed", user.Name);
+            _logger.LogError(ex, $"Verification user '{{user:l}}' at {ldapUri} failed", user.Name);
         }
 
         return false;

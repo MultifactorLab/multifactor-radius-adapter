@@ -2,9 +2,9 @@
 //Please see licence at 
 //https://github.com/MultifactorLab/multifactor-radius-adapter/blob/main/LICENSE.md
 
+using Microsoft.Extensions.Logging;
 using MultiFactor.Radius.Adapter.Configuration.Core;
 using MultiFactor.Radius.Adapter.Core;
-using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
@@ -16,9 +16,9 @@ namespace MultiFactor.Radius.Adapter.Configuration.ConfigurationLoading;
 public class DefaultClientConfigurationsProvider : IClientConfigurationsProvider
 {
     private readonly ApplicationVariables _variables;
-    private readonly ILogger _logger;
+    private readonly ILogger<DefaultClientConfigurationsProvider> _logger;
 
-    public DefaultClientConfigurationsProvider(ApplicationVariables variables, ILogger logger)
+    public DefaultClientConfigurationsProvider(ApplicationVariables variables, ILogger<DefaultClientConfigurationsProvider> logger)
     {
         _variables = variables ?? throw new ArgumentNullException(nameof(variables));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -33,7 +33,7 @@ public class DefaultClientConfigurationsProvider : IClientConfigurationsProvider
         var list = new List<Config>();
         foreach (var file in clientConfigFiles)
         {
-            _logger.Information($"Loading client configuration from {Path.GetFileName(file)}");
+            _logger.LogInformation($"Loading client configuration from {Path.GetFileName(file)}");
 
             var customConfigFileMap = new ExeConfigurationFileMap();
             customConfigFileMap.ExeConfigFilename = file;

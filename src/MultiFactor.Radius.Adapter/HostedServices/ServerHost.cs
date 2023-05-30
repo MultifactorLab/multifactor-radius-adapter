@@ -1,13 +1,12 @@
 ﻿using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using MultiFactor.Radius.Adapter.Server;
-using Serilog;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace MultiFactor.Radius.Adapter.HostedServices
 {
-
     public class ServerHost : IHostedService
     {
         private Task _executingTask;
@@ -16,7 +15,7 @@ namespace MultiFactor.Radius.Adapter.HostedServices
         private ILogger _logger;
         private RadiusServer _radiusServer;
 
-        public ServerHost(ILogger logger, RadiusServer radiusServer)
+        public ServerHost(ILogger<ServerHost> logger, RadiusServer radiusServer)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _radiusServer = radiusServer ?? throw new ArgumentNullException(nameof(radiusServer));
@@ -57,7 +56,7 @@ namespace MultiFactor.Radius.Adapter.HostedServices
             }
             catch (Exception ex)
             {
-                _logger.Error(ex, "StopAsync");
+                _logger.LogError(ex, "StopAsync");
             }
             finally
             {

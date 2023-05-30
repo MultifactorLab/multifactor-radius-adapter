@@ -1,4 +1,5 @@
 ﻿using LdapForNet;
+using Microsoft.Extensions.Logging;
 using MultiFactor.Radius.Adapter.Configuration;
 using MultiFactor.Radius.Adapter.Configuration.Core;
 using MultiFactor.Radius.Adapter.Core.Exceptions;
@@ -6,7 +7,6 @@ using MultiFactor.Radius.Adapter.Core.Ldap;
 using MultiFactor.Radius.Adapter.Core.Services.Ldap;
 using MultiFactor.Radius.Adapter.Services.Ldap.Connection;
 using MultiFactor.Radius.Adapter.Services.Ldap.UserGroupsReading;
-using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -20,7 +20,7 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.ProfileLoading
         private readonly UserGroupsSource _userGroupsSource;
         private readonly ILogger _logger;
 
-        public ProfileLoader(UserGroupsSource userGroupsSource, ILogger logger)
+        public ProfileLoader(UserGroupsSource userGroupsSource, ILogger<ProfileLoader> logger)
         {
             _userGroupsSource = userGroupsSource ?? throw new ArgumentNullException(nameof(userGroupsSource));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -39,7 +39,7 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.ProfileLoading
             var searchFilter = $"(&(objectClass={names.UserClass})({names.Identity(user)}={user.Name}))";
 
             var domain = await adapter.WhereAmIAsync();
-            _logger.Debug($"Querying user '{{user:l}}' in {domain.Name}", user.Name);
+            _logger.LogDebug($"Querying user '{{user:l}}' in {domain.Name}", user.Name);
 
             var response = await adapter.SearchQueryAsync(domain.Name, searchFilter, LdapSearchScope.LDAP_SCOPE_SUB, queryAttributes.Distinct().ToArray());
             var entry = response.SingleOrDefault();
@@ -93,7 +93,7 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.ProfileLoading
                 }
             }
 
-            _logger.Debug($"User '{{user:l}}' profile loaded: {entry.Dn}", user.Name);
+            _logger.LogDebug($"User '{{user:l}}' profile loaded: {entry.Dn}", user.Name);
 
             if (clientConfig.ShouldLoadUserGroups())
             {

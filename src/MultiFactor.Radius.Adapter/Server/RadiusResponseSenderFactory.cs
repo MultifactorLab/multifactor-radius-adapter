@@ -22,9 +22,9 @@
 //OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 //SOFTWARE.
 
-using Serilog;
 using System;
 using System.Net.Sockets;
+using Microsoft.Extensions.Logging;
 using MultiFactor.Radius.Adapter.Core.Radius;
 
 namespace MultiFactor.Radius.Adapter.Server
@@ -32,9 +32,9 @@ namespace MultiFactor.Radius.Adapter.Server
     public class RadiusResponseSenderFactory
     {
         private readonly IRadiusPacketParser _radiusPacketParser;
-        private readonly ILogger _logger;
+        private readonly ILogger<RadiusResponseSender> _logger;
 
-        public RadiusResponseSenderFactory(IRadiusPacketParser radiusPacketParser, ILogger logger)
+        public RadiusResponseSenderFactory(IRadiusPacketParser radiusPacketParser, ILogger<RadiusResponseSender> logger)
         {
             _radiusPacketParser = radiusPacketParser ?? throw new ArgumentNullException(nameof(radiusPacketParser));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));

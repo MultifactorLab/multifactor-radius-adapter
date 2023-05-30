@@ -2,6 +2,7 @@
 //Please see licence at 
 //https://github.com/MultifactorLab/multifactor-radius-adapter/blob/main/LICENSE.md
 
+using Microsoft.Extensions.Logging;
 using MultiFactor.Radius.Adapter.Configuration.Core;
 using MultiFactor.Radius.Adapter.Configuration.Features.RadiusReplyAttributeFeature;
 using MultiFactor.Radius.Adapter.Configuration.Features.RandomWaiterFeature;
@@ -10,7 +11,6 @@ using MultiFactor.Radius.Adapter.Core;
 using MultiFactor.Radius.Adapter.Core.Exceptions;
 using MultiFactor.Radius.Adapter.Core.Radius.Attributes;
 using NetTools;
-using Serilog;
 using System;
 using System.Collections;
 using System.Configuration;
@@ -26,13 +26,13 @@ namespace MultiFactor.Radius.Adapter.Configuration.ConfigurationLoading
         private readonly IClientConfigurationsProvider _clientConfigurationsProvider;
         private readonly IRadiusDictionary _dictionary;
         private readonly ClientConfigurationFactory _clientConfigFactory;
-        private readonly ILogger _logger;
+        private readonly ILogger<ServiceConfigurationFactory> _logger;
 
         public ServiceConfigurationFactory(IRootConfigurationProvider appConfigurationProvider, 
             IClientConfigurationsProvider clientConfigurationsProvider,
             IRadiusDictionary dictionary, 
             ClientConfigurationFactory clientConfigFactory, 
-            ILogger logger)
+            ILogger<ServiceConfigurationFactory> logger)
         {
             _appConfigurationProvider = appConfigurationProvider ?? throw new ArgumentNullException(nameof(appConfigurationProvider));
             _clientConfigurationsProvider = clientConfigurationsProvider ?? throw new ArgumentNullException(nameof(clientConfigurationsProvider));

@@ -3,6 +3,7 @@
 //https://github.com/MultifactorLab/multifactor-radius-adapter/blob/main/LICENSE.md
 
 using LdapForNet;
+using Microsoft.Extensions.Logging;
 using MultiFactor.Radius.Adapter.Core.Ldap;
 using System;
 using System.Collections.Generic;
@@ -57,7 +58,7 @@ public class LdapConnectionAdapter : ILdapConnectionAdapter
 
         if (sw.Elapsed.TotalSeconds > 2)
         {
-            _config.Logger?.Warning("Slow response while querying {baseDn:l}. Time elapsed {elapsed}", baseDn, sw.Elapsed);
+            _config.Logger?.LogWarning("Slow response while querying {baseDn:l}. Time elapsed {elapsed}", baseDn, sw.Elapsed);
         }
 
         return searchResult.ToArray();

@@ -1,6 +1,6 @@
-﻿using MultiFactor.Radius.Adapter.Core.Ldap;
+﻿using Microsoft.Extensions.Logging;
+using MultiFactor.Radius.Adapter.Core.Ldap;
 using MultiFactor.Radius.Adapter.Services.BindIdentityFormatting;
-using Serilog;
 
 namespace MultiFactor.Radius.Adapter.Services.Ldap.Connection
 {

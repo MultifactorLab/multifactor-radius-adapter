@@ -8,7 +8,7 @@ internal static class TestHostFactory
     public static IHost CreateHost(Action<IServiceCollection>? configureServices = null)
     {
         var builder = Host.CreateApplicationBuilder();
-        builder.Services.ConfigureServices(configureServices);
+        builder.ConfigureApplication(configureServices);
         return builder.Build();
     }
 }

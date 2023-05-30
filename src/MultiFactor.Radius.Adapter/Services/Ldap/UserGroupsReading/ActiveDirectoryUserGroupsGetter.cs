@@ -10,7 +10,6 @@ using MultiFactor.Radius.Adapter.Core.Services.Ldap;
 using MultiFactor.Radius.Adapter.Server;
 using MultiFactor.Radius.Adapter.Services.BindIdentityFormatting;
 using MultiFactor.Radius.Adapter.Services.Ldap.Connection;
-using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Linq;

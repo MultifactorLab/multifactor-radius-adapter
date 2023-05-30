@@ -2,12 +2,12 @@
 //Please see licence at 
 //https://github.com/MultifactorLab/multifactor-radius-adapter/blob/main/LICENSE.md
 
+using Microsoft.Extensions.Logging;
 using MultiFactor.Radius.Adapter.Configuration;
 using MultiFactor.Radius.Adapter.Core.Exceptions;
 using MultiFactor.Radius.Adapter.Core.Pipeline;
 using MultiFactor.Radius.Adapter.Core.Radius;
 using MultiFactor.Radius.Adapter.Services.MultiFactorApi;
-using Serilog;
 using System;
 using System.Diagnostics;
 using System.Threading.Tasks;
@@ -22,7 +22,7 @@ public class SecondFactorAuthenticationMiddleware : IRadiusMiddleware
     private readonly ILogger _logger;
 
     public SecondFactorAuthenticationMiddleware(IChallengeProcessor challengeProcessor, IMultiFactorApiClient multiFactorApiClient,
-        IRadiusRequestPostProcessor requestPostProcessor, ILogger logger)
+        IRadiusRequestPostProcessor requestPostProcessor, ILogger<SecondFactorAuthenticationMiddleware> logger)
     {
         _challengeProcessor = challengeProcessor ?? throw new ArgumentNullException(nameof(challengeProcessor));
         _multiFactorApiClient = multiFactorApiClient ?? throw new ArgumentNullException(nameof(multiFactorApiClient));
@@ -49,7 +49,7 @@ public class SecondFactorAuthenticationMiddleware : IRadiusMiddleware
     {
         if (string.IsNullOrEmpty(context.UserName))
         {
-            _logger.Warning("Can't find User-Name in message id={id} from {host:l}:{port}", context.RequestPacket.Identifier, context.RemoteEndpoint.Address, context.RemoteEndpoint.Port);
+            _logger.LogWarning("Can't find User-Name in message id={id} from {host:l}:{port}", context.RequestPacket.Identifier, context.RemoteEndpoint.Address, context.RemoteEndpoint.Port);
             return PacketCode.AccessReject;
         }
 
@@ -58,7 +58,7 @@ public class SecondFactorAuthenticationMiddleware : IRadiusMiddleware
             // security check
             if (context.ClientConfiguration.FirstFactorAuthenticationSource == AuthenticationSource.Radius)
             {
-                _logger.Information("Bypass second factor for user {user:l}", context.UserName);
+                _logger.LogInformation("Bypass second factor for user {user:l}", context.UserName);
                 return PacketCode.AccessAccept;
             }
         }

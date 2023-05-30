@@ -1,11 +1,11 @@
 ﻿using FluentAssertions;
+using Microsoft.Extensions.Logging;
 using Moq;
 using MultiFactor.Radius.Adapter.Configuration;
 using MultiFactor.Radius.Adapter.Core.Radius;
 using MultiFactor.Radius.Adapter.Server;
 using MultiFactor.Radius.Adapter.Services.MultiFactorApi;
 using MultiFactor.Radius.Adapter.Tests.Fixtures.Radius;
-using Serilog;
 using System.Net;
 
 namespace MultiFactor.Radius.Adapter.Tests
@@ -18,7 +18,7 @@ namespace MultiFactor.Radius.Adapter.Tests
             const string reqId = "RequestId";
 
             var api = new Mock<IMultiFactorApiClient>();
-            var logger = new Mock<ILogger>();
+            var logger = new Mock<ILogger<ChallengeProcessor>>();
             var processor = new ChallengeProcessor(api.Object, logger.Object);
 
             var client = ClientConfiguration.CreateBuilder("cli_config", "rds", AuthenticationSource.None, "key", "secret").Build();
@@ -40,7 +40,7 @@ namespace MultiFactor.Radius.Adapter.Tests
             const string reqId = "RequestId";
 
             var api = new Mock<IMultiFactorApiClient>();
-            var logger = new Mock<ILogger>();
+            var logger = new Mock<ILogger<ChallengeProcessor>>();
             var processor = new ChallengeProcessor(api.Object, logger.Object);
 
             var client = ClientConfiguration.CreateBuilder("cli_config", "rds", AuthenticationSource.None, "key", "secret").Build();
@@ -64,7 +64,7 @@ namespace MultiFactor.Radius.Adapter.Tests
             const string reqId = "RequestId";
 
             var api = new Mock<IMultiFactorApiClient>();
-            var logger = new Mock<ILogger>();
+            var logger = new Mock<ILogger<ChallengeProcessor>>();
             var processor = new ChallengeProcessor(api.Object, logger.Object);
 
             var client = ClientConfiguration.CreateBuilder("cli_config", "rds", AuthenticationSource.None, "key", "secret").Build();
@@ -92,7 +92,7 @@ namespace MultiFactor.Radius.Adapter.Tests
             const string reqId = "RequestId";
 
             var api = new Mock<IMultiFactorApiClient>();
-            var logger = new Mock<ILogger>();
+            var logger = new Mock<ILogger<ChallengeProcessor>>();
             var processor = new ChallengeProcessor(api.Object, logger.Object);
 
             var client = ClientConfiguration.CreateBuilder("cli_config", "rds", AuthenticationSource.None, "key", "secret").Build();
@@ -123,7 +123,7 @@ namespace MultiFactor.Radius.Adapter.Tests
             const string reqId = "RequestId";
 
             var api = new Mock<IMultiFactorApiClient>();
-            var logger = new Mock<ILogger>();
+            var logger = new Mock<ILogger<ChallengeProcessor>>();
             var processor = new ChallengeProcessor(api.Object, logger.Object);
 
             var client = ClientConfiguration.CreateBuilder("cli_config", "rds", AuthenticationSource.None, "key", "secret").Build();
@@ -153,7 +153,7 @@ namespace MultiFactor.Radius.Adapter.Tests
             var api = new Mock<IMultiFactorApiClient>();
             api.Setup(x => x.Challenge(It.IsAny<RadiusContext>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<ChallengeRequestIdentifier>()))
                 .ReturnsAsync(PacketCode.AccessAccept);
-            var logger = new Mock<ILogger>();
+            var logger = new Mock<ILogger<ChallengeProcessor>>();
             var processor = new ChallengeProcessor(api.Object, logger.Object);
 
             var client = ClientConfiguration.CreateBuilder("cli_config", "rds", AuthenticationSource.None, "key", "secret").Build();

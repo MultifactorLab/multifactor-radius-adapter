@@ -1,9 +1,9 @@
 ﻿using System.Net.Http;
 using System.Threading.Tasks;
 using System;
-using Serilog;
 using System.Text;
 using System.Text.Json;
+using Microsoft.Extensions.Logging;
 
 namespace MultiFactor.Radius.Adapter.Core.Serialization
 {
@@ -11,7 +11,7 @@ namespace MultiFactor.Radius.Adapter.Core.Serialization
     {
         private readonly ILogger _logger;
 
-        public SystemTextJsonDataSerializer(ILogger logger)
+        public SystemTextJsonDataSerializer(ILogger<SystemTextJsonDataSerializer> logger)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
@@ -20,13 +20,13 @@ namespace MultiFactor.Radius.Adapter.Core.Serialization
         {
             var jsonResponse = await content.ReadAsStringAsync();
             var parsed = JsonSerializer.Deserialize<T>(jsonResponse, SerializerOptions.JsonSerializerOptions);
-            _logger.Debug("Received response from API: {@response}", parsed);
+            _logger.LogDebug("Received response from API: {@response}", parsed);
             return parsed;
         }
 
         public StringContent Serialize(object data)
         {
-            _logger.Debug("Sending request to API: {@payload}", data);
+            _logger.LogDebug("Sending request to API: {@payload}", data);
             var payload = JsonSerializer.Serialize(data, SerializerOptions.JsonSerializerOptions);
             return new StringContent(payload, Encoding.UTF8, "application/json");
         }

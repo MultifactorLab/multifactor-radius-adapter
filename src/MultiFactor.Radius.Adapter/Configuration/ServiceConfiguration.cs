@@ -8,7 +8,6 @@ using MultiFactor.Radius.Adapter.Configuration.Features.RandomWaiterFeature;
 using MultiFactor.Radius.Adapter.Core;
 using MultiFactor.Radius.Adapter.Server;
 using NetTools;
-using Serilog;
 using System;
 using System.Collections;
 using System.Collections.Generic;

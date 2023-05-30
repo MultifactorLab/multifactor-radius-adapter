@@ -6,7 +6,6 @@ using MultiFactor.Radius.Adapter.Configuration.Core;
 using MultiFactor.Radius.Adapter.Core.Pipeline;
 using MultiFactor.Radius.Adapter.Core.Radius;
 using MultiFactor.Radius.Adapter.Services;
-using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,6 +15,7 @@ using System.Threading.Tasks;
 using System.Collections;
 using System.Globalization;
 using MultiFactor.Radius.Adapter.Core.Radius.Attributes;
+using Microsoft.Extensions.Logging;
 
 namespace MultiFactor.Radius.Adapter.Server.Pipeline;
 
@@ -26,7 +26,8 @@ public class RadiusRequestPostProcessor : IRadiusRequestPostProcessor
     private readonly IRadiusDictionary _dictionary;
     private readonly ILogger _logger;
 
-    public RadiusRequestPostProcessor(IServiceConfiguration serviceConfiguration, RandomWaiter waiter, IRadiusDictionary dictionary, ILogger logger)
+    public RadiusRequestPostProcessor(IServiceConfiguration serviceConfiguration, RandomWaiter waiter, IRadiusDictionary dictionary, 
+        ILogger<RadiusRequestPostProcessor> logger)
     {
         _serviceConfiguration = serviceConfiguration ?? throw new ArgumentNullException(nameof(serviceConfiguration));
         _waiter = waiter ?? throw new ArgumentNullException(nameof(waiter));
@@ -44,7 +45,7 @@ public class RadiusRequestPostProcessor : IRadiusRequestPostProcessor
         if (context.ResponsePacket?.IsEapMessageChallenge == true)
         {
             //EAP authentication in process, just proxy response
-            _logger.Debug("Proxying EAP-Message Challenge to {host:l}:{port} id={id}", context.RemoteEndpoint.Address, context.RemoteEndpoint.Port, context.RequestPacket.Identifier);
+            _logger.LogDebug("Proxying EAP-Message Challenge to {host:l}:{port} id={id}", context.RemoteEndpoint.Address, context.RemoteEndpoint.Port, context.RequestPacket.Identifier);
             context.ResponseSender.Send(context.ResponsePacket, context.RequestPacket?.UserName, context.RemoteEndpoint, context.ProxyEndpoint, true);
 
             return; //stop processing
@@ -53,7 +54,7 @@ public class RadiusRequestPostProcessor : IRadiusRequestPostProcessor
         if (context.RequestPacket.IsVendorAclRequest && context.ResponsePacket != null)
         { 
             //ACL and other rules transfer, just proxy response
-            _logger.Debug("Proxying #ACSACL# to {host:l}:{port} id={id}", context.RemoteEndpoint.Address, context.RemoteEndpoint.Port, context.RequestPacket.Identifier);
+            _logger.LogDebug("Proxying #ACSACL# to {host:l}:{port} id={id}", context.RemoteEndpoint.Address, context.RemoteEndpoint.Port, context.RequestPacket.Identifier);
             context.ResponseSender.Send(context.ResponsePacket, context.RequestPacket?.UserName, context.RemoteEndpoint, context.ProxyEndpoint, true);
 
             return; //stop processing
@@ -87,7 +88,7 @@ public class RadiusRequestPostProcessor : IRadiusRequestPostProcessor
                             var convertedValues = new List<object>();
                             foreach (var val in matched.ToList())
                             {
-                                _logger.Debug("Added/replaced attribute '{attrname:l}:{attrval:l}' to reply", attr.Key, val.ToString());
+                                _logger.LogDebug("Added/replaced attribute '{attrname:l}:{attrval:l}' to reply", attr.Key, val.ToString());
                                 convertedValues.Add(ConvertType(attr.Key, val));
                             }
                             responsePacket.Attributes[attr.Key] = convertedValues;

@@ -2,13 +2,13 @@
 //Please see licence at 
 //https://github.com/MultifactorLab/multifactor-radius-adapter/blob/main/LICENSE.md
 
+using Microsoft.Extensions.Logging;
 using MultiFactor.Radius.Adapter.Configuration;
 using MultiFactor.Radius.Adapter.Configuration.Core;
 using MultiFactor.Radius.Adapter.Core;
 using MultiFactor.Radius.Adapter.Core.Radius;
 using MultiFactor.Radius.Adapter.Services.ActiveDirectory.MembershipVerification;
 using MultiFactor.Radius.Adapter.Services.Ldap.MembershipVerification;
-using Serilog;
 using System.Threading.Tasks;
 
 namespace MultiFactor.Radius.Adapter.Server.FirstAuthFactorProcessing
@@ -18,7 +18,7 @@ namespace MultiFactor.Radius.Adapter.Server.FirstAuthFactorProcessing
         private readonly MembershipProcessor _membershipProcessor;
         private readonly ILogger _logger;
 
-        public DefaultFirstAuthFactorProcessor(MembershipProcessor membershipProcessor, ILogger logger)
+        public DefaultFirstAuthFactorProcessor(MembershipProcessor membershipProcessor, ILogger<DefaultFirstAuthFactorProcessor> logger)
         {
             _membershipProcessor = membershipProcessor ?? throw new System.ArgumentNullException(nameof(membershipProcessor));
             _logger = logger ?? throw new System.ArgumentNullException(nameof(logger));

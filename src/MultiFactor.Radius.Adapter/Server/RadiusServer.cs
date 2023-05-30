@@ -22,7 +22,6 @@
 //OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 //SOFTWARE.
 
-using Serilog;
 using System;
 using System.Linq;
 using System.Net;
@@ -34,7 +33,6 @@ using MultiFactor.Radius.Adapter.Services;
 using System.Globalization;
 using System.Collections.Generic;
 using MultiFactor.Radius.Adapter.Configuration;
-using Serilog.Context;
 using MultiFactor.Radius.Adapter.Logging.Enrichers;
 using MultiFactor.Radius.Adapter.Logging;
 using MultiFactor.Radius.Adapter.Core.Radius;
@@ -44,6 +42,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.Extensions.DependencyInjection;
 using MultiFactor.Radius.Adapter.Core.Pipeline;
 using static System.Formats.Asn1.AsnWriter;
+using Microsoft.Extensions.Logging;
 
 namespace MultiFactor.Radius.Adapter.Server
 {
@@ -76,7 +75,7 @@ namespace MultiFactor.Radius.Adapter.Server
             IRadiusPacketParser radiusPacketParser, 
             CacheService cacheService, 
             RandomWaiter waiter,
-            ILogger logger,
+            ILogger<RadiusServer> logger,
             IRadiusPipeline pipeline,
             RadiusContextFactory radiusContextFactory)
         {
@@ -98,17 +97,17 @@ namespace MultiFactor.Radius.Adapter.Server
         {
             if (Running)
             {
-                _logger.Warning("Server already started");
+                _logger.LogWarning("Server already started");
                 return;
             }
                    
-            _logger.Information("Starting Radius server on {host:l}:{port}", _localEndpoint.Address, _localEndpoint.Port);
+            _logger.LogInformation("Starting Radius server on {host:l}:{port}", _localEndpoint.Address, _localEndpoint.Port);
 
             _udpClient = new UdpClient(_localEndpoint);
             Running = true;
             var receiveTask = Receive();
 
-            _logger.Information("Server started");           
+            _logger.LogInformation("Server started");           
         }
 
         /// <summary>
@@ -118,14 +117,14 @@ namespace MultiFactor.Radius.Adapter.Server
         {
             if (!Running)
             {
-                _logger.Warning("Server already stopped");
+                _logger.LogWarning("Server already stopped");
                 return;
             }
                      
-            _logger.Information("Stopping server");
+            _logger.LogInformation("Stopping server");
             Running = false;
             _udpClient?.Close();
-            _logger.Information("Stopped");          
+            _logger.LogInformation("Stopped");          
         }
 
         /// <summary>
@@ -144,7 +143,7 @@ namespace MultiFactor.Radius.Adapter.Server
                 catch (ObjectDisposedException) { } // This is thrown when udpclient is disposed, can be safely ignored
                 catch (Exception ex)
                 {
-                    _logger.Error($"Something went wrong transmitting packet: {ex.Message}");
+                    _logger.LogError($"Something went wrong transmitting packet: {ex.Message}");
                 }
             }
         }
@@ -157,16 +156,16 @@ namespace MultiFactor.Radius.Adapter.Server
             try
             {
                 var handlersCount = Interlocked.Increment(ref _concurrentHandlerCount);
-                _logger.Verbose("Received packet from {host:l}:{port}, Concurrent handlers count: {handlersCount}", remoteEndpoint.Address, remoteEndpoint.Port, handlersCount);
+                _logger.LogTrace("Received packet from {host:l}:{port}, Concurrent handlers count: {handlersCount}", remoteEndpoint.Address, remoteEndpoint.Port, handlersCount);
                 ParseAndProcess(packetBytes, remoteEndpoint);
             }
             catch (Exception ex) when (ex is ArgumentException || ex is OverflowException)
             {
-                _logger.Warning(ex, "Ignoring malformed(?) packet received from {host}:{port}", remoteEndpoint.Address, remoteEndpoint.Port);
+                _logger.LogWarning(ex, "Ignoring malformed(?) packet received from {host}:{port}", remoteEndpoint.Address, remoteEndpoint.Port);
             }
             catch (Exception ex)
             {
-                _logger.Error(ex, "Failed to receive packet from {host:l}:{port}", remoteEndpoint.Address, remoteEndpoint.Port);
+                _logger.LogError(ex, "Failed to receive packet from {host:l}:{port}", remoteEndpoint.Address, remoteEndpoint.Port);
             }
             finally
             {
@@ -200,7 +199,7 @@ namespace MultiFactor.Radius.Adapter.Server
 
             if (clientConfiguration == null)
             {
-                _logger.Warning("Received packet from unknown client {host:l}:{port}, ignoring", remoteEndpoint.Address, remoteEndpoint.Port);
+                _logger.LogWarning("Received packet from unknown client {host:l}:{port}, ignoring", remoteEndpoint.Address, remoteEndpoint.Port);
                 return;
             }
 
@@ -217,7 +216,7 @@ namespace MultiFactor.Radius.Adapter.Server
             var isRetransmission = _cacheService.IsRetransmission(packet, context.RemoteEndpoint);
             if (isRetransmission)
             {
-                _logger.Debug("Retransmissed request from {host:l}:{port} id={id} client '{client:l}', ignoring",
+                _logger.LogDebug("Retransmissed request from {host:l}:{port} id={id} client '{client:l}', ignoring",
                     context.RemoteEndpoint.Address,
                     context.RemoteEndpoint.Port,
                     packet.Identifier,
@@ -229,7 +228,7 @@ namespace MultiFactor.Radius.Adapter.Server
             {
                 if (packet.Code == PacketCode.StatusServer)
                 {
-                    _logger.Information("Received {code:l} from {host:l}:{port} proxied by {proxyhost:l}:{proxyport} id={id} client '{client:l}'", 
+                    _logger.LogInformation("Received {code:l} from {host:l}:{port} proxied by {proxyhost:l}:{proxyport} id={id} client '{client:l}'", 
                     packet.Code.ToString(),
                     context.RemoteEndpoint.Address,
                     context.RemoteEndpoint.Port,
@@ -240,7 +239,7 @@ namespace MultiFactor.Radius.Adapter.Server
                 }
                 else
                 {
-                    _logger.Information("Received {code:l} from {host:l}:{port} proxied by {proxyhost:l}:{proxyport} id={id} user='{user:l}' client '{client:l}'", 
+                    _logger.LogInformation("Received {code:l} from {host:l}:{port} proxied by {proxyhost:l}:{proxyport} id={id} user='{user:l}' client '{client:l}'", 
                         packet.Code.ToString(),
                         context.RemoteEndpoint.Address,
                         context.RemoteEndpoint.Port,
@@ -255,7 +254,7 @@ namespace MultiFactor.Radius.Adapter.Server
             {
                 if (packet.Code == PacketCode.StatusServer)
                 {
-                    _logger.Debug("Received {code:l} from {host:l}:{port} id={id} client '{client:l}'",
+                    _logger.LogDebug("Received {code:l} from {host:l}:{port} id={id} client '{client:l}'",
                         packet.Code.ToString(), 
                         context.RemoteEndpoint.Address, 
                         context.RemoteEndpoint.Port,
@@ -264,7 +263,7 @@ namespace MultiFactor.Radius.Adapter.Server
                 }
                 else
                 {
-                    _logger.Information("Received {code:l} from {host:l}:{port} id={id} user='{user:l}' client '{client:l}'",
+                    _logger.LogInformation("Received {code:l} from {host:l}:{port} id={id} user='{user:l}' client '{client:l}'",
                         packet.Code.ToString(), 
                         context.RemoteEndpoint.Address, 
                         context.RemoteEndpoint.Port,

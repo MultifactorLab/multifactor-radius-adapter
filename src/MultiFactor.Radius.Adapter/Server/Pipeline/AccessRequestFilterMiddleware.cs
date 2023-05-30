@@ -2,9 +2,9 @@
 //Please see licence at 
 //https://github.com/MultifactorLab/multifactor-radius-adapter/blob/main/LICENSE.md
 
+using Microsoft.Extensions.Logging;
 using MultiFactor.Radius.Adapter.Core.Pipeline;
 using MultiFactor.Radius.Adapter.Core.Radius;
-using Serilog;
 using System.Threading.Tasks;
 
 namespace MultiFactor.Radius.Adapter.Server.Pipeline
@@ -13,7 +13,7 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline
     {
         private readonly ILogger _logger;
 
-        public AccessRequestFilterMiddleware(ILogger logger)
+        public AccessRequestFilterMiddleware(ILogger<AccessRequestFilterMiddleware> logger)
         {
             _logger = logger;
         }
@@ -26,7 +26,7 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline
                 return;
             }
 
-            _logger.Warning("Unprocessable packet type: {code}", context.RequestPacket.Code);
+            _logger.LogWarning("Unprocessable packet type: {code}", context.RequestPacket.Code);
         }
     }
 }

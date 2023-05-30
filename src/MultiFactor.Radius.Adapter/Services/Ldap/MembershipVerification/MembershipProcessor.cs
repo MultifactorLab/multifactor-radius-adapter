@@ -3,6 +3,7 @@
 //https://github.com/MultifactorLab/MultiFactor.Radius.Adapter/blob/master/LICENSE.md
 
 using LdapForNet;
+using Microsoft.Extensions.Logging;
 using Microsoft.VisualBasic;
 using MultiFactor.Radius.Adapter.Configuration;
 using MultiFactor.Radius.Adapter.Configuration.Core;
@@ -14,7 +15,6 @@ using MultiFactor.Radius.Adapter.Services.BindIdentityFormatting;
 using MultiFactor.Radius.Adapter.Services.Ldap.Connection;
 using MultiFactor.Radius.Adapter.Services.Ldap.Connection.Exceptions;
 using MultiFactor.Radius.Adapter.Services.Ldap.ProfileLoading;
-using Serilog;
 using System;
 using System.Linq;
 using System.Net;
@@ -35,7 +35,7 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.MembershipVerification
         public MembershipProcessor(ProfileLoader profileLoader,
             LdapConnectionAdapterFactory connectionAdapterFactory,
             MembershipVerifier membershipVerifier,
-            ILogger logger)
+            ILogger<MembershipProcessor> logger)
         {
             _profileLoader = profileLoader ?? throw new ArgumentNullException(nameof(profileLoader));
             _connectionAdapterFactory = connectionAdapterFactory ?? throw new ArgumentNullException(nameof(connectionAdapterFactory));
@@ -55,7 +55,7 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.MembershipVerification
             var userName = context.UserName;
             if (string.IsNullOrEmpty(userName))
             {
-                _logger.Warning("Verification user' membership failed: can't find 'User-Name' attribute (messageId: {id}, from: {host:l}:{port})", context.RequestPacket.Identifier, context.RemoteEndpoint.Address, context.RemoteEndpoint.Port);
+                _logger.LogWarning("Verification user' membership failed: can't find 'User-Name' attribute (messageId: {id}, from: {host:l}:{port})", context.RequestPacket.Identifier, context.RemoteEndpoint.Address, context.RemoteEndpoint.Port);
                 return result;
             }
 
@@ -67,7 +67,7 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.MembershipVerification
                 {
                     var user = LdapIdentity.ParseUser(userName);
 
-                    _logger.Debug("Verifying user '{user:l}' membership at '{domain:l}'", user.Name, domain);
+                    _logger.LogDebug("Verifying user '{user:l}' membership at '{domain:l}'", user.Name, domain);
                     using (var connAdapter = await _connectionAdapterFactory.CreateAdapterAsTechnicalAccAsync(domain, context.ClientConfiguration))
                     {
                         if (profile == null)
@@ -83,7 +83,7 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.MembershipVerification
                 }
                 catch (Exception ex)
                 {
-                    _logger.Warning(ex, "Verification user '{user:l}' membership at '{domain:l}' failed: {msg:l}", userName, domain, ex.Message);
+                    _logger.LogWarning(ex, "Verification user '{user:l}' membership at '{domain:l}' failed: {msg:l}", userName, domain, ex.Message);
                     result.AddDomainResult(MembershipVerificationResult.Create(domain)
                         .SetSuccess(false)
                         .Build());

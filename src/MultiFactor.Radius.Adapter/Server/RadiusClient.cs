@@ -24,7 +24,7 @@
 //OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 //SOFTWARE.
 
-using Serilog;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Concurrent;
 using System.Net;
@@ -74,11 +74,11 @@ namespace MultiFactor.Radius.Adapter.Server
                 }
 
                 //timeout
-                _logger.Debug($"Server {remoteEndpoint.ToString()} did not respond within {timeout}");
+                _logger.LogDebug($"Server {remoteEndpoint.ToString()} did not respond within {timeout}");
                 return null; 
             }
 
-            _logger.Warning("Network error");
+            _logger.LogWarning("Network error");
             return null;
         }
 

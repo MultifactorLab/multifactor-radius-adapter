@@ -24,7 +24,7 @@
 //OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 //SOFTWARE.
 
-using Serilog;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -38,12 +38,12 @@ namespace MultiFactor.Radius.Adapter.Core.Radius.Attributes
         internal List<DictionaryVendorAttribute> VendorSpecificAttributes { get; set; } = new List<DictionaryVendorAttribute>();
         internal Dictionary<string, DictionaryAttribute> AttributeNames { get; set; } = new Dictionary<string, DictionaryAttribute>();
 
-        private readonly ILogger _logger;
+        private readonly ILogger<RadiusDictionary> _logger;
 
         /// <summary>
         /// Load the dictionary from a dictionary file
         /// </summary>        
-        public RadiusDictionary(ApplicationVariables variables, ILogger logger)
+        public RadiusDictionary(ApplicationVariables variables, ILogger<RadiusDictionary> logger)
         {
             _logger = logger;
 
@@ -90,7 +90,7 @@ namespace MultiFactor.Radius.Adapter.Core.Radius.Attributes
                     }
                 }
 
-                _logger.Debug($"Parsed {Attributes.Count} attributes and {VendorSpecificAttributes.Count} vendor attributes from file");
+                _logger.LogDebug($"Parsed {Attributes.Count} attributes and {VendorSpecificAttributes.Count} vendor attributes from file");
             }
         }
 

@@ -2,10 +2,10 @@
 //Please see licence at 
 //https://github.com/MultifactorLab/multifactor-radius-adapter/blob/main/LICENSE.md
 
+using Microsoft.Extensions.Logging;
 using MultiFactor.Radius.Adapter.Configuration;
 using MultiFactor.Radius.Adapter.Core.Radius;
 using MultiFactor.Radius.Adapter.Services.MultiFactorApi;
-using Serilog;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -22,7 +22,7 @@ namespace MultiFactor.Radius.Adapter.Server
         private readonly IMultiFactorApiClient _multiFactorApiClient;
         private readonly ILogger _logger;
 
-        public ChallengeProcessor(IMultiFactorApiClient multiFactorApiClient, ILogger logger)
+        public ChallengeProcessor(IMultiFactorApiClient multiFactorApiClient, ILogger<ChallengeProcessor> logger)
         {
             _multiFactorApiClient = multiFactorApiClient ?? throw new ArgumentNullException(nameof(multiFactorApiClient));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -37,7 +37,7 @@ namespace MultiFactor.Radius.Adapter.Server
 
             if (string.IsNullOrEmpty(userName))
             {
-                _logger.Warning("Can't find User-Name in message id={id} from {host:l}:{port}", context.RequestPacket.Identifier, context.RemoteEndpoint.Address, context.RemoteEndpoint.Port);
+                _logger.LogWarning("Can't find User-Name in message id={id} from {host:l}:{port}", context.RequestPacket.Identifier, context.RemoteEndpoint.Address, context.RemoteEndpoint.Port);
                 return PacketCode.AccessReject;
             }
 
@@ -51,7 +51,7 @@ namespace MultiFactor.Radius.Adapter.Server
 
                     if (string.IsNullOrEmpty(userAnswer))
                     {
-                        _logger.Warning("Can't find User-Password with user response in message id={id} from {host:l}:{port}", context.RequestPacket.Identifier, context.RemoteEndpoint.Address, context.RemoteEndpoint.Port);
+                        _logger.LogWarning("Can't find User-Password with user response in message id={id} from {host:l}:{port}", context.RequestPacket.Identifier, context.RemoteEndpoint.Address, context.RemoteEndpoint.Port);
                         return PacketCode.AccessReject;
                     }
 
@@ -61,7 +61,7 @@ namespace MultiFactor.Radius.Adapter.Server
 
                     if (msChapResponse == null)
                     {
-                        _logger.Warning("Can't find MS-CHAP2-Response in message id={id} from {host:l}:{port}", context.RequestPacket.Identifier, context.RemoteEndpoint.Address, context.RemoteEndpoint.Port);
+                        _logger.LogWarning("Can't find MS-CHAP2-Response in message id={id} from {host:l}:{port}", context.RequestPacket.Identifier, context.RemoteEndpoint.Address, context.RemoteEndpoint.Port);
                         return PacketCode.AccessReject;
                     }
 
@@ -71,7 +71,7 @@ namespace MultiFactor.Radius.Adapter.Server
 
                     break;
                 default:
-                    _logger.Warning("Unable to process {auth} challange in message id={id} from {host:l}:{port}", context.RequestPacket.AuthenticationType, context.RequestPacket.Identifier, context.RemoteEndpoint.Address, context.RemoteEndpoint.Port);
+                    _logger.LogWarning("Unable to process {auth} challange in message id={id} from {host:l}:{port}", context.RequestPacket.AuthenticationType, context.RequestPacket.Identifier, context.RemoteEndpoint.Address, context.RemoteEndpoint.Port);
                     return PacketCode.AccessReject;
             }
 
@@ -107,7 +107,7 @@ namespace MultiFactor.Radius.Adapter.Server
         {
             if (!_stateChallengePendingRequests.TryAdd(identifier, context))
             {
-                _logger.Error("Unable to cache request id={id} for the '{cfg:l}' configuration",
+                _logger.LogError("Unable to cache request id={id} for the '{cfg:l}' configuration",
                     context.RequestPacket.Identifier, context.ClientConfiguration.Name);
             }
         }
@@ -122,7 +122,7 @@ namespace MultiFactor.Radius.Adapter.Server
                 return request;
             }
 
-            _logger.Error($"Unable to get cached request with state={identifier}");
+            _logger.LogError($"Unable to get cached request with state={identifier}");
             return null;
         }
 

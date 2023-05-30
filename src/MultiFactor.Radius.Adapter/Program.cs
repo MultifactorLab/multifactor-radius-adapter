@@ -6,7 +6,7 @@ using System;
 using System.Text;
 
 var builder = Host.CreateApplicationBuilder(args);
-builder.Services.ConfigureServices();
+builder.ConfigureApplication();
 
 var host = builder.Build();
 

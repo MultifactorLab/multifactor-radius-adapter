@@ -5,10 +5,10 @@ using System.Net;
 using MultiFactor.Radius.Adapter.Services.MultiFactorApi;
 using MultiFactor.Radius.Adapter.Core.Http;
 using MultiFactor.Radius.Adapter.Services;
-using Serilog;
 using MultiFactor.Radius.Adapter.Configuration;
 using MultiFactor.Radius.Adapter.Core.Radius;
 using MultiFactor.Radius.Adapter.Configuration.Features.PrivacyModeFeature;
+using Microsoft.Extensions.Logging;
 
 namespace MultiFactor.Radius.Adapter.Tests
 {
@@ -44,7 +44,7 @@ namespace MultiFactor.Radius.Adapter.Tests
             adapter.Setup(x => x.PostAsync<MultiFactorApiResponse<MultiFactorAccessRequest>>("access/requests/ra", It.IsAny<object>(), It.IsAny<IReadOnlyDictionary<string, string>>()))
                 .ReturnsAsync(response);
 
-            var api = new MultiFactorApiClient(cache.Object, new Mock<ILogger>().Object, adapter.Object);
+            var api = new MultiFactorApiClient(cache.Object, new Mock<ILogger<MultiFactorApiClient>>().Object, adapter.Object);
             var result = await api.CreateSecondFactorRequest(context);
 
             Assert.Equal(PacketCode.AccessReject, result);
@@ -77,7 +77,7 @@ namespace MultiFactor.Radius.Adapter.Tests
             adapter.Setup(x => x.PostAsync<MultiFactorApiResponse<MultiFactorAccessRequest>>("access/requests/ra", It.IsAny<object>(), It.IsAny<IReadOnlyDictionary<string, string>>()))
                 .ReturnsAsync(response);
 
-            var api = new MultiFactorApiClient(cache.Object, new Mock<ILogger>().Object, adapter.Object);
+            var api = new MultiFactorApiClient(cache.Object, new Mock<ILogger<MultiFactorApiClient>>().Object, adapter.Object);
             var result = await api.CreateSecondFactorRequest(context);
 
             Assert.Equal(PacketCode.AccessAccept, result);
@@ -110,7 +110,7 @@ namespace MultiFactor.Radius.Adapter.Tests
             adapter.Setup(x => x.PostAsync<MultiFactorApiResponse<MultiFactorAccessRequest>>("access/requests/ra", It.IsAny<object>(), It.IsAny<IReadOnlyDictionary<string, string>>()))
                 .ReturnsAsync(response);
 
-            var api = new MultiFactorApiClient(cache.Object, new Mock<ILogger>().Object, adapter.Object);
+            var api = new MultiFactorApiClient(cache.Object, new Mock<ILogger<MultiFactorApiClient>>().Object, adapter.Object);
             var result = await api.CreateSecondFactorRequest(context);
 
             Assert.Equal(PacketCode.AccessReject, result);
@@ -135,7 +135,7 @@ namespace MultiFactor.Radius.Adapter.Tests
             adapter.Setup(x => x.PostAsync<MultiFactorApiResponse<MultiFactorAccessRequest>>("access/requests/ra", It.IsAny<object>(), It.IsAny<IReadOnlyDictionary<string, string>>()))
                 .ThrowsAsync(new MultifactorApiUnreachableException());
 
-            var api = new MultiFactorApiClient(cache.Object, new Mock<ILogger>().Object, adapter.Object);
+            var api = new MultiFactorApiClient(cache.Object, new Mock<ILogger<MultiFactorApiClient>>().Object, adapter.Object);
             var result = await api.CreateSecondFactorRequest(context);
 
             Assert.Equal(PacketCode.AccessReject, result);
@@ -159,7 +159,7 @@ namespace MultiFactor.Radius.Adapter.Tests
             adapter.Setup(x => x.PostAsync<MultiFactorApiResponse<MultiFactorAccessRequest>>("access/requests/ra", It.IsAny<object>(), It.IsAny<IReadOnlyDictionary<string, string>>()))
                 .ThrowsAsync(new MultifactorApiUnreachableException());
 
-            var api = new MultiFactorApiClient(cache.Object, new Mock<ILogger>().Object, adapter.Object);
+            var api = new MultiFactorApiClient(cache.Object, new Mock<ILogger<MultiFactorApiClient>>().Object, adapter.Object);
             var result = await api.CreateSecondFactorRequest(context);
 
             Assert.Equal(PacketCode.AccessAccept, result);

@@ -2,10 +2,10 @@
 //Please see licence at 
 //https://github.com/MultifactorLab/MultiFactor.Radius.Adapter/blob/master/LICENSE.md
 
+using Microsoft.Extensions.Logging;
 using MultiFactor.Radius.Adapter.Configuration.Core;
 using MultiFactor.Radius.Adapter.Core.Ldap;
 using MultiFactor.Radius.Adapter.Services.Ldap.ProfileLoading;
-using Serilog;
 using System;
 using System.Linq;
 
@@ -15,7 +15,7 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.MembershipVerification
     {
         private readonly ILogger _logger;
 
-        public MembershipVerifier(ILogger logger)
+        public MembershipVerifier(ILogger<MembershipVerifier> logger)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
@@ -33,12 +33,12 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.MembershipVerification
                 var accessGroup = clientConfig.ActiveDirectoryGroups.FirstOrDefault(group => IsMemberOf(profile, group));
                 if (accessGroup != null)
                 {
-                    _logger.Debug("User '{user:l}' is a member of the access group '{group:l}' in '{domain:l}'",
+                    _logger.LogDebug("User '{user:l}' is a member of the access group '{group:l}' in '{domain:l}'",
                         user.Name, accessGroup, profile.BaseDn.Name);
                 }
                 else
                 {
-                    _logger.Warning("User '{user:l}' is not a member of any access group ({accGroups:l}) in '{domain:l}'",
+                    _logger.LogWarning("User '{user:l}' is not a member of any access group ({accGroups:l}) in '{domain:l}'",
                         user.Name, string.Join(", ", clientConfig.ActiveDirectoryGroups), profile.BaseDn.Name);
                     return MembershipVerificationResult.Create(domain)
                         .SetSuccess(false)
@@ -57,13 +57,13 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.MembershipVerification
                 var mfaGroup = clientConfig.ActiveDirectory2FaGroup.FirstOrDefault(group => IsMemberOf(profile, group));
                 if (mfaGroup != null)
                 {
-                    _logger.Debug("User '{user:l}' is a member of the 2FA group '{group:l}' in '{domain:l}'",
+                    _logger.LogDebug("User '{user:l}' is a member of the 2FA group '{group:l}' in '{domain:l}'",
                         user.Name, mfaGroup.Trim(), profile.BaseDn.Name);
                     resBuilder.SetIsMemberOf2FaGroups(true);
                 }
                 else
                 {
-                    _logger.Information("User '{user:l}' is not a member of any 2FA group ({groups:l}) in '{domain:l}'",
+                    _logger.LogInformation("User '{user:l}' is not a member of any 2FA group ({groups:l}) in '{domain:l}'",
                         user.Name, string.Join(", ", clientConfig.ActiveDirectory2FaGroup), profile.BaseDn.Name);
                 }
             }
@@ -74,13 +74,13 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.MembershipVerification
                 var bypassGroup = clientConfig.ActiveDirectory2FaBypassGroup.FirstOrDefault(group => IsMemberOf(profile, group));
                 if (bypassGroup != null)
                 {
-                    _logger.Information("User '{user:l}' is a member of the 2FA bypass group '{group:l}' in '{domain:l}'",
+                    _logger.LogInformation("User '{user:l}' is a member of the 2FA bypass group '{group:l}' in '{domain:l}'",
                         user.Name, bypassGroup.Trim(), profile.BaseDn.Name);
                     resBuilder.SetIsMemberOf2FaBypassGroup(true);
                 }
                 else
                 {
-                    _logger.Debug("User '{user:l}' is not a member of any 2FA bypass group ({groups:l}) in '{domain:l}'",
+                    _logger.LogDebug("User '{user:l}' is not a member of any 2FA bypass group ({groups:l}) in '{domain:l}'",
                         user.Name, string.Join(", ", clientConfig.ActiveDirectory2FaBypassGroup), profile.BaseDn.Name);
                 }
             }

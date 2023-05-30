@@ -2,12 +2,12 @@
 //Please see licence at 
 //https://github.com/MultifactorLab/multifactor-radius-adapter/blob/main/LICENSE.md
 
+using Microsoft.Extensions.Logging;
 using MultiFactor.Radius.Adapter.Configuration;
 using MultiFactor.Radius.Adapter.Configuration.Core;
 using MultiFactor.Radius.Adapter.Core.Ldap;
 using MultiFactor.Radius.Adapter.Services.BindIdentityFormatting;
 using MultiFactor.Radius.Adapter.Services.Ldap.Connection.Exceptions;
-using Serilog;
 using System;
 using System.Threading.Tasks;
 
@@ -18,7 +18,7 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.Connection
         private readonly BindIdentityFormatterFactory _bindIdentityFormatterFactory;
         private readonly ILogger _logger;
 
-        public LdapConnectionAdapterFactory(BindIdentityFormatterFactory bindIdentityFormatterFactory, ILogger logger)
+        public LdapConnectionAdapterFactory(BindIdentityFormatterFactory bindIdentityFormatterFactory, ILogger<LdapConnectionAdapter> logger)
         {
             _bindIdentityFormatterFactory = bindIdentityFormatterFactory ?? throw new ArgumentNullException(nameof(bindIdentityFormatterFactory));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));

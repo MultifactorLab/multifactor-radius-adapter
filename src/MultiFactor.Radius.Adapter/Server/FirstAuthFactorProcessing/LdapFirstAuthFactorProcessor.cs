@@ -2,13 +2,13 @@
 //Please see licence at 
 //https://github.com/MultifactorLab/multifactor-radius-adapter/blob/main/LICENSE.md
 
+using Microsoft.Extensions.Logging;
 using MultiFactor.Radius.Adapter.Configuration;
 using MultiFactor.Radius.Adapter.Configuration.Core;
 using MultiFactor.Radius.Adapter.Core;
 using MultiFactor.Radius.Adapter.Core.Radius;
 using MultiFactor.Radius.Adapter.Services;
 using MultiFactor.Radius.Adapter.Services.Ldap;
-using Serilog;
 using System;
 using System.Threading.Tasks;
 
@@ -25,7 +25,7 @@ namespace MultiFactor.Radius.Adapter.Server.FirstAuthFactorProcessing
 
         public LdapFirstAuthFactorProcessor(IServiceConfiguration serviceConfiguration,
             LdapService ldapService,
-            ILogger logger)
+            ILogger<LdapFirstAuthFactorProcessor> logger)
         {
             _serviceConfiguration = serviceConfiguration ?? throw new ArgumentNullException(nameof(serviceConfiguration));
             _ldapService = ldapService ?? throw new ArgumentNullException(nameof(ldapService));
@@ -40,7 +40,7 @@ namespace MultiFactor.Radius.Adapter.Server.FirstAuthFactorProcessing
 
             if (string.IsNullOrEmpty(userName))
             {
-                _logger.Warning("Can't find User-Name in message id={id} from {host:l}:{port}", context.RequestPacket.Identifier, context.RemoteEndpoint.Address, context.RemoteEndpoint.Port);
+                _logger.LogWarning("Can't find User-Name in message id={id} from {host:l}:{port}", context.RequestPacket.Identifier, context.RemoteEndpoint.Address, context.RemoteEndpoint.Port);
                 return PacketCode.AccessReject;
             }
 
@@ -48,7 +48,7 @@ namespace MultiFactor.Radius.Adapter.Server.FirstAuthFactorProcessing
 
             if (string.IsNullOrEmpty(password))
             {
-                _logger.Warning("Can't find User-Password in message id={id} from {host:l}:{port}", context.RequestPacket.Identifier, context.RemoteEndpoint.Address, context.RemoteEndpoint.Port);
+                _logger.LogWarning("Can't find User-Password in message id={id} from {host:l}:{port}", context.RequestPacket.Identifier, context.RemoteEndpoint.Address, context.RemoteEndpoint.Port);
                 return PacketCode.AccessReject;
             }
 

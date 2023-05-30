@@ -24,8 +24,8 @@
 //OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 //SOFTWARE.
 
+using Microsoft.Extensions.Logging;
 using MultiFactor.Radius.Adapter.Core.Radius.Attributes;
-using Serilog;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -41,17 +41,15 @@ namespace MultiFactor.Radius.Adapter.Core.Radius
         private readonly ILogger _logger;
         private readonly IRadiusDictionary _radiusDictionary;
 
-
         /// <summary>
         /// RadiusPacketParser
         /// </summary>
         /// <param name="logger"></param>
-        public RadiusPacketParser(ILogger logger, IRadiusDictionary radiusDictionary)
+        public RadiusPacketParser(ILogger<RadiusPacketParser> logger, IRadiusDictionary radiusDictionary)
         {
             _logger = logger;
             _radiusDictionary = radiusDictionary;
         }
-
 
         /// <summary>
         /// Parses packet bytes and returns an IRadiusPacket
@@ -109,7 +107,7 @@ namespace MultiFactor.Radius.Adapter.Core.Radius
                         var vendorAttributeDefinition = _radiusDictionary.GetVendorAttribute(vsa.VendorId, vsa.VendorCode);
                         if (vendorAttributeDefinition == null)
                         {
-                            _logger.Debug($"Unknown vsa: {vsa.VendorId}:{vsa.VendorCode}");
+                            _logger.LogDebug($"Unknown vsa: {vsa.VendorId}:{vsa.VendorCode}");
                         }
                         else
                         {
@@ -120,7 +118,7 @@ namespace MultiFactor.Radius.Adapter.Core.Radius
                             }
                             catch (Exception ex)
                             {
-                                _logger.Error(ex, $"Something went wrong with vsa {vendorAttributeDefinition.Name}");
+                                _logger.LogError(ex, $"Something went wrong with vsa {vendorAttributeDefinition.Name}");
                             }
                         }
                     }
@@ -138,18 +136,18 @@ namespace MultiFactor.Radius.Adapter.Core.Radius
                         }
                         catch (Exception ex)
                         {
-                            _logger.Error(ex, $"Something went wrong with {attributeDefinition.Name}");
-                            _logger.Debug($"Attribute bytes: {contentBytes.ToHexString()}");
+                            _logger.LogError(ex, $"Something went wrong with {attributeDefinition.Name}");
+                            _logger.LogDebug($"Attribute bytes: {contentBytes.ToHexString()}");
                         }
                     }
                 }
                 catch (KeyNotFoundException)
                 {
-                    _logger.Warning($"Attribute {typecode} not found in dictionary");
+                    _logger.LogWarning($"Attribute {typecode} not found in dictionary");
                 }
                 catch (Exception ex)
                 {
-                    _logger.Error(ex, $"Something went wrong parsing attribute {typecode}");
+                    _logger.LogError(ex, $"Something went wrong parsing attribute {typecode}");
                 }
 
                 position += length;

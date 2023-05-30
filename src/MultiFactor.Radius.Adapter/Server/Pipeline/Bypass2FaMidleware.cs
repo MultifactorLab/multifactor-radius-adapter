@@ -2,9 +2,9 @@
 //Please see licence at 
 //https://github.com/MultifactorLab/multifactor-radius-adapter/blob/main/LICENSE.md
 
+using Microsoft.Extensions.Logging;
 using MultiFactor.Radius.Adapter.Core.Pipeline;
 using MultiFactor.Radius.Adapter.Core.Radius;
-using Serilog;
 using System;
 using System.Threading.Tasks;
 
@@ -15,7 +15,7 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline
         private readonly ILogger _logger;
         private readonly IRadiusRequestPostProcessor _requestPostProcessor;
 
-        public Bypass2FaMidleware(ILogger logger, IRadiusRequestPostProcessor requestPostProcessor)
+        public Bypass2FaMidleware(ILogger<Bypass2FaMidleware> logger, IRadiusRequestPostProcessor requestPostProcessor)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _requestPostProcessor = requestPostProcessor ?? throw new ArgumentNullException(nameof(requestPostProcessor));
@@ -30,7 +30,7 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline
             }
 
             // second factor not required
-            _logger.Information("Bypass second factor for user '{user:l}'", context.UserName);
+            _logger.LogInformation("Bypass second factor for user '{user:l}'", context.UserName);
 
             context.ResponseCode = PacketCode.AccessAccept;
             // stop authencation process

@@ -1,5 +1,5 @@
-﻿using MultiFactor.Radius.Adapter.Core.Ldap;
-using Serilog;
+﻿using Microsoft.Extensions.Logging;
+using MultiFactor.Radius.Adapter.Core.Ldap;
 using System;
 
 namespace MultiFactor.Radius.Adapter.Services.Ldap.Connection

@@ -3,7 +3,6 @@ using System.Net.Http;
 using System.Net;
 using System.Threading.Tasks;
 using System;
-using Serilog;
 using MultiFactor.Radius.Adapter.Core.Serialization;
 
 namespace MultiFactor.Radius.Adapter.Core.Http

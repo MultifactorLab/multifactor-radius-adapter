@@ -1,5 +1,7 @@
 using FluentAssertions;
+using FluentAssertions.Common;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using MultiFactor.Radius.Adapter.Configuration.Core;
 using MultiFactor.Radius.Adapter.Core.Exceptions;
 using MultiFactor.Radius.Adapter.Tests.Fixtures;
@@ -58,7 +60,6 @@ public class ConfigurationLoadingTests
     [InlineData("root-empty-multifactor-api-url.config", "Configuration error: 'multifactor-api-url' element not found")]
     [InlineData("root-empty-multifactor-nas-identifier.config", "Configuration error: 'multifactor-nas-identifier' element not found")]
     [InlineData("root-empty-multifactor-shared-secret.config", "Configuration error: 'multifactor-shared-secret' element not found")]
-    [InlineData("root-empty-logging-level.config", "Configuration error: 'logging-level' element not found")]
     [InlineData("root-empty-first-factor-authentication-source.config", "Configuration error: No clients' config files found. Use one of the *.template files in the /clients folder to customize settings. Then save this file as *.config.")]
     [InlineData("root-first-factor-authentication-source-is-digit.config", "Configuration error: Can't parse 'first-factor-authentication-source' value. Must be one of: ActiveDirectory, Radius, None")]
     [InlineData("root-first-factor-authentication-source-is-invalid.config", "Configuration error: Can't parse 'first-factor-authentication-source' value. Must be one of: ActiveDirectory, Radius, None")]
@@ -77,6 +78,28 @@ public class ConfigurationLoadingTests
         });
 
         var act = () => host.Services.GetRequiredService<IServiceConfiguration>();
+
+        act.Should().Throw<InvalidConfigurationException>().WithMessage(msg);
+    }
+    
+    [Theory]
+    [InlineData("root-empty-logging-level.config", "Configuration error: 'logging-level' element not found")]
+    public void CreateHost_InvalidSettings_ShouldThrow(string asset, string msg)
+    {
+        var act = () =>
+        {
+            var builder = Host.CreateApplicationBuilder();
+            builder.ConfigureApplication(services =>
+            {
+                services.RemoveService<IRootConfigurationProvider>().AddSingleton<IRootConfigurationProvider, TestRootConfigProvider>();
+                services.RemoveService<IClientConfigurationsProvider>().AddSingleton<IClientConfigurationsProvider, TestClientConfigsProvider>();
+                services.Configure<TestConfigProviderOptions>(x =>
+                {
+                    x.RootConfigFilePath = TestEnvironment.GetAssetPath(asset);
+                });
+            });
+            return builder.Build();
+        };
 
         act.Should().Throw<InvalidConfigurationException>().WithMessage(msg);
     }
