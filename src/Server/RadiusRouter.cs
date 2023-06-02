@@ -86,6 +86,11 @@ namespace MultiFactor.Radius.Adapter.Server
 
                 var firstAuthProcessor = _firstAuthFactorProcessorProvider.GetProcessor(clientConfig.FirstFactorAuthenticationSource);
                 var firstFactorAuthenticationResultCode = await firstAuthProcessor.ProcessFirstAuthFactorAsync(request, clientConfig);
+                if (firstFactorAuthenticationResultCode == PacketCode.DisconnectNak)
+                {
+                    return;
+                }
+
                 if (firstFactorAuthenticationResultCode != PacketCode.AccessAccept)
                 {
                     //first factor authentication rejected
