@@ -29,7 +29,6 @@ namespace MultiFactor.Radius.Adapter.Server
         private readonly ChallengeProcessor _challengeProcessor;
 
         public event EventHandler<PendingRequest> RequestProcessed;
-        public event EventHandler<PendingRequest> RequestWillNotBeProcessed;
 
         private DateTime _startedAt = DateTime.Now;
 
@@ -89,7 +88,6 @@ namespace MultiFactor.Radius.Adapter.Server
                 var firstFactorAuthenticationResultCode = await firstAuthProcessor.ProcessFirstAuthFactorAsync(request, clientConfig);
                 if (firstFactorAuthenticationResultCode == PacketCode.DisconnectNak)
                 {
-                    RequestWillNotBeProcessed?.Invoke(this, request);
                     return;
                 }
 
