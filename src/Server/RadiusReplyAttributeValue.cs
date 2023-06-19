@@ -3,6 +3,7 @@
 //https://github.com/MultifactorLab/multifactor-radius-adapter/blob/main/LICENSE.md
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace MultiFactor.Radius.Adapter.Server
@@ -12,24 +13,26 @@ namespace MultiFactor.Radius.Adapter.Server
     /// </summary>
     public class RadiusReplyAttributeValue
     {
-        public bool FromLdap { get; set; }
+        public bool FromLdap { get; }
+        public bool Sufficient { get; }
 
         /// <summary>
         /// Const value with optional condition
         /// </summary>
-        public RadiusReplyAttributeValue(object value, string conditionClause)
+        public RadiusReplyAttributeValue(object value, string conditionClause, bool sufficient = false)
         {
             Value = value;
             if (!string.IsNullOrEmpty(conditionClause))
             {
                 ParseConditionClause(conditionClause);
             }
+            Sufficient = sufficient;
         }
 
         /// <summary>
         /// Proxy value from LDAP attr
         /// </summary>
-        public RadiusReplyAttributeValue(string ldapAttributeName)
+        public RadiusReplyAttributeValue(string ldapAttributeName, bool sufficient = false)
         {
             if (string.IsNullOrEmpty(ldapAttributeName))
             {
@@ -38,6 +41,7 @@ namespace MultiFactor.Radius.Adapter.Server
             
             LdapAttributeName = ldapAttributeName;
             FromLdap = true;
+            Sufficient = sufficient;
         }
 
         /// <summary>
@@ -48,28 +52,22 @@ namespace MultiFactor.Radius.Adapter.Server
         /// <summary>
         /// Ldap attr name to proxy value from
         /// </summary>
-        public string LdapAttributeName { get; set; }
+        public string LdapAttributeName { get; }
 
         /// <summary>
         /// Is list of all user groups attribute
         /// </summary>
-        public bool IsMemberOf
-        {
-            get
-            {
-                return LdapAttributeName?.ToLower() == "memberof";
-            }
-        }
-
+        public bool IsMemberOf => LdapAttributeName?.ToLower() == "memberof";      
+        
         /// <summary>
         /// User group condition
         /// </summary>
-        public string UserGroupCondition { get; set; }
+        public string UserGroupCondition { get; private set; }
 
         /// <summary>
         /// User name condition
         /// </summary>
-        public string UserNameCondition { get; set; }
+        public string UserNameCondition { get; private set; }
 
         /// <summary>
         /// Is match condition
