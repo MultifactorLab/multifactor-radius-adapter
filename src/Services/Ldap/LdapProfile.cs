@@ -11,23 +11,6 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap
         }
 
         public string DistinguishedName { get; set; }
-        public string DistinguishedNameEscaped
-        {
-            get
-            {
-                var ret = DistinguishedName
-                    .Replace("(", @"\28")
-                    .Replace(")", @"\29");
-
-                if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                {
-                    ret = ret.Replace("\"", "\\\""); //quotes
-                    ret = ret.Replace("\\,", "\\5C,"); //comma
-                }
-
-                return ret;
-            }
-        }
         public string Upn { get; set; }
         public string DisplayName { get; set; }
         public string Email { get; set; }
