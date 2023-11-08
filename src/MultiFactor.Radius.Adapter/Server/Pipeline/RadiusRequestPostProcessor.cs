@@ -7,15 +7,13 @@ using MultiFactor.Radius.Adapter.Core.Pipeline;
 using MultiFactor.Radius.Adapter.Core.Radius;
 using MultiFactor.Radius.Adapter.Services;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Net.Sockets;
-using System.Net;
 using System.Threading.Tasks;
 using System.Collections;
-using System.Globalization;
 using MultiFactor.Radius.Adapter.Core.Radius.Attributes;
 using Microsoft.Extensions.Logging;
+using MultiFactor.Radius.Adapter.Configuration;
 
 namespace MultiFactor.Radius.Adapter.Server.Pipeline;
 
@@ -23,15 +21,17 @@ public class RadiusRequestPostProcessor : IRadiusRequestPostProcessor
 {
     private readonly IServiceConfiguration _serviceConfiguration;
     private readonly RandomWaiter _waiter;
-    private readonly IRadiusDictionary _dictionary;
+    private readonly RadiusReplyAttributeEnricher _attributeEnricher;
     private readonly ILogger _logger;
 
-    public RadiusRequestPostProcessor(IServiceConfiguration serviceConfiguration, RandomWaiter waiter, IRadiusDictionary dictionary, 
+    public RadiusRequestPostProcessor(IServiceConfiguration serviceConfiguration, 
+        RandomWaiter waiter, 
+        RadiusReplyAttributeEnricher attributeRewriter,
         ILogger<RadiusRequestPostProcessor> logger)
     {
         _serviceConfiguration = serviceConfiguration ?? throw new ArgumentNullException(nameof(serviceConfiguration));
         _waiter = waiter ?? throw new ArgumentNullException(nameof(waiter));
-        _dictionary = dictionary ?? throw new ArgumentNullException(nameof(dictionary));
+        _attributeEnricher = attributeRewriter ?? throw new ArgumentNullException(nameof(attributeRewriter));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -79,21 +79,7 @@ public class RadiusRequestPostProcessor : IRadiusRequestPostProcessor
                 //add custom reply attributes
                 if (context.ResponseCode == PacketCode.AccessAccept)
                 {
-                    foreach (var attr in clientConfiguration.RadiusReplyAttributes)
-                    {
-                        //check condition
-                        var matched = attr.Value.Where(val => val.IsMatch(context)).SelectMany(val => val.GetValues(context));
-                        if (matched.Any())
-                        {
-                            var convertedValues = new List<object>();
-                            foreach (var val in matched.ToList())
-                            {
-                                _logger.LogDebug("Added/replaced attribute '{attrname:l}:{attrval:l}' to reply", attr.Key, val.ToString());
-                                convertedValues.Add(ConvertType(attr.Key, val));
-                            }
-                            responsePacket.Attributes[attr.Key] = convertedValues;
-                        }
-                    }
+                    _attributeEnricher.RewriteReplyAttributes(context);
                 }
 
                 break;
@@ -129,37 +115,4 @@ public class RadiusRequestPostProcessor : IRadiusRequestPostProcessor
         var debugLog = context.RequestPacket.Code == PacketCode.StatusServer;
         context.ResponseSender.Send(responsePacket, context.RequestPacket?.UserName, context.RemoteEndpoint, context.ProxyEndpoint, debugLog);
     }
-
-    private object ConvertType(string attrName, object value)
-    {
-        if (value is string)
-        {
-            var stringValue = (string)value;
-            var attribute = _dictionary.GetAttribute(attrName);
-            switch (attribute.Type)
-            {
-                case "ipaddr":
-                    if (IPAddress.TryParse(stringValue, out var ipValue))
-                    {
-                        return ipValue;
-                    }
-                    break;
-                case "date":
-                    if (DateTime.TryParse(stringValue, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var dateValue))
-                    {
-                        return dateValue;
-                    }
-                    break;
-                case "integer":
-                    if (int.TryParse(stringValue, out var integerValue))
-                    {
-                        return integerValue;
-                    }
-                    break;
-            }
-        }
-
-        return value;
-    }
-
 }

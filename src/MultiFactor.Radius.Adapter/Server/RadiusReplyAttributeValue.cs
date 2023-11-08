@@ -19,6 +19,8 @@ namespace MultiFactor.Radius.Adapter.Server
         /// </summary>
         public object Value { get; }
 
+        public bool Sufficient { get; }
+
         /// <summary>
         /// Ldap attr name to proxy value from
         /// </summary>
@@ -42,19 +44,20 @@ namespace MultiFactor.Radius.Adapter.Server
         /// <summary>
         /// Const value with optional condition
         /// </summary>
-        public RadiusReplyAttributeValue(object value, string conditionClause)
+        public RadiusReplyAttributeValue(object value, string conditionClause, bool sufficient = false)
         {
             Value = value;
             if (!string.IsNullOrEmpty(conditionClause))
             {
                 ParseConditionClause(conditionClause);
             }
+            Sufficient = sufficient;
         }
 
         /// <summary>
         /// Proxy value from LDAP attr
         /// </summary>
-        public RadiusReplyAttributeValue(string ldapAttributeName)
+        public RadiusReplyAttributeValue(string ldapAttributeName, bool sufficient = false)
         {
             if (string.IsNullOrEmpty(ldapAttributeName))
             {
@@ -63,6 +66,7 @@ namespace MultiFactor.Radius.Adapter.Server
             
             LdapAttributeName = ldapAttributeName;
             FromLdap = true;
+            Sufficient = sufficient;
         }
 
         /// <summary>
@@ -114,16 +118,16 @@ namespace MultiFactor.Radius.Adapter.Server
             return true; //without conditions
         }
 
-        public object[] GetValues(RadiusContext request)
+        public object[] GetValues(RadiusContext context)
         {
             if (IsMemberOf)
             {
-                return request.UserGroups.ToArray();
+                return context.UserGroups.ToArray();
             }
 
             if (FromLdap)
             {
-                return new object[] { request.LdapAttrs[LdapAttributeName] };
+                return new object[] { context.LdapAttrs[LdapAttributeName] };
             }
 
             return new object[] { Value };

@@ -91,6 +91,8 @@ internal static class AppConfiguration
         builder.Services.AddSingleton<IRadiusRequestPostProcessor, RadiusRequestPostProcessor>();
         builder.Services.AddSingleton<RadiusResponseSenderFactory>();
 
+        builder.Services.AddSingleton<RadiusReplyAttributeEnricher>();
+
         AddHttpServices(builder);
 
         configureServices?.Invoke(builder.Services);

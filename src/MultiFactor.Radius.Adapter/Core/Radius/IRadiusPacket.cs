@@ -31,31 +31,18 @@ namespace MultiFactor.Radius.Adapter.Core.Radius
 {
     public interface IRadiusPacket
     {
-        byte Identifier
-        {
-            get; set;
-        }
-        byte[] Authenticator
-        {
-            get; set;
-        }
-        byte[] SharedSecret
-        {
-            get;
-        }
-        PacketCode Code
-        {
-            get;
-        }
-        byte[] RequestAuthenticator
-        {
-            get;
-        }
+        byte Identifier { get; set; }
+        byte[] Authenticator { get; set; }
+        byte[] SharedSecret { get; }
+        PacketCode Code { get; }
+        byte[] RequestAuthenticator { get; }
         bool IsEapMessageChallenge { get; }
         bool IsVendorAclRequest { get; }
         bool IsWinLogon { get; }
         bool IsOpenVpnStaticChallenge { get; }
+
         AuthenticationType AuthenticationType { get; }
+
         string UserName { get; }
         string TryGetUserPassword();
         string TryGetChallenge();
@@ -63,6 +50,7 @@ namespace MultiFactor.Radius.Adapter.Core.Radius
         string CallingStationId { get; }
         string CalledStationId { get; }
         string NasIdentifier { get; }
+
         IRadiusPacket CreateResponsePacket(PacketCode responseCode);
 
         T GetAttribute<T>(string name);

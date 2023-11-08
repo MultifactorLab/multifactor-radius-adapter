@@ -134,7 +134,19 @@
     <None Update="Assets\clients\client-empty-identifier-and-ip.config">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Assets\clients\client-ad-group.config">
+    <None Update="Assets\clients\radius-reply-with-attribute.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Assets\clients\radius-reply-with-condition.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Assets\clients\radius-reply-with-sufficient.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Assets\clients\radius-reply-join.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Assets\clients\radius-reply.config">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="Assets\clients\client-minimal.config">
