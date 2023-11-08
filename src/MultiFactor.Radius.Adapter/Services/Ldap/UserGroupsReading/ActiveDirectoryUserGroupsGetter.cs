@@ -44,8 +44,9 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.UserGroupsReading
 
             if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                ret = ret.Replace("\"", "\\\""); //quotes
-                ret = ret.Replace("\\,", "\\5C,"); //comma
+                ret = ret.Replace("\"", "\\\""); // quotes
+                ret = ret.Replace("\\,", "\\5C,"); // comma
+                ret = ret.Replace("\\=", "\\5C="); // \=
             }
 
             return ret;
