@@ -29,7 +29,7 @@ catch (Exception ex)
 
     if (host != null)
     {
-        host.StopAsync();
+        await host.StopAsync();
     }
 }
 
