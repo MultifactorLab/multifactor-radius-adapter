@@ -8,7 +8,7 @@
     <AssemblyName>multifactor-radius-adapter</AssemblyName>
     <Authors>MultlFactor</Authors>
     <Description>Multifactor Radus Adapter</Description>
-	<Version>1.5.0</Version>
+	<Version>2.0.0</Version>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
