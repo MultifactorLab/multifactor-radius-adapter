@@ -82,16 +82,18 @@ To install, run the commands:
 
 ```shell
 $ sudo rpm -Uvh https://packages.microsoft.com/config/centos/7/packages-microsoft-prod.rpm
-$ sudo yum install aspnetcore-runtime-3.1
+$ sudo yum install aspnetcore-runtime-6.0
 ```
 <a href="https://docs.microsoft.com/ru-ru/dotnet/core/install/linux-centos" target="_blank">https://docs.microsoft.com/ru-ru/dotnet/core/install/linux-centos</a>
 
 #### CentOS 8
 
-```shell
-$ sudo dnf install aspnetcore-runtime-3.1
-```
-<a href="https://docs.microsoft.com/ru-ru/dotnet/core/install/linux-centos" target="_blank">https://docs.microsoft.com/ru-ru/dotnet/core/install/linux-centos</a>
+> ⚠️ **Warning**  
+> CentOS Linux 8 достигла раннего окончания жизни (EOL) 31 декабря 2021 года.  
+> Дополнительные сведения см. на официальной <a href="https://www.centos.org/centos-linux-eol/" target="_blank">странице</a> EOL Для CentOS Linux.   
+> Из-за этого .NET не поддерживается в CentOS Linux 8. 
+
+Дополнительную информацию см. на <a href="https://docs.microsoft.com/ru-ru/dotnet/core/install/linux-centos" target="_blank">этой странице</a>.
 
 #### Ubuntu 18.04
 
@@ -102,7 +104,7 @@ $ sudo dpkg -i packages-microsoft-prod.deb
 $ sudo apt-get update; \
   sudo apt-get install -y apt-transport-https && \
   sudo apt-get update && \
-  sudo apt-get install -y aspnetcore-runtime-3.1
+  sudo apt-get install -y aspnetcore-runtime-6.0
 ```
 <a href="https://docs.microsoft.com/ru-ru/dotnet/core/install/linux-ubuntu" target="_blank">https://docs.microsoft.com/ru-ru/dotnet/core/install/linux-ubuntu</a>
 
@@ -115,7 +117,7 @@ $ sudo dpkg -i packages-microsoft-prod.deb
 $ sudo apt-get update; \
   sudo apt-get install -y apt-transport-https && \
   sudo apt-get update && \
-  sudo apt-get install -y aspnetcore-runtime-3.1
+  sudo apt-get install -y aspnetcore-runtime-6.0
 ```
 <a href="https://docs.microsoft.com/ru-ru/dotnet/core/install/linux-debian" target="_blank">https://docs.microsoft.com/ru-ru/dotnet/core/install/linux-debian</a>
 

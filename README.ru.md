@@ -84,16 +84,16 @@ Remote Authentication Dial-In User Service (RADIUS) &mdash; сетевой пр�
 
 ```shell
 $ sudo rpm -Uvh https://packages.microsoft.com/config/centos/7/packages-microsoft-prod.rpm
-$ sudo yum install aspnetcore-runtime-3.1
+$ sudo yum install aspnetcore-runtime-6.0
 ```
 <a href="https://docs.microsoft.com/ru-ru/dotnet/core/install/linux-centos" target="_blank">https://docs.microsoft.com/ru-ru/dotnet/core/install/linux-centos</a>
 
 #### CentOS 8
 
-```shell
-$ sudo dnf install aspnetcore-runtime-3.1
-```
-<a href="https://docs.microsoft.com/ru-ru/dotnet/core/install/linux-centos" target="_blank">https://docs.microsoft.com/ru-ru/dotnet/core/install/linux-centos</a>
+> ⚠️ **Warning**  
+> CentOS Linux 8 reached an early End Of Life (EOL) on December 31st, 2021.  
+> For more information, see the official <a href="https://www.centos.org/centos-linux-eol/" target="_blank">CentOS Linux EOL page</a>.   
+> Because of this, .NET isn't supported on CentOS Linux 8. 
 
 #### Ubuntu 18.04
 
@@ -104,7 +104,7 @@ $ sudo dpkg -i packages-microsoft-prod.deb
 $ sudo apt-get update; \
   sudo apt-get install -y apt-transport-https && \
   sudo apt-get update && \
-  sudo apt-get install -y aspnetcore-runtime-3.1
+  sudo apt-get install -y aspnetcore-runtime-6.0
 ```
 <a href="https://docs.microsoft.com/ru-ru/dotnet/core/install/linux-ubuntu" target="_blank">https://docs.microsoft.com/ru-ru/dotnet/core/install/linux-ubuntu</a>
 
@@ -117,7 +117,7 @@ $ sudo dpkg -i packages-microsoft-prod.deb
 $ sudo apt-get update; \
   sudo apt-get install -y apt-transport-https && \
   sudo apt-get update && \
-  sudo apt-get install -y aspnetcore-runtime-3.1
+  sudo apt-get install -y aspnetcore-runtime-6.0
 ```
 <a href="https://docs.microsoft.com/ru-ru/dotnet/core/install/linux-debian" target="_blank">https://docs.microsoft.com/ru-ru/dotnet/core/install/linux-debian</a>
 
