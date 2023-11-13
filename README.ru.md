@@ -91,9 +91,12 @@ $ sudo yum install aspnetcore-runtime-6.0
 #### CentOS 8
 
 > ⚠️ **Warning**  
-> CentOS Linux 8 reached an early End Of Life (EOL) on December 31st, 2021.  
-> For more information, see the official <a href="https://www.centos.org/centos-linux-eol/" target="_blank">CentOS Linux EOL page</a>.   
-> Because of this, .NET isn't supported on CentOS Linux 8. 
+> CentOS Linux 8 достигла раннего окончания жизни (EOL) 31 декабря 2021 года.  
+> Дополнительные сведения см. на официальной <a href="https://www.centos.org/centos-linux-eol/" target="_blank">странице</a> EOL Для CentOS Linux.   
+> Из-за этого .NET не поддерживается в CentOS Linux 8. 
+
+Дополнительную информацию см. на <a href="https://docs.microsoft.com/ru-ru/dotnet/core/install/linux-centos" target="_blank">странице</a>.  
+См. также: <a href="https://learn.microsoft.com/ru-ru/dotnet/core/install/linux-rhel#supported-distributions">установка .NET на CentOS Stream</a>.
 
 #### Ubuntu 18.04
 
