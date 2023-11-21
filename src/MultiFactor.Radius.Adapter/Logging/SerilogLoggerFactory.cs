@@ -61,7 +61,7 @@ namespace MultiFactor.Radius.Adapter.Logging
             {
                 loggerConfiguration
                     .WriteTo.Console(formatter)
-                    .WriteTo.File(formatter, $"{path}logs{Path.DirectorySeparatorChar}log-.txt", rollingInterval: RollingInterval.Day);
+                    .WriteTo.File(formatter, $"{path}{Path.DirectorySeparatorChar}logs{Path.DirectorySeparatorChar}log-.txt", rollingInterval: RollingInterval.Day);
             }
             else
             {
@@ -79,14 +79,14 @@ namespace MultiFactor.Radius.Adapter.Logging
                 if (fileTemplate != null)
                 {
                     loggerConfiguration.WriteTo.File(
-                        $"{path}logs{Path.DirectorySeparatorChar}log-.txt",
+                        $"{path}{Path.DirectorySeparatorChar}logs{Path.DirectorySeparatorChar}log-.txt",
                         rollingInterval: RollingInterval.Day,
                         outputTemplate: fileTemplate);
                 }
                 else
                 {
                     loggerConfiguration.WriteTo.File(
-                        $"{path}logs{Path.DirectorySeparatorChar}log-.txt",
+                        $"{path}{Path.DirectorySeparatorChar}logs{Path.DirectorySeparatorChar}log-.txt",
                         rollingInterval: RollingInterval.Day);
                 }
             }
