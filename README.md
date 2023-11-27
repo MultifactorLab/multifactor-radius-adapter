@@ -269,7 +269,9 @@ As ```outputTemplate``` also acts text template which shows the logging system h
 For more information [see this page.](https://github.com/serilog/serilog/wiki/Formatting-Output)
 
 Moreover, logging can be provided in json:
-
+```xml
+<add key="logging-format" value="format"/>
+```
 Keep in mind that ```console-log-output-template``` and ```file-log-output-template``` settings are not applicable for the JSON log format, but its possible to choose from predefined formats. Here are possible values of the ```format``` parametr (register is not case-sensitive).
  - ```Json``` or ```JsonUtc```. Compact logging, times in UTC.
    ```json
