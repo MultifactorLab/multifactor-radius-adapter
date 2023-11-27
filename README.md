@@ -250,6 +250,60 @@ You can specify attributes the component will pass further upon successful authe
 </RadiusReply>
 ```
 
+### Logging
+There are such options to customize logging:
+```xml
+<!--Allows you to customize the template of logs which get into the system log -->
+<add key="console-log-output-template" value="outputTemplate"/>
+<!--Allows you to customize the logs’ template which get into the file -->
+<add key="file-log-output-template" value="outputTemplate"/>
+```
+
+As ```outputTemplate``` also acts text template which shows the logging system how the message should be formatted. For example
+ ```sh
+[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}
+[{Timestamp:HH:mm:ss} {Level:u3}] {CorrelationId} {Message:lj}{NewLine}{Exception} 
+```
+
+For more information [see this page.](https://github.com/serilog/serilog/wiki/Formatting-Output)
+
+Moreover, logging can be provided in json:
+
+Keep in mind that ```console-log-output-template``` and ```file-log-output-template``` settings are not applicable for the JSON log format, but its possible to choose from predefined formats. Here are possible values of the ```format``` parametr (register is not case-sensitive).
+ - ```Json``` or ```JsonUtc```. Compact logging, times in UTC.
+   ```json
+   {"@t":"2016-06-07T03:44:57.8532799Z","@m":"Hello, \"nblumhardt\"","@i":"7a8b9c0d","User":"nblumhardt"}
+   ```
+ - ```JsonTz```. Compact logging, differs from ```JsonUtc``` by the time format. In this kind of format the local time with time zone is indicated. 
+  ```Json
+   {"@t":"2023-11-23 17:16:29.919 +03:00","@m":"Hello, \"nblumhardt\"","@i":"7a8b9c0d","User":"nblumhardt"}
+   ```
+ - ```Ecs```. Ecs formats logs according to elastic common schema.
+   ```json
+   {
+     "@timestamp": "2019-11-22T14:59:02.5903135+11:00",
+     "log.level": "Information",
+     "message": "Log message",
+     "ecs": {
+       "version": "1.4.0"
+     },
+     "event": {
+       "severity": 0,
+       "timezone": "AUS Eastern Standard Time",
+       "created": "2019-11-22T14:59:02.5903135+11:00"
+     },
+     "log": {
+       "logger": "Elastic.CommonSchema.Serilog"
+     },
+     "process": {
+       "thread": {
+         "id": 1
+       },
+       "executable": "System.Threading.ExecutionContext"
+     }
+   }
+   ```
+
 ## Start-Up
 
 After configuring the configuration, run the component:
