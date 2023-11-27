@@ -32,6 +32,7 @@ Windows version of the component is available in our [MultiFactor.Radius.Adapter
   - [Active Directory Connection Parameters](#active-directory-connection-parameters)
   - [External RADIUS Server Connection](#external-radius-server-connection)
   - [Optional RADIUS Attributes](#optional-radius-attributes)
+  - [Customize logging](#logging)
 - [Start-Up](#start-up)
 - [Logs](#logs)
 - [Limitations of Active Directory Integration](#limitations-of-active-directory-integration)
