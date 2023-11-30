@@ -10,6 +10,10 @@ using Serilog.Formatting;
 using MultiFactor.Radius.Adapter.Core;
 using MultiFactor.Radius.Adapter.Core.Exceptions;
 using MultiFactor.Radius.Adapter.Configuration.Core;
+using Serilog.Formatting.Json;
+using MultiFactor.Radius.Adapter.Core.Serialization;
+using Elastic.CommonSchema.Serilog;
+using static MultiFactor.Radius.Adapter.Core.Literals.Configuration;
 
 namespace MultiFactor.Radius.Adapter.Logging
 {
@@ -42,10 +46,10 @@ namespace MultiFactor.Radius.Adapter.Logging
             ConfigureLogging(_variables.AppPath, loggerConfiguration);
 
             var config = _rootConfigurationProvider.GetRootConfiguration();
-            var level = config.AppSettings.Settings[Literals.Configuration.LoggingLevel]?.Value;
+            var level = config.AppSettings.Settings[LoggingLevel]?.Value;
             if (string.IsNullOrWhiteSpace(level))
             {
-                throw new InvalidConfigurationException($"'{Literals.Configuration.LoggingLevel}' element not found");
+                throw new InvalidConfigurationException($"'{LoggingLevel}' element not found");
             }
 
             SetLogLevel(level, levelSwitch);
@@ -57,15 +61,23 @@ namespace MultiFactor.Radius.Adapter.Logging
         private void ConfigureLogging(string path, LoggerConfiguration loggerConfiguration)
         {
             var formatter = GetLogFormatter();
+            var fileTemplate = GetStringSettingOrNull(FileLogOutputTemplate);
             if (formatter != null)
             {
                 loggerConfiguration
                     .WriteTo.Console(formatter)
-                    .WriteTo.File(formatter, $"{path}{Path.DirectorySeparatorChar}logs{Path.DirectorySeparatorChar}log-.txt", rollingInterval: RollingInterval.Day);
+                    .WriteTo.File(formatter,
+                    $"{path}{Path.DirectorySeparatorChar}logs{Path.DirectorySeparatorChar}log-.txt",
+                    rollingInterval: RollingInterval.Day);
+
+                if (fileTemplate != null)
+                {
+                    Log.Logger.Warning($"The {LoggingFormat} parameter cannot be used together with the template. The {FileLogOutputTemplate} parameter will be ignored.");
+                }
             }
             else
             {
-                var consoleTemplate = GetStringSettingOrNull(Core.Literals.Configuration.ConsoleLogOutputTemplate);
+                var consoleTemplate = GetStringSettingOrNull(ConsoleLogOutputTemplate);
                 if (consoleTemplate != null)
                 {
                     loggerConfiguration.WriteTo.Console(outputTemplate: consoleTemplate);
@@ -74,8 +86,6 @@ namespace MultiFactor.Radius.Adapter.Logging
                 {
                     loggerConfiguration.WriteTo.Console();
                 }
-
-                var fileTemplate = GetStringSettingOrNull(Core.Literals.Configuration.FileLogOutputTemplate);
                 if (fileTemplate != null)
                 {
                     loggerConfiguration.WriteTo.File(
@@ -118,12 +128,20 @@ namespace MultiFactor.Radius.Adapter.Logging
         private ITextFormatter GetLogFormatter()
         {
             var root = _rootConfigurationProvider.GetRootConfiguration();
-            
+
             var format = root.AppSettings.Settings[Literals.Configuration.LoggingFormat]?.Value;
-            switch (format?.ToLower())
+            var parseResult = Enum.TryParse<SerilogJsonFormatterTypes>(format, true, out var formatterType);
+            if (!parseResult) return null;
+
+            switch (formatterType)
             {
-                case "json":
+                case SerilogJsonFormatterTypes.Json:
+                case SerilogJsonFormatterTypes.JsonUtc:
                     return new RenderedCompactJsonFormatter();
+                case SerilogJsonFormatterTypes.JsonTz:
+                    return new CustomCompactJsonFormatter("yyyy-MM-dd HH:mm:ss.fff zzz");
+                case SerilogJsonFormatterTypes.ElasticCommonSchema:
+                    return new EcsTextFormatter();
                 default:
                     return null;
             }
