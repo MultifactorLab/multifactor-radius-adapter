@@ -4,6 +4,7 @@
 
 using System;
 using System.Configuration;
+using System.Xml;
 using MultiFactor.Radius.Adapter.Configuration.Core;
 using Config = System.Configuration.Configuration;
 
@@ -13,6 +14,15 @@ public class DefaultRootConfigurationProvider : IRootConfigurationProvider
 {
     private Lazy<Config> _rootConfig = new Lazy<Config>(() =>
     {
+        try
+        {
+            RootConfigurationFile.Touch();
+        }
+        catch (Exception ex) 
+        {
+            throw new Exception("Failed to heck the root configuration file", ex);
+        }
+
         return ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
     });
 

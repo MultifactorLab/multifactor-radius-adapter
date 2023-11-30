@@ -6,7 +6,7 @@
     <RunAnalyzersDuringBuild>true</RunAnalyzersDuringBuild>
     <RunAnalyzersDuringLiveAnalysis>false</RunAnalyzersDuringLiveAnalysis>
     <AssemblyName>multifactor-radius-adapter</AssemblyName>
-    <Authors>MultlFactor</Authors>
+    <Authors>MultiFactor</Authors>
     <Description>Multifactor Radus Adapter</Description>
 	<Version>2.0.0</Version>
   </PropertyGroup>
@@ -21,7 +21,20 @@
 
 	<PropertyGroup>
 		<ServerGarbageCollection>true</ServerGarbageCollection>
+		<Copyright>© MultiFactor</Copyright>
+		<PackageProjectUrl>https://multifactor.ru</PackageProjectUrl>
+		<RepositoryUrl>https://github.com/MultifactorLab/multifactor-radius-adapter</RepositoryUrl>
+		<RepositoryType>git</RepositoryType>
+		<PackageTags>radius multifactor</PackageTags>
 	</PropertyGroup>
+
+	<ItemGroup>
+	  <Content Remove="App.config" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <EmbeddedResource Include="App.config" />
+	</ItemGroup>
 
 	<ItemGroup>
     <PackageReference Include="IPAddressRange" Version="4.2.0" />
