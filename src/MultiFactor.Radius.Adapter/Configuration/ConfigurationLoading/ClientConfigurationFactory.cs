@@ -138,9 +138,9 @@ namespace MultiFactor.Radius.Adapter.Configuration.ConfigurationLoading
                     }
                 }
             };
-            fillRules(userNameTransformRulesSection.Members, UserNameTransformRulesScope.Both);
-            fillRules(userNameTransformRulesSection.BeforeFirstFactor?.Members, UserNameTransformRulesScope.BeforeFirstFactor);
-            fillRules(userNameTransformRulesSection.BeforeSecondFactor?.Members, UserNameTransformRulesScope.BeforeSecondFactor);
+            fillRules(userNameTransformRulesSection?.Members, UserNameTransformRulesScope.Both);
+            fillRules(userNameTransformRulesSection?.BeforeFirstFactor?.Members, UserNameTransformRulesScope.BeforeFirstFactor);
+            fillRules(userNameTransformRulesSection?.BeforeSecondFactor?.Members, UserNameTransformRulesScope.BeforeSecondFactor);
         }
 
         private static void LoadActiveDirectoryAuthenticationSourceSettings(IClientConfigurationBuilder builder, AppSettingsSection appSettings, bool mandatory)
