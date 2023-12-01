@@ -9,7 +9,6 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <None Remove="Assets\root-all-appsettings-items.config" />
         <None Remove="Assets\root-empty-adapter-server-endpoint.config" />
         <None Remove="Assets\root-empty-first-factor-authentication-source.config" />
         <None Remove="Assets\root-empty-logging-level.config" />
@@ -50,11 +49,20 @@
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
     </ItemGroup>
+        <None Remove="Assets\root-all-appsettings-items.config" />
 
     <ItemGroup>
         <Reference Include="LdapForNet">
             <HintPath>..\libs\LdapForNet.dll</HintPath>
         </Reference>
+    </ItemGroup>
+    <ItemGroup>
+        <Content Include="Assets\clients\username-transformation-rule-before-first-fa.config">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </Content>
+        <Content Include="Assets\clients\username-transformation-rule-legacy.config">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </Content>
     </ItemGroup>
 
     <ItemGroup>

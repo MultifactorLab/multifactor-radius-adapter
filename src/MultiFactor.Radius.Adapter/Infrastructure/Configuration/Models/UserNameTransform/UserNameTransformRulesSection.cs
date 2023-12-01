@@ -2,37 +2,39 @@
 //Please see licence at 
 //https://github.com/MultifactorLab/multifactor-radius-adapter/blob/main/LICENSE.md
 
-using Microsoft.Extensions.Configuration;
-using System;
-using System.Linq;
+using MultiFactor.Radius.Adapter.Configuration.Features.UserNameTransformFeature;
+using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Features.UserNameTransformFeature;
+using System.Configuration;
 
 namespace MultiFactor.Radius.Adapter.Infrastructure.Configuration.Models.UserNameTransform;
 
-public class UserNameTransformRulesSection
+public class UserNameTransformRulesSection : ConfigurationSection
 {
-    [ConfigurationKeyName("add")]
-    private UserNameTransformRule[] _elements { get; set; }
-    
-    [ConfigurationKeyName("add")]
-    private UserNameTransformRule _singleElement { get; set; }
+    [ConfigurationProperty("", IsDefaultCollection = true)]
+    public UserNameTransformRulesCollection Members
+    {
+        get { return (UserNameTransformRulesCollection)base[""]; }
+    }
 
-    public UserNameTransformRule[] Elements
+    [ConfigurationProperty("BeforeFirstFactor")]
+    public UserNameTransformRuleSetting BeforeFirstFactor
     {
         get
         {
-            // To deal with a single element binding to array issue, we should map a single claim manually 
-            // See: https://github.com/dotnet/runtime/issues/57325
-            if (!string.IsNullOrWhiteSpace(_singleElement?.Match))
-            {
-                return new [] { _singleElement };
-            }
-        
-            if (_elements != null && _elements.All(x => !string.IsNullOrWhiteSpace(x.Match)))
-            {
-                return _elements;
-            }
+            var url =
+            (UserNameTransformRuleSetting)base["BeforeFirstFactor"];
+            return url;
+        }
+    }
 
-            return Array.Empty<UserNameTransformRule>();
+    [ConfigurationProperty("BeforeSecondFactor")]
+    public UserNameTransformRuleSetting BeforeSecondFactor
+    {
+        get
+        {
+            var url =
+            (UserNameTransformRuleSetting)base["BeforeSecondFactor"];
+            return url;
         }
     }
 }

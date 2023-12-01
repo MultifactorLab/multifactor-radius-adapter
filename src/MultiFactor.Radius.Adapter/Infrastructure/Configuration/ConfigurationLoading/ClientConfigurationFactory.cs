@@ -19,6 +19,8 @@ using System.Net;
 using System.Text.RegularExpressions;
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration.ClientLevel;
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration.RootLevel;
+using MultiFactor.Radius.Adapter.Configuration.Features.UserNameTransformFeature;
+using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Features.UserNameTransformFeature;
 
 namespace MultiFactor.Radius.Adapter.Infrastructure.Configuration.ConfigurationLoading;
 
@@ -83,6 +85,9 @@ public class ClientConfigurationFactory
         ReadPrivacyModeSetting(appSettings, builder);
         ReadInvalidCredDelaySetting(appSettings, builder, serviceConfig);
         ReadPreAuthModeSetting(appSettings, builder);
+
+        var userNameTransformRulesSection = configuration.UserNameTransformRules;
+        LoadUserNameTransformRulesSection(userNameTransformRulesSection, builder);
 
         switch (builder.FirstFactorAuthenticationSource)
         {
@@ -181,12 +186,25 @@ public class ClientConfigurationFactory
         }
     }
 
-    private static void ReadUserNameTransformRulesSection(RadiusAdapterConfiguration configuration, ClientConfiguration builder)
-    { 
-        foreach (var rule in configuration.UserNameTransformRules.Elements)
+    private static void LoadUserNameTransformRulesSection(UserNameTransformRulesSection userNameTransformRulesSection, ClientConfiguration builder)
+    {
+        var fillRules = (UserNameTransformRulesCollection collection, UserNameTransformRulesScope scope) =>
         {
-            builder.AddUserNameTransformRule(rule);
-        }  
+            if (collection == null || collection.Count == 0)
+            {
+                return;
+            }
+            foreach (var member in collection)
+            {
+                if (member is UserNameTransformRulesElement rule)
+                {
+                    builder.AddUserNameTransformRule(rule, scope);
+                }
+            }
+        };
+        fillRules(userNameTransformRulesSection?.Members, UserNameTransformRulesScope.Both);
+        fillRules(userNameTransformRulesSection?.BeforeFirstFactor?.Members, UserNameTransformRulesScope.BeforeFirstFactor);
+        fillRules(userNameTransformRulesSection?.BeforeSecondFactor?.Members, UserNameTransformRulesScope.BeforeSecondFactor);
     }
 
     private void ReadActiveDirectoryAuthenticationSourceSettings(ClientConfiguration builder, AppSettingsSection appSettings)
