@@ -165,13 +165,11 @@ namespace MultiFactor.Radius.Adapter.Configuration
         /// </summary>
         public IReadOnlyDictionary<string, RadiusReplyAttributeValue[]> RadiusReplyAttributes => _radiusReplyAttributes;
 
-        private readonly List<UserNameTransformRulesElement> _userNameTransformRules = new();
-        /// <summary>
-        /// Username transfor rules
-        /// </summary>
-        public UserNameTransformRulesElement[] UserNameTransformRules => _userNameTransformRules.ToArray();
+        private readonly UserNameTransformRules _userNameTransformRules = new();
+        public UserNameTransformRules UserNameTransformRules => _userNameTransformRules;
 
         public string CallingStationIdVendorAttribute { get; private set; }
+
 
         public bool ShouldLoadUserGroups()
         {
@@ -371,14 +369,14 @@ namespace MultiFactor.Radius.Adapter.Configuration
             return this;
         }
 
-        public IClientConfigurationBuilder AddUserNameTransformRule(UserNameTransformRulesElement rule)
+        public IClientConfigurationBuilder AddUserNameTransformRule(UserNameTransformRulesElement rule, UserNameTransformRulesScope scope = UserNameTransformRulesScope.Both)
         {
             if (rule is null)
             {
                 throw new ArgumentNullException(nameof(rule));
             }
 
-            _userNameTransformRules.Add(rule);
+            _userNameTransformRules.AddRule(rule, scope);
             return this;
         }
 

@@ -125,16 +125,22 @@ namespace MultiFactor.Radius.Adapter.Configuration.ConfigurationLoading
         {
             var userNameTransformRulesSection = configuration.GetSection("UserNameTransformRules") as UserNameTransformRulesSection;
 
-            if (userNameTransformRulesSection?.Members != null)
+            var fillRules = (UserNameTransformRulesCollection collection, UserNameTransformRulesScope scope) =>
             {
-                foreach (var member in userNameTransformRulesSection?.Members)
+                if (collection != null)
                 {
-                    if (member is UserNameTransformRulesElement rule)
+                    foreach (var member in collection)
                     {
-                        builder.AddUserNameTransformRule(rule);
+                        if (member is UserNameTransformRulesElement rule)
+                        {
+                            builder.AddUserNameTransformRule(rule, scope);
+                        }
                     }
                 }
-            }
+            };
+            fillRules(userNameTransformRulesSection.Members, UserNameTransformRulesScope.Both);
+            fillRules(userNameTransformRulesSection.BeforeFirstFactor?.Members, UserNameTransformRulesScope.BeforeFirstFactor);
+            fillRules(userNameTransformRulesSection.BeforeSecondFactor?.Members, UserNameTransformRulesScope.BeforeSecondFactor);
         }
 
         private static void LoadActiveDirectoryAuthenticationSourceSettings(IClientConfigurationBuilder builder, AppSettingsSection appSettings, bool mandatory)

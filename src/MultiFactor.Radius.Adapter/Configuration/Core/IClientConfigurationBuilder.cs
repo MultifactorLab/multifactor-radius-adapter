@@ -37,7 +37,7 @@ namespace MultiFactor.Radius.Adapter.Configuration.Core
 
         IClientConfigurationBuilder AddRadiusReplyAttribute(string attr, IEnumerable<RadiusReplyAttributeValue> values);
 
-        IClientConfigurationBuilder AddUserNameTransformRule(UserNameTransformRulesElement rule);
+        IClientConfigurationBuilder AddUserNameTransformRule(UserNameTransformRulesElement rule, UserNameTransformRulesScope scope = UserNameTransformRulesScope.Both);
         IClientConfigurationBuilder SetCallingStationIdVendorAttribute(string val);
 
         IClientConfiguration Build();
