@@ -195,9 +195,9 @@ public class ClientConfigurationFactory
                 }
             }
         };
-        fillRules(userNameTransformRulesSection.Members, UserNameTransformRulesScope.Both);
-        fillRules(userNameTransformRulesSection.BeforeFirstFactor?.Members, UserNameTransformRulesScope.BeforeFirstFactor);
-        fillRules(userNameTransformRulesSection.BeforeSecondFactor?.Members, UserNameTransformRulesScope.BeforeSecondFactor);
+        fillRules(userNameTransformRulesSection?.Members, UserNameTransformRulesScope.Both);
+        fillRules(userNameTransformRulesSection?.BeforeFirstFactor?.Members, UserNameTransformRulesScope.BeforeFirstFactor);
+        fillRules(userNameTransformRulesSection?.BeforeSecondFactor?.Members, UserNameTransformRulesScope.BeforeSecondFactor);
     }
 
     private void LoadActiveDirectoryAuthenticationSourceSettings(ClientConfiguration builder, AppSettingsSection appSettings)
