@@ -1,4 +1,4 @@
-﻿//Copyright(c) 2020 MultiFactor
+//Copyright(c) 2020 MultiFactor
 //Please see licence at 
 //https://github.com/MultifactorLab/multifactor-radius-adapter/blob/main/LICENSE.md
 
@@ -66,7 +66,7 @@ public class RadiusRequestPostProcessor : IRadiusRequestPostProcessor
                 if (context.ResponsePacket != null) //copy from remote radius reply
                 {
                     context.ResponsePacket.CopyTo(responsePacket);
-                }
+                } 
                 else
                 {
                     context.ResponsePacket = responsePacket;

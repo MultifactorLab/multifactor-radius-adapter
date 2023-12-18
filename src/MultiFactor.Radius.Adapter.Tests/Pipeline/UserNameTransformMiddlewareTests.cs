@@ -72,6 +72,8 @@ namespace MultiFactor.Radius.Adapter.Tests.Pipeline
             context.ClientConfiguration.UserNameTransformRules.BeforeSecondFactor.Length.Should().BeGreaterThan(0);
             await middleware.InvokeAsync(context, nextDelegate.Object);
             context.UserName.Should().BeEquivalentTo(to);
+
+            middleware = host.Services.GetRequiredService<TransformUserNameMiddleware>();
         }
 
     }

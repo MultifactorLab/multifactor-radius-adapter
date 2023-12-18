@@ -22,7 +22,7 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.TransformUserName
         {
             return context.Configuration.UserNameTransformRules.BeforeFirstFactor;
         }
-
+    
         private void ProcessUserNameTransformRules(RadiusContext context)
         {
             if (string.IsNullOrEmpty(context.OriginalUserName)) return;
@@ -42,14 +42,6 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.TransformUserName
             }
 
             context.TransformRadiusRequestAttribute("User-Name", userName);
-        }
-    }
-
-    public class SecondFactorUserNameTransformMiddleware : TransformUserNameMiddleware
-    {
-        protected override UserNameTransformRule[] GetConfigurationRules(RadiusContext context)
-        {
-            return context.Configuration.UserNameTransformRules.BeforeSecondFactor;
         }
     }
 }
