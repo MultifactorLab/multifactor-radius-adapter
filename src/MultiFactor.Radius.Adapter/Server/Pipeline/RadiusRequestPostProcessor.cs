@@ -69,7 +69,12 @@ public class RadiusRequestPostProcessor : IRadiusRequestPostProcessor
                 if (context.ResponsePacket != null) //copy from remote radius reply
                 {
                     context.ResponsePacket.CopyTo(responsePacket);
+                } 
+                else
+                {
+                    context.ResponsePacket = responsePacket;
                 }
+
                 if (context.RequestPacket.Code == PacketCode.StatusServer)
                 {
                     responsePacket.AddAttribute("Reply-Message", context.ReplyMessage);

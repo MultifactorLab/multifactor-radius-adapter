@@ -1,14 +1,11 @@
 using FluentAssertions;
-using FluentAssertions.Common;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using MultiFactor.Radius.Adapter.Configuration;
 using MultiFactor.Radius.Adapter.Configuration.Core;
 using MultiFactor.Radius.Adapter.Core.Exceptions;
-using MultiFactor.Radius.Adapter.Server;
+using MultiFactor.Radius.Adapter.Tests.Data.UsernameTransformationRules;
 using MultiFactor.Radius.Adapter.Tests.Fixtures;
 using MultiFactor.Radius.Adapter.Tests.Fixtures.ConfigLoading;
-using System.Configuration;
 
 namespace MultiFactor.Radius.Adapter.Tests;
 
@@ -151,9 +148,8 @@ public class ConfigurationLoadingTests
     }
 
     [Theory]
-    [InlineData("username-transformation-rule-before-first-fa.config")]
-    [InlineData("username-transformation-rule-legacy.config")]
-    public void ReadConfiguration_ShouldReadUsernameTransformationRules(string asset)
+    [MemberData(nameof(UsernameTransformationRuleTestCases.TestCase1), MemberType=typeof(UsernameTransformationRuleTestCases))]
+    public void ReadConfiguration_ShouldReadUsernameTransformationRules(UsernameTransformationRuleTestCase data)
     {
         var host = TestHostFactory.CreateHost(services => {
             services
@@ -168,13 +164,24 @@ public class ConfigurationLoadingTests
                 x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-multi.config");
                 x.ClientConfigFilePaths = new[]
                 {
-                    TestEnvironment.GetAssetPath(TestAssetLocation.ClientsDirectory, asset)
+                    TestEnvironment.GetAssetPath(TestAssetLocation.ClientsDirectory, data.Asset)
                 };
             });
         });
         var act = host.Services.GetRequiredService<IServiceConfiguration>();
         act.Should().NotBeNull();
-        act.Clients[0].UserNameTransformRules.BeforeFirstFactor.Should().NotBeNullOrEmpty();
-        act.Clients[0].UserNameTransformRules.BeforeSecondFactor.Should().NotBeNullOrEmpty();
+        act.Clients.Should()
+            .NotBeNull()
+            .And.HaveCountGreaterThan(0);
+
+        act.Clients[0].UserNameTransformRules.BeforeFirstFactor.Should()
+            .NotBeNullOrEmpty()
+            .And
+            .ContainSingle(x => x.Element.Replace == data.ReplaceFirst && x.Element.Match == data.MatchFirst);
+
+        act.Clients[0].UserNameTransformRules.BeforeSecondFactor.Should()
+            .NotBeNullOrEmpty()
+            .And
+            .ContainSingle(x => x.Element.Replace == data.ReplaceSecond && x.Element.Match == data.MatchSecond);
     }
 }

@@ -127,14 +127,15 @@ namespace MultiFactor.Radius.Adapter.Configuration.ConfigurationLoading
 
             var fillRules = (UserNameTransformRulesCollection collection, UserNameTransformRulesScope scope) =>
             {
-                if (collection != null)
+                if (collection == null || collection.Count == 0)
                 {
-                    foreach (var member in collection)
+                    return;
+                }
+                foreach (var member in collection)
+                {
+                    if (member is UserNameTransformRulesElement rule)
                     {
-                        if (member is UserNameTransformRulesElement rule)
-                        {
-                            builder.AddUserNameTransformRule(rule, scope);
-                        }
+                        builder.AddUserNameTransformRule(rule, scope);
                     }
                 }
             };
