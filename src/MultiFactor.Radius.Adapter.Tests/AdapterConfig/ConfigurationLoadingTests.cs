@@ -877,4 +877,43 @@ public partial class ConfigurationLoadingTests
         var cli = conf.Clients.First();
         cli.LdapBindDn.Should().NotBeNull();
     }
+
+
+    [Theory]
+    [MemberData(nameof(UsernameTransformationRuleTestCases.TestCase1), MemberType = typeof(UsernameTransformationRuleTestCases))]
+    public void ReadConfiguration_ShouldReadUsernameTransformationRules(UsernameTransformationRuleTestCase data)
+    {
+        var host = TestHostFactory.CreateHost(builder => {
+            builder.Services
+                .RemoveService<IRootConfigurationProvider>()
+                .AddSingleton<IRootConfigurationProvider, TestRootConfigProvider>();
+            builder.Services
+                .RemoveService<IClientConfigurationsProvider>()
+                .AddSingleton<IClientConfigurationsProvider, TestClientConfigsProvider>();
+
+            builder.Services.Configure<TestConfigProviderOptions>(x =>
+            {
+                x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-multi.config");
+                x.ClientConfigFilePaths = new[]
+                {
+                    TestEnvironment.GetAssetPath(TestAssetLocation.ClientsDirectory, data.Asset)
+                };
+            });
+        });
+        var act = host.Service<IServiceConfiguration>();
+        act.Should().NotBeNull();
+        act.Clients.Should()
+            .NotBeNull()
+            .And.HaveCountGreaterThan(0);
+
+        act.Clients[0].UserNameTransformRules.BeforeFirstFactor.Should()
+            .NotBeNullOrEmpty()
+            .And
+            .ContainSingle(x => x.Element.Replace == data.ReplaceFirst && x.Element.Match == data.MatchFirst);
+
+        act.Clients[0].UserNameTransformRules.BeforeSecondFactor.Should()
+            .NotBeNullOrEmpty()
+            .And
+            .ContainSingle(x => x.Element.Replace == data.ReplaceSecond && x.Element.Match == data.MatchSecond);
+    }
 }
