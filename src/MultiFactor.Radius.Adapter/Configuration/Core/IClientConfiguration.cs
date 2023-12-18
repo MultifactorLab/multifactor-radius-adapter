@@ -33,7 +33,7 @@ namespace MultiFactor.Radius.Adapter.Configuration.Core
         IPEndPoint ServiceClientEndpoint { get; }
         string SignUpGroups { get; }
         string[] SplittedActiveDirectoryDomains { get; }
-        UserNameTransformRulesElement[] UserNameTransformRules { get; }
+        UserNameTransformRules UserNameTransformRules { get; }
         bool UseUpnAsIdentity { get; }
         bool ShouldLoadUserGroups();
     }

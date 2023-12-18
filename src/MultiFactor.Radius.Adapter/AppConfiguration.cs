@@ -85,6 +85,7 @@ internal static class AppConfiguration
             builder.Use<AccessChallengeMiddleware>();
             builder.Use<FirstFactorAuthenticationMiddleware>();
             builder.Use<Bypass2FaMidleware>();
+            builder.Use<SecondFactorUserNameTransformMiddleware>();
             builder.Use<SecondFactorAuthenticationMiddleware>();
         });
 

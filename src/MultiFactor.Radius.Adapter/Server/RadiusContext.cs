@@ -36,6 +36,7 @@ namespace MultiFactor.Radius.Adapter.Server
         public string State { get; set; }
         public string ReplyMessage { get; set; }
         public string UserName { get; set; }
+        public string OriginalUserName { get; init; }
         public string Upn => _ldapProfile?.Upn;
         public string DisplayName => _ldapProfile?.DisplayName;
         public string UserPhone => _ldapProfile?.Phone;

@@ -25,5 +25,7 @@ namespace MultiFactor.Radius.Adapter.Configuration.Features.UserNameTransformFea
         {
             get { return (int?)this["count"]; }
         }
+
+        public UserNameTransformRulesScope Scope = UserNameTransformRulesScope.Both;
     }
 }
