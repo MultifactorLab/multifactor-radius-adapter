@@ -70,11 +70,16 @@ public class RadiusRequestPostProcessor : IRadiusRequestPostProcessor
                 {
                     context.ResponsePacket.CopyTo(responsePacket);
                 }
+                else
+                {
+                    context.ResponsePacket = responsePacket;
+                }
+
                 if (context.RequestPacket.Code == PacketCode.StatusServer)
                 {
                     responsePacket.AddAttribute("Reply-Message", context.ReplyMessage);
                 }
-
+                
                 var clientConfiguration = _serviceConfiguration.GetClient(context);
                 //add custom reply attributes
                 if (context.ResponseCode == PacketCode.AccessAccept)
