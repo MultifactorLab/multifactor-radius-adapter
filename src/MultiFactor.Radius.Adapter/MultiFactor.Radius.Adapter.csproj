@@ -43,9 +43,6 @@
     <None Update="clients\cisco with nps.config.template">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="clients\fortigate with none.template">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
     <None Update="clients\fortigate with ad.config.template">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
