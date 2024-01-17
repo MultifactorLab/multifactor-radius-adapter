@@ -4,6 +4,7 @@
 
 using MultiFactor.Radius.Adapter.Configuration.Features.RandomWaiterFeature;
 using MultiFactor.Radius.Adapter.Server;
+using System;
 using System.Collections.Generic;
 using System.Net;
 
@@ -13,6 +14,7 @@ namespace MultiFactor.Radius.Adapter.Configuration.Core
     {
         string ApiProxy { get; }
         string ApiUrl { get; }
+        TimeSpan ApiTimeout{ get; }
         IReadOnlyList<IClientConfiguration> Clients { get; }
         RandomWaiterConfig InvalidCredentialDelay { get; }
         IPEndPoint ServiceServerEndpoint { get; }

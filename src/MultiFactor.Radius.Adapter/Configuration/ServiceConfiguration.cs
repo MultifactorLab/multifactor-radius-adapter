@@ -101,10 +101,16 @@ namespace MultiFactor.Radius.Adapter.Configuration
         /// Multifactor API URL
         /// </summary>
         public string ApiUrl { get; private set; }
+
         /// <summary>
         /// HTTP Proxy for API
         /// </summary>
         public string ApiProxy { get; private set; }
+
+        /// <summary>
+        /// HTTP timeout for Multifactor requests
+        /// </summary>
+        public TimeSpan ApiTimeout { get; private set; }
 
         public bool SingleClientMode { get; private set; }
         public RandomWaiterConfig InvalidCredentialDelay { get; private set; }
@@ -118,6 +124,12 @@ namespace MultiFactor.Radius.Adapter.Configuration
         public IServiceConfigurationBuilder SetApiUrl(string val)
         {
             ApiUrl = val;
+            return this;
+        }
+
+        public IServiceConfigurationBuilder SetApiTimeout(TimeSpan httpTimeoutSetting)
+        {
+            ApiTimeout = httpTimeoutSetting;
             return this;
         }
 
@@ -165,5 +177,6 @@ namespace MultiFactor.Radius.Adapter.Configuration
         {
             return this;
         }
+
     }
 }

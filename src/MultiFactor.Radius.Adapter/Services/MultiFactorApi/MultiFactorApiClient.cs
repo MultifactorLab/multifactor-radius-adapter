@@ -204,10 +204,15 @@ namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi
 
                 return response.Model;
             }
-            catch (Exception ex)
+            catch (TaskCanceledException ex)
             {
                 var message = ex is TaskCanceledException ? "Timed out" : ex.Message;
                 var err = $"Multifactor API host unreachable: {url}. Reason: {message}";
+                throw new MultifactorApiUnreachableException(err, ex);
+            }
+            catch (Exception ex)
+            {
+                var err = $"Multifactor API host unreachable: {url}. Reason: {ex.Message}";
                 throw new MultifactorApiUnreachableException(err, ex);
             }
         }

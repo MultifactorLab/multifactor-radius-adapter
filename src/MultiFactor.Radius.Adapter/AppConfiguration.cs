@@ -44,7 +44,7 @@ internal static class AppConfiguration
         builder.Services.AddSingleton(prov => ApplicationVariablesFactory.Create());
         builder.Services.AddSingleton<IRootConfigurationProvider, DefaultRootConfigurationProvider>();
 
-        AddConfiguration(builder);
+        builder.Services.AddConfiguration();
         AddLogging(builder, configureServices);
 
         builder.Services.AddMemoryCache();
@@ -56,7 +56,7 @@ internal static class AppConfiguration
         builder.Services.AddSingleton<RadiusContextFactory>();
         builder.Services.AddSingleton<IChallengeProcessor, ChallengeProcessor>();
 
-        AddFirstAuthFactorProcessing(builder);
+        builder.Services.AddFirstAuthFactorProcessing();
 
         builder.Services.AddSingleton<UserGroupsGetterProvider>();
         builder.Services.AddSingleton<UserGroupsSource>();
@@ -93,29 +93,29 @@ internal static class AppConfiguration
 
         builder.Services.AddSingleton<RadiusReplyAttributeEnricher>();
 
-        AddHttpServices(builder);
+        builder.Services.AddHttpServices();
 
         configureServices?.Invoke(builder.Services);
         return builder;
     }
 
-    private static void AddFirstAuthFactorProcessing(HostApplicationBuilder builder)
+    private static void AddFirstAuthFactorProcessing(this IServiceCollection services)
     {
-        builder.Services.AddSingleton<IFirstAuthFactorProcessor, LdapFirstAuthFactorProcessor>();
-        builder.Services.AddSingleton<IFirstAuthFactorProcessor, RadiusFirstAuthFactorProcessor>();
-        builder.Services.AddSingleton<IFirstAuthFactorProcessor, DefaultFirstAuthFactorProcessor>();
-        builder.Services.AddSingleton<IFirstAuthFactorProcessorProvider, FirstAuthFactorProcessorProvider>();
+        services.AddSingleton<IFirstAuthFactorProcessor, LdapFirstAuthFactorProcessor>();
+        services.AddSingleton<IFirstAuthFactorProcessor, RadiusFirstAuthFactorProcessor>();
+        services.AddSingleton<IFirstAuthFactorProcessor, DefaultFirstAuthFactorProcessor>();
+        services.AddSingleton<IFirstAuthFactorProcessorProvider, FirstAuthFactorProcessorProvider>();
     }
 
-    private static void AddConfiguration(HostApplicationBuilder builder)
+    private static void AddConfiguration(this IServiceCollection services)
     {
-        builder.Services.AddSingleton<IClientConfigurationsProvider, DefaultClientConfigurationsProvider>();
+        services.AddSingleton<IClientConfigurationsProvider, DefaultClientConfigurationsProvider>();
 
-        builder.Services.AddSingleton<IRadiusDictionary, RadiusDictionary>();
+        services.AddSingleton<IRadiusDictionary, RadiusDictionary>();
 
-        builder.Services.AddSingleton<ServiceConfigurationFactory>();
-        builder.Services.AddSingleton<ClientConfigurationFactory>();
-        builder.Services.AddSingleton(prov =>
+        services.AddSingleton<ServiceConfigurationFactory>();
+        services.AddSingleton<ClientConfigurationFactory>();
+        services.AddSingleton(prov =>
         {
             var config = prov.GetRequiredService<ServiceConfigurationFactory>().CreateConfig();
             config.Validate();
@@ -140,15 +140,18 @@ internal static class AppConfiguration
         return srv.BuildServiceProvider();
     }
 
-    private static void AddHttpServices(HostApplicationBuilder builder)
+    private static void AddHttpServices(this IServiceCollection services)
     {
-        builder.Services.AddSingleton<IJsonDataSerializer, SystemTextJsonDataSerializer>();
-        builder.Services.AddSingleton<IHttpClientAdapter, HttpClientAdapter>();
+        services.AddSingleton<IJsonDataSerializer, SystemTextJsonDataSerializer>();
+        services.AddSingleton<IHttpClientAdapter, HttpClientAdapter>();
+        services.AddHttpContextAccessor();
+        services.AddTransient<MfTraceIdHeaderSetter>();
 
-        var clientBuilder = builder.Services.AddHttpClient(nameof(HttpClientAdapter), (prov, client) =>
+        services.AddHttpClient(nameof(HttpClientAdapter), (prov, client) =>
         {
             var config = prov.GetRequiredService<IServiceConfiguration>();
             client.BaseAddress = new Uri(config.ApiUrl);
+            client.Timeout = config.ApiTimeout;
         }).ConfigurePrimaryHttpMessageHandler(prov =>
         {
             var config = prov.GetRequiredService<IServiceConfiguration>();
@@ -163,7 +166,8 @@ internal static class AppConfiguration
             handler.Proxy = webProxy;
 
             return handler;
-        });
+        })
+        .AddHttpMessageHandler<MfTraceIdHeaderSetter>();
     }
 
 }

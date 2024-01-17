@@ -16,6 +16,7 @@ using System.Collections;
 using System.Configuration;
 using System.IO;
 using System.Net;
+using System.Threading;
 
 namespace MultiFactor.Radius.Adapter.Configuration.ConfigurationLoading
 {
@@ -49,6 +50,7 @@ namespace MultiFactor.Radius.Adapter.Configuration.ConfigurationLoading
             var serviceServerEndpointSetting = appsettings[Literals.Configuration.AdapterServerEndpoint]?.Value;
             var apiUrlSetting = appsettings[Literals.Configuration.MultifactorApiUrl]?.Value;
             var apiProxySetting = appsettings[Literals.Configuration.MultifactorApiProxy]?.Value;
+            var apiTimeoutSetting = appsettings[Literals.Configuration.MultifactorApiTimeout]?.Value;
 
             if (string.IsNullOrEmpty(serviceServerEndpointSetting))
             {
@@ -62,11 +64,13 @@ namespace MultiFactor.Radius.Adapter.Configuration.ConfigurationLoading
             {
                 throw new InvalidConfigurationException($"'{Literals.Configuration.MultifactorApiUrl}' element not found");
             }
+            TimeSpan apiTimeout = ParseHttpTimeout(apiProxySetting);
 
             var builder = ServiceConfiguration.CreateBuilder()
                 .SetServiceServerEndpoint(serviceServerEndpoint)
                 .SetApiUrl(apiUrlSetting)
-                .SetApiProxy(apiProxySetting);
+                .SetApiProxy(apiProxySetting)
+                .SetApiTimeout(apiTimeout);
 
             try
             {
@@ -124,6 +128,20 @@ namespace MultiFactor.Radius.Adapter.Configuration.ConfigurationLoading
             }
             
             return builder.Build();
-        }  
+        }
+
+        private TimeSpan ParseHttpTimeout(string mfTimeoutSetting)
+        {
+            TimeSpan _minimalApiTimeout = TimeSpan.FromSeconds(65);
+
+            if (!TimeSpan.TryParseExact(mfTimeoutSetting, @"hh\:mm\:ss", null, System.Globalization.TimeSpanStyles.None, out var httpRequestTimeout))
+                return _minimalApiTimeout;
+
+            return httpRequestTimeout == TimeSpan.Zero ?
+                Timeout.InfiniteTimeSpan // infinity timeout
+                : httpRequestTimeout < _minimalApiTimeout
+                    ? _minimalApiTimeout  // minimal timeout
+                    : httpRequestTimeout; // timeout from config
+        }
     }
 }

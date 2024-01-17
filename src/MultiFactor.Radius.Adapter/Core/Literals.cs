@@ -24,6 +24,7 @@
             public const string LoggingLevel = "logging-level";
             public const string MultifactorApiProxy = "multifactor-api-proxy";
             public const string MultifactorApiUrl = "multifactor-api-url";
+            public const string MultifactorApiTimeout= "multifactor-api-timeout";
             public const string MultifactorNasIdentifier = "multifactor-nas-identifier";
             public const string MultifactorSharedSecret = "multifactor-shared-secret";
             public const string NpsServerEndpoint = "nps-server-endpoint";
