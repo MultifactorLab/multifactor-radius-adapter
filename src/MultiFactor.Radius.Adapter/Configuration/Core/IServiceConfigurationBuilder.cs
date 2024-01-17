@@ -2,6 +2,7 @@
 //Please see licence at 
 //https://github.com/MultifactorLab/multifactor-radius-adapter/blob/main/LICENSE.md
 
+using System;
 using System.Net;
 using MultiFactor.Radius.Adapter.Configuration.Features.RandomWaiterFeature;
 
@@ -11,6 +12,7 @@ namespace MultiFactor.Radius.Adapter.Configuration.Core
     {
         IServiceConfigurationBuilder SetApiProxy(string val);
         IServiceConfigurationBuilder SetApiUrl(string val);
+        IServiceConfigurationBuilder SetApiTimeout(TimeSpan httpTimeoutSetting);
         IServiceConfigurationBuilder AddClient(string nasId, IClientConfiguration client);
         IServiceConfigurationBuilder AddClient(IPAddress ip, IClientConfiguration client);
         IServiceConfigurationBuilder SetInvalidCredentialDelay(RandomWaiterConfig config);
