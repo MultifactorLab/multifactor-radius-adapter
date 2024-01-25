@@ -13,16 +13,17 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.UserGroupsReading
     public class UserGroupsGetterProvider
     {
         private readonly IEnumerable<IUserGroupsGetter> _getters;
-
+        private readonly IUserGroupsGetter _defaultUserGroupsGetter;
         public UserGroupsGetterProvider(IEnumerable<IUserGroupsGetter> getters)
         {
             _getters = getters ?? throw new ArgumentNullException(nameof(getters));
+            _defaultUserGroupsGetter = getters.Single(x => x.GetType() == typeof(DefaultUserGroupsGetter));
         }
 
         public IUserGroupsGetter GetUserGroupsGetter(AuthenticationSource authSource)
         {
             return _getters.FirstOrDefault(x => x.AuthenticationSource.HasFlag(authSource))
-                ?? throw new NotImplementedException(authSource.ToString());
+                ?? _defaultUserGroupsGetter;
         }
     }
 }
