@@ -51,7 +51,7 @@ public class UserGroupsGetterProviderTests
     }
     
     [Fact]
-    public void Get_Radius_ShouldThrow()
+    public void Get_Radius_ShouldReturnDefaultGetter()
     {
         var host = TestHostFactory.CreateHost(services =>
         {
@@ -64,8 +64,8 @@ public class UserGroupsGetterProviderTests
         });
 
         var prov = host.Services.GetRequiredService<UserGroupsGetterProvider>();
-        var act = () => prov.GetUserGroupsGetter(AuthenticationSource.Radius);
+        var getter = prov.GetUserGroupsGetter(AuthenticationSource.Radius);
 
-        act.Should().Throw<NotImplementedException>();
+        getter.Should().NotBeNull().And.BeOfType<DefaultUserGroupsGetter>();
     }
 }
