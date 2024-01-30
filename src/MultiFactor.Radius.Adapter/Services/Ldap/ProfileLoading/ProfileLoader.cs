@@ -66,7 +66,7 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.ProfileLoading
             {
                 profile.SetUpn(upnAttr.GetValue<string>());
             }
-            if (attrs.TryGetValue(clientConfig.TwoFAIdentityAttribyte, out var identityAttribute))
+            if (clientConfig.TwoFAIdentityAttribyte != null && attrs.TryGetValue(clientConfig.TwoFAIdentityAttribyte, out var identityAttribute))
             {
                 profile.SetIdentityAttribute(identityAttribute.GetValue<string>());
             }
