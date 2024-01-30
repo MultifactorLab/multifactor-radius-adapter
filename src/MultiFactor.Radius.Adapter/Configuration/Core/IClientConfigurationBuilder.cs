@@ -28,6 +28,7 @@ namespace MultiFactor.Radius.Adapter.Configuration.Core
 
         IClientConfigurationBuilder SetLoadActiveDirectoryNestedGroups(bool val);
         IClientConfigurationBuilder SetUseUpnAsIdentity(bool val);
+        IClientConfigurationBuilder SetUseAttributeAsIdentity(string val);
         IClientConfigurationBuilder SetServiceClientEndpoint(IPEndPoint val);
         IClientConfigurationBuilder SetNpsServerEndpoint(IPEndPoint val);
         IClientConfigurationBuilder SetServiceAccountUser(string val);

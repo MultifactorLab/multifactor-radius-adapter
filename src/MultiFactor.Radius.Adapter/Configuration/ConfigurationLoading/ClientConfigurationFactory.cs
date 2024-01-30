@@ -2,6 +2,7 @@
 //Please see licence at 
 //https://github.com/MultifactorLab/multifactor-radius-adapter/blob/main/LICENSE.md
 
+using Microsoft.Extensions.Logging;
 using MultiFactor.Radius.Adapter.Configuration.Core;
 using MultiFactor.Radius.Adapter.Configuration.Features.AuthenticatedClientCacheFeature;
 using MultiFactor.Radius.Adapter.Configuration.Features.PrivacyModeFeature;
@@ -17,6 +18,7 @@ using System.Configuration;
 using System.Linq;
 using System.Net;
 using System.Text.RegularExpressions;
+using static MultiFactor.Radius.Adapter.Core.Literals;
 using Config = System.Configuration.Configuration;
 
 
@@ -25,10 +27,12 @@ namespace MultiFactor.Radius.Adapter.Configuration.ConfigurationLoading
     public class ClientConfigurationFactory
     {
         private readonly IRadiusDictionary _dictionary;
+        private readonly ILogger<ClientConfigurationFactory> _logger;
 
-        public ClientConfigurationFactory(IRadiusDictionary dictionary)
+        public ClientConfigurationFactory(IRadiusDictionary dictionary, ILogger<ClientConfigurationFactory> logger)
         {
             _dictionary = dictionary;
+            _logger = logger;
         }
 
         public IClientConfiguration CreateConfig(string name, Config configuration)
@@ -137,7 +141,7 @@ namespace MultiFactor.Radius.Adapter.Configuration.ConfigurationLoading
             }
         }
 
-        private static void LoadActiveDirectoryAuthenticationSourceSettings(IClientConfigurationBuilder builder, AppSettingsSection appSettings, bool mandatory)
+        private void LoadActiveDirectoryAuthenticationSourceSettings(IClientConfigurationBuilder builder, AppSettingsSection appSettings, bool mandatory)
         {
             var activeDirectoryDomainSetting = appSettings.Settings["active-directory-domain"]?.Value;
             var ldapBindDnSetting = appSettings.Settings["ldap-bind-dn"]?.Value;
@@ -149,6 +153,7 @@ namespace MultiFactor.Radius.Adapter.Configuration.ConfigurationLoading
             var phoneAttributes = appSettings.Settings["phone-attribute"]?.Value;
             var loadActiveDirectoryNestedGroupsSettings = appSettings.Settings["load-active-directory-nested-groups"]?.Value;
             var useUpnAsIdentitySetting = appSettings.Settings["use-upn-as-identity"]?.Value;
+            var twoFAIdentityAttribyteSetting = appSettings.Settings["use-attribute-as-identity"]?.Value;
 
             if (mandatory && string.IsNullOrEmpty(activeDirectoryDomainSetting))
             {
@@ -216,7 +221,15 @@ namespace MultiFactor.Radius.Adapter.Configuration.ConfigurationLoading
 
             if (bool.TryParse(useUpnAsIdentitySetting, out var useUpnAsIdentity))
             {
+                _logger.LogWarning("The setting 'use-upn-as-identity' is deprecated, use 'use-attribute-as-identity' instead");
                 builder.SetUseUpnAsIdentity(useUpnAsIdentity);
+            }
+
+            if (!string.IsNullOrEmpty(twoFAIdentityAttribyteSetting))
+            {
+                builder.SetUseAttributeAsIdentity(twoFAIdentityAttribyteSetting);
+                if (useUpnAsIdentity)
+                    throw new Exception("Configuration error: Using settings 'use-upn-as-identity' and 'use-attribute-as-identity' together is unacceptable. Prefer using 'use-attribute-as-identity'.");
             }
         }
 

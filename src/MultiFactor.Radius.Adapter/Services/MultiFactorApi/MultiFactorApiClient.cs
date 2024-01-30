@@ -41,7 +41,7 @@ namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi
 
         public async Task<PacketCode> CreateSecondFactorRequest(RadiusContext context)
         {
-            var userName = context.UserName;
+            var userName = context.SecondFactorIdentity;
             var displayName = context.DisplayName;
             var email = context.EmailAddress;
             var userPhone = context.UserPhone;

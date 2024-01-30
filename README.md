@@ -11,33 +11,34 @@ The component is a part of <a href="https://multifactor.pro/" target="_blank">Mu
 * <a href="https://github.com/MultifactorLab/multifactor-radius-adapter" target="_blank">Source code</a>
 * <a href="https://github.com/MultifactorLab/multifactor-radius-adapter/releases" target="_blank">Build</a>
 
-See documentation at https://multifactor.pro/docs/radius-adapter/linux/ for additional guidance on integrating 2FA through RADIUS into your infrastructure.
+See documentation at <https://multifactor.pro/docs/radius-adapter/linux/> for additional guidance on integrating 2FA through RADIUS into your infrastructure.
 
 Windows version of the component is available in our [MultiFactor.Radius.Adapter](https://github.com/MultifactorLab/MultiFactor.Radius.Adapter) repository.
 
 ## Table of Contents
 
-- [Background](#background)
-  - [Component Features](#component-features)
-- [Prerequisites](#prerequisites)
-- [Installation](#installation)
-  - [Dependencies Installation](#dependencies-installation)
-    - [CentOS 7](#centos-7)
-    - [CentOS 8](#centos-8)
-    - [Ubuntu 18.04](#ubuntu-1804)
-    - [Debian 10](#debian-10)
-  - [Component Installation](#component-installation)
-- [Configuration](#configuration)
-  - [General Parameters](#general-parameters)
-  - [Active Directory Connection Parameters](#active-directory-connection-parameters)
-  - [External RADIUS Server Connection](#external-radius-server-connection)
-  - [Optional RADIUS Attributes](#optional-radius-attributes)
-  - [Customize logging](#logging)
-- [Start-Up](#start-up)
-- [Logs](#logs)
-- [Limitations of Active Directory Integration](#limitations-of-active-directory-integration)
-- [Use Cases](#use-cases)
-- [License](#license)
+* [Background](#background)
+  * [Component Features](#component-features)
+* [Prerequisites](#prerequisites)
+* [Installation](#installation)
+  * [Dependencies Installation](#dependencies-installation)
+    * [CentOS 7](#centos-7)
+    * [CentOS 8](#centos-8)
+    * [Ubuntu 18.04](#ubuntu-1804)
+    * [Debian 10](#debian-10)
+  * [Component Installation](#component-installation)
+* [Configuration](#configuration)
+  * [General Parameters](#general-parameters)
+  * [Active Directory Connection Parameters](#active-directory-connection-parameters)
+  * [External RADIUS Server Connection](#external-radius-server-connection)
+  * [Optional RADIUS Attributes](#optional-radius-attributes)
+  * [Second factor verification parameters](#second-factor-verification-parameters)
+  * [Customize logging](#logging)
+* [Start-Up](#start-up)
+* [Logs](#logs)
+* [Limitations of Active Directory Integration](#limitations-of-active-directory-integration)
+* [Use Cases](#use-cases)
+* [License](#license)
 
 ## Background
 
@@ -55,21 +56,21 @@ Key features:
 
 Additional features:
 
-- Inline enrollment within VPN/VDI client;
-- Conditional access based on the user's group membership in Active Directory;
-- Activate second factor selectively based on the user's group membership in Active Directory;
-- Use user's phone number from Active Directory profile for one-time SMS passcodes;
-- Configure RADIUS response attributes based on user's Active Directory group membership;
-- Proxy Network Policy Server requests and responses.
+* Inline enrollment within VPN/VDI client;
+* Conditional access based on the user's group membership in Active Directory;
+* Activate second factor selectively based on the user's group membership in Active Directory;
+* Use user's phone number from Active Directory profile for one-time SMS passcodes;
+* Configure RADIUS response attributes based on user's Active Directory group membership;
+* Proxy Network Policy Server requests and responses.
 
 ## Prerequisites
 
-- Component is installed on a Linux server, tested on CentOS, Ubuntu, Debian;
-- Minimum server requirements: 1 CPU, 2 GB RAM, 8 GB HDD (to run the OS and adapter for 100 simultaneous connections &mdash; approximately 1500 users);
-- Port 1812 (UDP) must be open on the server to receive requests from Radius clients;
-- The server with the component installed needs access to ```api.multifactor.ru``` via TCP port 443 (TLS) directly or via HTTP proxy;
-- To interact with Active Directory, the component needs access to the domain server via TCP port 389 (LDAP scheme) or 636 (LDAPS scheme);
-- To interact with the Network Policy Server, the component needs access to NPS via UDP port 1812.
+* Component is installed on a Linux server, tested on CentOS, Ubuntu, Debian;
+* Minimum server requirements: 1 CPU, 2 GB RAM, 8 GB HDD (to run the OS and adapter for 100 simultaneous connections &mdash; approximately 1500 users);
+* Port 1812 (UDP) must be open on the server to receive requests from Radius clients;
+* The server with the component installed needs access to ```api.multifactor.ru``` via TCP port 443 (TLS) directly or via HTTP proxy;
+* To interact with Active Directory, the component needs access to the domain server via TCP port 389 (LDAP scheme) or 636 (LDAPS scheme);
+* To interact with the Network Policy Server, the component needs access to NPS via UDP port 1812.
 
 ## Installation
 
@@ -82,17 +83,18 @@ To install, run the commands:
 #### CentOS 7
 
 ```shell
-$ sudo rpm -Uvh https://packages.microsoft.com/config/centos/7/packages-microsoft-prod.rpm
-$ sudo yum install aspnetcore-runtime-6.0
+sudo rpm -Uvh https://packages.microsoft.com/config/centos/7/packages-microsoft-prod.rpm
+sudo yum install aspnetcore-runtime-6.0
 ```
+
 <a href="https://docs.microsoft.com/ru-ru/dotnet/core/install/linux-centos" target="_blank">https://docs.microsoft.com/ru-ru/dotnet/core/install/linux-centos</a>
 
 #### CentOS 8
 
 > ⚠️ **Warning**  
 > CentOS Linux 8 reached an early End Of Life (EOL) on December 31st, 2021.  
-> For more information, see the official <a href="https://www.centos.org/centos-linux-eol/" target="_blank">CentOS Linux EOL page</a>.   
-> Because of this, .NET isn't supported on CentOS Linux 8. 
+> For more information, see the official <a href="https://www.centos.org/centos-linux-eol/" target="_blank">CentOS Linux EOL page</a>.
+> Because of this, .NET isn't supported on CentOS Linux 8.
 
 For more information see <a href="https://docs.microsoft.com/ru-ru/dotnet/core/install/linux-centos" target="_blank">this page</a>.  
 See also: <a href="https://learn.microsoft.com/ru-ru/dotnet/core/install/linux-rhel#supported-distributions">install the .NET on CentOS Stream</a>.
@@ -108,6 +110,7 @@ $ sudo apt-get update; \
   sudo apt-get update && \
   sudo apt-get install -y aspnetcore-runtime-6.0
 ```
+
 <a href="https://docs.microsoft.com/ru-ru/dotnet/core/install/linux-ubuntu" target="_blank">https://docs.microsoft.com/ru-ru/dotnet/core/install/linux-ubuntu</a>
 
 #### Debian 10
@@ -121,6 +124,7 @@ $ sudo apt-get update; \
   sudo apt-get update && \
   sudo apt-get install -y aspnetcore-runtime-6.0
 ```
+
 <a href="https://docs.microsoft.com/ru-ru/dotnet/core/install/linux-debian" target="_blank">https://docs.microsoft.com/ru-ru/dotnet/core/install/linux-debian</a>
 
 ### Component Installation
@@ -128,20 +132,23 @@ $ sudo apt-get update; \
 Create a folder, download and unzip the current version of the component from <a href="https://github.com/MultifactorLab/multifactor-radius-adapter/releases/" target="_blank">GitHub</a>:
 
 ```shell
-$ sudo mkdir /opt/multifactor /opt/multifactor/radius /opt/multifactor/radius/logs
-$ sudo wget https://github.com/MultifactorLab/multifactor-radius-adapter/releases/latest/download/release_linux_x64.zip
-$ sudo unzip release_linux_x64.zip -d /opt/multifactor/radius
+sudo mkdir /opt/multifactor /opt/multifactor/radius /opt/multifactor/radius/logs
+sudo wget https://github.com/MultifactorLab/multifactor-radius-adapter/releases/latest/download/release_linux_x64.zip
+sudo unzip release_linux_x64.zip -d /opt/multifactor/radius
 ```
 
 Create a system user mfa and give it rights to the application:
+
 ```shell
-$ sudo useradd -r mfa
-$ sudo chown -R mfa: /opt/multifactor/radius/
-$ sudo chmod -R 700 /opt/multifactor/radius/
+sudo useradd -r mfa
+sudo chown -R mfa: /opt/multifactor/radius/
+sudo chmod -R 700 /opt/multifactor/radius/
 ```
+
 Create a service
+
 ```shell
-$ sudo vi /etc/systemd/system/multifactor-radius.service
+sudo vi /etc/systemd/system/multifactor-radius.service
 ```
 
 ```shell
@@ -170,8 +177,9 @@ WantedBy=multi-user.target
 ```
 
 Enable autorun:
+
 ```shell
-$ sudo systemctl enable multifactor-radius
+sudo systemctl enable multifactor-radius
 ```
 
 ## Configuration
@@ -210,6 +218,7 @@ The component's parameters are stored in ```/opt/multifactor/radius/multifactor-
 ### Active Directory Connection Parameters
 
 To check the first factor in the Active Directory domain, the following parameters apply:
+
 ```xml
 <!--ActiveDirectory authentication settings: for example domain.local on host 10.0.0.4 -->
 <add key="active-directory-domain" value="ldaps://10.0.0.4/DC=domain,DC=local"/>
@@ -222,6 +231,7 @@ To check the first factor in the Active Directory domain, the following paramete
 <!--add key="use-active-directory-user-phone" value="true"/-->
 <!--add key="use-active-directory-mobile-user-phone" value="true"/-->
 ```
+
 When the ```use-active-directory-user-phone``` option is enabled, the component will use the phone recorded in the General tab. The format of the phone can be anything.
 
 <img src="https://multifactor.pro/img/radius-adapter/ra-ad-phone-source.png" width="300">
@@ -233,15 +243,18 @@ When the ```use-active-directory-mobile-user-phone``` option is enabled, the com
 ### External RADIUS Server Connection
 
 To check the first factor in RADIUS, for example in Network Policy Server, the following parameters are applicable:
+
 ```xml
 <!--Address (UDP) from which the adapter will connect to the server -->
 <add key="adapter-client-endpoint" value="192.168.0.1"/>
 <!--Server address and port (UDP) -->
 <add key="nps-server-endpoint" value="192.168.0.10:1812"/>
 ```
+
 ### Optional RADIUS Attributes
 
 You can specify attributes the component will pass further upon successful authentication, including verification that the user is a member of a security group.
+
 ```xml
 <RadiusReply>
     <Attributes>
@@ -253,8 +266,25 @@ You can specify attributes the component will pass further upon successful authe
 </RadiusReply>
 ```
 
+### Second factor verification parameters
+
+The following parameters will help you set up access to the MULTIFACTOR API when checking the second factor:
+
+```xml
+<!-- Use the specified attribute as the user identity when checking the second factor-->
+<add key="use-attribute-as-identity" value="mail"/>
+<!-- Skip repeated authentications without requesting the second factor for 1 hour, 20 minutes, 10 seconds (caching is disabled if you remove the setting) -->
+<add key="authentication-cache-lifetime" value="01:20:10" />
+<!-- If the API is unavailable, skip the MULTIFACTOR without checking (by default), or deny access (false) -->
+<add key="bypass-second-factor-when-api-unreachable" value="true"/>
+<!-- Automatically assign MULTIFACTOR group membership to registering users -->
+<add key="sign-up-groups" value="group1;Group name 2"/>
+```
+
 ### Logging
+
 There are such options to customize logging:
+
 ```xml
 <!--Allows you to customize the template of logs which get into the system log -->
 <add key="console-log-output-template" value="outputTemplate"/>
@@ -263,6 +293,7 @@ There are such options to customize logging:
 ```
 
 As ```outputTemplate``` also acts text template which shows the logging system how the message should be formatted. For example
+
  ```sh
 [{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}
 [{Timestamp:HH:mm:ss} {Level:u3}] {CorrelationId} {Message:lj}{NewLine}{Exception} 
@@ -271,19 +302,27 @@ As ```outputTemplate``` also acts text template which shows the logging system h
 For more information [see this page.](https://github.com/serilog/serilog/wiki/Formatting-Output)
 
 Moreover, logging can be provided in json:
+
 ```xml
 <add key="logging-format" value="format"/>
 ```
+
 Keep in mind that ```console-log-output-template``` and ```file-log-output-template``` settings are not applicable for the JSON log format, but its possible to choose from predefined formats. Here are possible values of the ```format``` parametr (register is not case-sensitive).
- - ```Json``` or ```JsonUtc```. Compact logging, times in UTC.
+
+* ```Json``` or ```JsonUtc```. Compact logging, times in UTC.
+
    ```json
    {"@t":"2016-06-07T03:44:57.8532799Z","@m":"Hello, \"nblumhardt\"","@i":"7a8b9c0d","User":"nblumhardt"}
    ```
- - ```JsonTz```. Compact logging, differs from ```JsonUtc``` by the time format. In this kind of format the local time with time zone is indicated. 
+
+* ```JsonTz```. Compact logging, differs from ```JsonUtc``` by the time format. In this kind of format the local time with time zone is indicated.
+
   ```Json
    {"@t":"2023-11-23 17:16:29.919 +03:00","@m":"Hello, \"nblumhardt\"","@i":"7a8b9c0d","User":"nblumhardt"}
    ```
- - ```Ecs```. Ecs formats logs according to elastic common schema.
+
+* ```Ecs```. Ecs formats logs according to elastic common schema.
+
    ```json
    {
      "@timestamp": "2019-11-22T14:59:02.5903135+11:00",
@@ -312,13 +351,15 @@ Keep in mind that ```console-log-output-template``` and ```file-log-output-templ
 ## Start-Up
 
 After configuring the configuration, run the component:
+
 ```shell
-$ sudo systemctl start multifactor-radius
+sudo systemctl start multifactor-radius
 ```
+
 You can check the status with the command:
 
 ```shell
-$ sudo systemctl status multifactor-radius
+sudo systemctl status multifactor-radius
 ```
 
 ## Logs
@@ -327,20 +368,20 @@ The logs of the component are located in the ``/opt/multifactor/radius/logs`` fo
 
 ## Limitations of Active Directory Integration
 
-- The Linux version of the Adapter *can't yet* handle multiple domains with trust established between them;
-- A simple user's password authentication is used with Active Directory. We strongly recommend using the LDAPS scheme to encrypt traffic between the adapter and the domain (AD server must have a certificate installed, including a self-signed one).
+* The Linux version of the Adapter _can't yet_ handle multiple domains with trust established between them;
+* A simple user's password authentication is used with Active Directory. We strongly recommend using the LDAPS scheme to encrypt traffic between the adapter and the domain (AD server must have a certificate installed, including a self-signed one).
 
 ## Use Cases
 
 Use Radius Adapter Component to implement 2FA in one of the following scenarios:
 
-- Two-factor authentication for VPN devices [Cisco](https://multifactor.pro/docs/vpn/cisco-anyconnect-vpn-2fa/), [Fortigate](https://multifactor.pro/docs/vpn/fortigate-forticlient-vpn-2fa/), [CheckPoint](https://multifactor.pro/docs/vpn/checkpoint-remote-access-vpn-2fa/), Mikrotik, Huawei and others;
-- Two-factor authentication for [Windows VPN with Routing and Remote Access Service (RRAS)](https://multifactor.pro/docs/windows-2fa-rras-vpn/);
-- Two-factor authentication for [Microsoft Remote Desktop Gateway](https://multifactor.pro/docs/windows-2fa-remote-desktop-gateway/) ;
-- Two factor authentication for [VMware Horizon](/docs/vmware-horizon-2fa/);
-- [Citrix Gateway](https://multifactor.pro/docs/citrix-radius-2fa/) two-factor authentication;
-- Apache Guacamole two-factor authentication;
-- Two-factor authentication for Wi-Fi hotspots;
+* Two-factor authentication for VPN devices [Cisco](https://multifactor.pro/docs/vpn/cisco-anyconnect-vpn-2fa/), [Fortigate](https://multifactor.pro/docs/vpn/fortigate-forticlient-vpn-2fa/), [CheckPoint](https://multifactor.pro/docs/vpn/checkpoint-remote-access-vpn-2fa/), Mikrotik, Huawei and others;
+* Two-factor authentication for [Windows VPN with Routing and Remote Access Service (RRAS)](https://multifactor.pro/docs/windows-2fa-rras-vpn/);
+* Two-factor authentication for [Microsoft Remote Desktop Gateway](https://multifactor.pro/docs/windows-2fa-remote-desktop-gateway/) ;
+* Two factor authentication for [VMware Horizon](https://multifactor.pro/docs/vmware-horizon-2fa/);
+* [Citrix Gateway](https://multifactor.pro/docs/citrix-radius-2fa/) two-factor authentication;
+* Apache Guacamole two-factor authentication;
+* Two-factor authentication for Wi-Fi hotspots;
 
 and many more...
 

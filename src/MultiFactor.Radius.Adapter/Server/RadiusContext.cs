@@ -36,6 +36,7 @@ namespace MultiFactor.Radius.Adapter.Server
         public string State { get; set; }
         public string ReplyMessage { get; set; }
         public string UserName { get; set; }
+        public string TwoFAIdentityAttribyte => _ldapProfile?.SecondFactorIdentity;
         public string Upn => _ldapProfile?.Upn;
         public string DisplayName => _ldapProfile?.DisplayName;
         public string UserPhone => _ldapProfile?.Phone;
@@ -46,6 +47,11 @@ namespace MultiFactor.Radius.Adapter.Server
         public IServiceProvider RequestServices { get; set; }
         public IClientConfiguration ClientConfiguration { get; }
         public IRadiusResponseSender ResponseSender { get; }
+
+        /// <summary>
+        /// Should use for 2FA request to MFA API.
+        /// </summary>
+        public string SecondFactorIdentity => TwoFAIdentityAttribyte ?? UserName;
 
         public void SetProfile(ILdapProfile profile)
         {

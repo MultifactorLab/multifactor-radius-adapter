@@ -14,4 +14,5 @@ public interface ILdapProfile
     string[] MemberOf { get; }
     string Phone { get; }
     string Upn { get; }
+    string SecondFactorIdentity { get; }
 }

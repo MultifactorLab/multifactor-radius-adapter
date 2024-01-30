@@ -11,6 +11,7 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.ProfileLoading
         public string DistinguishedNameEscaped => EscapeDn(DistinguishedName);
 
         public string Upn { get; private set; }
+        public string SecondFactorIdentity { get; private set; }
         public string DisplayName { get; private set; }
         public string Email { get; private set; }
         public string Phone { get; private set; }
@@ -115,6 +116,12 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.ProfileLoading
             }
 
             _ldapAttrs.Add(attr, value);
+            return this;
+        }
+
+        public ILdapProfileBuilder SetIdentityAttribute(string identityAttribute)
+        {
+            SecondFactorIdentity = identityAttribute ?? throw new System.ArgumentNullException(nameof(identityAttribute));
             return this;
         }
     }

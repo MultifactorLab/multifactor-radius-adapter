@@ -35,6 +35,7 @@ namespace MultiFactor.Radius.Adapter.Configuration.Core
         string[] SplittedActiveDirectoryDomains { get; }
         UserNameTransformRulesElement[] UserNameTransformRules { get; }
         bool UseUpnAsIdentity { get; }
+        public string TwoFAIdentityAttribyte { get; }
         bool ShouldLoadUserGroups();
     }
 }

@@ -135,6 +135,11 @@ namespace MultiFactor.Radius.Adapter.Configuration
         public bool UseUpnAsIdentity { get; private set; }
 
         /// <summary>
+        /// Name of the attribute that will be used as an identifier in MFA request
+        /// </summary>
+        public string TwoFAIdentityAttribyte { get; private set; }
+
+        /// <summary>
         /// This service RADIUS UDP Client endpoint
         /// </summary>
         public IPEndPoint ServiceClientEndpoint { get; private set; }
@@ -390,6 +395,12 @@ namespace MultiFactor.Radius.Adapter.Configuration
             }
 
             CallingStationIdVendorAttribute = val;
+            return this;
+        }
+
+        public IClientConfigurationBuilder SetUseAttributeAsIdentity(string val)
+        {
+            TwoFAIdentityAttribyte = val;
             return this;
         }
 
