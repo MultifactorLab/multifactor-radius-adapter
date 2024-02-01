@@ -2,7 +2,7 @@
 
 namespace MultiFactor.Radius.Adapter.Tests
 {
-    public class WbProxyFactoryTests
+    public class WebProxyFactoryTests
     {
         [Theory]
         [InlineData("")]

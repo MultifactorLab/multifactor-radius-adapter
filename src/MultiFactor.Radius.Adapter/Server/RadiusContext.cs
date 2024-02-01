@@ -36,7 +36,6 @@ namespace MultiFactor.Radius.Adapter.Server
         public string State { get; set; }
         public string ReplyMessage { get; set; }
         public string UserName { get; set; }
-        public string TwoFAIdentityAttribyte => _ldapProfile?.SecondFactorIdentity;
         public string Upn => _ldapProfile?.Upn;
         public string DisplayName => _ldapProfile?.DisplayName;
         public string UserPhone => _ldapProfile?.Phone;
@@ -48,14 +47,28 @@ namespace MultiFactor.Radius.Adapter.Server
         public IClientConfiguration ClientConfiguration { get; }
         public IRadiusResponseSender ResponseSender { get; }
 
-        /// <summary>
-        /// Should use for 2FA request to MFA API.
-        /// </summary>
-        public string SecondFactorIdentity => TwoFAIdentityAttribyte ?? UserName;
-
         public void SetProfile(ILdapProfile profile)
         {
             _ldapProfile = profile ?? throw new ArgumentNullException(nameof(profile));
+        }
+
+        /// <summary>
+        /// Should use for 2FA request to MFA API.
+        /// </summary>
+        public string GetSecondFactorIdentity()
+        {
+            // using Upn and attribute as identity together is unacceptable,
+            // this situation should be eliminated at the start of the application
+            if (ClientConfiguration.UseUpnAsIdentity && !string.IsNullOrEmpty(ClientConfiguration.TwoFAIdentityAttribyte))
+            {
+                throw new Exception("Using UPN and any other attribute as identity together is unacceptable.");
+            }
+
+            // select upn if the appropriate setting is enabled,
+            // or select the attribute
+            // otherwise just take the user name
+            return ClientConfiguration.UseUpnAsIdentity ? Upn 
+                : !string.IsNullOrEmpty(ClientConfiguration.TwoFAIdentityAttribyte) ? _ldapProfile?.SecondFactorIdentity : UserName;
         }
     }
 }

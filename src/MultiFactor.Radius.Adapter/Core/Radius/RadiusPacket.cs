@@ -129,7 +129,7 @@ namespace MultiFactor.Radius.Adapter.Core.Radius
             }
         }
         public string CallingStationId => GetCallingStationId();
-        public string CalledStationId => GetString("Called-Station-Id");
+        public string CalledStationId => IsWinLogon ? GetString("Called-Station-Id") : null;
         public string NasIdentifier => GetString("NAS-Identifier");
 
         public string TryGetUserPassword()

@@ -4,7 +4,6 @@
 
 using Microsoft.Extensions.Logging;
 using MultiFactor.Radius.Adapter.Configuration;
-using MultiFactor.Radius.Adapter.Configuration.Core;
 using MultiFactor.Radius.Adapter.Core;
 using MultiFactor.Radius.Adapter.Core.Radius;
 using MultiFactor.Radius.Adapter.Services.ActiveDirectory.MembershipVerification;
@@ -30,6 +29,26 @@ namespace MultiFactor.Radius.Adapter.Server.FirstAuthFactorProcessing
         {
             if (!context.ClientConfiguration.CheckMembership)
             {
+                if (context.ClientConfiguration.UseUpnAsIdentity)
+                {
+                    var profile = await _membershipProcessor.LoadProfileWithRequiredAttributesAsync(context, context.ClientConfiguration, "userPrincipalName", (profile, attr)  => profile.SetUpn(attr));
+                    if (profile == null)
+                    {
+                        _logger.LogWarning("Attribute 'userPrincipalName' was not loaded");
+                        return PacketCode.AccessReject;
+                    }
+                    context.SetProfile(profile);
+                }
+                if (context.ClientConfiguration.TwoFAIdentityAttribyte != null)
+                {
+                    var profile = await _membershipProcessor.LoadProfileWithRequiredAttributesAsync(context, context.ClientConfiguration, context.ClientConfiguration.TwoFAIdentityAttribyte, (profile, attr) => profile.SetIdentityAttribute(attr));
+                    if (profile == null)
+                    {
+                        _logger.LogWarning("Attribute '{TwoFAIdentityAttribyte}' was not loaded", context.ClientConfiguration.TwoFAIdentityAttribyte);
+                        return PacketCode.AccessReject;
+                    }
+                    context.SetProfile(profile);
+                }
                 return PacketCode.AccessAccept;
             }
 

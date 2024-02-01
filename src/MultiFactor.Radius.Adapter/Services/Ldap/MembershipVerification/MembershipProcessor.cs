@@ -2,26 +2,16 @@
 //Please see licence at 
 //https://github.com/MultifactorLab/MultiFactor.Radius.Adapter/blob/master/LICENSE.md
 
-using LdapForNet;
 using Microsoft.Extensions.Logging;
-using Microsoft.VisualBasic;
-using MultiFactor.Radius.Adapter.Configuration;
 using MultiFactor.Radius.Adapter.Configuration.Core;
-using MultiFactor.Radius.Adapter.Core.Exceptions;
 using MultiFactor.Radius.Adapter.Core.Ldap;
-using MultiFactor.Radius.Adapter.Core.Services.Ldap;
 using MultiFactor.Radius.Adapter.Server;
-using MultiFactor.Radius.Adapter.Services.BindIdentityFormatting;
 using MultiFactor.Radius.Adapter.Services.Ldap.Connection;
-using MultiFactor.Radius.Adapter.Services.Ldap.Connection.Exceptions;
 using MultiFactor.Radius.Adapter.Services.Ldap.ProfileLoading;
 using System;
+using System.Collections.Generic;
 using System.Linq;
-using System.Net;
-using System.Runtime.InteropServices;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using static LdapForNet.Native.Native;
 
 namespace MultiFactor.Radius.Adapter.Services.Ldap.MembershipVerification
 {
@@ -92,6 +82,48 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.MembershipVerification
             }
 
             return result;
+        }
+
+        /// <summary>
+        /// Load required attribute and set it in user profile
+        /// </summary>
+        public async Task<ILdapProfile> LoadProfileWithRequiredAttributesAsync(RadiusContext request, IClientConfiguration clientConfig, string attr, Action<ILdapProfileBuilder, string> attributeSetter)
+        {
+            var userName = request.UserName;
+            if (string.IsNullOrEmpty(userName))
+            {
+                throw new Exception($"Can't find User-Name in message id={request.RequestPacket.Identifier} from {request.RemoteEndpoint.Address}:{request.RemoteEndpoint.Port}");
+            }
+            var user = LdapIdentity.ParseUser(userName);
+            var attributes = new Dictionary<string, string[]>();
+
+            foreach (var domain in clientConfig.SplittedActiveDirectoryDomains)
+            {
+                if (attributes.Any()) break;
+
+                var domainIdentity = LdapIdentity.FqdnToDn(domain);
+
+                try
+                {
+                    using (var connAdapter = await _connectionAdapterFactory.CreateAdapterAsTechnicalAccAsync(domain, clientConfig))
+                    {
+                        attributes = await _profileLoader.LoadAttributesAsync(clientConfig, connAdapter, user, new[] { attr });
+                        if (!attributes.Any()) continue;
+
+                        var profile = LdapProfile.CreateBuilder(domainIdentity, domain);
+                        attributeSetter(profile, attributes[attr].FirstOrDefault());
+                        return profile.Build();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, $"Loading attributes of user '{{user:l}}' at {domainIdentity} failed", userName);
+                    _logger.LogInformation("Run MultiFactor.Raduis.Adapter as user with domain read permissions (basically any domain user)");
+                    continue;
+                }
+            }
+
+            return null;
         }
     }
 }

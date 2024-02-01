@@ -117,6 +117,32 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.ProfileLoading
             return profile.Build();
         }
 
+        public async Task<Dictionary<string, string[]>> LoadAttributesAsync(IClientConfiguration clientConfig, ILdapConnectionAdapter adapter, LdapIdentity user, params string[] attrs)
+        {
+
+            var names = LdapNamesFactory.CreateLdapNames(clientConfig.FirstFactorAuthenticationSource);
+            var searchFilter = $"(&(objectClass={names.UserClass})({names.Identity(user)}={user.Name}))";
+
+            var domain = await adapter.WhereAmIAsync();
+            _logger.LogDebug($"Querying user '{{user:l}}' in {domain.Name}", user.Name);
+
+            var response = await adapter.SearchQueryAsync(domain.Name, searchFilter, LdapSearchScope.LDAP_SCOPE_SUB, attrs.Distinct().ToArray());
+            var entry = response.SingleOrDefault();
+            if (entry == null) throw new LdapUserNotFoundException(user.Name, domain.Name);
+
+            var dirAttrs = entry.DirectoryAttributes;
+            var attributes = new Dictionary<string, string[]>();
+            foreach (var a in attrs)
+            {
+                if (dirAttrs.TryGetValue(a, out var reqAttr))
+                {
+                    attributes[a] = reqAttr.GetValues<string>().ToArray();
+                }
+            }
+
+            return attributes;
+        }
+
         private static string[] GetLdapReplyAttributes(IClientConfiguration config)
         {
             return config.RadiusReplyAttributes
