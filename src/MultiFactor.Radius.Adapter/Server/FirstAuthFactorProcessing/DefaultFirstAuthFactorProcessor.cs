@@ -37,44 +37,16 @@ namespace MultiFactor.Radius.Adapter.Server.FirstAuthFactorProcessing
                 return handler.GetDecision();
             }
 
-            var packetCode = PacketCode.AccessAccept;
-            packetCode = await CheckUpnIdentity(context);
-            packetCode = await CheckAttributeIdentity(context);
-
-            return packetCode;
-        }
-
-        // try get 'upn' attribute for second factor identity if required; reject request if attribute not present
-        private async Task<PacketCode> CheckUpnIdentity(RadiusContext context)
-        {
-            if (!context.ClientConfiguration.UseUpnAsIdentity)
+            if (context.ClientConfiguration.UseIdentityAttribyte)
             {
-                return PacketCode.AccessAccept;
+                var profile = await _membershipProcessor.LoadProfileWithRequiredAttributeAsync(context, context.ClientConfiguration, context.ClientConfiguration.TwoFAIdentityAttribyte);
+                if (profile == null)
+                {
+                    _logger.LogWarning("Attribute '{TwoFAIdentityAttribyte}' was not loaded", context.ClientConfiguration.TwoFAIdentityAttribyte);
+                    return PacketCode.AccessReject;
+                }
+                context.SetProfile(profile);
             }
-            var profile = await _membershipProcessor.LoadProfileWithRequiredAttributesAsync(context, context.ClientConfiguration, "userPrincipalName", (profile, attr) => profile.SetUpn(attr));
-            if (profile == null)
-            {
-                _logger.LogWarning("Attribute 'userPrincipalName' was not loaded");
-                return PacketCode.AccessReject;
-            }
-            context.SetProfile(profile);
-            return PacketCode.AccessAccept;
-        }
-
-        // try get custom attribute for second factor identity if required; reject request if attribute not present
-        private async Task<PacketCode> CheckAttributeIdentity(RadiusContext context)
-        {
-            if (context.ClientConfiguration.TwoFAIdentityAttribyte == null)
-            {
-                return PacketCode.AccessAccept;
-            }
-            var profile = await _membershipProcessor.LoadProfileWithRequiredAttributesAsync(context, context.ClientConfiguration, context.ClientConfiguration.TwoFAIdentityAttribyte, (profile, attr) => profile.SetIdentityAttribute(attr));
-            if (profile == null)
-            {
-                _logger.LogWarning("Attribute '{TwoFAIdentityAttribyte}' was not loaded", context.ClientConfiguration.TwoFAIdentityAttribyte);
-                return PacketCode.AccessReject;
-            }
-            context.SetProfile(profile);
             return PacketCode.AccessAccept;
         }
     }

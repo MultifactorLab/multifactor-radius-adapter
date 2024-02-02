@@ -219,17 +219,19 @@ namespace MultiFactor.Radius.Adapter.Configuration.ConfigurationLoading
                 builder.AddActiveDirectory2FaBypassGroups(activeDirectory2FaBypassGroupSetting.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries));
             }
 
-            if (bool.TryParse(useUpnAsIdentitySetting, out var useUpnAsIdentity))
-            {
-                _logger.LogWarning("The setting 'use-upn-as-identity' is deprecated, use 'use-attribute-as-identity' instead");
-                builder.SetUseUpnAsIdentity(useUpnAsIdentity);
-            }
-
+            // MUST be before 'use-upn-as-identity' check
             if (!string.IsNullOrEmpty(twoFAIdentityAttribyteSetting))
             {
                 builder.SetUseAttributeAsIdentity(twoFAIdentityAttribyteSetting);
-                if (useUpnAsIdentity)
+            }
+
+            if (bool.TryParse(useUpnAsIdentitySetting, out var useUpnAsIdentity))
+            {
+                if (!string.IsNullOrEmpty(twoFAIdentityAttribyteSetting))
                     throw new Exception("Configuration error: Using settings 'use-upn-as-identity' and 'use-attribute-as-identity' together is unacceptable. Prefer using 'use-attribute-as-identity'.");
+
+                _logger.LogWarning("The setting 'use-upn-as-identity' is deprecated, use 'use-attribute-as-identity' instead");
+                builder.SetUseAttributeAsIdentity("userPrincipalName");
             }
         }
 

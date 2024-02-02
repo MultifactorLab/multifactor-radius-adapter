@@ -87,7 +87,7 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.MembershipVerification
         /// <summary>
         /// Load required attribute and set it in user profile
         /// </summary>
-        public async Task<ILdapProfile> LoadProfileWithRequiredAttributesAsync(RadiusContext request, IClientConfiguration clientConfig, string attr, Action<ILdapProfileBuilder, string> attributeSetter)
+        public async Task<ILdapProfile> LoadProfileWithRequiredAttributeAsync(RadiusContext request, IClientConfiguration clientConfig, string attr)
         {
             var userName = request.UserName;
             if (string.IsNullOrEmpty(userName))
@@ -111,7 +111,7 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.MembershipVerification
                         if (!attributes.Any()) continue;
 
                         var profile = LdapProfile.CreateBuilder(domainIdentity, domain);
-                        attributeSetter(profile, attributes[attr].FirstOrDefault());
+                        profile.SetIdentityAttribute(attributes[attr].FirstOrDefault());
                         return profile.Build();
                     }
                 }

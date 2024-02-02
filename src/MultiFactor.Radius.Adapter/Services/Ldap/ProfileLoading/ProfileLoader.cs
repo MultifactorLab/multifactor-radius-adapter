@@ -31,7 +31,7 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.ProfileLoading
             var queryAttributes = new List<string> { "DistinguishedName", "displayName", "mail", "memberOf", "userPrincipalName" };
 
             // if an attribute is set for the second factor and it is a new attribute
-            if (clientConfig.TwoFAIdentityAttribyte != null && !queryAttributes.Contains(clientConfig.TwoFAIdentityAttribyte))
+            if (clientConfig.UseIdentityAttribyte && !queryAttributes.Contains(clientConfig.TwoFAIdentityAttribyte))
             {
                 queryAttributes.Add(clientConfig.TwoFAIdentityAttribyte);
             }
@@ -66,7 +66,7 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.ProfileLoading
             {
                 profile.SetUpn(upnAttr.GetValue<string>());
             }
-            if (clientConfig.TwoFAIdentityAttribyte != null && attrs.TryGetValue(clientConfig.TwoFAIdentityAttribyte, out var identityAttribute))
+            if (clientConfig.UseIdentityAttribyte && attrs.TryGetValue(clientConfig.TwoFAIdentityAttribyte, out var identityAttribute))
             {
                 profile.SetIdentityAttribute(identityAttribute.GetValue<string>());
             }
