@@ -3,12 +3,10 @@
 //https://github.com/MultifactorLab/multifactor-radius-adapter/blob/main/LICENSE.md
 
 using Microsoft.Extensions.Logging;
-using MultiFactor.Radius.Adapter.Configuration;
 using MultiFactor.Radius.Adapter.Core.Radius;
 using MultiFactor.Radius.Adapter.Services.MultiFactorApi;
 using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -18,9 +16,8 @@ namespace MultiFactor.Radius.Adapter.Server
     public class ChallengeProcessor : IChallengeProcessor
     {
         private readonly ConcurrentDictionary<ChallengeRequestIdentifier, RadiusContext> _stateChallengePendingRequests = new();
-
         private readonly IMultiFactorApiClient _multiFactorApiClient;
-        private readonly ILogger _logger;
+        private readonly ILogger<ChallengeProcessor> _logger;
 
         public ChallengeProcessor(IMultiFactorApiClient multiFactorApiClient, ILogger<ChallengeProcessor> logger)
         {
@@ -75,11 +72,14 @@ namespace MultiFactor.Radius.Adapter.Server
                     return PacketCode.AccessReject;
             }
 
-            PacketCode response = await _multiFactorApiClient.Challenge(context, userName, userAnswer, identifier);
+            // copy initial request profile to challenge request context
+            var stateChallengePendingRequest = GetStateChallengeRequest(identifier);
+            stateChallengePendingRequest?.CopyProfileToContext(context);
+
+            PacketCode response = await _multiFactorApiClient.Challenge(context, userAnswer, identifier);
             switch (response)
             {
                 case PacketCode.AccessAccept:
-                    var stateChallengePendingRequest = GetStateChallengeRequest(identifier);
                     if (stateChallengePendingRequest != null)
                     {
                         context.UserGroups = stateChallengePendingRequest.UserGroups;

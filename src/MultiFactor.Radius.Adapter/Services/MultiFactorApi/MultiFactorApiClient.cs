@@ -148,8 +148,9 @@ namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi
             }
         }
 
-        public async Task<PacketCode> Challenge(RadiusContext context, string userName, string answer, ChallengeRequestIdentifier identifier)
+        public async Task<PacketCode> Challenge(RadiusContext context, string answer, ChallengeRequestIdentifier identifier)
         {
+            var userName = context.SecondFactorIdentity;
             var payload = new
             {
                 Identity = userName,

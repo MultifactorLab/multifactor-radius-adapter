@@ -21,7 +21,7 @@ namespace MultiFactor.Radius.Adapter.Server.FirstAuthFactorProcessing
     {
         private readonly MembershipProcessor _membershipProcessor;
         private readonly IRadiusPacketParser _packetParser;
-        private readonly ILogger _logger;
+        private readonly ILogger<RadiusFirstAuthFactorProcessor> _logger;
 
         public RadiusFirstAuthFactorProcessor(MembershipProcessor membershipProcessor,
             IRadiusPacketParser packetParser,

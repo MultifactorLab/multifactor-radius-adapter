@@ -15,7 +15,7 @@ namespace MultiFactor.Radius.Adapter.Server.FirstAuthFactorProcessing
     public class DefaultFirstAuthFactorProcessor : IFirstAuthFactorProcessor
     {
         private readonly MembershipProcessor _membershipProcessor;
-        private readonly ILogger _logger;
+        private readonly ILogger<DefaultFirstAuthFactorProcessor> _logger;
 
         public DefaultFirstAuthFactorProcessor(MembershipProcessor membershipProcessor, ILogger<DefaultFirstAuthFactorProcessor> logger)
         {

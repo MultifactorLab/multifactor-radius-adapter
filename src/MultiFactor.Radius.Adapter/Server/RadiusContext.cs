@@ -56,5 +56,10 @@ namespace MultiFactor.Radius.Adapter.Server
         {
             _ldapProfile = profile ?? throw new ArgumentNullException(nameof(profile));
         }
+
+        public void CopyProfileToContext(RadiusContext other)
+        {
+            other.SetProfile(_ldapProfile);
+        }
     }
 }

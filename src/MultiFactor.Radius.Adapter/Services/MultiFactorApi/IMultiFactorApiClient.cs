@@ -11,7 +11,7 @@ namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi
 {
     public interface IMultiFactorApiClient
     {
-        Task<PacketCode> Challenge(RadiusContext context, string userName, string answer, ChallengeRequestIdentifier identifier);
+        Task<PacketCode> Challenge(RadiusContext context, string answer, ChallengeRequestIdentifier identifier);
         Task<PacketCode> CreateSecondFactorRequest(RadiusContext context);
     }
 }
