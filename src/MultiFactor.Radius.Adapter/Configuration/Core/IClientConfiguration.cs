@@ -19,6 +19,7 @@ namespace MultiFactor.Radius.Adapter.Configuration.Core
         string CallingStationIdVendorAttribute { get; }
         bool CheckMembership { get; }
         AuthenticationSource FirstFactorAuthenticationSource { get; }
+        LdapCatalogType LdapCatalogType { get; }
         string LdapBindDn { get; }
         bool LoadActiveDirectoryNestedGroups { get; }
         MultifactorApiCredential ApiCredential { get; }

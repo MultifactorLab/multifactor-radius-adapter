@@ -67,7 +67,7 @@ namespace MultiFactor.Radius.Adapter.HostedServices
 
         protected async Task ExecuteAsync(CancellationToken cancellationToken)
         {
-            while (!cancellationToken.IsCancellationRequested)
+            while (!cancellationToken.IsCancellationRequested)  
             {
                 //infinite job
                 await Task.Delay(TimeSpan.FromSeconds(5), cancellationToken);

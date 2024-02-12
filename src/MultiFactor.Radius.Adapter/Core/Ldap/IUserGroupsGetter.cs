@@ -14,5 +14,6 @@ namespace MultiFactor.Radius.Adapter.Core.Ldap;
 public interface IUserGroupsGetter
 {
     AuthenticationSource AuthenticationSource { get; }
+    LdapCatalogType LdapCatalogType { get; }
     Task<string[]> GetAllUserGroupsAsync(IClientConfiguration clientConfig, ILdapConnectionAdapter connectionAdapter, string userDn);
 }

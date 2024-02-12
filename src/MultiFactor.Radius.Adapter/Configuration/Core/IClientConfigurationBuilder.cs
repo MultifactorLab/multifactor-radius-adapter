@@ -30,6 +30,7 @@ namespace MultiFactor.Radius.Adapter.Configuration.Core
         IClientConfigurationBuilder SetUseUpnAsIdentity(bool val);
         IClientConfigurationBuilder SetServiceClientEndpoint(IPEndPoint val);
         IClientConfigurationBuilder SetNpsServerEndpoint(IPEndPoint val);
+        IClientConfigurationBuilder SetLdapCatalogType(LdapCatalogType type);
         IClientConfigurationBuilder SetServiceAccountUser(string val);
         IClientConfigurationBuilder SetServiceAccountPassword(string val);
         IClientConfigurationBuilder SetSignUpGroups(string val);

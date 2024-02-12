@@ -142,7 +142,7 @@ namespace MultiFactor.Radius.Adapter.Configuration
         /// Network Policy Service RADIUS UDP Server endpoint
         /// </summary>
         public IPEndPoint NpsServerEndpoint { get; private set; }
-
+        public LdapCatalogType LdapCatalogType { get; private set; }
         public string ServiceAccountUser { get; private set; }
 
         public string ServiceAccountPassword { get; private set; }
@@ -328,6 +328,12 @@ namespace MultiFactor.Radius.Adapter.Configuration
         public IClientConfigurationBuilder SetNpsServerEndpoint(IPEndPoint val)
         {
             NpsServerEndpoint = val;
+            return this;
+        }
+
+        public IClientConfigurationBuilder SetLdapCatalogType(LdapCatalogType catalogType) 
+        {
+            LdapCatalogType = catalogType;
             return this;
         }
 

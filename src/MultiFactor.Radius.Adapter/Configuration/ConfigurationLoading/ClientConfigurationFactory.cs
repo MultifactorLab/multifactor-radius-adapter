@@ -87,22 +87,8 @@ namespace MultiFactor.Radius.Adapter.Configuration.ConfigurationLoading
             {
                 throw new InvalidConfigurationException($"Can't parse '{Literals.Configuration.PrivacyMode}' value. Must be one of: Full, None, Partial:Field1,Field2");
             }
-
-            switch (builder.Build().FirstFactorAuthenticationSource)
-            {
-                case AuthenticationSource.ActiveDirectory:
-                case AuthenticationSource.Ldap:
-                    LoadActiveDirectoryAuthenticationSourceSettings(builder, appSettings, true);
-                    break;
-                case AuthenticationSource.Radius:
-                    LoadRadiusAuthenticationSourceSettings(builder, appSettings);
-                    LoadActiveDirectoryAuthenticationSourceSettings(builder, appSettings, false);
-                    break;
-                case AuthenticationSource.None:
-                    LoadActiveDirectoryAuthenticationSourceSettings(builder, appSettings, false);
-                    break;
-            }
-
+           
+            LoadAuthenticationSourceSettings(configuration, appSettings, builder);
             LoadRadiusReplyAttributes(builder, _dictionary, configuration.GetSection("RadiusReply") as RadiusReplyAttributesSection);
             LoadUserNameTransformRulesSection(configuration, builder);
 
@@ -119,6 +105,44 @@ namespace MultiFactor.Radius.Adapter.Configuration.ConfigurationLoading
             }
 
             return builder.Build();
+        }
+
+        private static void LoadAuthenticationSourceSettings(Config configuration, AppSettingsSection appSettings, IClientConfigurationBuilder builder)
+        {
+            var ldapCatalogType = appSettings.Settings[Literals.Configuration.LdapCatalogType]?.Value;
+
+            LdapCatalogType? ldapCatalogTypeParsed =  string.IsNullOrEmpty(ldapCatalogType) 
+                ? null 
+                : Enum.Parse<LdapCatalogType>(ldapCatalogType, true);
+            
+            switch (builder.Build().FirstFactorAuthenticationSource)
+            {
+                case AuthenticationSource.ActiveDirectory:
+                    LoadActiveDirectoryAuthenticationSourceSettings(builder, appSettings, true);
+                    if(ldapCatalogType != null && ldapCatalogTypeParsed != LdapCatalogType.ActiveDirectory)
+                    {
+                        throw new InvalidConfigurationException(
+                            $"Invalid value for a {Literals.Configuration.LdapCatalogType} parameter." +
+                            $" It should either be equal to ActiveDirectory or should be omitted, since {Literals.Configuration.FirstFactorAuthSource}" +
+                            $" is {AuthenticationSource.ActiveDirectory}.");
+                    }
+                    builder.SetLdapCatalogType(ldapCatalogTypeParsed ?? LdapCatalogType.ActiveDirectory);
+                    break;
+                case AuthenticationSource.Ldap:
+                    LoadActiveDirectoryAuthenticationSourceSettings(builder, appSettings, true);
+                    builder.SetLdapCatalogType(ldapCatalogTypeParsed ?? LdapCatalogType.ActiveDirectory);
+                    break;
+                case AuthenticationSource.Radius:
+                    LoadRadiusAuthenticationSourceSettings(builder, appSettings);
+                    LoadActiveDirectoryAuthenticationSourceSettings(builder, appSettings, false);
+                    // Use OpenLdap as default catalog since it is safier not use AD extensions
+                    builder.SetLdapCatalogType(ldapCatalogTypeParsed ?? LdapCatalogType.OpenLdap);
+                    break;
+                case AuthenticationSource.None:
+                    LoadActiveDirectoryAuthenticationSourceSettings(builder, appSettings, false);
+                    builder.SetLdapCatalogType(ldapCatalogTypeParsed ?? LdapCatalogType.ActiveDirectory);
+                    break;
+            }
         }
 
         private static void LoadUserNameTransformRulesSection(Config configuration, IClientConfigurationBuilder builder)
@@ -233,7 +257,6 @@ namespace MultiFactor.Radius.Adapter.Configuration.ConfigurationLoading
             {
                 throw new InvalidConfigurationException("'nps-server-endpoint' element not found");
             }
-
             if (!IPEndPointFactory.TryParse(serviceClientEndpointSetting, out var serviceClientEndpoint))
             {
                 throw new InvalidConfigurationException("Can't parse 'adapter-client-endpoint' value");
