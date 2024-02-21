@@ -4,6 +4,8 @@ using Moq;
 using MultiFactor.Radius.Adapter.Configuration;
 using MultiFactor.Radius.Adapter.Core.Radius;
 using MultiFactor.Radius.Adapter.Server;
+using MultiFactor.Radius.Adapter.Services.Ldap;
+using MultiFactor.Radius.Adapter.Services.Ldap.ProfileLoading;
 using MultiFactor.Radius.Adapter.Services.MultiFactorApi;
 using MultiFactor.Radius.Adapter.Tests.Fixtures.Radius;
 using System.Net;
@@ -151,7 +153,7 @@ namespace MultiFactor.Radius.Adapter.Tests
             const string reqId = "RequestId";
 
             var api = new Mock<IMultiFactorApiClient>();
-            api.Setup(x => x.Challenge(It.IsAny<RadiusContext>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<ChallengeRequestIdentifier>()))
+            api.Setup(x => x.Challenge(It.IsAny<RadiusContext>(), It.IsAny<string>(), It.IsAny<ChallengeRequestIdentifier>()))
                 .ReturnsAsync(PacketCode.AccessAccept);
             var logger = new Mock<ILogger<ChallengeProcessor>>();
             var processor = new ChallengeProcessor(api.Object, logger.Object);
@@ -176,6 +178,8 @@ namespace MultiFactor.Radius.Adapter.Tests
                     { "sAmaccountName", "user name" }
                 }
             };
+            var testDn = "CN=User Name,CN=Users,DC=domain,DC=local";
+            context.SetProfile(LdapProfile.CreateBuilder(LdapIdentity.BaseDn(testDn), testDn).SetIdentityAttribute("multifactor").Build());
             processor.AddState(new ChallengeRequestIdentifier(client, reqId), context);
 
             var newContext = new RadiusContext(client, responseSender.Object, new Mock<IServiceProvider>().Object)

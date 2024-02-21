@@ -41,6 +41,11 @@ namespace MultiFactor.Radius.Adapter.Server
         public string UserPhone => _ldapProfile?.Phone;
         public string EmailAddress => _ldapProfile?.Email;
         public bool Bypass2Fa { get; set; }
+
+        /// <summary>
+        /// Should use for 2FA request to MFA API.
+        /// </summary>
+        public string SecondFactorIdentity => ClientConfiguration.UseIdentityAttribyte ? _ldapProfile?.SecondFactorIdentity : UserName;
         public IList<string> UserGroups { get; set; }
         public IDictionary<string, object> LdapAttrs { get; set; }
         public IServiceProvider RequestServices { get; set; }
@@ -50,6 +55,11 @@ namespace MultiFactor.Radius.Adapter.Server
         public void SetProfile(ILdapProfile profile)
         {
             _ldapProfile = profile ?? throw new ArgumentNullException(nameof(profile));
+        }
+
+        public void CopyProfileToContext(RadiusContext other)
+        {
+            other.SetProfile(_ldapProfile);
         }
     }
 }

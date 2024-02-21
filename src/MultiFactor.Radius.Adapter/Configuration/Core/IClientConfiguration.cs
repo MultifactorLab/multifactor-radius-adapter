@@ -34,7 +34,8 @@ namespace MultiFactor.Radius.Adapter.Configuration.Core
         string SignUpGroups { get; }
         string[] SplittedActiveDirectoryDomains { get; }
         UserNameTransformRulesElement[] UserNameTransformRules { get; }
-        bool UseUpnAsIdentity { get; }
+        public string TwoFAIdentityAttribyte { get; }
+        public bool UseIdentityAttribyte => !string.IsNullOrEmpty(TwoFAIdentityAttribyte);
         bool ShouldLoadUserGroups();
     }
 }

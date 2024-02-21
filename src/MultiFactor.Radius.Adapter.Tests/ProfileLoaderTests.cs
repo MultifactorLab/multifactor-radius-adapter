@@ -76,10 +76,10 @@ public class ProfileLoaderTests
         var entry = LdapEntryFactory.Create("CN=User Name,CN=Users,DC=domain,DC=local", x =>
         {
             x.Add("sAMAccountName", "user.name")
-            .Add("displayName", "User Name")
-            .Add("memberOf", "CN=Users,DC=domain,DC=local")
-            .Add("mail", "username@post.org")
-            .Add("userPrincipalName", "user.name@domain.local");
+             .Add("displayName", "User Name")
+             .Add("memberOf", "CN=Users,DC=domain,DC=local")
+             .Add("mail", "username@post.org")
+             .Add("userPrincipalName", "user.name@domain.local");
         });
         var domain = LdapDomain.Parse("dc=domain,dc=local");
 
@@ -93,6 +93,7 @@ public class ProfileLoaderTests
 
         var clientConfig = ClientConfiguration.CreateBuilder("custom", "shared_secret", AuthenticationSource.ActiveDirectory, "key", "secret")
             .SetLoadActiveDirectoryNestedGroups(false)
+            .SetUseAttributeAsIdentity("mail")
             .Build();
         var loader = host.Services.GetRequiredService<ProfileLoader>();
 
@@ -108,6 +109,7 @@ public class ProfileLoaderTests
         profile.Upn.Should().Be(expectedProfile.Upn);
         profile.LdapAttrs.Should().BeEmpty();
         profile.MemberOf.Should().BeEquivalentTo(expectedProfile.MemberOf);
+        profile.SecondFactorIdentity.Should().BeEquivalentTo(expectedProfile.Email);
     }
 
     [Fact]

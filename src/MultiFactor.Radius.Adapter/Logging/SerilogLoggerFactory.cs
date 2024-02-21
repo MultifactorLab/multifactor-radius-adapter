@@ -41,6 +41,7 @@ namespace MultiFactor.Radius.Adapter.Logging
 
             var loggerConfiguration = new LoggerConfiguration()
                 .MinimumLevel.ControlledBy(levelSwitch)
+                .MinimumLevel.Override("Microsoft.Extensions.Http.DefaultHttpClientFactory", LogEventLevel.Warning)
                 .Enrich.FromLogContext();
 
             ConfigureLogging(_variables.AppPath, loggerConfiguration);

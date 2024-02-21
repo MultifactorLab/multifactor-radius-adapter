@@ -30,6 +30,12 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.ProfileLoading
         {
             var queryAttributes = new List<string> { "DistinguishedName", "displayName", "mail", "memberOf", "userPrincipalName" };
 
+            // if an attribute is set for the second factor and it is a new attribute
+            if (clientConfig.UseIdentityAttribyte && !queryAttributes.Contains(clientConfig.TwoFAIdentityAttribyte))
+            {
+                queryAttributes.Add(clientConfig.TwoFAIdentityAttribyte);
+            }
+
             foreach (var ldapReplyAttribute in GetLdapReplyAttributes(clientConfig))
             {
                 queryAttributes.Add(ldapReplyAttribute);
@@ -59,6 +65,10 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.ProfileLoading
             if (attrs.TryGetValue("userPrincipalName", out var upnAttr))
             {
                 profile.SetUpn(upnAttr.GetValue<string>());
+            }
+            if (clientConfig.UseIdentityAttribyte && attrs.TryGetValue(clientConfig.TwoFAIdentityAttribyte, out var identityAttribute))
+            {
+                profile.SetIdentityAttribute(identityAttribute.GetValue<string>());
             }
 
             // additional attributes for radius response
@@ -105,6 +115,32 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.ProfileLoading
             }
 
             return profile.Build();
+        }
+
+        public async Task<Dictionary<string, string[]>> LoadAttributesAsync(IClientConfiguration clientConfig, ILdapConnectionAdapter adapter, LdapIdentity user, params string[] attrs)
+        {
+
+            var names = LdapNamesFactory.CreateLdapNames(clientConfig.FirstFactorAuthenticationSource);
+            var searchFilter = $"(&(objectClass={names.UserClass})({names.Identity(user)}={user.Name}))";
+
+            var domain = await adapter.WhereAmIAsync();
+            _logger.LogDebug($"Querying user '{{user:l}}' in {domain.Name}", user.Name);
+
+            var response = await adapter.SearchQueryAsync(domain.Name, searchFilter, LdapSearchScope.LDAP_SCOPE_SUB, attrs.Distinct().ToArray());
+            var entry = response.SingleOrDefault();
+            if (entry == null) throw new LdapUserNotFoundException(user.Name, domain.Name);
+
+            var dirAttrs = entry.DirectoryAttributes;
+            var attributes = new Dictionary<string, string[]>();
+            foreach (var a in attrs)
+            {
+                if (dirAttrs.TryGetValue(a, out var reqAttr))
+                {
+                    attributes[a] = reqAttr.GetValues<string>().ToArray();
+                }
+            }
+
+            return attributes;
         }
 
         private static string[] GetLdapReplyAttributes(IClientConfiguration config)

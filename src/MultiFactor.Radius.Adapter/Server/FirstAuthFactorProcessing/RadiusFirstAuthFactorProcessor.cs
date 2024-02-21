@@ -21,7 +21,7 @@ namespace MultiFactor.Radius.Adapter.Server.FirstAuthFactorProcessing
     {
         private readonly MembershipProcessor _membershipProcessor;
         private readonly IRadiusPacketParser _packetParser;
-        private readonly ILogger _logger;
+        private readonly ILogger<RadiusFirstAuthFactorProcessor> _logger;
 
         public RadiusFirstAuthFactorProcessor(MembershipProcessor membershipProcessor,
             IRadiusPacketParser packetParser,
@@ -39,13 +39,27 @@ namespace MultiFactor.Radius.Adapter.Server.FirstAuthFactorProcessing
             var code = await ProcessRadiusAuthAsync(context);
             if (code != PacketCode.AccessAccept) return code;
 
-            if (!context.ClientConfiguration.CheckMembership) return PacketCode.AccessAccept;
+            if (context.ClientConfiguration.CheckMembership)
+            {
+                var result = await _membershipProcessor.ProcessMembershipAsync(context);
+                var handler = new MembershipProcessingResultHandler(result);
 
-            var result = await _membershipProcessor.ProcessMembershipAsync(context);
-            var handler = new MembershipProcessingResultHandler(result);
+                handler.EnrichRequest(context);
+                return handler.GetDecision();
+            }
 
-            handler.EnrichRequest(context);
-            return handler.GetDecision();
+            if (context.ClientConfiguration.UseIdentityAttribyte)
+            {
+                var profile = await _membershipProcessor.LoadProfileWithRequiredAttributeAsync(context, context.ClientConfiguration, context.ClientConfiguration.TwoFAIdentityAttribyte);
+                if (profile == null)
+                {
+                    _logger.LogWarning("Attribute '{TwoFAIdentityAttribyte}' was not loaded", context.ClientConfiguration.TwoFAIdentityAttribyte);
+                    return PacketCode.AccessReject;
+                }
+                context.SetProfile(profile);
+            }
+
+            return PacketCode.AccessAccept;
         }
 
         private async Task<PacketCode> ProcessRadiusAuthAsync(RadiusContext context)

@@ -21,7 +21,7 @@ namespace MultiFactor.Radius.Adapter.Server.FirstAuthFactorProcessing
     {
         private readonly IServiceConfiguration _serviceConfiguration;
         private readonly LdapService _ldapService;
-        private readonly ILogger _logger;
+        private readonly ILogger<LdapFirstAuthFactorProcessor> _logger;
 
         public LdapFirstAuthFactorProcessor(IServiceConfiguration serviceConfiguration,
             LdapService ldapService,

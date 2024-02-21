@@ -4,7 +4,6 @@
 
 using Microsoft.Extensions.Logging;
 using MultiFactor.Radius.Adapter.Configuration;
-using MultiFactor.Radius.Adapter.Configuration.Core;
 using MultiFactor.Radius.Adapter.Core;
 using MultiFactor.Radius.Adapter.Core.Radius;
 using MultiFactor.Radius.Adapter.Services.ActiveDirectory.MembershipVerification;
@@ -16,7 +15,7 @@ namespace MultiFactor.Radius.Adapter.Server.FirstAuthFactorProcessing
     public class DefaultFirstAuthFactorProcessor : IFirstAuthFactorProcessor
     {
         private readonly MembershipProcessor _membershipProcessor;
-        private readonly ILogger _logger;
+        private readonly ILogger<DefaultFirstAuthFactorProcessor> _logger;
 
         public DefaultFirstAuthFactorProcessor(MembershipProcessor membershipProcessor, ILogger<DefaultFirstAuthFactorProcessor> logger)
         {
@@ -28,17 +27,27 @@ namespace MultiFactor.Radius.Adapter.Server.FirstAuthFactorProcessing
 
         public async Task<PacketCode> ProcessFirstAuthFactorAsync(RadiusContext context)
         {
-            if (!context.ClientConfiguration.CheckMembership)
+            if (context.ClientConfiguration.CheckMembership)
             {
-                return PacketCode.AccessAccept;
+                // check membership without AD authentication
+                var result = await _membershipProcessor.ProcessMembershipAsync(context);
+                var handler = new MembershipProcessingResultHandler(result);
+
+                handler.EnrichRequest(context);
+                return handler.GetDecision();
             }
 
-            // check membership without AD authentication
-            var result = await _membershipProcessor.ProcessMembershipAsync(context);
-            var handler = new MembershipProcessingResultHandler(result);
-
-            handler.EnrichRequest(context);
-            return handler.GetDecision();
+            if (context.ClientConfiguration.UseIdentityAttribyte)
+            {
+                var profile = await _membershipProcessor.LoadProfileWithRequiredAttributeAsync(context, context.ClientConfiguration, context.ClientConfiguration.TwoFAIdentityAttribyte);
+                if (profile == null)
+                {
+                    _logger.LogWarning("Attribute '{TwoFAIdentityAttribyte}' was not loaded", context.ClientConfiguration.TwoFAIdentityAttribyte);
+                    return PacketCode.AccessReject;
+                }
+                context.SetProfile(profile);
+            }
+            return PacketCode.AccessAccept;
         }
     }
 }

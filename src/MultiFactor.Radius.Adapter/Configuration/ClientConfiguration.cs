@@ -131,8 +131,10 @@ namespace MultiFactor.Radius.Adapter.Configuration
 
         public bool LoadActiveDirectoryNestedGroups { get; private set; }
 
-        //Lookup for UPN and use it instead of uid
-        public bool UseUpnAsIdentity { get; private set; }
+        /// <summary>
+        /// Name of the attribute that will be used as an identifier in MFA request
+        /// </summary>
+        public string TwoFAIdentityAttribyte { get; private set; }
 
         /// <summary>
         /// This service RADIUS UDP Client endpoint
@@ -313,12 +315,6 @@ namespace MultiFactor.Radius.Adapter.Configuration
             return this;
         }
 
-        public IClientConfigurationBuilder SetUseUpnAsIdentity(bool val)
-        {
-            UseUpnAsIdentity = val;
-            return this;
-        }
-
         public IClientConfigurationBuilder SetServiceClientEndpoint(IPEndPoint val)
         {
             ServiceClientEndpoint = val;
@@ -393,6 +389,12 @@ namespace MultiFactor.Radius.Adapter.Configuration
             return this;
         }
 
+        public IClientConfigurationBuilder SetUseAttributeAsIdentity(string val)
+        {
+            TwoFAIdentityAttribyte = val;
+            return this;
+        }
+        
         public IClientConfiguration Build() => this;
     }
 }

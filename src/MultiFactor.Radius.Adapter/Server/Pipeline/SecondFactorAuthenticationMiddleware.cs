@@ -7,6 +7,7 @@ using MultiFactor.Radius.Adapter.Configuration;
 using MultiFactor.Radius.Adapter.Core.Exceptions;
 using MultiFactor.Radius.Adapter.Core.Pipeline;
 using MultiFactor.Radius.Adapter.Core.Radius;
+using MultiFactor.Radius.Adapter.Services.Ldap.MembershipVerification;
 using MultiFactor.Radius.Adapter.Services.MultiFactorApi;
 using System;
 using System.Diagnostics;
@@ -19,10 +20,13 @@ public class SecondFactorAuthenticationMiddleware : IRadiusMiddleware
     private readonly IChallengeProcessor _challengeProcessor;
     private readonly IMultiFactorApiClient _multiFactorApiClient;
     private readonly IRadiusRequestPostProcessor _requestPostProcessor;
-    private readonly ILogger _logger;
+    private readonly ILogger<SecondFactorAuthenticationMiddleware> _logger;
 
-    public SecondFactorAuthenticationMiddleware(IChallengeProcessor challengeProcessor, IMultiFactorApiClient multiFactorApiClient,
-        IRadiusRequestPostProcessor requestPostProcessor, ILogger<SecondFactorAuthenticationMiddleware> logger)
+    public SecondFactorAuthenticationMiddleware(
+        IChallengeProcessor challengeProcessor, 
+        IMultiFactorApiClient multiFactorApiClient,
+        IRadiusRequestPostProcessor requestPostProcessor, 
+        ILogger<SecondFactorAuthenticationMiddleware> logger) 
     {
         _challengeProcessor = challengeProcessor ?? throw new ArgumentNullException(nameof(challengeProcessor));
         _multiFactorApiClient = multiFactorApiClient ?? throw new ArgumentNullException(nameof(multiFactorApiClient));
@@ -47,13 +51,13 @@ public class SecondFactorAuthenticationMiddleware : IRadiusMiddleware
     /// </summary>
     private async Task<PacketCode> ProcessSecondAuthenticationFactor(RadiusContext context)
     {
-        if (string.IsNullOrEmpty(context.UserName))
+        if (string.IsNullOrEmpty(context.SecondFactorIdentity))
         {
             _logger.LogWarning("Can't find User-Name in message id={id} from {host:l}:{port}", context.RequestPacket.Identifier, context.RemoteEndpoint.Address, context.RemoteEndpoint.Port);
             return PacketCode.AccessReject;
         }
 
-        if (context.RequestPacket.IsVendorAclRequest == true)
+        if (context.RequestPacket.IsVendorAclRequest)
         {
             // security check
             if (context.ClientConfiguration.FirstFactorAuthenticationSource == AuthenticationSource.Radius)

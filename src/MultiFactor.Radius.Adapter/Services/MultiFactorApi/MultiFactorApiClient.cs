@@ -29,7 +29,7 @@ namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi
     public class MultiFactorApiClient : IMultiFactorApiClient
     {
         private readonly IAuthenticatedClientCache _authenticatedClientCache;
-        private ILogger _logger;
+        private ILogger<MultiFactorApiClient> _logger;
         private readonly IHttpClientAdapter _httpClientAdapter;
 
         public MultiFactorApiClient(IAuthenticatedClientCache authenticatedClientCache, ILogger<MultiFactorApiClient> logger, IHttpClientAdapter httpClientAdapter)
@@ -41,27 +41,18 @@ namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi
 
         public async Task<PacketCode> CreateSecondFactorRequest(RadiusContext context)
         {
-            var userName = context.UserName;
+            var userName = context.SecondFactorIdentity;
             var displayName = context.DisplayName;
             var email = context.EmailAddress;
             var userPhone = context.UserPhone;
             var callingStationId = context.RequestPacket.CallingStationId;
 
-            string calledStationId = null;
+            string calledStationId = context.RequestPacket.CalledStationId; //only for winlogon yet
 
-            if (context.RequestPacket.IsWinLogon) //only for winlogon yet
+            if (string.IsNullOrEmpty(userName))
             {
-                calledStationId = context.RequestPacket.CalledStationId;
-            }
-
-            if (context.ClientConfiguration.UseUpnAsIdentity)
-            {
-                if (string.IsNullOrEmpty(context.Upn))
-                {
-                    throw new ArgumentNullException("UserPrincipalName");
-                }
-
-                userName = context.Upn;
+                _logger.LogWarning("Empty user name for second factor request. Request rejected.");
+                return PacketCode.AccessReject;
             }
 
             //remove user information for privacy
@@ -157,8 +148,9 @@ namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi
             }
         }
 
-        public async Task<PacketCode> Challenge(RadiusContext context, string userName, string answer, ChallengeRequestIdentifier identifier)
+        public async Task<PacketCode> Challenge(RadiusContext context, string answer, ChallengeRequestIdentifier identifier)
         {
+            var userName = context.SecondFactorIdentity;
             var payload = new
             {
                 Identity = userName,
