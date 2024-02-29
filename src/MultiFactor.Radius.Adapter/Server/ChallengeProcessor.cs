@@ -73,13 +73,14 @@ namespace MultiFactor.Radius.Adapter.Server
             }
 
             // copy initial request profile to challenge request context
-            var stateChallengePendingRequest = GetStateChallengeRequest(identifier);
-            stateChallengePendingRequest?.CopyProfileToContext(context);
 
             PacketCode response = await _multiFactorApiClient.Challenge(context, userAnswer, identifier);
             switch (response)
             {
                 case PacketCode.AccessAccept:
+                    var stateChallengePendingRequest = GetStateChallengeRequest(identifier);
+                    stateChallengePendingRequest?.CopyProfileToContext(context);
+
                     if (stateChallengePendingRequest != null)
                     {
                         context.UserGroups = stateChallengePendingRequest.UserGroups;
