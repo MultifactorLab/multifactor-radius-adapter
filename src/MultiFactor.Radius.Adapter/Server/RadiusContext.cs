@@ -59,7 +59,11 @@ namespace MultiFactor.Radius.Adapter.Server
 
         public void CopyProfileToContext(RadiusContext other)
         {
-            other.SetProfile(_ldapProfile);
+            // null if no AD request. winlogon, for example
+            if (_ldapProfile != null)
+            {
+                other.SetProfile(_ldapProfile);
+            }
         }
     }
 }
