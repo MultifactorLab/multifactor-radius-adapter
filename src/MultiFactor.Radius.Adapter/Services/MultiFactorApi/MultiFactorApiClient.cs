@@ -196,40 +196,40 @@ namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi
 
                 return response.Model;
             }
-            catch (TaskCanceledException ex)
+            catch (TaskCanceledException tce)
             {
-                var message = ex is TaskCanceledException ? "Timed out" : ex.Message;
-                var err = $"Multifactor API host unreachable: {url}. Reason: {message}";
-                throw new MultifactorApiUnreachableException(err, ex);
+                throw new MultifactorApiUnreachableException($"Multifactor API host unreachable: {url}. Reason: Http request timeout", tce);
             }
             catch (Exception ex)
             {
-                var err = $"Multifactor API host unreachable: {url}. Reason: {ex.Message}";
-                throw new MultifactorApiUnreachableException(err, ex);
+                throw new MultifactorApiUnreachableException($"Multifactor API host unreachable: {url}. Reason: {ex.Message}", ex);
             }
         }
 
         private PacketCode HandleException(Exception ex, string username, RadiusContext context)
         {
-            if (ex is MultifactorApiUnreachableException apiEx)
-            {
-                _logger.LogError("Error occured while requesting API for user '{user:l}' from {host:l}:{port}, {msg:l}",
-                    username,
-                    context.RemoteEndpoint.Address,
-                    context.RemoteEndpoint.Port,
-                    apiEx.Message);
+            _logger.LogError("Error occured while requesting API for user '{user:l}' from {host:l}:{port}, {msg:l}",
+                username,
+                context.RemoteEndpoint.Address,
+                context.RemoteEndpoint.Port,
+                ex.Message);
 
-                if (context.ClientConfiguration.BypassSecondFactorWhenApiUnreachable)
-                {
-                    _logger.LogWarning("Bypass second factor for user '{user:l}' from {host:l}:{port}",
-                        username,
-                        context.RemoteEndpoint.Address,
-                        context.RemoteEndpoint.Port);
-                    return ConvertToRadiusCode(MultiFactorAccessRequest.Bypass);
-                }
+            if (ex is not MultifactorApiUnreachableException apiEx)
+            {
+                return ConvertToRadiusCode(null);
             }
 
-            return ConvertToRadiusCode(null);
+            if (context.ClientConfiguration.BypassSecondFactorWhenApiUnreachable)
+            {
+                return ConvertToRadiusCode(null);
+            }
+
+            _logger.LogWarning("Bypass second factor for user '{user:l}' from {host:l}:{port}",
+                    username,
+                    context.RemoteEndpoint.Address,
+                    context.RemoteEndpoint.Port);
+
+            return ConvertToRadiusCode(MultiFactorAccessRequest.Bypass);
         }
 
         private PacketCode ConvertToRadiusCode(MultiFactorAccessRequest multifactorAccessRequest)
