@@ -27,10 +27,9 @@ namespace MultiFactor.Radius.Adapter.Tests
             });
 
             var profile = GetProfile();
-            var client = ClientConfiguration.CreateBuilder("custom", "shared_secret", AuthenticationSource.None, "key", "secret")
+            var client = new ClientConfiguration("custom", "shared_secret", AuthenticationSource.None, "key", "secret")
                 .SetActiveDirectoryDomain("domain.local")
-                .AddActiveDirectoryGroup("Security Group")
-                .Build();
+                .AddActiveDirectoryGroup("Security Group");
 
             var verifier = host.Services.GetRequiredService<MembershipVerifier>();
             var result = verifier.VerifyMembership(client, profile, client.SplittedActiveDirectoryDomains[0], profile.ExtractUpnBasedUser());
@@ -51,10 +50,9 @@ namespace MultiFactor.Radius.Adapter.Tests
                 });
             });
 
-            var client = ClientConfiguration.CreateBuilder("custom", "shared_secret", AuthenticationSource.None, "key", "secret")
+            var client = new ClientConfiguration("custom", "shared_secret", AuthenticationSource.None, "key", "secret")
                 .SetActiveDirectoryDomain("domain.local")
-                .AddActiveDirectoryGroup("Security Group")
-                .Build();
+                .AddActiveDirectoryGroup("Security Group");
             var profile = LdapProfile.CreateBuilder(LdapIdentity.BaseDn("CN=User Name,CN=Users,DC=domain,DC=local"), "CN=User Name,CN=Users,DC=domain,DC=local")
                 .SetDisplayName("User Name")
                 .SetEmail("username@post.org")
@@ -84,10 +82,9 @@ namespace MultiFactor.Radius.Adapter.Tests
                 });
             });
 
-            var client = ClientConfiguration.CreateBuilder("custom", "shared_secret", AuthenticationSource.None, "key", "secret")
+            var client = new ClientConfiguration("custom", "shared_secret", AuthenticationSource.None, "key", "secret")
                 .SetActiveDirectoryDomain("domain.local")
-                .AddActiveDirectory2FaGroup("2FA Group")
-                .Build();
+                .AddActiveDirectory2FaGroup("2FA Group");
             var profile = GetProfile();
 
             var verifier = host.Services.GetRequiredService<MembershipVerifier>();
@@ -110,9 +107,8 @@ namespace MultiFactor.Radius.Adapter.Tests
                 });
             });
 
-            var client = ClientConfiguration.CreateBuilder("custom", "shared_secret", AuthenticationSource.None, "key", "secret")
-                .SetActiveDirectoryDomain("domain.local")
-                .Build();
+            var client = new ClientConfiguration("custom", "shared_secret", AuthenticationSource.None, "key", "secret")
+                .SetActiveDirectoryDomain("domain.local");
             var profile = GetProfile();
 
             var verifier = host.Services.GetRequiredService<MembershipVerifier>();
@@ -135,10 +131,9 @@ namespace MultiFactor.Radius.Adapter.Tests
                 });
             });
 
-            var client = ClientConfiguration.CreateBuilder("custom", "shared_secret", AuthenticationSource.None, "key", "secret")
+            var client = new ClientConfiguration("custom", "shared_secret", AuthenticationSource.None, "key", "secret")
                 .SetActiveDirectoryDomain("domain.local")
-                .AddActiveDirectory2FaGroup("2FA Group")
-                .Build();
+                .AddActiveDirectory2FaGroup("2FA Group");
             var profile = GetProfile();
 
             var verifier = host.Services.GetRequiredService<MembershipVerifier>();
@@ -161,10 +156,9 @@ namespace MultiFactor.Radius.Adapter.Tests
                 });
             });
 
-            var client = ClientConfiguration.CreateBuilder("custom", "shared_secret", AuthenticationSource.None, "key", "secret")
+            var client = new ClientConfiguration("custom", "shared_secret", AuthenticationSource.None, "key", "secret")
                 .SetActiveDirectoryDomain("domain.local")
-                .AddActiveDirectory2FaGroup("2FA Group")
-                .Build();
+                .AddActiveDirectory2FaGroup("2FA Group");
             var profile = LdapProfile.CreateBuilder(LdapIdentity.BaseDn("CN=User Name,CN=Users,DC=domain,DC=local"), "CN=User Name,CN=Users,DC=domain,DC=local")
                 .SetDisplayName("User Name")
                 .SetEmail("username@post.org")
@@ -195,10 +189,9 @@ namespace MultiFactor.Radius.Adapter.Tests
                 });
             });
 
-            var client = ClientConfiguration.CreateBuilder("custom", "shared_secret", AuthenticationSource.None, "key", "secret")
+            var client = new ClientConfiguration("custom", "shared_secret", AuthenticationSource.None, "key", "secret")
                 .SetActiveDirectoryDomain("domain.local")
-                .AddActiveDirectory2FaBypassGroup("2FA Bypass Group")
-                .Build();
+                .AddActiveDirectory2FaBypassGroup("2FA Bypass Group");
             var profile = GetProfile();
 
             var verifier = host.Services.GetRequiredService<MembershipVerifier>();
@@ -221,9 +214,8 @@ namespace MultiFactor.Radius.Adapter.Tests
                 });
             });
 
-            var client = ClientConfiguration.CreateBuilder("custom", "shared_secret", AuthenticationSource.None, "key", "secret")
-                .SetActiveDirectoryDomain("domain.local")
-                .Build();
+            var client = new ClientConfiguration("custom", "shared_secret", AuthenticationSource.None, "key", "secret")
+                .SetActiveDirectoryDomain("domain.local");
             var profile = GetProfile();
 
             var verifier = host.Services.GetRequiredService<MembershipVerifier>();
@@ -246,10 +238,9 @@ namespace MultiFactor.Radius.Adapter.Tests
                 });
             });
 
-            var client = ClientConfiguration.CreateBuilder("custom", "shared_secret", AuthenticationSource.None, "key", "secret")
+            var client = new ClientConfiguration("custom", "shared_secret", AuthenticationSource.None, "key", "secret")
                 .SetActiveDirectoryDomain("domain.local")
-                .AddActiveDirectory2FaBypassGroup("2FA Bypass Group")
-                .Build();
+                .AddActiveDirectory2FaBypassGroup("2FA Bypass Group");
             var profile = GetProfile();
 
             var verifier = host.Services.GetRequiredService<MembershipVerifier>();
@@ -272,10 +263,9 @@ namespace MultiFactor.Radius.Adapter.Tests
                 });
             });
 
-            var client = ClientConfiguration.CreateBuilder("custom", "shared_secret", AuthenticationSource.None, "key", "secret")
+            var client = new ClientConfiguration("custom", "shared_secret", AuthenticationSource.None, "key", "secret")
                 .SetActiveDirectoryDomain("domain.local")
-                .AddActiveDirectory2FaBypassGroup("2FA Bypass Group")
-                .Build();
+                .AddActiveDirectory2FaBypassGroup("2FA Bypass Group");
             var profile = LdapProfile.CreateBuilder(LdapIdentity.BaseDn("CN=User Name,CN=Users,DC=domain,DC=local"), "CN=User Name,CN=Users,DC=domain,DC=local")
                 .SetDisplayName("User Name")
                 .SetEmail("username@post.org")
@@ -306,12 +296,11 @@ namespace MultiFactor.Radius.Adapter.Tests
                 });
             });
 
-            var client = ClientConfiguration.CreateBuilder("custom", "shared_secret", AuthenticationSource.None, "key", "secret")
+            var client = new ClientConfiguration("custom", "shared_secret", AuthenticationSource.None, "key", "secret")
                 .SetActiveDirectoryDomain("domain.local")
                 .AddActiveDirectoryGroup("Security Group")
                 .AddActiveDirectory2FaGroup("2FA Group")
-                .AddActiveDirectory2FaBypassGroup("2FA Bypass Group")
-                .Build();
+                .AddActiveDirectory2FaBypassGroup("2FA Bypass Group");
             var profile = LdapProfile.CreateBuilder(LdapIdentity.BaseDn("CN=User Name,CN=Users,DC=domain,DC=local"), "CN=User Name,CN=Users,DC=domain,DC=local")
                 .SetDisplayName("User Name")
                 .SetEmail("username@post.org")

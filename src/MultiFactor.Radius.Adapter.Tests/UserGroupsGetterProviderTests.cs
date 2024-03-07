@@ -9,6 +9,7 @@ using MultiFactor.Radius.Adapter.Tests.Fixtures.ConfigLoading;
 
 namespace MultiFactor.Radius.Adapter.Tests;
 
+[Trait("Category", "Profile")]
 public class UserGroupsGetterProviderTests
 {
     private IHost CreateTestingHost()

@@ -14,6 +14,7 @@ using MultiFactor.Radius.Adapter.Services.Ldap;
 
 namespace MultiFactor.Radius.Adapter.Tests
 {
+    [Trait("Category", "Multifactor API")]
     public class MultiFactorApiClientTests
     {
         [Theory]

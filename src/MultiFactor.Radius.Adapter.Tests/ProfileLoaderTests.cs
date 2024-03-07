@@ -16,6 +16,7 @@ using static LdapForNet.Native.Native;
 
 namespace MultiFactor.Radius.Adapter.Tests;
 
+[Trait("Category", "Profile")]
 public class ProfileLoaderTests
 {
     [Fact]

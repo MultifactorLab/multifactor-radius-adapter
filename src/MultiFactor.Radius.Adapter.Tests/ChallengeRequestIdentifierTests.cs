@@ -4,6 +4,7 @@ using MultiFactor.Radius.Adapter.Server;
 
 namespace MultiFactor.Radius.Adapter.Tests
 {
+    [Trait("Category", "Challenge")]
     public class ChallengeRequestIdentifierTests
     {
         [Fact]

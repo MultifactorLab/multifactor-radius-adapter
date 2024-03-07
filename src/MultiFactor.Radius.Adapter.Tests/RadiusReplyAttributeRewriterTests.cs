@@ -12,6 +12,7 @@ using MultiFactor.Radius.Adapter.Tests.Fixtures.Radius;
 
 namespace MultiFactor.Radius.Adapter.Tests
 {
+    [Trait("Category", "Radius Reply Attributes")]
     public class RadiusReplyAttributeRewriterTests
     {
         [Fact]
@@ -171,10 +172,9 @@ namespace MultiFactor.Radius.Adapter.Tests
                 });
             });
 
-            var clientConfig = ClientConfiguration.CreateBuilder("custom", "shared_secret", AuthenticationSource.ActiveDirectory, "key", "secret")
+            var clientConfig = new ClientConfiguration("custom", "shared_secret", AuthenticationSource.ActiveDirectory, "key", "secret")
                 .AddRadiusReplyAttribute("givenName", Array.Empty<RadiusReplyAttributeValue>())
-                .AddRadiusReplyAttribute("displayName", Array.Empty<RadiusReplyAttributeValue>())
-                .Build();
+                .AddRadiusReplyAttribute("displayName", Array.Empty<RadiusReplyAttributeValue>());
             var responseSender = new Mock<IRadiusResponseSender>();
             var context = new RadiusContext(clientConfig, responseSender.Object, new Mock<IServiceProvider>().Object)
             {
@@ -205,13 +205,12 @@ namespace MultiFactor.Radius.Adapter.Tests
                 services.RemoveService<IRadiusDictionary>().AddSingleton(dict.Object);
             });
 
-            var clientConfig = ClientConfiguration.CreateBuilder("custom", "shared_secret", AuthenticationSource.ActiveDirectory, "key", "secret")
+            var clientConfig = new ClientConfiguration("custom", "shared_secret", AuthenticationSource.ActiveDirectory, "key", "secret")
                 .AddRadiusReplyAttribute("givenName", new[]
                 {
-                            new RadiusReplyAttributeValue("val1", null, true),
-                            new RadiusReplyAttributeValue("val2", null)
-                })
-                .Build();
+                    new RadiusReplyAttributeValue("val1", null, true),
+                    new RadiusReplyAttributeValue("val2", null)
+                });
             var responseSender = new Mock<IRadiusResponseSender>();
             var context = new RadiusContext(clientConfig, responseSender.Object, new Mock<IServiceProvider>().Object)
             {
@@ -244,7 +243,7 @@ namespace MultiFactor.Radius.Adapter.Tests
                 services.RemoveService<IRadiusDictionary>().AddSingleton(dict.Object);
             });
 
-            var clientConfig = ClientConfiguration.CreateBuilder("custom", "shared_secret", AuthenticationSource.ActiveDirectory, "key", "secret")
+            var clientConfig = new ClientConfiguration("custom", "shared_secret", AuthenticationSource.ActiveDirectory, "key", "secret")
                 .AddRadiusReplyAttribute("givenName", new[]
                 {
                     new RadiusReplyAttributeValue("givenName")
@@ -252,8 +251,7 @@ namespace MultiFactor.Radius.Adapter.Tests
                 .AddRadiusReplyAttribute("displayName", new[]
                 {
                     new RadiusReplyAttributeValue("displayName")
-                })
-                .Build();
+                });
             var responseSender = new Mock<IRadiusResponseSender>();
             var context = new RadiusContext(clientConfig, responseSender.Object, new Mock<IServiceProvider>().Object)
             {

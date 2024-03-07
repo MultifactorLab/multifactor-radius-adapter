@@ -1,5 +1,7 @@
 ﻿using MultiFactor.Radius.Adapter.Configuration.Features.AuthenticatedClientCacheFeature;
+using MultiFactor.Radius.Adapter.Configuration.Features.PreAuthModeFeature;
 using MultiFactor.Radius.Adapter.Configuration.Features.PrivacyModeFeature;
+using MultiFactor.Radius.Adapter.Configuration.Features.RandomWaiterFeature;
 using MultiFactor.Radius.Adapter.Configuration.Features.UserNameTransformFeature;
 using MultiFactor.Radius.Adapter.Core;
 using MultiFactor.Radius.Adapter.Server;
@@ -37,5 +39,7 @@ namespace MultiFactor.Radius.Adapter.Configuration.Core
         public string TwoFAIdentityAttribyte { get; }
         public bool UseIdentityAttribyte => !string.IsNullOrEmpty(TwoFAIdentityAttribyte);
         bool ShouldLoadUserGroups();
+        RandomWaiterConfig InvalidCredentialDelay { get; }
+        PreAuthModeDescriptor PreAuthnMode { get; }
     }
 }

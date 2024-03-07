@@ -15,6 +15,7 @@ using MultiFactor.Radius.Adapter.Tests.Fixtures.Radius;
 
 namespace MultiFactor.Radius.Adapter.Tests.Pipeline
 {
+    [Trait("Category", "Pipeline")]
     public class FirstFactorAuthenticationMiddlewareTests
     {
         [Fact]

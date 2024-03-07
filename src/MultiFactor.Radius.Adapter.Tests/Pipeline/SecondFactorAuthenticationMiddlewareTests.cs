@@ -15,6 +15,7 @@ using System.Net;
 
 namespace MultiFactor.Radius.Adapter.Tests.Pipeline;
 
+[Trait("Category", "Pipeline")]
 public class SecondFactorAuthenticationMiddlewareTests
 {
     [Fact]

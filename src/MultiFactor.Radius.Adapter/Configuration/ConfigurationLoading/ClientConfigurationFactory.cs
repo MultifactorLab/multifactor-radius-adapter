@@ -72,7 +72,7 @@ namespace MultiFactor.Radius.Adapter.Configuration.ConfigurationLoading
                 throw new InvalidConfigurationException($"Can't parse '{Literals.Configuration.FirstFactorAuthSource}' value. Must be one of: ActiveDirectory, Radius, None");
             }
 
-            var builder = ClientConfiguration.CreateBuilder(name, radiusSharedSecretSetting, firstFactorAuthenticationSource,
+            var builder = new ClientConfiguration(name, radiusSharedSecretSetting, firstFactorAuthenticationSource,
                 multiFactorApiKeySetting, multiFactorApiSecretSetting);
 
             if (bypassSecondFactorWhenApiUnreachableSetting != null)
@@ -92,19 +92,24 @@ namespace MultiFactor.Radius.Adapter.Configuration.ConfigurationLoading
                 throw new InvalidConfigurationException($"Can't parse '{Literals.Configuration.PrivacyMode}' value. Must be one of: Full, None, Partial:Field1,Field2");
             }
 
-            switch (builder.Build().FirstFactorAuthenticationSource)
+            switch (builder.FirstFactorAuthenticationSource)
             {
                 case AuthenticationSource.ActiveDirectory:
                 case AuthenticationSource.Ldap:
-                    LoadActiveDirectoryAuthenticationSourceSettings(builder, appSettings, true);
+                    LoadActiveDirectoryAuthenticationSourceSettings(builder, appSettings);
                     break;
                 case AuthenticationSource.Radius:
                     LoadRadiusAuthenticationSourceSettings(builder, appSettings);
-                    LoadActiveDirectoryAuthenticationSourceSettings(builder, appSettings, false);
+                    LoadActiveDirectoryAuthenticationSourceSettings(builder, appSettings);
                     break;
                 case AuthenticationSource.None:
-                    LoadActiveDirectoryAuthenticationSourceSettings(builder, appSettings, false);
+                    LoadActiveDirectoryAuthenticationSourceSettings(builder, appSettings);
                     break;
+            }
+
+            if (builder.CheckMembership && string.IsNullOrEmpty(builder.ActiveDirectoryDomain))
+            {
+                throw new InvalidConfigurationException("membership verification impossible: 'active-directory-domain' element not found");
             }
 
             LoadRadiusReplyAttributes(builder, _dictionary, configuration.GetSection("RadiusReply") as RadiusReplyAttributesSection);
@@ -122,10 +127,10 @@ namespace MultiFactor.Radius.Adapter.Configuration.ConfigurationLoading
                 builder.SetCallingStationIdVendorAttribute(callindStationIdAttr);
             }
 
-            return builder.Build();
+            return builder;
         }
 
-        private static void LoadUserNameTransformRulesSection(Config configuration, IClientConfigurationBuilder builder)
+        private static void LoadUserNameTransformRulesSection(Config configuration, ClientConfiguration builder)
         {
             var userNameTransformRulesSection = configuration.GetSection("UserNameTransformRules") as UserNameTransformRulesSection;
 
@@ -141,7 +146,7 @@ namespace MultiFactor.Radius.Adapter.Configuration.ConfigurationLoading
             }
         }
 
-        private void LoadActiveDirectoryAuthenticationSourceSettings(IClientConfigurationBuilder builder, AppSettingsSection appSettings, bool mandatory)
+        private void LoadActiveDirectoryAuthenticationSourceSettings(ClientConfiguration builder, AppSettingsSection appSettings)
         {
             var activeDirectoryDomainSetting = appSettings.Settings["active-directory-domain"]?.Value;
             var ldapBindDnSetting = appSettings.Settings["ldap-bind-dn"]?.Value;
@@ -155,7 +160,7 @@ namespace MultiFactor.Radius.Adapter.Configuration.ConfigurationLoading
             var useUpnAsIdentitySetting = appSettings.Settings["use-upn-as-identity"]?.Value;
             var twoFAIdentityAttribyteSetting = appSettings.Settings["use-attribute-as-identity"]?.Value;
 
-            if (mandatory && string.IsNullOrEmpty(activeDirectoryDomainSetting))
+            if (builder.FirstFactorAuthenticationSource == AuthenticationSource.ActiveDirectory && string.IsNullOrEmpty(activeDirectoryDomainSetting))
             {
                 throw new InvalidConfigurationException("'active-directory-domain' element not found");
             }
@@ -235,7 +240,7 @@ namespace MultiFactor.Radius.Adapter.Configuration.ConfigurationLoading
             }
         }
 
-        private static void LoadRadiusAuthenticationSourceSettings(IClientConfigurationBuilder builder, AppSettingsSection appSettings)
+        private static void LoadRadiusAuthenticationSourceSettings(ClientConfiguration builder, AppSettingsSection appSettings)
         {
             var serviceClientEndpointSetting = appSettings.Settings["adapter-client-endpoint"]?.Value;
             var npsEndpointSetting = appSettings.Settings["nps-server-endpoint"]?.Value;
@@ -262,7 +267,7 @@ namespace MultiFactor.Radius.Adapter.Configuration.ConfigurationLoading
             builder.SetNpsServerEndpoint(npsEndpoint);
         }
 
-        private static void ReadSignUpGroupsSettings(IClientConfigurationBuilder builder, AppSettingsSection appSettings)
+        private static void ReadSignUpGroupsSettings(ClientConfiguration builder, AppSettingsSection appSettings)
         {
             const string signUpGroupsRegex = @"([\wа-я\s\-]+)(\s*;\s*([\wа-я\s\-]+)*)*";
             const string signUpGroupsToken = "sign-up-groups";
@@ -282,7 +287,7 @@ namespace MultiFactor.Radius.Adapter.Configuration.ConfigurationLoading
             builder.SetSignUpGroups(signUpGroupsSettings);
         }
 
-        private static void ReadAuthenticationCacheSettings(AppSettingsSection appSettings, IClientConfigurationBuilder builder)
+        private static void ReadAuthenticationCacheSettings(AppSettingsSection appSettings, ClientConfiguration builder)
         {
             bool minimalMatching = false;
             try
@@ -305,7 +310,7 @@ namespace MultiFactor.Radius.Adapter.Configuration.ConfigurationLoading
             }
         }
 
-        private static void LoadRadiusReplyAttributes(IClientConfigurationBuilder builder, IRadiusDictionary dictionary, RadiusReplyAttributesSection radiusReplyAttributesSection)
+        private static void LoadRadiusReplyAttributes(ClientConfiguration builder, IRadiusDictionary dictionary, RadiusReplyAttributesSection radiusReplyAttributesSection)
         {
             var replyAttributes = new Dictionary<string, List<RadiusReplyAttributeValue>>();
 

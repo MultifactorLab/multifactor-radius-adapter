@@ -12,6 +12,7 @@ using System.Net;
 
 namespace MultiFactor.Radius.Adapter.Tests
 {
+    [Trait("Category", "Challenge")]
     public class ChallengeProcessorTests
     {
         [Fact]
