@@ -198,17 +198,17 @@ namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi
             }
             catch (TaskCanceledException tce)
             {
-                throw new MultifactorApiUnreachableException($"Multifactor API host unreachable: {url}. Reason: Http request timeout", tce);
+                throw new MultifactorApiUnreachableException($"[API0000] Multifactor API host unreachable: {url}. Reason: Http request timeout", tce);
             }
             catch (Exception ex)
             {
-                throw new MultifactorApiUnreachableException($"Multifactor API host unreachable: {url}. Reason: {ex.Message}", ex);
+                throw new MultifactorApiUnreachableException($"[API0000] Multifactor API host unreachable: {url}. Reason: {ex.Message}", ex);
             }
         }
 
         private PacketCode HandleException(Exception ex, string username, RadiusContext context)
         {
-            _logger.LogError("Error occured while requesting API for user '{user:l}' from {host:l}:{port}, {msg:l}",
+            _logger.LogError(ex, "Error occured while requesting API for user '{user:l}' from {host:l}:{port}, {msg:l}",
                 username,
                 context.RemoteEndpoint.Address,
                 context.RemoteEndpoint.Port,
@@ -219,7 +219,7 @@ namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi
                 return ConvertToRadiusCode(null);
             }
 
-            if (context.ClientConfiguration.BypassSecondFactorWhenApiUnreachable)
+            if (!context.ClientConfiguration.BypassSecondFactorWhenApiUnreachable)
             {
                 return ConvertToRadiusCode(null);
             }
