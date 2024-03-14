@@ -3,6 +3,7 @@
 //https://github.com/MultifactorLab/multifactor-radius-adapter/blob/main/LICENSE.md
 
 using MultiFactor.Radius.Adapter.Core.Pipeline;
+using MultiFactor.Radius.Adapter.Server.Context;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 

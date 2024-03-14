@@ -3,6 +3,7 @@
 //https://github.com/MultifactorLab/multifactor-radius-adapter/blob/main/LICENSE.md
 
 using MultiFactor.Radius.Adapter.Core.Radius;
+using MultiFactor.Radius.Adapter.Server.Context;
 using System.Threading.Tasks;
 
 namespace MultiFactor.Radius.Adapter.Server

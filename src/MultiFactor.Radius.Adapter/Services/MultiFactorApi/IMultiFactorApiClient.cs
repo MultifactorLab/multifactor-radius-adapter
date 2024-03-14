@@ -5,6 +5,7 @@
 
 using MultiFactor.Radius.Adapter.Core.Radius;
 using MultiFactor.Radius.Adapter.Server;
+using MultiFactor.Radius.Adapter.Server.Context;
 using System.Threading.Tasks;
 
 namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi

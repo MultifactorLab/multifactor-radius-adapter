@@ -9,7 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.Net;
 
-namespace MultiFactor.Radius.Adapter.Server
+namespace MultiFactor.Radius.Adapter.Server.Context
 {
     public class RadiusContext
     {
@@ -23,6 +23,7 @@ namespace MultiFactor.Radius.Adapter.Server
             ClientConfiguration = clientConfiguration ?? throw new ArgumentNullException(nameof(clientConfiguration));
             ResponseSender = radiusResponseSender ?? throw new ArgumentNullException(nameof(radiusResponseSender));
             RequestServices = provider ?? throw new ArgumentNullException(nameof(provider));
+            AuthenticationState = new();
         }
 
         public IPEndPoint RemoteEndpoint { get; init; }
@@ -51,6 +52,8 @@ namespace MultiFactor.Radius.Adapter.Server
         public IServiceProvider RequestServices { get; set; }
         public IClientConfiguration ClientConfiguration { get; }
         public IRadiusResponseSender ResponseSender { get; }
+
+        public AuthenticationState AuthenticationState { get; }
 
         public void SetProfile(ILdapProfile profile)
         {

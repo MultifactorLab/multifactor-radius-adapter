@@ -7,6 +7,7 @@ using MultiFactor.Radius.Adapter.Configuration;
 using MultiFactor.Radius.Adapter.Core.Exceptions;
 using MultiFactor.Radius.Adapter.Core.Pipeline;
 using MultiFactor.Radius.Adapter.Core.Radius;
+using MultiFactor.Radius.Adapter.Server.Context;
 using MultiFactor.Radius.Adapter.Services.Ldap.MembershipVerification;
 using MultiFactor.Radius.Adapter.Services.MultiFactorApi;
 using System;

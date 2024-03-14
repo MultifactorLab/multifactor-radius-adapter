@@ -14,6 +14,7 @@ using System.Collections;
 using MultiFactor.Radius.Adapter.Core.Radius.Attributes;
 using Microsoft.Extensions.Logging;
 using MultiFactor.Radius.Adapter.Configuration;
+using MultiFactor.Radius.Adapter.Server.Context;
 
 namespace MultiFactor.Radius.Adapter.Server.Pipeline;
 

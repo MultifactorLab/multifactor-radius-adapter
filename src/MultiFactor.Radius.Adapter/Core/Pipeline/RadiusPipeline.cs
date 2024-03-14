@@ -1,8 +1,8 @@
-﻿using MultiFactor.Radius.Adapter.Server;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using System;
 using MultiFactor.Radius.Adapter.Core.Exceptions;
 using Microsoft.Extensions.Logging;
+using MultiFactor.Radius.Adapter.Server.Context;
 
 namespace MultiFactor.Radius.Adapter.Core.Pipeline;
 

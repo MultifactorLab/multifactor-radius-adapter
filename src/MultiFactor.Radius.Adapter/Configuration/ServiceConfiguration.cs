@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc.Formatters;
 using MultiFactor.Radius.Adapter.Configuration.Core;
 using MultiFactor.Radius.Adapter.Configuration.Features.RandomWaiterFeature;
 using MultiFactor.Radius.Adapter.Core;
-using MultiFactor.Radius.Adapter.Server;
+using MultiFactor.Radius.Adapter.Server.Context;
 using NetTools;
 using System;
 using System.Collections;

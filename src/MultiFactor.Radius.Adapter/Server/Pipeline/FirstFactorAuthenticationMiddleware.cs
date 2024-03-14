@@ -4,6 +4,7 @@
 
 using MultiFactor.Radius.Adapter.Core.Pipeline;
 using MultiFactor.Radius.Adapter.Core.Radius;
+using MultiFactor.Radius.Adapter.Server.Context;
 using MultiFactor.Radius.Adapter.Server.FirstAuthFactorProcessing;
 using System;
 using System.Threading.Tasks;

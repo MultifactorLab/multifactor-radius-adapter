@@ -1,4 +1,4 @@
-﻿using MultiFactor.Radius.Adapter.Server;
+﻿using MultiFactor.Radius.Adapter.Server.Context;
 using System.Threading.Tasks;
 
 namespace MultiFactor.Radius.Adapter.Core.Pipeline;

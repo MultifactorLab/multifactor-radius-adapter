@@ -7,6 +7,7 @@ using MultiFactor.Radius.Adapter.Configuration;
 using MultiFactor.Radius.Adapter.Configuration.Core;
 using MultiFactor.Radius.Adapter.Core;
 using MultiFactor.Radius.Adapter.Core.Radius;
+using MultiFactor.Radius.Adapter.Server.Context;
 using MultiFactor.Radius.Adapter.Services.ActiveDirectory.MembershipVerification;
 using MultiFactor.Radius.Adapter.Services.Ldap.MembershipVerification;
 using System;

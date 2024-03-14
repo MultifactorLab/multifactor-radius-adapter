@@ -8,6 +8,7 @@ using System.Net;
 using System.Globalization;
 using MultiFactor.Radius.Adapter.Core.Radius.Attributes;
 using Microsoft.Extensions.Logging;
+using MultiFactor.Radius.Adapter.Server.Context;
 
 namespace MultiFactor.Radius.Adapter.Server.Pipeline;
 

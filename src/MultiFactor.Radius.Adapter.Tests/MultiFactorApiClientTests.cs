@@ -11,6 +11,7 @@ using MultiFactor.Radius.Adapter.Configuration.Features.PrivacyModeFeature;
 using Microsoft.Extensions.Logging;
 using MultiFactor.Radius.Adapter.Services.Ldap.ProfileLoading;
 using MultiFactor.Radius.Adapter.Services.Ldap;
+using MultiFactor.Radius.Adapter.Server.Context;
 
 namespace MultiFactor.Radius.Adapter.Tests
 {

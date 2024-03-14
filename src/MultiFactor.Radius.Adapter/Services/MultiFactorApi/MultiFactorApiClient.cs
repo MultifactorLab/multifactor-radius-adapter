@@ -12,6 +12,7 @@ using MultiFactor.Radius.Adapter.Core.Http;
 using MultiFactor.Radius.Adapter.Core.Radius;
 using MultiFactor.Radius.Adapter.Core.Serialization;
 using MultiFactor.Radius.Adapter.Server;
+using MultiFactor.Radius.Adapter.Server.Context;
 using System;
 using System.Collections.Generic;
 using System.Linq;

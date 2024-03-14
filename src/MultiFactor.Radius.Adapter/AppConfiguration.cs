@@ -16,6 +16,7 @@ using MultiFactor.Radius.Adapter.Core.Serialization;
 using MultiFactor.Radius.Adapter.HostedServices;
 using MultiFactor.Radius.Adapter.Logging;
 using MultiFactor.Radius.Adapter.Server;
+using MultiFactor.Radius.Adapter.Server.Context;
 using MultiFactor.Radius.Adapter.Server.FirstAuthFactorProcessing;
 using MultiFactor.Radius.Adapter.Server.Pipeline;
 using MultiFactor.Radius.Adapter.Services;

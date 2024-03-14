@@ -5,6 +5,7 @@
 using Microsoft.Extensions.Logging;
 using MultiFactor.Radius.Adapter.Core.Pipeline;
 using MultiFactor.Radius.Adapter.Core.Radius;
+using MultiFactor.Radius.Adapter.Server.Context;
 using System;
 using System.Threading.Tasks;
 

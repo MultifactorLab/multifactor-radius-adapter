@@ -4,6 +4,7 @@
 
 using Microsoft.Extensions.Logging;
 using MultiFactor.Radius.Adapter.Core.Radius;
+using MultiFactor.Radius.Adapter.Server.Context;
 using MultiFactor.Radius.Adapter.Services.MultiFactorApi;
 using System;
 using System.Collections.Concurrent;

@@ -4,6 +4,7 @@
 
 using System;
 using System.Linq;
+using MultiFactor.Radius.Adapter.Server.Context;
 
 namespace MultiFactor.Radius.Adapter.Server
 {

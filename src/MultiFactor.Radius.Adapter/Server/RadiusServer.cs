@@ -43,6 +43,7 @@ using Microsoft.Extensions.DependencyInjection;
 using MultiFactor.Radius.Adapter.Core.Pipeline;
 using static System.Formats.Asn1.AsnWriter;
 using Microsoft.Extensions.Logging;
+using MultiFactor.Radius.Adapter.Server.Context;
 
 namespace MultiFactor.Radius.Adapter.Server
 {

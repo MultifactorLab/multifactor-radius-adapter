@@ -28,7 +28,7 @@ using System.Net.Sockets;
 using MultiFactor.Radius.Adapter.Core.Radius;
 using MultiFactor.Radius.Adapter.Configuration.Core;
 
-namespace MultiFactor.Radius.Adapter.Server;
+namespace MultiFactor.Radius.Adapter.Server.Context;
 
 public class RadiusContextFactory
 {
