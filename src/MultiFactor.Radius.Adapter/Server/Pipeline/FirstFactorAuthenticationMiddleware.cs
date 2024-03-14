@@ -28,6 +28,7 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline
             var firstFactorAuthenticationResultCode = await firstAuthProcessor.ProcessFirstAuthFactorAsync(context);
             if (firstFactorAuthenticationResultCode == PacketCode.AccessAccept)
             {
+                context.AuthenticationState.SetFirstFactor(AuthenticationCode.Accept);
                 await next(context);
                 return;
             }
