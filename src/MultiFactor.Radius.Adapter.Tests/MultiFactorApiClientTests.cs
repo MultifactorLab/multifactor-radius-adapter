@@ -25,9 +25,8 @@ namespace MultiFactor.Radius.Adapter.Tests
         [InlineData("SomeUnexpectedStatus")]
         public async Task CreateSecondFactorRequest_ShouldReturnReject(string status)
         {
-            var client = ClientConfiguration.CreateBuilder("cli_config", "rds", AuthenticationSource.None, "key", "secret")
-                .SetPrivacyMode(PrivacyModeDescriptor.None)
-                .Build();
+            var client = new ClientConfiguration("cli_config", "rds", AuthenticationSource.None, "key", "secret")
+                .SetPrivacyMode(PrivacyModeDescriptor.None);
             var responseSender = new Mock<IRadiusResponseSender>();
             var context = new RadiusContext(client, responseSender.Object, new Mock<IServiceProvider>().Object)
             {
@@ -57,9 +56,8 @@ namespace MultiFactor.Radius.Adapter.Tests
         [Fact]
         public async Task CreateSecondFactorRequest_CachedUser_ShouldReturnAccept()
         {
-            var client = ClientConfiguration.CreateBuilder("cli_config", "rds", AuthenticationSource.None, "key", "secret")
-                .SetPrivacyMode(PrivacyModeDescriptor.None)
-                .Build();
+            var client = new ClientConfiguration("cli_config", "rds", AuthenticationSource.None, "key", "secret")
+                .SetPrivacyMode(PrivacyModeDescriptor.None);
             var responseSender = new Mock<IRadiusResponseSender>();
             var context = new RadiusContext(client, responseSender.Object, new Mock<IServiceProvider>().Object)
             {
@@ -91,9 +89,8 @@ namespace MultiFactor.Radius.Adapter.Tests
         [Fact]
         public async Task CreateSecondFactorRequest_NotCachedUser_ShouldReturnReject()
         {
-            var client = ClientConfiguration.CreateBuilder("cli_config", "rds", AuthenticationSource.None, "key", "secret")
-                .SetPrivacyMode(PrivacyModeDescriptor.None)
-                .Build();
+            var client = new ClientConfiguration("cli_config", "rds", AuthenticationSource.None, "key", "secret")
+                .SetPrivacyMode(PrivacyModeDescriptor.None);
             var responseSender = new Mock<IRadiusResponseSender>();
             var context = new RadiusContext(client, responseSender.Object, new Mock<IServiceProvider>().Object)
             {
@@ -125,10 +122,9 @@ namespace MultiFactor.Radius.Adapter.Tests
         [Fact]
         public async Task CreateSecondFactorRequest_ThrowsMultifactorApiUnreachableExceptionAndBypassIsNotConfigured_ShouldReturnReject()
         {
-            var client = ClientConfiguration.CreateBuilder("cli_config", "rds", AuthenticationSource.None, "key", "secret")
+            var client = new ClientConfiguration("cli_config", "rds", AuthenticationSource.None, "key", "secret")
                 .SetPrivacyMode(PrivacyModeDescriptor.None)
-                .SetBypassSecondFactorWhenApiUnreachable(false)
-                .Build();
+                .SetBypassSecondFactorWhenApiUnreachable(false);
             var responseSender = new Mock<IRadiusResponseSender>();
             var context = new RadiusContext(client, responseSender.Object, new Mock<IServiceProvider>().Object)
             {
@@ -151,9 +147,8 @@ namespace MultiFactor.Radius.Adapter.Tests
         [Fact]
         public async Task CreateSecondFactorRequest_ThrowsMultifactorApiUnreachableExceptionAndBypassIsConfigured_ShouldReturnAccept()
         {
-            var client = ClientConfiguration.CreateBuilder("cli_config", "rds", AuthenticationSource.None, "key", "secret")
-                .SetPrivacyMode(PrivacyModeDescriptor.None)
-                .Build();
+            var client = new ClientConfiguration("cli_config", "rds", AuthenticationSource.None, "key", "secret")
+                .SetPrivacyMode(PrivacyModeDescriptor.None);
             var responseSender = new Mock<IRadiusResponseSender>();
             var context = new RadiusContext(client, responseSender.Object, new Mock<IServiceProvider>().Object)
             {
@@ -176,10 +171,9 @@ namespace MultiFactor.Radius.Adapter.Tests
         [Fact]
         public async Task CreateSecondFactorRequest_UseAttributeAsIdentityEnable_ShouldReturnAccept()
         {
-            var client = ClientConfiguration.CreateBuilder("cli_config", "rds", AuthenticationSource.None, "key", "secret")
+            var client = new ClientConfiguration("cli_config", "rds", AuthenticationSource.None, "key", "secret")
                 .SetPrivacyMode(PrivacyModeDescriptor.None)
-                .SetUseAttributeAsIdentity("some_attr_name")
-                .Build();
+                .SetUseAttributeAsIdentity("some_attr_name");
             var responseSender = new Mock<IRadiusResponseSender>();
             var context = new RadiusContext(client, responseSender.Object, new Mock<IServiceProvider>().Object)
             {
@@ -205,10 +199,9 @@ namespace MultiFactor.Radius.Adapter.Tests
         [Fact]
         public async Task CreateSecondFactorRequest_UseAttributeAsIdentityEnableButEmpty_ShouldReturnReject()
         {
-            var client = ClientConfiguration.CreateBuilder("cli_config", "rds", AuthenticationSource.None, "key", "secret")
+            var client = new ClientConfiguration("cli_config", "rds", AuthenticationSource.None, "key", "secret")
                 .SetPrivacyMode(PrivacyModeDescriptor.None)
-                .SetUseAttributeAsIdentity("some_attr")
-                .Build();
+                .SetUseAttributeAsIdentity("some_attr");
             var responseSender = new Mock<IRadiusResponseSender>();
             var context = new RadiusContext(client, responseSender.Object, new Mock<IServiceProvider>().Object)
             {

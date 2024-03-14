@@ -39,6 +39,8 @@
             public const string UseActiveDirectoryMobileUserPhone = "use-active-directory-mobile-user-phone";
             public const string UseActiveDirectoryUserPhone = "use-active-directory-user-phone";
             public const string UseUpnAsIdentity = "use-upn-as-identity";
+            public const string UseAttributeAsIdentity = "use-attribute-as-identity";
+            public const string PreAuthMode = "pre-authentication-method";
         }
     }
 }

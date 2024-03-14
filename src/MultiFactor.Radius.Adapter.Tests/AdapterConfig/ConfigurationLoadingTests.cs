@@ -209,7 +209,7 @@ public partial class ConfigurationLoadingTests
                 x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-multi.config");
                 x.ClientConfigFilePaths = new[]
                 {
-                    TestEnvironment.GetAssetPath(TestAssetLocation.ClientsDirectory, "client-cred-delay-0")
+                    TestEnvironment.GetAssetPath(TestAssetLocation.ClientsDirectory, "client-cred-delay-0.config")
                 };
             });
         });
@@ -238,14 +238,14 @@ public partial class ConfigurationLoadingTests
                 x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-multi.config");
                 x.ClientConfigFilePaths = new[]
                 {
-                    TestEnvironment.GetAssetPath(TestAssetLocation.ClientsDirectory, "client-cred-delay-1-2")
+                    TestEnvironment.GetAssetPath(TestAssetLocation.ClientsDirectory, "client-cred-delay-1-2.config")
                 };
             });
         });
 
         var conf = host.Services.GetRequiredService<IServiceConfiguration>();
 
-        var cli = Assert.Single(conf.Clients, x => x.Name == "client-cred-delay-0");
+        var cli = Assert.Single(conf.Clients, x => x.Name == "client-cred-delay-1-2");
         var waiterConfig = cli.InvalidCredentialDelay;
 
         Assert.NotNull(waiterConfig);
@@ -264,10 +264,10 @@ public partial class ConfigurationLoadingTests
             services.RemoveService<IClientConfigurationsProvider>().AddSingleton<IClientConfigurationsProvider, TestClientConfigsProvider>();
             services.Configure<TestConfigProviderOptions>(x =>
             {
-                x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-multi-credential-delay-1-2");
+                x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-multi-credential-delay-1-2.config");
                 x.ClientConfigFilePaths = new[]
                 {
-                    TestEnvironment.GetAssetPath(TestAssetLocation.ClientsDirectory, "client-cred-delay-3")
+                    TestEnvironment.GetAssetPath(TestAssetLocation.ClientsDirectory, "client-cred-delay-3.config")
                 };
             });
         });
@@ -277,7 +277,7 @@ public partial class ConfigurationLoadingTests
         Assert.Equal(1, conf.InvalidCredentialDelay.Min);
         Assert.Equal(2, conf.InvalidCredentialDelay.Max);
 
-        var cli = Assert.Single(conf.Clients, x => x.Name == "client-cred-delay-0");
+        var cli = Assert.Single(conf.Clients, x => x.Name == "client-cred-delay-3");
         var waiterConfig = cli.InvalidCredentialDelay;
 
         Assert.Equal(3, waiterConfig.Min);
@@ -294,10 +294,10 @@ public partial class ConfigurationLoadingTests
             services.RemoveService<IClientConfigurationsProvider>().AddSingleton<IClientConfigurationsProvider, TestClientConfigsProvider>();
             services.Configure<TestConfigProviderOptions>(x =>
             {
-                x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-multi");
+                x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-multi.config");
                 x.ClientConfigFilePaths = new[]
                 {
-                    TestEnvironment.GetAssetPath(TestAssetLocation.ClientsDirectory, "pre-auth-method/client-pre-auth-method-otp-with-no-cred-delay")
+                    TestEnvironment.GetAssetPath(TestAssetLocation.ClientsDirectory, "pre-auth-method/client-pre-auth-method-otp-with-no-cred-delay.config")
                 };
             });
         });
@@ -317,10 +317,10 @@ public partial class ConfigurationLoadingTests
             services.RemoveService<IClientConfigurationsProvider>().AddSingleton<IClientConfigurationsProvider, TestClientConfigsProvider>();
             services.Configure<TestConfigProviderOptions>(x =>
             {
-                x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-multi");
+                x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-multi.config");
                 x.ClientConfigFilePaths = new[]
                 {
-                    TestEnvironment.GetAssetPath(TestAssetLocation.ClientsDirectory, "pre-auth-method/client-pre-auth-method-none")
+                    TestEnvironment.GetAssetPath(TestAssetLocation.ClientsDirectory, "pre-auth-method/client-pre-auth-method-none.config")
                 };
             });
         });
@@ -335,9 +335,9 @@ public partial class ConfigurationLoadingTests
     
     [Theory]
     [Trait("Category", "Pre Authentication Method")]
-    [InlineData("pre-auth-method/client-pre-auth-method-otp", PreAuthMode.Otp)]
-    [InlineData("pre-auth-method/client-pre-auth-method-push", PreAuthMode.Push)]
-    [InlineData("pre-auth-method/client-pre-auth-method-telegram", PreAuthMode.Telegram)]
+    [InlineData("pre-auth-method/client-pre-auth-method-otp.config", PreAuthMode.Otp)]
+    [InlineData("pre-auth-method/client-pre-auth-method-push.config", PreAuthMode.Push)]
+    [InlineData("pre-auth-method/client-pre-auth-method-telegram.config", PreAuthMode.Telegram)]
     public void MultiPreAuthMethodWithCredDelay_ShouldSuccess(string asset, PreAuthMode mode)
     {
         var host = TestHostFactory.CreateHost(services =>
@@ -346,7 +346,7 @@ public partial class ConfigurationLoadingTests
             services.RemoveService<IClientConfigurationsProvider>().AddSingleton<IClientConfigurationsProvider, TestClientConfigsProvider>();
             services.Configure<TestConfigProviderOptions>(x =>
             {
-                x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-multi");
+                x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-multi.config");
                 x.ClientConfigFilePaths = new[]
                 {
                     TestEnvironment.GetAssetPath(TestAssetLocation.ClientsDirectory, asset)
@@ -370,10 +370,10 @@ public partial class ConfigurationLoadingTests
             services.RemoveService<IClientConfigurationsProvider>().AddSingleton<IClientConfigurationsProvider, TestClientConfigsProvider>();
             services.Configure<TestConfigProviderOptions>(x =>
             {
-                x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-multi-credential-delay-2-3");
+                x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-multi-credential-delay-2-3.config");
                 x.ClientConfigFilePaths = new[]
                 {
-                    TestEnvironment.GetAssetPath(TestAssetLocation.ClientsDirectory, "pre-auth-method/client-pre-auth-method-otp-with-no-cred-delay")
+                    TestEnvironment.GetAssetPath(TestAssetLocation.ClientsDirectory, "pre-auth-method/client-pre-auth-method-otp-with-no-cred-delay.config")
                 };
             });
         });

@@ -24,7 +24,7 @@ namespace MultiFactor.Radius.Adapter.Tests
             var logger = new Mock<ILogger<ChallengeProcessor>>();
             var processor = new ChallengeProcessor(api.Object, logger.Object);
 
-            var client = ClientConfiguration.CreateBuilder("cli_config", "rds", AuthenticationSource.None, "key", "secret").Build();
+            var client = new ClientConfiguration("cli_config", "rds", AuthenticationSource.None, "key", "secret");
             var identifier = new ChallengeRequestIdentifier(client, reqId);
             var responseSender = new Mock<IRadiusResponseSender>();
             var context = new RadiusContext(client, responseSender.Object, new Mock<IServiceProvider>().Object)
@@ -46,7 +46,7 @@ namespace MultiFactor.Radius.Adapter.Tests
             var logger = new Mock<ILogger<ChallengeProcessor>>();
             var processor = new ChallengeProcessor(api.Object, logger.Object);
 
-            var client = ClientConfiguration.CreateBuilder("cli_config", "rds", AuthenticationSource.None, "key", "secret").Build();
+            var client = new ClientConfiguration("cli_config", "rds", AuthenticationSource.None, "key", "secret");
             var identifier = new ChallengeRequestIdentifier(client, reqId);
             var responseSender = new Mock<IRadiusResponseSender>();
             var context = new RadiusContext(client, responseSender.Object, new Mock<IServiceProvider>().Object)
@@ -70,7 +70,7 @@ namespace MultiFactor.Radius.Adapter.Tests
             var logger = new Mock<ILogger<ChallengeProcessor>>();
             var processor = new ChallengeProcessor(api.Object, logger.Object);
 
-            var client = ClientConfiguration.CreateBuilder("cli_config", "rds", AuthenticationSource.None, "key", "secret").Build();
+            var client = new ClientConfiguration("cli_config", "rds", AuthenticationSource.None, "key", "secret");
             var identifier = new ChallengeRequestIdentifier(client, reqId);
             var responseSender = new Mock<IRadiusResponseSender>();
             var context = new RadiusContext(client, responseSender.Object, new Mock<IServiceProvider>().Object)
@@ -98,7 +98,7 @@ namespace MultiFactor.Radius.Adapter.Tests
             var logger = new Mock<ILogger<ChallengeProcessor>>();
             var processor = new ChallengeProcessor(api.Object, logger.Object);
 
-            var client = ClientConfiguration.CreateBuilder("cli_config", "rds", AuthenticationSource.None, "key", "secret").Build();
+            var client = new ClientConfiguration("cli_config", "rds", AuthenticationSource.None, "key", "secret");
             var identifier = new ChallengeRequestIdentifier(client, reqId);
             var responseSender = new Mock<IRadiusResponseSender>();
             var context = new RadiusContext(client, responseSender.Object, new Mock<IServiceProvider>().Object)
@@ -129,7 +129,7 @@ namespace MultiFactor.Radius.Adapter.Tests
             var logger = new Mock<ILogger<ChallengeProcessor>>();
             var processor = new ChallengeProcessor(api.Object, logger.Object);
 
-            var client = ClientConfiguration.CreateBuilder("cli_config", "rds", AuthenticationSource.None, "key", "secret").Build();
+            var client = new ClientConfiguration("cli_config", "rds", AuthenticationSource.None, "key", "secret");
             var identifier = new ChallengeRequestIdentifier(client, reqId);
             var responseSender = new Mock<IRadiusResponseSender>();
             var context = new RadiusContext(client, responseSender.Object, new Mock<IServiceProvider>().Object)
@@ -159,7 +159,7 @@ namespace MultiFactor.Radius.Adapter.Tests
             var logger = new Mock<ILogger<ChallengeProcessor>>();
             var processor = new ChallengeProcessor(api.Object, logger.Object);
 
-            var client = ClientConfiguration.CreateBuilder("cli_config", "rds", AuthenticationSource.None, "key", "secret").Build();
+            var client = new ClientConfiguration("cli_config", "rds", AuthenticationSource.None, "key", "secret");
             var responseSender = new Mock<IRadiusResponseSender>();
             var context = new RadiusContext(client, responseSender.Object, new Mock<IServiceProvider>().Object)
             {

@@ -20,7 +20,7 @@ using System.Text.RegularExpressions;
 
 namespace MultiFactor.Radius.Adapter.Configuration
 {
-    public class ServiceConfiguration : IServiceConfiguration, IServiceConfigurationBuilder
+    public class ServiceConfiguration : IServiceConfiguration
     {
         /// <summary>
         /// List of clients with identification by client ip
@@ -32,18 +32,10 @@ namespace MultiFactor.Radius.Adapter.Configuration
         /// </summary>
         private readonly IDictionary<string, IClientConfiguration> _nasIdClients = new Dictionary<string, IClientConfiguration>();
 
-        public IReadOnlyList<IClientConfiguration> Clients => _ipClients
-            .Select(x => x.Value)
-            .Concat(_nasIdClients.Select(x => x.Value))
-            .ToList()
-            .AsReadOnly();
+        private readonly List<IClientConfiguration> _clients = new();
+        public ReadOnlyCollection<IClientConfiguration> Clients => _clients.AsReadOnly();
 
-        private ServiceConfiguration() { }
-
-        public static IServiceConfigurationBuilder CreateBuilder()
-        {
-            return new ServiceConfiguration();
-        }
+        public ServiceConfiguration() { }
 
         public IClientConfiguration GetClient(string nasIdentifier)
         {
@@ -115,68 +107,94 @@ namespace MultiFactor.Radius.Adapter.Configuration
         public bool SingleClientMode { get; private set; }
         public RandomWaiterConfig InvalidCredentialDelay { get; private set; }
 
-        public IServiceConfigurationBuilder SetApiProxy(string val)
+        public ServiceConfiguration SetApiProxy(string val)
         {
+            if (string.IsNullOrWhiteSpace(val))
+            {
+                throw new ArgumentException($"'{nameof(val)}' cannot be null or whitespace.", nameof(val));
+            }
+
             ApiProxy = val;
             return this;
         }
 
-        public IServiceConfigurationBuilder SetApiUrl(string val)
+        public ServiceConfiguration SetApiUrl(string val)
         {
+            if (string.IsNullOrWhiteSpace(val))
+            {
+                throw new ArgumentException($"'{nameof(val)}' cannot be null or whitespace.", nameof(val));
+            }
+
             ApiUrl = val;
             return this;
         }
 
-        public IServiceConfigurationBuilder SetApiTimeout(TimeSpan httpTimeoutSetting)
+        public ServiceConfiguration SetApiTimeout(TimeSpan httpTimeoutSetting)
         {
             ApiTimeout = httpTimeoutSetting;
             return this;
         }
 
-        public IServiceConfigurationBuilder AddClient(string nasId, IClientConfiguration client)
+        public ServiceConfiguration AddClient(string nasId, IClientConfiguration client)
         {
             if (_nasIdClients.ContainsKey(nasId))
             {
                 throw new ConfigurationErrorsException($"Client with NAS-Identifier '{nasId} already added from {_nasIdClients[nasId].Name}.config");
             }
 
+            if (string.IsNullOrWhiteSpace(nasId))
+            {
+                throw new ArgumentException($"'{nameof(nasId)}' cannot be null or whitespace.", nameof(nasId));
+            }
+
+            if (client is null)
+            {
+                throw new ArgumentNullException(nameof(client));
+            }
+
             _nasIdClients.Add(nasId, client);
+            _clients.Add(client);
             return this;
         }
 
-        public IServiceConfigurationBuilder AddClient(IPAddress ip, IClientConfiguration client)
+        public ServiceConfiguration AddClient(IPAddress ip, IClientConfiguration client)
         {
+            if (ip is null)
+            {
+                throw new ArgumentNullException(nameof(ip));
+            }
+
+            if (client is null)
+            {
+                throw new ArgumentNullException(nameof(client));
+            }
+
             if (_ipClients.ContainsKey(ip))
             {
                 throw new ConfigurationErrorsException($"Client with IP {ip} already added from {_ipClients[ip].Name}.config");
             }
 
             _ipClients.Add(ip, client);
+            _clients.Add(client);
             return this;
         }
 
-        public IServiceConfigurationBuilder SetInvalidCredentialDelay(RandomWaiterConfig config)
+        public ServiceConfiguration SetInvalidCredentialDelay(RandomWaiterConfig config)
         {
-            InvalidCredentialDelay = config;
+            InvalidCredentialDelay = config ?? throw new ArgumentNullException(nameof(config));
             return this;
         }
 
-        public IServiceConfigurationBuilder SetServiceServerEndpoint(IPEndPoint endpoint)
+        public ServiceConfiguration SetServiceServerEndpoint(IPEndPoint endpoint)
         {
-            ServiceServerEndpoint = endpoint;
+            ServiceServerEndpoint = endpoint ?? throw new ArgumentNullException(nameof(endpoint));
             return this;
         }
 
-        public IServiceConfigurationBuilder IsSingleClientMode(bool single)
+        public ServiceConfiguration IsSingleClientMode(bool single)
         {
             SingleClientMode = single;
             return this;
         }
-
-        public IServiceConfiguration Build()
-        {
-            return this;
-        }
-
     }
 }

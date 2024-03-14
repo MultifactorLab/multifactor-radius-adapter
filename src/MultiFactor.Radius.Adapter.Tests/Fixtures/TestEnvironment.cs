@@ -30,6 +30,7 @@ internal static class TestEnvironment
     public static string GetAssetPath(TestAssetLocation location, string fileName)
     {
         if (string.IsNullOrWhiteSpace(fileName)) return GetAssetPath(location);
-        return $"{GetAssetPath(location)}{Path.DirectorySeparatorChar}{Path.Combine(fileName.Split('/', '\\'))}";
+        var s = $"{GetAssetPath(location)}{Path.DirectorySeparatorChar}{Path.Combine(fileName.Split('/', '\\'))}";
+        return s;
     }
 }

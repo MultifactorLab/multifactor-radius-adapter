@@ -102,10 +102,9 @@ public class SecondFactorAuthenticationMiddlewareTests
             services.RemoveService<IMultiFactorApiClient>().AddSingleton(api.Object);
         });
 
-        var client = ClientConfiguration.CreateBuilder("custom", "shared_secret", AuthenticationSource.Radius, "key", "secret")
+        var client = new ClientConfiguration("custom", "shared_secret", AuthenticationSource.Radius, "key", "secret")
             .SetActiveDirectoryDomain("domain.local")
-            .AddActiveDirectoryGroup("Security Group")
-            .Build();
+            .AddActiveDirectoryGroup("Security Group");
 
         var responseSender = new Mock<IRadiusResponseSender>();
         var context = new RadiusContext(client, responseSender.Object, new Mock<IServiceProvider>().Object)
@@ -140,10 +139,9 @@ public class SecondFactorAuthenticationMiddlewareTests
             services.RemoveService<IMultiFactorApiClient>().AddSingleton(api.Object);
         });
 
-        var client = ClientConfiguration.CreateBuilder("custom", "shared_secret", AuthenticationSource.Radius, "key", "secret")
+        var client = new ClientConfiguration("custom", "shared_secret", AuthenticationSource.Radius, "key", "secret")
             .SetActiveDirectoryDomain("domain.local")
-            .AddActiveDirectoryGroup("Security Group")
-            .Build();
+            .AddActiveDirectoryGroup("Security Group");
         var responseSender = new Mock<IRadiusResponseSender>();
         var context = new RadiusContext(client, responseSender.Object, new Mock<IServiceProvider>().Object)
         {

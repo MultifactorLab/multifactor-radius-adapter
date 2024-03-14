@@ -42,9 +42,8 @@ public class ProfileLoaderTests
             It.IsAny<string[]>()))
             .ReturnsAsync(Array.Empty<LdapEntry>());
 
-        var clientConfig = ClientConfiguration.CreateBuilder("custom", "shared_secret", AuthenticationSource.ActiveDirectory, "key", "secret")
-            .SetLoadActiveDirectoryNestedGroups(false)
-            .Build();
+        var clientConfig = new ClientConfiguration("custom", "shared_secret", AuthenticationSource.ActiveDirectory, "key", "secret")
+            .SetLoadActiveDirectoryNestedGroups(false);
         var loader = host.Services.GetRequiredService<ProfileLoader>();
 
         var act = async () => await loader.LoadAsync(clientConfig, adapter.Object, LdapIdentity.ParseUser("some.user@domain.local"));
@@ -92,10 +91,9 @@ public class ProfileLoaderTests
             It.IsAny<string[]>()))
             .ReturnsAsync(new[] { entry } );
 
-        var clientConfig = ClientConfiguration.CreateBuilder("custom", "shared_secret", AuthenticationSource.ActiveDirectory, "key", "secret")
+        var clientConfig = new ClientConfiguration("custom", "shared_secret", AuthenticationSource.ActiveDirectory, "key", "secret")
             .SetLoadActiveDirectoryNestedGroups(false)
-            .SetUseAttributeAsIdentity("mail")
-            .Build();
+            .SetUseAttributeAsIdentity("mail");
         var loader = host.Services.GetRequiredService<ProfileLoader>();
 
         var profile = await loader.LoadAsync(clientConfig, adapter.Object, LdapIdentity.ParseUser("some.user@domain.local"));
@@ -145,14 +143,13 @@ public class ProfileLoaderTests
             It.IsAny<string[]>()))
             .ReturnsAsync(new[] { entry });
 
-        var clientConfig = ClientConfiguration.CreateBuilder("custom", "shared_secret", AuthenticationSource.ActiveDirectory, "key", "secret")
+        var clientConfig = new ClientConfiguration("custom", "shared_secret", AuthenticationSource.ActiveDirectory, "key", "secret")
             .AddRadiusReplyAttribute("givenName", new[] 
             { 
                 new RadiusReplyAttributeValue("givenName"),
                 new RadiusReplyAttributeValue("displayName")
             })
-            .SetLoadActiveDirectoryNestedGroups(false)
-            .Build();
+            .SetLoadActiveDirectoryNestedGroups(false);
         var loader = host.Services.GetRequiredService<ProfileLoader>();
 
         var profile = await loader.LoadAsync(clientConfig, adapter.Object, LdapIdentity.ParseUser("some.user@domain.local"));
