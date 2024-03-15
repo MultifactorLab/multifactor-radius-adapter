@@ -19,8 +19,6 @@ namespace MultiFactor.Radius.Adapter.Logging
 {
     public class SerilogLoggerFactory
     {
-        private readonly Lazy<System.Configuration.Configuration> _rootConfig;
-
         private readonly ApplicationVariables _variables;
         private readonly IRootConfigurationProvider _rootConfigurationProvider;
 
@@ -32,7 +30,6 @@ namespace MultiFactor.Radius.Adapter.Logging
             }
             _variables = variables;
             _rootConfigurationProvider = rootConfigurationProvider ?? throw new ArgumentNullException(nameof(rootConfigurationProvider));
-            _rootConfig = new Lazy<System.Configuration.Configuration>(() => _rootConfigurationProvider.GetRootConfiguration());
         }
 
         public ILogger CreateLogger()

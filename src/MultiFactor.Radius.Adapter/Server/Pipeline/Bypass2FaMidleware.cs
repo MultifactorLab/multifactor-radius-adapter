@@ -34,8 +34,9 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline
             _logger.LogInformation("Bypass second factor for user '{user:l}'", context.UserName);
 
             context.ResponseCode = PacketCode.AccessAccept;
+            context.AuthenticationState.SetSecondFactor(AuthenticationCode.Accept);
+
             // stop authencation process
-            await _requestPostProcessor.InvokeAsync(context);
         }
     }
 }

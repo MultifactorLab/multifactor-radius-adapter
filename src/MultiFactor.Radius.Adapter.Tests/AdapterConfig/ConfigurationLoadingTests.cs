@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using MultiFactor.Radius.Adapter.Configuration.Core;
 using MultiFactor.Radius.Adapter.Configuration.Features.PreAuthModeFeature;
+using MultiFactor.Radius.Adapter.Core;
 using MultiFactor.Radius.Adapter.Core.Exceptions;
 using MultiFactor.Radius.Adapter.Tests.Fixtures;
 using MultiFactor.Radius.Adapter.Tests.Fixtures.ConfigLoading;
@@ -18,8 +19,6 @@ public partial class ConfigurationLoadingTests
     {
         var host = TestHostFactory.CreateHost(services =>
         {
-            services.RemoveService<IRootConfigurationProvider>().AddSingleton<IRootConfigurationProvider, TestRootConfigProvider>();
-            services.RemoveService<IClientConfigurationsProvider>().AddSingleton<IClientConfigurationsProvider, TestClientConfigsProvider>();
             services.Configure<TestConfigProviderOptions>(x =>
             {
                 x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-multi.config");
@@ -43,8 +42,6 @@ public partial class ConfigurationLoadingTests
     {
         var host = TestHostFactory.CreateHost(services =>
         {
-            services.RemoveService<IRootConfigurationProvider>().AddSingleton<IRootConfigurationProvider, TestRootConfigProvider>();
-            services.RemoveService<IClientConfigurationsProvider>().AddSingleton<IClientConfigurationsProvider, TestClientConfigsProvider>();
             services.Configure<TestConfigProviderOptions>(x =>
             {
                 x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-single.config");
@@ -72,8 +69,6 @@ public partial class ConfigurationLoadingTests
     {
         var host = TestHostFactory.CreateHost(services =>
         {
-            services.RemoveService<IRootConfigurationProvider>().AddSingleton<IRootConfigurationProvider, TestRootConfigProvider>();
-            services.RemoveService<IClientConfigurationsProvider>().AddSingleton<IClientConfigurationsProvider, TestClientConfigsProvider>();
             services.Configure<TestConfigProviderOptions>(x =>
             {
                 x.RootConfigFilePath = TestEnvironment.GetAssetPath(asset);
@@ -91,14 +86,15 @@ public partial class ConfigurationLoadingTests
     {
         var act = () =>
         {
-            var builder = Host.CreateApplicationBuilder();
-            builder.ConfigureApplication(services =>
+            var builder = RadiusHost.CreateApplicationBuilder();
+            builder.Configure(host =>
             {
-                services.RemoveService<IRootConfigurationProvider>().AddSingleton<IRootConfigurationProvider, TestRootConfigProvider>();
-                services.RemoveService<IClientConfigurationsProvider>().AddSingleton<IClientConfigurationsProvider, TestClientConfigsProvider>();
-                services.Configure<TestConfigProviderOptions>(x =>
+                host.ConfigureApplication(services =>
                 {
-                    x.RootConfigFilePath = TestEnvironment.GetAssetPath(asset);
+                    services.Configure<TestConfigProviderOptions>(x =>
+                    {
+                        x.RootConfigFilePath = TestEnvironment.GetAssetPath(asset);
+                    });
                 });
             });
             return builder.Build();
@@ -114,8 +110,6 @@ public partial class ConfigurationLoadingTests
     {
         var host = TestHostFactory.CreateHost(services =>
         {
-            services.RemoveService<IRootConfigurationProvider>().AddSingleton<IRootConfigurationProvider, TestRootConfigProvider>();
-            services.RemoveService<IClientConfigurationsProvider>().AddSingleton<IClientConfigurationsProvider, TestClientConfigsProvider>();
             services.Configure<TestConfigProviderOptions>(x =>
             {
                 x.RootConfigFilePath = TestEnvironment.GetAssetPath(asset);
@@ -133,8 +127,6 @@ public partial class ConfigurationLoadingTests
     {
         var host = TestHostFactory.CreateHost(services =>
         {
-            services.RemoveService<IRootConfigurationProvider>().AddSingleton<IRootConfigurationProvider, TestRootConfigProvider>();
-            services.RemoveService<IClientConfigurationsProvider>().AddSingleton<IClientConfigurationsProvider, TestClientConfigsProvider>();
             services.Configure<TestConfigProviderOptions>(x =>
             {
                 x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-multi.config");
@@ -156,8 +148,6 @@ public partial class ConfigurationLoadingTests
     {
         var host = TestHostFactory.CreateHost(services =>
         {
-            services.RemoveService<IRootConfigurationProvider>().AddSingleton<IRootConfigurationProvider, TestRootConfigProvider>();
-            services.RemoveService<IClientConfigurationsProvider>().AddSingleton<IClientConfigurationsProvider, TestClientConfigsProvider>();
             services.Configure<TestConfigProviderOptions>(x =>
             {
                 x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-valid-credential-delay-0.config");
@@ -179,8 +169,6 @@ public partial class ConfigurationLoadingTests
     {
         var host = TestHostFactory.CreateHost(services =>
         {
-            services.RemoveService<IRootConfigurationProvider>().AddSingleton<IRootConfigurationProvider, TestRootConfigProvider>();
-            services.RemoveService<IClientConfigurationsProvider>().AddSingleton<IClientConfigurationsProvider, TestClientConfigsProvider>();
             services.Configure<TestConfigProviderOptions>(x =>
             {
                 x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-valid-credential-delay-1-2.config");
@@ -202,8 +190,6 @@ public partial class ConfigurationLoadingTests
     {
         var host = TestHostFactory.CreateHost(services =>
         {
-            services.RemoveService<IRootConfigurationProvider>().AddSingleton<IRootConfigurationProvider, TestRootConfigProvider>();
-            services.RemoveService<IClientConfigurationsProvider>().AddSingleton<IClientConfigurationsProvider, TestClientConfigsProvider>();
             services.Configure<TestConfigProviderOptions>(x =>
             {
                 x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-multi.config");
@@ -231,8 +217,6 @@ public partial class ConfigurationLoadingTests
     {
         var host = TestHostFactory.CreateHost(services =>
         {
-            services.RemoveService<IRootConfigurationProvider>().AddSingleton<IRootConfigurationProvider, TestRootConfigProvider>();
-            services.RemoveService<IClientConfigurationsProvider>().AddSingleton<IClientConfigurationsProvider, TestClientConfigsProvider>();
             services.Configure<TestConfigProviderOptions>(x =>
             {
                 x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-multi.config");
@@ -260,8 +244,6 @@ public partial class ConfigurationLoadingTests
     {
         var host = TestHostFactory.CreateHost(services =>
         {
-            services.RemoveService<IRootConfigurationProvider>().AddSingleton<IRootConfigurationProvider, TestRootConfigProvider>();
-            services.RemoveService<IClientConfigurationsProvider>().AddSingleton<IClientConfigurationsProvider, TestClientConfigsProvider>();
             services.Configure<TestConfigProviderOptions>(x =>
             {
                 x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-multi-credential-delay-1-2.config");
@@ -290,8 +272,6 @@ public partial class ConfigurationLoadingTests
     {
         var host = TestHostFactory.CreateHost(services =>
         {
-            services.RemoveService<IRootConfigurationProvider>().AddSingleton<IRootConfigurationProvider, TestRootConfigProvider>();
-            services.RemoveService<IClientConfigurationsProvider>().AddSingleton<IClientConfigurationsProvider, TestClientConfigsProvider>();
             services.Configure<TestConfigProviderOptions>(x =>
             {
                 x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-multi.config");
@@ -313,8 +293,6 @@ public partial class ConfigurationLoadingTests
     {
         var host = TestHostFactory.CreateHost(services =>
         {
-            services.RemoveService<IRootConfigurationProvider>().AddSingleton<IRootConfigurationProvider, TestRootConfigProvider>();
-            services.RemoveService<IClientConfigurationsProvider>().AddSingleton<IClientConfigurationsProvider, TestClientConfigsProvider>();
             services.Configure<TestConfigProviderOptions>(x =>
             {
                 x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-multi.config");
@@ -342,8 +320,6 @@ public partial class ConfigurationLoadingTests
     {
         var host = TestHostFactory.CreateHost(services =>
         {
-            services.RemoveService<IRootConfigurationProvider>().AddSingleton<IRootConfigurationProvider, TestRootConfigProvider>();
-            services.RemoveService<IClientConfigurationsProvider>().AddSingleton<IClientConfigurationsProvider, TestClientConfigsProvider>();
             services.Configure<TestConfigProviderOptions>(x =>
             {
                 x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-multi.config");
@@ -366,8 +342,6 @@ public partial class ConfigurationLoadingTests
     {
         var host = TestHostFactory.CreateHost(services =>
         {
-            services.RemoveService<IRootConfigurationProvider>().AddSingleton<IRootConfigurationProvider, TestRootConfigProvider>();
-            services.RemoveService<IClientConfigurationsProvider>().AddSingleton<IClientConfigurationsProvider, TestClientConfigsProvider>();
             services.Configure<TestConfigProviderOptions>(x =>
             {
                 x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-multi-credential-delay-2-3.config");

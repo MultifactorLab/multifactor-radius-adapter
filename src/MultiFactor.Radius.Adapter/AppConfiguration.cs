@@ -28,8 +28,10 @@ using MultiFactor.Radius.Adapter.Services.Ldap.ProfileLoading;
 using MultiFactor.Radius.Adapter.Services.Ldap.UserGroupsReading;
 using MultiFactor.Radius.Adapter.Services.MultiFactorApi;
 using Serilog;
+using Serilog.Extensions.Logging;
 using System;
 using System.Net.Http;
+using SerilogLoggerFactory = MultiFactor.Radius.Adapter.Logging.SerilogLoggerFactory;
 
 namespace MultiFactor.Radius.Adapter;
 
@@ -42,19 +44,10 @@ internal static class AppConfiguration
             throw new ArgumentNullException(nameof(builder));
         }
 
-        builder.Services.AddSingleton(prov => ApplicationVariablesFactory.Create());
-        builder.Services.AddSingleton<IRootConfigurationProvider, DefaultRootConfigurationProvider>();
-
-        builder.Services.AddConfiguration();
         AddLogging(builder, configureServices);
 
-        builder.Services.AddMemoryCache();
-
-        builder.Services.AddSingleton<IRadiusPacketParser, RadiusPacketParser>();
-        builder.Services.AddSingleton<CacheService>();
         builder.Services.AddSingleton<IMultiFactorApiClient, MultiFactorApiClient>();
-        builder.Services.AddSingleton<RadiusServer>();
-        builder.Services.AddSingleton<RadiusContextFactory>();
+
         builder.Services.AddSingleton<IChallengeProcessor, ChallengeProcessor>();
 
         builder.Services.AddFirstAuthFactorProcessing();
@@ -71,28 +64,9 @@ internal static class AppConfiguration
         builder.Services.AddSingleton<MembershipVerifier>();
         builder.Services.AddSingleton<MembershipProcessor>();
 
-        builder.Services.AddSingleton(prov => new RandomWaiter(prov.GetRequiredService<IServiceConfiguration>().InvalidCredentialDelay));
         builder.Services.AddSingleton<IAuthenticatedClientCache, AuthenticatedClientCache>();
 
-        builder.Services.AddHostedService<ServerHost>();
-        builder.Services.AddHostedService<Starter>();
         builder.Services.AddSingleton<IServerInfo, ServerInfo>();
-
-        builder.Services.AddRadiusPipeline(builder =>
-        {
-            builder.Use<StatusServerMiddleware>();
-            builder.Use<AccessRequestFilterMiddleware>();
-            builder.Use<TransformUserNameMiddleware>();
-            builder.Use<AccessChallengeMiddleware>();
-            builder.Use<FirstFactorAuthenticationMiddleware>();
-            builder.Use<Bypass2FaMidleware>();
-            builder.Use<SecondFactorAuthenticationMiddleware>();
-        });
-
-        builder.Services.AddSingleton<IRadiusRequestPostProcessor, RadiusRequestPostProcessor>();
-        builder.Services.AddSingleton<RadiusResponseSenderFactory>();
-
-        builder.Services.AddSingleton<RadiusReplyAttributeEnricher>();
 
         builder.Services.AddHttpServices();
 
@@ -108,37 +82,22 @@ internal static class AppConfiguration
         services.AddSingleton<IFirstAuthFactorProcessorProvider, FirstAuthFactorProcessorProvider>();
     }
 
-    private static void AddConfiguration(this IServiceCollection services)
-    {
-        services.AddSingleton<IClientConfigurationsProvider, DefaultClientConfigurationsProvider>();
-
-        services.AddSingleton<IRadiusDictionary, RadiusDictionary>();
-
-        services.AddSingleton<ServiceConfigurationFactory>();
-        services.AddSingleton<ClientConfigurationFactory>();
-        services.AddSingleton(prov =>
-        {
-            var config = prov.GetRequiredService<ServiceConfigurationFactory>().CreateConfig();
-            config.Validate();
-            return config;
-        });
-    }
-
     private static void AddLogging(HostApplicationBuilder builder, Action<IServiceCollection> configureServices = null)
     {
-        builder.Services.AddSingleton<SerilogLoggerFactory>();
-        var logger = BuildTemporaryProvider(builder, configureServices).GetRequiredService<SerilogLoggerFactory>().CreateLogger();
+        // temporary service provider.
+        var services = new ServiceCollection();
+
+        services.AddSingleton(prov => ApplicationVariablesFactory.Create());
+        services.AddSingleton<IRootConfigurationProvider, DefaultRootConfigurationProvider>();
+        services.AddSingleton<SerilogLoggerFactory>();
+        configureServices?.Invoke(services);
+
+        var prov = services.BuildServiceProvider();
+        var logger = prov.GetRequiredService<SerilogLoggerFactory>().CreateLogger();
+
         Log.Logger = logger;
         builder.Logging.ClearProviders();
         builder.Logging.AddSerilog(logger);
-    }
-
-    private static ServiceProvider BuildTemporaryProvider(HostApplicationBuilder builder, Action<IServiceCollection> configureServices = null)
-    {
-        var srv = new ServiceCollection();
-        foreach (var desc in builder.Services) srv.Add(desc);
-        configureServices?.Invoke(srv);
-        return srv.BuildServiceProvider();
     }
 
     private static void AddHttpServices(this IServiceCollection services)

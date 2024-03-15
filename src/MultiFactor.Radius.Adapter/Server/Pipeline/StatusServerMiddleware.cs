@@ -34,8 +34,7 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline
             var version = _serverInfo.GetVersion();
             context.ReplyMessage = $"Server up {uptime.Days} days {uptime.ToString("hh\\:mm\\:ss")}, ver.: {version}";
             context.ResponseCode = PacketCode.AccessAccept;
-
-            await _requestPostProcessor.InvokeAsync(context);
+            context.AuthenticationState.Accept();
         }
     }
 }

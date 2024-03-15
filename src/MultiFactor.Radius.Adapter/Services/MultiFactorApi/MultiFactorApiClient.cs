@@ -13,6 +13,7 @@ using MultiFactor.Radius.Adapter.Core.Radius;
 using MultiFactor.Radius.Adapter.Core.Serialization;
 using MultiFactor.Radius.Adapter.Server;
 using MultiFactor.Radius.Adapter.Server.Context;
+using MultiFactor.Radius.Adapter.Services.MultiFactorApi.Dto;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -101,7 +102,7 @@ namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi
                 return PacketCode.AccessAccept;
             }
 
-            var payload = new
+            var payload = new CreateRequestDto
             {
                 Identity = userName,
                 Name = displayName,
@@ -110,13 +111,13 @@ namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi
                 PassCode = GetPassCodeOrNull(context),
                 CallingStationId = callingStationId,
                 CalledStationId = calledStationId,
-                Capabilities = new
+                Capabilities = new CapabilitiesDto
                 {
                     InlineEnroll = true
                 },
-                GroupPolicyPreset = new
+                GroupPolicyPreset = new GroupPolicyPresetDto
                 {
-                    context.ClientConfiguration.SignUpGroups
+                    SignUpGroups = context.ClientConfiguration.SignUpGroups
                 }
             };
 
@@ -152,7 +153,7 @@ namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi
         public async Task<PacketCode> Challenge(RadiusContext context, string answer, ChallengeRequestIdentifier identifier)
         {
             var userName = context.SecondFactorIdentity;
-            var payload = new
+            var payload = new ChallengeDto
             {
                 Identity = userName,
                 Challenge = answer,
@@ -180,7 +181,7 @@ namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi
             }
         }
 
-        private async Task<MultiFactorAccessRequest> SendRequest(string url, object payload, IClientConfiguration clientConfiguration)
+        private async Task<AccessRequestDto> SendRequest(string url, object payload, IClientConfiguration clientConfiguration)
         {
             var headers = new Dictionary<string, string>
             {
@@ -189,7 +190,7 @@ namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi
 
             try
             {
-                var response = await _httpClientAdapter.PostAsync<MultiFactorApiResponse<MultiFactorAccessRequest>>(url, payload, headers);
+                var response = await _httpClientAdapter.PostAsync<MultiFactorApiResponse<AccessRequestDto>>(url, payload, headers);
                 if (!response.Success)
                 {
                     _logger.LogWarning("Got unsuccessful response from API: {@response}", response);
@@ -226,14 +227,14 @@ namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi
                         username,
                         context.RemoteEndpoint.Address,
                         context.RemoteEndpoint.Port);
-                    return ConvertToRadiusCode(MultiFactorAccessRequest.Bypass);
+                    return ConvertToRadiusCode(AccessRequestDto.Bypass);
                 }
             }
 
             return ConvertToRadiusCode(null);
         }
 
-        private PacketCode ConvertToRadiusCode(MultiFactorAccessRequest multifactorAccessRequest)
+        private PacketCode ConvertToRadiusCode(AccessRequestDto multifactorAccessRequest)
         {
             if (multifactorAccessRequest == null)
             {
@@ -300,7 +301,7 @@ namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi
             return null;
         }
 
-        private void LogGrantedInfo(string userName, MultiFactorAccessRequest response, RadiusContext context)
+        private void LogGrantedInfo(string userName, AccessRequestDto response, RadiusContext context)
         {
             string countryValue = null;
             string regionValue = null;

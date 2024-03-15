@@ -33,7 +33,6 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline
                     context.State = identifier.RequestId;  //state for Access-Challenge message if otp is wrong (3 times allowed)
 
                     // stop authentication process after otp code verification
-                    await _requestPostProcessor.InvokeAsync(context);
                     return;
                 }
             }

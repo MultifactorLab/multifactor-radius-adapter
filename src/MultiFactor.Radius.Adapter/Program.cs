@@ -1,12 +1,22 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using MultiFactor.Radius.Adapter;
+using MultiFactor.Radius.Adapter.Core;
+using MultiFactor.Radius.Adapter.Server.Pipeline;
 using Serilog;
 using System;
 using System.Text;
 
-var builder = Host.CreateApplicationBuilder(args);
-builder.ConfigureApplication();
+var builder = RadiusHost.CreateApplicationBuilder(args);
+builder.Configure(x => x.ConfigureApplication());
+
+builder.UseMiddleware<StatusServerMiddleware>();
+builder.UseMiddleware<AccessRequestFilterMiddleware>();
+builder.UseMiddleware<TransformUserNameMiddleware>();
+builder.UseMiddleware<AccessChallengeMiddleware>();
+builder.UseMiddleware<FirstFactorAuthenticationMiddleware>();
+builder.UseMiddleware<Bypass2FaMidleware>();
+builder.UseMiddleware<SecondFactorAuthenticationMiddleware>();
 
 var host = builder.Build();
 

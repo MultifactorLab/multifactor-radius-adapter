@@ -120,12 +120,11 @@ namespace MultiFactor.Radius.Adapter.Tests.Pipeline
                 RequestPacket = RadiusPacketFactory.AccessRequest()
             };
 
-            var nextDelegate = new Mock<RadiusRequestDelegate>();
-
             var middleware = host.Services.GetRequiredService<FirstFactorAuthenticationMiddleware>();
-            await middleware.InvokeAsync(context, nextDelegate.Object);
+            await middleware.InvokeAsync(context, new Mock<RadiusRequestDelegate>().Object);
 
             context.ResponseCode.Should().Be(PacketCode.AccessReject);
+            context.AuthenticationState.FirstFactor.Should().Be(AuthenticationCode.Reject);
         }
         
         [Fact]
@@ -157,11 +156,10 @@ namespace MultiFactor.Radius.Adapter.Tests.Pipeline
                 RequestPacket = RadiusPacketFactory.AccessRequest()
             };
 
-            var nextDelegate = new Mock<RadiusRequestDelegate>();
-
             var middleware = host.Services.GetRequiredService<FirstFactorAuthenticationMiddleware>();
-            await middleware.InvokeAsync(context, nextDelegate.Object);
+            await middleware.InvokeAsync(context, new Mock<RadiusRequestDelegate>().Object);
 
+            context.AuthenticationState.FirstFactor.Should().Be(AuthenticationCode.Accept);
             context.AuthenticationState.FirstFactor.Should().Be(AuthenticationCode.Accept);
         }
     }

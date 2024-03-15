@@ -35,9 +35,9 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline
 
             // first factor authentication rejected
             context.ResponseCode = firstFactorAuthenticationResultCode;
+            context.AuthenticationState.SetFirstFactor(AuthenticationCode.Reject);
 
             // stop authencation process
-            await _requestPostProcessor.InvokeAsync(context);
         }
     }
 }

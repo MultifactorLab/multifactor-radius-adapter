@@ -41,9 +41,15 @@ public class SecondFactorAuthenticationMiddleware : IRadiusMiddleware
         if (context.ResponseCode == PacketCode.AccessChallenge)
         {
             _challengeProcessor.AddState(new ChallengeRequestIdentifier(context.ClientConfiguration, context.State), context);
+            return;
         }
 
-        await _requestPostProcessor.InvokeAsync(context);
+        if (context.ResponseCode == PacketCode.AccessAccept)
+        {
+            context.AuthenticationState.SetSecondFactor(AuthenticationCode.Accept);
+            return;
+        }
+
         await next(context);
     }
 

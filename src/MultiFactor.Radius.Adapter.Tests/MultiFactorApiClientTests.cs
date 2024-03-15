@@ -12,6 +12,7 @@ using Microsoft.Extensions.Logging;
 using MultiFactor.Radius.Adapter.Services.Ldap.ProfileLoading;
 using MultiFactor.Radius.Adapter.Services.Ldap;
 using MultiFactor.Radius.Adapter.Server.Context;
+using MultiFactor.Radius.Adapter.Services.MultiFactorApi.Dto;
 
 namespace MultiFactor.Radius.Adapter.Tests
 {
@@ -37,15 +38,15 @@ namespace MultiFactor.Radius.Adapter.Tests
             };
             var cache = new Mock<IAuthenticatedClientCache>();
             var adapter = new Mock<IHttpClientAdapter>();
-            var response = new MultiFactorApiResponse<MultiFactorAccessRequest> 
+            var response = new MultiFactorApiResponse<AccessRequestDto> 
             {
                 Success = true,
-                Model = new MultiFactorAccessRequest
+                Model = new AccessRequestDto
                 {
                     Status = status
                 }
             };
-            adapter.Setup(x => x.PostAsync<MultiFactorApiResponse<MultiFactorAccessRequest>>("access/requests/ra", It.IsAny<object>(), It.IsAny<IReadOnlyDictionary<string, string>>()))
+            adapter.Setup(x => x.PostAsync<MultiFactorApiResponse<AccessRequestDto>>("access/requests/ra", It.IsAny<object>(), It.IsAny<IReadOnlyDictionary<string, string>>()))
                 .ReturnsAsync(response);
 
             var api = new MultiFactorApiClient(cache.Object, new Mock<ILogger<MultiFactorApiClient>>().Object, adapter.Object);
@@ -70,15 +71,15 @@ namespace MultiFactor.Radius.Adapter.Tests
             cache.Setup(x => x.TryHitCache(It.IsAny<string>(), It.IsAny<string>(), client)).Returns(true);
 
             var adapter = new Mock<IHttpClientAdapter>();
-            var response = new MultiFactorApiResponse<MultiFactorAccessRequest>
+            var response = new MultiFactorApiResponse<AccessRequestDto>
             {
                 Success = false,
-                Model = new MultiFactorAccessRequest
+                Model = new AccessRequestDto
                 {
                     Status = Literals.RadiusCode.Denied
                 }
             };
-            adapter.Setup(x => x.PostAsync<MultiFactorApiResponse<MultiFactorAccessRequest>>("access/requests/ra", It.IsAny<object>(), It.IsAny<IReadOnlyDictionary<string, string>>()))
+            adapter.Setup(x => x.PostAsync<MultiFactorApiResponse<AccessRequestDto>>("access/requests/ra", It.IsAny<object>(), It.IsAny<IReadOnlyDictionary<string, string>>()))
                 .ReturnsAsync(response);
 
             var api = new MultiFactorApiClient(cache.Object, new Mock<ILogger<MultiFactorApiClient>>().Object, adapter.Object);
@@ -103,15 +104,15 @@ namespace MultiFactor.Radius.Adapter.Tests
             cache.Setup(x => x.TryHitCache(It.IsAny<string>(), It.IsAny<string>(), client)).Returns(false);
 
             var adapter = new Mock<IHttpClientAdapter>();
-            var response = new MultiFactorApiResponse<MultiFactorAccessRequest>
+            var response = new MultiFactorApiResponse<AccessRequestDto>
             {
                 Success = false,
-                Model = new MultiFactorAccessRequest
+                Model = new AccessRequestDto
                 {
                     Status = Literals.RadiusCode.Denied
                 }
             };
-            adapter.Setup(x => x.PostAsync<MultiFactorApiResponse<MultiFactorAccessRequest>>("access/requests/ra", It.IsAny<object>(), It.IsAny<IReadOnlyDictionary<string, string>>()))
+            adapter.Setup(x => x.PostAsync<MultiFactorApiResponse<AccessRequestDto>>("access/requests/ra", It.IsAny<object>(), It.IsAny<IReadOnlyDictionary<string, string>>()))
                 .ReturnsAsync(response);
 
             var api = new MultiFactorApiClient(cache.Object, new Mock<ILogger<MultiFactorApiClient>>().Object, adapter.Object);
@@ -136,7 +137,7 @@ namespace MultiFactor.Radius.Adapter.Tests
             var cache = new Mock<IAuthenticatedClientCache>();
 
             var adapter = new Mock<IHttpClientAdapter>();
-            adapter.Setup(x => x.PostAsync<MultiFactorApiResponse<MultiFactorAccessRequest>>("access/requests/ra", It.IsAny<object>(), It.IsAny<IReadOnlyDictionary<string, string>>()))
+            adapter.Setup(x => x.PostAsync<MultiFactorApiResponse<AccessRequestDto>>("access/requests/ra", It.IsAny<object>(), It.IsAny<IReadOnlyDictionary<string, string>>()))
                 .ThrowsAsync(new MultifactorApiUnreachableException());
 
             var api = new MultiFactorApiClient(cache.Object, new Mock<ILogger<MultiFactorApiClient>>().Object, adapter.Object);
@@ -160,7 +161,7 @@ namespace MultiFactor.Radius.Adapter.Tests
             var cache = new Mock<IAuthenticatedClientCache>();
 
             var adapter = new Mock<IHttpClientAdapter>();
-            adapter.Setup(x => x.PostAsync<MultiFactorApiResponse<MultiFactorAccessRequest>>("access/requests/ra", It.IsAny<object>(), It.IsAny<IReadOnlyDictionary<string, string>>()))
+            adapter.Setup(x => x.PostAsync<MultiFactorApiResponse<AccessRequestDto>>("access/requests/ra", It.IsAny<object>(), It.IsAny<IReadOnlyDictionary<string, string>>()))
                 .ThrowsAsync(new MultifactorApiUnreachableException());
 
             var api = new MultiFactorApiClient(cache.Object, new Mock<ILogger<MultiFactorApiClient>>().Object, adapter.Object);
@@ -188,7 +189,7 @@ namespace MultiFactor.Radius.Adapter.Tests
             Assert.Equal("some_attr_value", context.SecondFactorIdentity);
 
             var adapter = new Mock<IHttpClientAdapter>();
-            adapter.Setup(x => x.PostAsync<MultiFactorApiResponse<MultiFactorAccessRequest>>("access/requests/ra", It.IsAny<object>(), It.IsAny<IReadOnlyDictionary<string, string>>()))
+            adapter.Setup(x => x.PostAsync<MultiFactorApiResponse<AccessRequestDto>>("access/requests/ra", It.IsAny<object>(), It.IsAny<IReadOnlyDictionary<string, string>>()))
                 .ThrowsAsync(new MultifactorApiUnreachableException());
 
             var api = new MultiFactorApiClient(cache.Object, new Mock<ILogger<MultiFactorApiClient>>().Object, adapter.Object);
@@ -213,7 +214,7 @@ namespace MultiFactor.Radius.Adapter.Tests
             var cache = new Mock<IAuthenticatedClientCache>();
 
             var adapter = new Mock<IHttpClientAdapter>();
-            adapter.Setup(x => x.PostAsync<MultiFactorApiResponse<MultiFactorAccessRequest>>("access/requests/ra", It.IsAny<object>(), It.IsAny<IReadOnlyDictionary<string, string>>()))
+            adapter.Setup(x => x.PostAsync<MultiFactorApiResponse<AccessRequestDto>>("access/requests/ra", It.IsAny<object>(), It.IsAny<IReadOnlyDictionary<string, string>>()))
                 .ThrowsAsync(new MultifactorApiUnreachableException());
 
             var api = new MultiFactorApiClient(cache.Object, new Mock<ILogger<MultiFactorApiClient>>().Object, adapter.Object);

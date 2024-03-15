@@ -33,7 +33,7 @@ namespace MultiFactor.Radius.Adapter.Tests.Pipeline
                 var serverInfo = new Mock<IServerInfo>();
                 serverInfo.Setup(x => x.GetUptime()).Returns(expectedTs);
                 serverInfo.Setup(x => x.GetVersion()).Returns(expectedVer);
-                services.RemoveService<IServerInfo>().AddSingleton<IServerInfo>(serverInfo.Object);
+                services.ReplaceService(serverInfo.Object);
             });
 
             var config = host.Services.GetRequiredService<IServiceConfiguration>();
@@ -48,7 +48,9 @@ namespace MultiFactor.Radius.Adapter.Tests.Pipeline
             var middleware = host.Services.GetRequiredService<StatusServerMiddleware>();
             await middleware.InvokeAsync(context, nextDelegate.Object);
 
+            context.AuthenticationState.ToPacketCode().Should().Be(PacketCode.AccessAccept);
             context.ResponseCode.Should().Be(PacketCode.AccessAccept);
+
             context.ReplyMessage.Should().Be($"Server up {expectedTs.Days} days {expectedTs.ToString("hh\\:mm\\:ss")}, ver.: {expectedVer}");
             nextDelegate.Verify(q => q.Invoke(It.IsAny<RadiusContext>()), Times.Never);
         }

@@ -16,7 +16,7 @@ namespace MultiFactor.Radius.Adapter.Tests.Pipeline
     public class Bypass2FaMidlewareTests
     {
         [Fact]
-        public async Task Invoke_Bypass2IsTrue_ShouldInvokePostProcessorAndSetAcceptState()
+        public async Task Invoke_Bypass2IsTrue_ShouldInvokePostProcessor()
         {
             var postProcessor = new Mock<IRadiusRequestPostProcessor>();
 
@@ -42,8 +42,6 @@ namespace MultiFactor.Radius.Adapter.Tests.Pipeline
 
             var middleware = host.Services.GetRequiredService<Bypass2FaMidleware>();
             await middleware.InvokeAsync(context, nextDelegate.Object);
-
-            context.ResponseCode.Should().Be(Core.Radius.PacketCode.AccessAccept);
 
             nextDelegate.Verify(q => q.Invoke(It.Is<RadiusContext>(x => x == context)), Times.Never);
             postProcessor.Verify(v => v.InvokeAsync(It.Is<RadiusContext>(x => x == context)), Times.Once);
@@ -79,6 +77,66 @@ namespace MultiFactor.Radius.Adapter.Tests.Pipeline
 
             nextDelegate.Verify(q => q.Invoke(It.Is<RadiusContext>(x => x == context)), Times.Once);
             postProcessor.Verify(v => v.InvokeAsync(It.Is<RadiusContext>(x => x == context)), Times.Never);
+        }
+
+        [Fact]
+        public async Task Invoke_Bypass2IsTrue_AuthStateShouldBeAccept()
+        {
+            var postProcessor = new Mock<IRadiusRequestPostProcessor>();
+
+            var host = TestHostFactory.CreateHost(services =>
+            {
+                services.Configure<TestConfigProviderOptions>(x =>
+                {
+                    x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-single.config");
+                });
+
+                services.RemoveService<IRadiusRequestPostProcessor>().AddSingleton(postProcessor.Object);
+            });
+
+            var config = host.Services.GetRequiredService<IServiceConfiguration>();
+            var responseSender = new Mock<IRadiusResponseSender>();
+            var context = new RadiusContext(config.Clients[0], responseSender.Object, new Mock<IServiceProvider>().Object)
+            {
+                RequestPacket = RadiusPacketFactory.AccessRequest(),
+                Bypass2Fa = true
+            };
+
+            var middleware = host.Services.GetRequiredService<Bypass2FaMidleware>();
+            await middleware.InvokeAsync(context, new Mock<RadiusRequestDelegate>().Object);
+
+            context.ResponseCode.Should().Be(Core.Radius.PacketCode.AccessAccept);
+            context.AuthenticationState.SecondFactor.Should().Be(AuthenticationCode.Accept);
+        }
+
+        [Fact]
+        public async Task Invoke_Bypass2IsFalse_AuthStateShouldBeAwaiting()
+        {
+            var postProcessor = new Mock<IRadiusRequestPostProcessor>();
+
+            var host = TestHostFactory.CreateHost(services =>
+            {
+                services.Configure<TestConfigProviderOptions>(x =>
+                {
+                    x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-single.config");
+                });
+
+                services.RemoveService<IRadiusRequestPostProcessor>().AddSingleton(postProcessor.Object);
+            });
+
+            var config = host.Services.GetRequiredService<IServiceConfiguration>();
+            var responseSender = new Mock<IRadiusResponseSender>();
+            var context = new RadiusContext(config.Clients[0], responseSender.Object, new Mock<IServiceProvider>().Object)
+            {
+                RequestPacket = RadiusPacketFactory.AccessRequest(),
+                Bypass2Fa = false
+            };
+
+            var middleware = host.Services.GetRequiredService<Bypass2FaMidleware>();
+            await middleware.InvokeAsync(context, new Mock<RadiusRequestDelegate>().Object);
+
+            context.ResponseCode.Should().Be(Core.Radius.PacketCode.AccessReject);
+            context.AuthenticationState.SecondFactor.Should().Be(AuthenticationCode.Awaiting);
         }
     }
 }

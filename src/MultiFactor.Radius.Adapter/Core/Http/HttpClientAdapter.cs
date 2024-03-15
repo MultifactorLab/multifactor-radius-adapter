@@ -18,28 +18,6 @@ namespace MultiFactor.Radius.Adapter.Core.Http
             _jsonDataSerializer = jsonDataSerializer ?? throw new ArgumentNullException(nameof(jsonDataSerializer));
         }
 
-        public async Task<string> GetAsync(string uri, IReadOnlyDictionary<string, string> headers = null)
-        {
-            var message = new HttpRequestMessage(HttpMethod.Get, uri);
-            AddHeaders(message, headers);
-
-            var resp = await ExecuteHttpMethod(() => GetClient().SendAsync(message));
-            if (resp.Content == null) return default;
-
-            return await resp.Content.ReadAsStringAsync();
-        }
-
-        public async Task<T> GetAsync<T>(string uri, IReadOnlyDictionary<string, string> headers = null)
-        {
-            var message = new HttpRequestMessage(HttpMethod.Get, uri);
-            AddHeaders(message, headers);
-
-            var resp = await ExecuteHttpMethod(() => GetClient().SendAsync(message));
-            if (resp.Content == null) return default;
-
-            return await _jsonDataSerializer.DeserializeAsync<T>(resp.Content);
-        }
-
         public async Task<T> PostAsync<T>(string uri, object data = null, IReadOnlyDictionary<string, string> headers = null)
         {
             var message = new HttpRequestMessage(HttpMethod.Post, uri);
@@ -49,35 +27,19 @@ namespace MultiFactor.Radius.Adapter.Core.Http
                 message.Content = _jsonDataSerializer.Serialize(data);
             }
 
-            var resp = await ExecuteHttpMethod(() => GetClient().SendAsync(message));
-            if (resp.Content == null) return default;
-
-            return await _jsonDataSerializer.DeserializeAsync<T>(resp.Content);
-        }
-
-        public async Task<T> DeleteAsync<T>(string uri, IReadOnlyDictionary<string, string> headers = null)
-        {
-            var message = new HttpRequestMessage(HttpMethod.Delete, uri);
-            AddHeaders(message, headers);
-
-            var resp = await ExecuteHttpMethod(() => GetClient().SendAsync(message));
-            if (resp.Content == null) return default;
-
-            return await _jsonDataSerializer.DeserializeAsync<T>(resp.Content);
-        }
-
-        private HttpClient GetClient() => _factory.CreateClient(nameof(HttpClientAdapter));
-
-        private async Task<HttpResponseMessage> ExecuteHttpMethod(Func<Task<HttpResponseMessage>> method)
-        {
             ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
             ServicePointManager.DefaultConnectionLimit = 100;
 
-            // workaround for the .NET 4.6.2 version
-            var response = await Task.Run(method);
+            var cli = _factory.CreateClient(nameof(HttpClientAdapter));
+            var response = await cli.SendAsync(message);
 
             response.EnsureSuccessStatusCode();
-            return response;
+            if (response.Content == null)
+            {
+                return default;
+            }
+
+            return await _jsonDataSerializer.DeserializeAsync<T>(response.Content);
         }
 
         private static void AddHeaders(HttpRequestMessage message, IReadOnlyDictionary<string, string> headers)
