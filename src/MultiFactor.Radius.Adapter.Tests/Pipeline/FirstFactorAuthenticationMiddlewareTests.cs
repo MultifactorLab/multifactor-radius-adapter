@@ -22,9 +22,9 @@ namespace MultiFactor.Radius.Adapter.Tests.Pipeline
         [Fact]
         public async Task Invoke_FirstFactorReturnsAccept_ShouldInvokeNext()
         {
-            var host = TestHostFactory.CreateHost(services =>
+            var host = TestHostFactory.CreateHost(builder =>
             {
-                services.Configure<TestConfigProviderOptions>(x =>
+                builder.Services.Configure<TestConfigProviderOptions>(x =>
                 {
                     x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-single.config");
                 });
@@ -35,10 +35,10 @@ namespace MultiFactor.Radius.Adapter.Tests.Pipeline
                 var fafpProv = new Mock<IFirstAuthFactorProcessorProvider>();
                 fafpProv.Setup(x => x.GetProcessor(It.IsAny<AuthenticationSource>())).Returns(processor.Object);
 
-                services.ReplaceService(fafpProv.Object);
+                builder.Services.ReplaceService(fafpProv.Object);
             });
 
-            var config = host.Services.GetRequiredService<IServiceConfiguration>();
+            var config = host.Service<IServiceConfiguration>();
             var responseSender = new Mock<IRadiusResponseSender>();
             var context = new RadiusContext(config.Clients[0], responseSender.Object, new Mock<IServiceProvider>().Object)
             {
@@ -47,7 +47,7 @@ namespace MultiFactor.Radius.Adapter.Tests.Pipeline
 
             var nextDelegate = new Mock<RadiusRequestDelegate>();
 
-            var middleware = host.Services.GetRequiredService<FirstFactorAuthenticationMiddleware>();
+            var middleware = host.Service<FirstFactorAuthenticationMiddleware>();
             await middleware.InvokeAsync(context, nextDelegate.Object);
 
             nextDelegate.Verify(q => q.Invoke(It.Is<RadiusContext>(x => x == context)), Times.Once);
@@ -58,9 +58,9 @@ namespace MultiFactor.Radius.Adapter.Tests.Pipeline
         {
             var postProcessor = new Mock<IRadiusRequestPostProcessor>();
 
-            var host = TestHostFactory.CreateHost(services =>
+            var host = TestHostFactory.CreateHost(builder =>
             {
-                services.Configure<TestConfigProviderOptions>(x =>
+                builder.Services.Configure<TestConfigProviderOptions>(x =>
                 {
                     x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-single.config");
                 });
@@ -71,11 +71,11 @@ namespace MultiFactor.Radius.Adapter.Tests.Pipeline
                 var fafpProv = new Mock<IFirstAuthFactorProcessorProvider>();
                 fafpProv.Setup(x => x.GetProcessor(It.IsAny<AuthenticationSource>())).Returns(processor.Object);
 
-                services.ReplaceService(fafpProv.Object);
-                services.ReplaceService(postProcessor.Object);
+                builder.Services.ReplaceService(fafpProv.Object);
+                builder.Services.ReplaceService(postProcessor.Object);
             });
 
-            var config = host.Services.GetRequiredService<IServiceConfiguration>();
+            var config = host.Service<IServiceConfiguration>();
             var responseSender = new Mock<IRadiusResponseSender>();
             var context = new RadiusContext(config.Clients[0], responseSender.Object, new Mock<IServiceProvider>().Object)
             {
@@ -84,7 +84,7 @@ namespace MultiFactor.Radius.Adapter.Tests.Pipeline
 
             var nextDelegate = new Mock<RadiusRequestDelegate>();
 
-            var middleware = host.Services.GetRequiredService<FirstFactorAuthenticationMiddleware>();
+            var middleware = host.Service<FirstFactorAuthenticationMiddleware>();
             await middleware.InvokeAsync(context, nextDelegate.Object);
 
             nextDelegate.Verify(v => v.Invoke(It.Is<RadiusContext>(x => x == context)), Times.Never);
@@ -96,9 +96,9 @@ namespace MultiFactor.Radius.Adapter.Tests.Pipeline
         {
             var postProcessor = new Mock<IRadiusRequestPostProcessor>();
 
-            var host = TestHostFactory.CreateHost(services =>
+            var host = TestHostFactory.CreateHost(builder =>
             {
-                services.Configure<TestConfigProviderOptions>(x =>
+                builder.Services.Configure<TestConfigProviderOptions>(x =>
                 {
                     x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-single.config");
                 });
@@ -109,18 +109,18 @@ namespace MultiFactor.Radius.Adapter.Tests.Pipeline
                 var fafpProv = new Mock<IFirstAuthFactorProcessorProvider>();
                 fafpProv.Setup(x => x.GetProcessor(It.IsAny<AuthenticationSource>())).Returns(processor.Object);
 
-                services.RemoveService<IFirstAuthFactorProcessorProvider>().AddSingleton(fafpProv.Object);
-                services.RemoveService<IRadiusRequestPostProcessor>().AddSingleton(postProcessor.Object);
+                builder.Services.RemoveService<IFirstAuthFactorProcessorProvider>().AddSingleton(fafpProv.Object);
+                builder.Services.RemoveService<IRadiusRequestPostProcessor>().AddSingleton(postProcessor.Object);
             });
 
-            var config = host.Services.GetRequiredService<IServiceConfiguration>();
+            var config = host.Service<IServiceConfiguration>();
             var responseSender = new Mock<IRadiusResponseSender>();
             var context = new RadiusContext(config.Clients[0], responseSender.Object, new Mock<IServiceProvider>().Object)
             {
                 RequestPacket = RadiusPacketFactory.AccessRequest()
             };
 
-            var middleware = host.Services.GetRequiredService<FirstFactorAuthenticationMiddleware>();
+            var middleware = host.Service<FirstFactorAuthenticationMiddleware>();
             await middleware.InvokeAsync(context, new Mock<RadiusRequestDelegate>().Object);
 
             context.ResponseCode.Should().Be(PacketCode.AccessReject);
@@ -132,9 +132,9 @@ namespace MultiFactor.Radius.Adapter.Tests.Pipeline
         {
             var postProcessor = new Mock<IRadiusRequestPostProcessor>();
 
-            var host = TestHostFactory.CreateHost(services =>
+            var host = TestHostFactory.CreateHost(builder =>
             {
-                services.Configure<TestConfigProviderOptions>(x =>
+                builder.Services.Configure<TestConfigProviderOptions>(x =>
                 {
                     x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-single.config");
                 });
@@ -145,18 +145,18 @@ namespace MultiFactor.Radius.Adapter.Tests.Pipeline
                 var fafpProv = new Mock<IFirstAuthFactorProcessorProvider>();
                 fafpProv.Setup(x => x.GetProcessor(It.IsAny<AuthenticationSource>())).Returns(processor.Object);
 
-                services.RemoveService<IFirstAuthFactorProcessorProvider>().AddSingleton(fafpProv.Object);
-                services.RemoveService<IRadiusRequestPostProcessor>().AddSingleton(postProcessor.Object);
+                builder.Services.RemoveService<IFirstAuthFactorProcessorProvider>().AddSingleton(fafpProv.Object);
+                builder.Services.RemoveService<IRadiusRequestPostProcessor>().AddSingleton(postProcessor.Object);
             });
 
-            var config = host.Services.GetRequiredService<IServiceConfiguration>();
+            var config = host.Service<IServiceConfiguration>();
             var responseSender = new Mock<IRadiusResponseSender>();
             var context = new RadiusContext(config.Clients[0], responseSender.Object, new Mock<IServiceProvider>().Object)
             {
                 RequestPacket = RadiusPacketFactory.AccessRequest()
             };
 
-            var middleware = host.Services.GetRequiredService<FirstFactorAuthenticationMiddleware>();
+            var middleware = host.Service<FirstFactorAuthenticationMiddleware>();
             await middleware.InvokeAsync(context, new Mock<RadiusRequestDelegate>().Object);
 
             context.AuthenticationState.FirstFactor.Should().Be(AuthenticationCode.Accept);

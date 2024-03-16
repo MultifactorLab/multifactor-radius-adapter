@@ -23,9 +23,11 @@ namespace MultiFactor.Radius.Adapter.Tests.Pipeline
             var expectedTs = TimeSpan.FromMinutes(90);
             var expectedVer = "8.8.8";
 
-            var host = TestHostFactory.CreateHost(services =>
+            var host = TestHostFactory.CreateHost(builder =>
             {
-                services.Configure<TestConfigProviderOptions>(x =>
+                builder.UseMiddleware<StatusServerMiddleware>();
+
+                builder.Services.Configure<TestConfigProviderOptions>(x =>
                 {
                     x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-single.config");
                 });
@@ -33,40 +35,38 @@ namespace MultiFactor.Radius.Adapter.Tests.Pipeline
                 var serverInfo = new Mock<IServerInfo>();
                 serverInfo.Setup(x => x.GetUptime()).Returns(expectedTs);
                 serverInfo.Setup(x => x.GetVersion()).Returns(expectedVer);
-                services.ReplaceService(serverInfo.Object);
+                builder.Services.ReplaceService(serverInfo.Object);
+
+                builder.Services.RemoveService<IRadiusPipeline>();
+                builder.Services.AddSingleton<RadiusPipeline>();
+                builder.Services.AddSingleton<IRadiusPipeline>(prov => prov.GetRequiredService<RadiusPipeline>());
+
+                builder.Services.ReplaceService(new Mock<IRadiusResponseSender>().Object);
             });
 
-            var config = host.Services.GetRequiredService<IServiceConfiguration>();
-            var responseSender = new Mock<IRadiusResponseSender>();
-            var context = new RadiusContext(config.Clients[0], responseSender.Object, new Mock<IServiceProvider>().Object)
-            {
-                RequestPacket = RadiusPacketFactory.StatusServer()
-            };
+            var context = host.CreateContext(RadiusPacketFactory.StatusServer());
 
-            var nextDelegate = new Mock<RadiusRequestDelegate>();
-
-            var middleware = host.Services.GetRequiredService<StatusServerMiddleware>();
-            await middleware.InvokeAsync(context, nextDelegate.Object);
+            var pipeline = host.Service<RadiusPipeline>();
+            await pipeline.InvokeAsync(context);
 
             context.AuthenticationState.ToPacketCode().Should().Be(PacketCode.AccessAccept);
             context.ResponseCode.Should().Be(PacketCode.AccessAccept);
 
             context.ReplyMessage.Should().Be($"Server up {expectedTs.Days} days {expectedTs.ToString("hh\\:mm\\:ss")}, ver.: {expectedVer}");
-            nextDelegate.Verify(q => q.Invoke(It.IsAny<RadiusContext>()), Times.Never);
         }
         
         [Fact]
         public async Task Invoke_NonStatusServerRequest_ShouldInvokeNext()
         {
-            var host = TestHostFactory.CreateHost(services =>
+            var host = TestHostFactory.CreateHost(builder =>
             {
-                services.Configure<TestConfigProviderOptions>(x =>
+                builder.Services.Configure<TestConfigProviderOptions>(x =>
                 {
                     x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-single.config");
                 });
             });
 
-            var config = host.Services.GetRequiredService<IServiceConfiguration>();
+            var config = host.Service<IServiceConfiguration>();
             var responseSender = new Mock<IRadiusResponseSender>();
             var context = new RadiusContext(config.Clients[0], responseSender.Object, new Mock<IServiceProvider>().Object)
             {
@@ -75,7 +75,7 @@ namespace MultiFactor.Radius.Adapter.Tests.Pipeline
 
             var nextDelegate = new Mock<RadiusRequestDelegate>();
 
-            var middleware = host.Services.GetRequiredService<StatusServerMiddleware>();
+            var middleware = host.Service<StatusServerMiddleware>();
             await middleware.InvokeAsync(context, nextDelegate.Object);
 
             context.ReplyMessage.Should().BeNullOrEmpty();

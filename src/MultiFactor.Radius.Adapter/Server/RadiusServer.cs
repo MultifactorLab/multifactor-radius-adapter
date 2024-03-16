@@ -44,12 +44,37 @@ using MultiFactor.Radius.Adapter.Core.Pipeline;
 using static System.Formats.Asn1.AsnWriter;
 using Microsoft.Extensions.Logging;
 using MultiFactor.Radius.Adapter.Server.Context;
+using System.Runtime.CompilerServices;
 
 namespace MultiFactor.Radius.Adapter.Server
 {
+    internal class RealUdpClient : IUdpClient
+    {
+        private readonly UdpClient _udpClient;
+
+        public RealUdpClient(IPEndPoint endpoint)
+        {
+            if (endpoint is null)
+            {
+                throw new ArgumentNullException(nameof(endpoint));
+            }
+
+            _udpClient = new UdpClient(endpoint);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Close() => _udpClient.Close();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public Task<UdpReceiveResult> ReceiveAsync() => _udpClient.ReceiveAsync();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public int Send(byte[] dgram, int bytes, IPEndPoint endPoint) => _udpClient.Send(dgram, bytes, endPoint);
+    }
+
     public sealed class RadiusServer : IDisposable
     {
-        private UdpClient _udpClient;
+        private IUdpClient _udpClient;
         private readonly IPEndPoint _localEndpoint;
         private readonly IRadiusPacketParser _radiusPacketParser;
         private readonly IRadiusDictionary _dictionary;
@@ -57,6 +82,7 @@ namespace MultiFactor.Radius.Adapter.Server
         private readonly ILogger _logger;
         private readonly IRadiusPipeline _pipeline;
         private readonly RadiusContextFactory _radiusContextFactory;
+        private readonly Func<IPEndPoint, IUdpClient> _createUdpClient;
         private readonly RandomWaiter _waiter;
         private IServiceConfiguration _serviceConfiguration;
 
@@ -78,7 +104,9 @@ namespace MultiFactor.Radius.Adapter.Server
             RandomWaiter waiter,
             ILogger<RadiusServer> logger,
             IRadiusPipeline pipeline,
-            RadiusContextFactory radiusContextFactory)
+            RadiusContextFactory radiusContextFactory,
+            // need for tests only
+            Func<IPEndPoint, IUdpClient> createUdpClient)
         {
             _serviceConfiguration = serviceConfiguration ?? throw new ArgumentNullException(nameof(serviceConfiguration));
             _dictionary = dictionary ?? throw new ArgumentNullException(nameof(dictionary));
@@ -87,6 +115,7 @@ namespace MultiFactor.Radius.Adapter.Server
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _pipeline = pipeline ?? throw new ArgumentNullException(nameof(pipeline));
             _radiusContextFactory = radiusContextFactory ?? throw new ArgumentNullException(nameof(radiusContextFactory));
+            _createUdpClient = createUdpClient;
             _localEndpoint = serviceConfiguration.ServiceServerEndpoint;
             _waiter = waiter ?? throw new ArgumentNullException(nameof(waiter));
         }
@@ -104,7 +133,7 @@ namespace MultiFactor.Radius.Adapter.Server
                    
             _logger.LogInformation("Starting Radius server on {host:l}:{port}", _localEndpoint.Address, _localEndpoint.Port);
 
-            _udpClient = new UdpClient(_localEndpoint);
+            _udpClient = _createUdpClient(_localEndpoint);
             Running = true;
             var receiveTask = Receive();
 

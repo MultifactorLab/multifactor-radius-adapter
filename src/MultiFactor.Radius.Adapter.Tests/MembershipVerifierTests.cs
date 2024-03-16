@@ -16,9 +16,9 @@ namespace MultiFactor.Radius.Adapter.Tests
         [Fact]
         public void VerifyMembership_UserIsNotMemberOfSecurityGroup_ShouldReturnBadResult()
         {
-            var host = TestHostFactory.CreateHost(services =>
+            var host = TestHostFactory.CreateHost(builder =>
             {
-                services.Configure<TestConfigProviderOptions>(x =>
+                builder.Services.Configure<TestConfigProviderOptions>(x =>
                 {
                     x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-single.config");
                 });
@@ -29,7 +29,7 @@ namespace MultiFactor.Radius.Adapter.Tests
                 .SetActiveDirectoryDomain("domain.local")
                 .AddActiveDirectoryGroup("Security Group");
 
-            var verifier = host.Services.GetRequiredService<MembershipVerifier>();
+            var verifier = host.Service<MembershipVerifier>();
             var result = verifier.VerifyMembership(client, profile, client.SplittedActiveDirectoryDomains[0], profile.ExtractUpnBasedUser());
 
             result.IsSuccess.Should().BeFalse();
@@ -38,9 +38,9 @@ namespace MultiFactor.Radius.Adapter.Tests
         [Fact]
         public void VerifyMembership_UserIsMemberOfSecurityGroup_ShouldReturnGoodResult()
         {
-            var host = TestHostFactory.CreateHost(services =>
+            var host = TestHostFactory.CreateHost(builder =>
             {
-                services.Configure<TestConfigProviderOptions>(x =>
+                builder.Services.Configure<TestConfigProviderOptions>(x =>
                 {
                     x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-single.config");
                 });
@@ -59,7 +59,7 @@ namespace MultiFactor.Radius.Adapter.Tests
                 .AddMemberOf("Security Group")
                 .Build();
 
-            var verifier = host.Services.GetRequiredService<MembershipVerifier>();
+            var verifier = host.Service<MembershipVerifier>();
             var result = verifier.VerifyMembership(client, profile, client.SplittedActiveDirectoryDomains[0], profile.ExtractUpnBasedUser());
 
             result.IsSuccess.Should().BeTrue();
@@ -68,9 +68,9 @@ namespace MultiFactor.Radius.Adapter.Tests
         [Fact]
         public void VerifyMembership_2FaGroupSpecified_ShouldReturnTrue()
         {
-            var host = TestHostFactory.CreateHost(services =>
+            var host = TestHostFactory.CreateHost(builder =>
             {
-                services.Configure<TestConfigProviderOptions>(x =>
+                builder.Services.Configure<TestConfigProviderOptions>(x =>
                 {
                     x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-single.config");
                 });
@@ -81,7 +81,7 @@ namespace MultiFactor.Radius.Adapter.Tests
                 .AddActiveDirectory2FaGroup("2FA Group");
             var profile = GetProfile();
 
-            var verifier = host.Services.GetRequiredService<MembershipVerifier>();
+            var verifier = host.Service<MembershipVerifier>();
             var result = verifier.VerifyMembership(client, profile, client.SplittedActiveDirectoryDomains[0], profile.ExtractUpnBasedUser());
 
             result.IsSuccess.Should().BeTrue();
@@ -91,9 +91,9 @@ namespace MultiFactor.Radius.Adapter.Tests
         [Fact]
         public void VerifyMembership_2FaGroupNotSpecified_ShouldReturnFalse()
         {
-            var host = TestHostFactory.CreateHost(services =>
+            var host = TestHostFactory.CreateHost(builder =>
             {
-                services.Configure<TestConfigProviderOptions>(x =>
+                builder.Services.Configure<TestConfigProviderOptions>(x =>
                 {
                     x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-single.config");
                 });
@@ -103,7 +103,7 @@ namespace MultiFactor.Radius.Adapter.Tests
                 .SetActiveDirectoryDomain("domain.local");
             var profile = GetProfile();
 
-            var verifier = host.Services.GetRequiredService<MembershipVerifier>();
+            var verifier = host.Service<MembershipVerifier>();
             var result = verifier.VerifyMembership(client, profile, client.SplittedActiveDirectoryDomains[0], profile.ExtractUpnBasedUser());
 
             result.IsSuccess.Should().BeTrue();
@@ -113,9 +113,9 @@ namespace MultiFactor.Radius.Adapter.Tests
         [Fact]
         public void VerifyMembership_UserIsNotMemberOf2FaGroup_ShouldReturnFalse()
         {
-            var host = TestHostFactory.CreateHost(services =>
+            var host = TestHostFactory.CreateHost(builder =>
             {
-                services.Configure<TestConfigProviderOptions>(x =>
+                builder.Services.Configure<TestConfigProviderOptions>(x =>
                 {
                     x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-single.config");
                 });
@@ -126,7 +126,7 @@ namespace MultiFactor.Radius.Adapter.Tests
                 .AddActiveDirectory2FaGroup("2FA Group");
             var profile = GetProfile();
 
-            var verifier = host.Services.GetRequiredService<MembershipVerifier>();
+            var verifier = host.Service<MembershipVerifier>();
             var result = verifier.VerifyMembership(client, GetProfile(), client.SplittedActiveDirectoryDomains[0], profile.ExtractUpnBasedUser());
 
             result.IsSuccess.Should().BeTrue();
@@ -136,9 +136,9 @@ namespace MultiFactor.Radius.Adapter.Tests
         [Fact]
         public void VerifyMembership_UserIsMemberOf2FaGroup_ShouldReturnTrue()
         {
-            var host = TestHostFactory.CreateHost(services =>
+            var host = TestHostFactory.CreateHost(builder =>
             {
-                services.Configure<TestConfigProviderOptions>(x =>
+                builder.Services.Configure<TestConfigProviderOptions>(x =>
                 {
                     x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-single.config");
                 });
@@ -157,7 +157,7 @@ namespace MultiFactor.Radius.Adapter.Tests
                 .AddMemberOf("2FA Group")
                 .Build();
 
-            var verifier = host.Services.GetRequiredService<MembershipVerifier>();
+            var verifier = host.Service<MembershipVerifier>();
             var result = verifier.VerifyMembership(client, profile, client.SplittedActiveDirectoryDomains[0], profile.ExtractUpnBasedUser());
 
             result.IsSuccess.Should().BeTrue();
@@ -167,9 +167,9 @@ namespace MultiFactor.Radius.Adapter.Tests
         [Fact]
         public void VerifyMembership_2FaBypassGroupSpecified_ShouldReturnTrue()
         {
-            var host = TestHostFactory.CreateHost(services =>
+            var host = TestHostFactory.CreateHost(builder =>
             {
-                services.Configure<TestConfigProviderOptions>(x =>
+                builder.Services.Configure<TestConfigProviderOptions>(x =>
                 {
                     x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-single.config");
                 });
@@ -180,7 +180,7 @@ namespace MultiFactor.Radius.Adapter.Tests
                 .AddActiveDirectory2FaBypassGroup("2FA Bypass Group");
             var profile = GetProfile();
 
-            var verifier = host.Services.GetRequiredService<MembershipVerifier>();
+            var verifier = host.Service<MembershipVerifier>();
             var result = verifier.VerifyMembership(client, profile, client.SplittedActiveDirectoryDomains[0], profile.ExtractUpnBasedUser());
 
             result.IsSuccess.Should().BeTrue();
@@ -190,9 +190,9 @@ namespace MultiFactor.Radius.Adapter.Tests
         [Fact]
         public void VerifyMembership_2FaBypassGroupNotSpecified_ShouldReturnFalse()
         {
-            var host = TestHostFactory.CreateHost(services =>
+            var host = TestHostFactory.CreateHost(builder =>
             {
-                services.Configure<TestConfigProviderOptions>(x =>
+                builder.Services.Configure<TestConfigProviderOptions>(x =>
                 {
                     x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-single.config");
                 });
@@ -202,7 +202,7 @@ namespace MultiFactor.Radius.Adapter.Tests
                 .SetActiveDirectoryDomain("domain.local");
             var profile = GetProfile();
 
-            var verifier = host.Services.GetRequiredService<MembershipVerifier>();
+            var verifier = host.Service<MembershipVerifier>();
             var result = verifier.VerifyMembership(client, GetProfile(), client.SplittedActiveDirectoryDomains[0], profile.ExtractUpnBasedUser());
 
             result.IsSuccess.Should().BeTrue();
@@ -212,9 +212,9 @@ namespace MultiFactor.Radius.Adapter.Tests
         [Fact]
         public void VerifyMembership_UserIsNotMemberOf2FaBypassGroup_ShouldReturnFalse()
         {
-            var host = TestHostFactory.CreateHost(services =>
+            var host = TestHostFactory.CreateHost(builder =>
             {
-                services.Configure<TestConfigProviderOptions>(x =>
+                builder.Services.Configure<TestConfigProviderOptions>(x =>
                 {
                     x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-single.config");
                 });
@@ -225,7 +225,7 @@ namespace MultiFactor.Radius.Adapter.Tests
                 .AddActiveDirectory2FaBypassGroup("2FA Bypass Group");
             var profile = GetProfile();
 
-            var verifier = host.Services.GetRequiredService<MembershipVerifier>();
+            var verifier = host.Service<MembershipVerifier>();
             var result = verifier.VerifyMembership(client, GetProfile(), client.SplittedActiveDirectoryDomains[0], profile.ExtractUpnBasedUser());
 
             result.IsSuccess.Should().BeTrue();
@@ -235,9 +235,9 @@ namespace MultiFactor.Radius.Adapter.Tests
         [Fact]
         public void VerifyMembership_UserIsMemberOf2FaBypassGroup_ShouldReturnTrue()
         {
-            var host = TestHostFactory.CreateHost(services =>
+            var host = TestHostFactory.CreateHost(builder =>
             {
-                services.Configure<TestConfigProviderOptions>(x =>
+                builder.Services.Configure<TestConfigProviderOptions>(x =>
                 {
                     x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-single.config");
                 });
@@ -256,7 +256,7 @@ namespace MultiFactor.Radius.Adapter.Tests
                 .AddMemberOf("2FA Bypass Group")
                 .Build();
 
-            var verifier = host.Services.GetRequiredService<MembershipVerifier>();
+            var verifier = host.Service<MembershipVerifier>();
             var result = verifier.VerifyMembership(client, profile, client.SplittedActiveDirectoryDomains[0], profile.ExtractUpnBasedUser());
 
             result.IsSuccess.Should().BeTrue();
@@ -266,9 +266,9 @@ namespace MultiFactor.Radius.Adapter.Tests
         [Fact]
         public void VerifyMembership_UserIsMemberOfGroups_ShouldReturnTrue()
         {
-            var host = TestHostFactory.CreateHost(services =>
+            var host = TestHostFactory.CreateHost(builder =>
             {
-                services.Configure<TestConfigProviderOptions>(x =>
+                builder.Services.Configure<TestConfigProviderOptions>(x =>
                 {
                     x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-single.config");
                 });
@@ -291,7 +291,7 @@ namespace MultiFactor.Radius.Adapter.Tests
                 .AddMemberOf("Security Group")
                 .Build();
 
-            var verifier = host.Services.GetRequiredService<MembershipVerifier>();
+            var verifier = host.Service<MembershipVerifier>();
             var result = verifier.VerifyMembership(client, profile, client.SplittedActiveDirectoryDomains[0], profile.ExtractUpnBasedUser());
 
             result.IsSuccess.Should().BeTrue();

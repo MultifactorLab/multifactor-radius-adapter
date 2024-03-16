@@ -26,17 +26,18 @@ using System;
 using System.Net;
 using System.Net.Sockets;
 using Microsoft.Extensions.Logging;
+using MultiFactor.Radius.Adapter.Configuration.Core;
 using MultiFactor.Radius.Adapter.Core.Radius;
 
 namespace MultiFactor.Radius.Adapter.Server
 {
     public class RadiusResponseSender : IRadiusResponseSender
     {
-        private readonly UdpClient _udpClient;
+        private readonly IUdpClient _udpClient;
         private readonly IRadiusPacketParser _radiusPacketParser;
         private readonly ILogger _logger;
 
-        public RadiusResponseSender(UdpClient udpClient, IRadiusPacketParser radiusPacketParser, ILogger<RadiusResponseSender> logger)
+        public RadiusResponseSender(IUdpClient udpClient, IRadiusPacketParser radiusPacketParser, ILogger<RadiusResponseSender> logger)
         {
             _udpClient = udpClient ?? throw new ArgumentNullException(nameof(udpClient));
             _radiusPacketParser = radiusPacketParser ?? throw new ArgumentNullException(nameof(radiusPacketParser));

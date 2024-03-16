@@ -25,6 +25,7 @@
 using System;
 using System.Net.Sockets;
 using Microsoft.Extensions.Logging;
+using MultiFactor.Radius.Adapter.Configuration.Core;
 using MultiFactor.Radius.Adapter.Core.Radius;
 
 namespace MultiFactor.Radius.Adapter.Server
@@ -40,7 +41,7 @@ namespace MultiFactor.Radius.Adapter.Server
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
-        public IRadiusResponseSender CreateSender(UdpClient udpClient)
+        public IRadiusResponseSender CreateSender(IUdpClient udpClient)
         {
             if (udpClient is null)
             {

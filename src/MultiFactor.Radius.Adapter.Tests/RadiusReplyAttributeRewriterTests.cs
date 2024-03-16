@@ -19,9 +19,9 @@ namespace MultiFactor.Radius.Adapter.Tests
         [Fact]
         public void LoadConfig_SimpleAttribute_ShouldLoadCorrectly()
         {
-            var host = TestHostFactory.CreateHost(services =>
+            var host = TestHostFactory.CreateHost(builder =>
             {
-                services.Configure<TestConfigProviderOptions>(x =>
+                builder.Services.Configure<TestConfigProviderOptions>(x =>
                 {
                     x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-multi.config");
                     x.ClientConfigFilePaths = new[]
@@ -31,7 +31,7 @@ namespace MultiFactor.Radius.Adapter.Tests
                 });
             });
 
-            var config = host.Services.GetRequiredService<IServiceConfiguration>();
+            var config = host.Service<IServiceConfiguration>();
             var cli = config.Clients[0];
 
             cli.RadiusReplyAttributes.Should().ContainSingle();
@@ -45,9 +45,9 @@ namespace MultiFactor.Radius.Adapter.Tests
         [Fact]
         public void LoadConfig_AttributeWithCondition_ShouldLoadCorrectly()
         {
-            var host = TestHostFactory.CreateHost(services =>
+            var host = TestHostFactory.CreateHost(builder =>
             {
-                services.Configure<TestConfigProviderOptions>(x =>
+                builder.Services.Configure<TestConfigProviderOptions>(x =>
                 {
                     x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-multi.config");
                     x.ClientConfigFilePaths = new[]
@@ -57,7 +57,7 @@ namespace MultiFactor.Radius.Adapter.Tests
                 });
             });
 
-            var config = host.Services.GetRequiredService<IServiceConfiguration>();
+            var config = host.Service<IServiceConfiguration>();
             var cli = config.Clients[0];
 
             cli.RadiusReplyAttributes.Should().ContainSingle();
@@ -71,9 +71,9 @@ namespace MultiFactor.Radius.Adapter.Tests
         [Fact]
         public void LoadConfig_AttributeWithAttribute_ShouldLoadCorrectly()
         {
-            var host = TestHostFactory.CreateHost(services =>
+            var host = TestHostFactory.CreateHost(builder =>
             {
-                services.Configure<TestConfigProviderOptions>(x =>
+                builder.Services.Configure<TestConfigProviderOptions>(x =>
                 {
                     x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-multi.config");
                     x.ClientConfigFilePaths = new[]
@@ -83,7 +83,7 @@ namespace MultiFactor.Radius.Adapter.Tests
                 });
             });
 
-            var config = host.Services.GetRequiredService<IServiceConfiguration>();
+            var config = host.Service<IServiceConfiguration>();
             var cli = config.Clients[0];
 
             cli.RadiusReplyAttributes.Should().ContainSingle();
@@ -97,9 +97,9 @@ namespace MultiFactor.Radius.Adapter.Tests
         [Fact]
         public void LoadConfig_MultipleWithTheSameKey_ShouldLoadCorrectly()
         {
-            var host = TestHostFactory.CreateHost(services =>
+            var host = TestHostFactory.CreateHost(builder =>
             {
-                services.Configure<TestConfigProviderOptions>(x =>
+                builder.Services.Configure<TestConfigProviderOptions>(x =>
                 {
                     x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-multi.config");
                     x.ClientConfigFilePaths = new[]
@@ -109,7 +109,7 @@ namespace MultiFactor.Radius.Adapter.Tests
                 });
             });
 
-            var config = host.Services.GetRequiredService<IServiceConfiguration>();
+            var config = host.Service<IServiceConfiguration>();
             var cli = config.Clients[0];
 
             cli.RadiusReplyAttributes.Should().ContainSingle();
@@ -127,9 +127,9 @@ namespace MultiFactor.Radius.Adapter.Tests
         [Fact]
         public void LoadConfig_Sufficient_ShouldLoadCorrectly()
         {
-            var host = TestHostFactory.CreateHost(services =>
+            var host = TestHostFactory.CreateHost(builder =>
             {
-                services.Configure<TestConfigProviderOptions>(x =>
+                builder.Services.Configure<TestConfigProviderOptions>(x =>
                 {
                     x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-multi.config");
                     x.ClientConfigFilePaths = new[]
@@ -139,7 +139,7 @@ namespace MultiFactor.Radius.Adapter.Tests
                 });
             });
 
-            var config = host.Services.GetRequiredService<IServiceConfiguration>();
+            var config = host.Service<IServiceConfiguration>();
             var cli = config.Clients[0];
 
             cli.RadiusReplyAttributes.Should().ContainSingle();
@@ -153,9 +153,9 @@ namespace MultiFactor.Radius.Adapter.Tests
         [Fact]
         public void Rewrite_ResponseShoulContainKeys()
         {
-            var host = TestHostFactory.CreateHost(services =>
+            var host = TestHostFactory.CreateHost(builder =>
             {
-                services.Configure<TestConfigProviderOptions>(x =>
+                builder.Services.Configure<TestConfigProviderOptions>(x =>
                 {
                     x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-single.config");
                 });
@@ -171,7 +171,7 @@ namespace MultiFactor.Radius.Adapter.Tests
                 ResponsePacket = RadiusPacketFactory.AccessRequest()
             };
 
-            var srv = host.Services.GetRequiredService<RadiusReplyAttributeEnricher>();
+            var srv = host.Service<RadiusReplyAttributeEnricher>();
             srv.RewriteReplyAttributes(context);
 
             context.ResponsePacket.Attributes.Should().ContainKeys("givenName", "displayName");
@@ -180,16 +180,16 @@ namespace MultiFactor.Radius.Adapter.Tests
         [Fact]
         public void Rewrite_Sufficient_ResponseShoulContainOneValue()
         {
-            var host = TestHostFactory.CreateHost(services =>
+            var host = TestHostFactory.CreateHost(builder =>
             {
-                services.Configure<TestConfigProviderOptions>(x =>
+                builder.Services.Configure<TestConfigProviderOptions>(x =>
                 {
                     x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-single.config");
                 });
 
                 var dict = new Mock<IRadiusDictionary>();
                 dict.Setup(x => x.GetAttribute(It.Is<string>(y => y == "givenName"))).Returns(new DictionaryAttribute("givenName", 26, DictionaryAttribute.TYPE_STRING));
-                services.RemoveService<IRadiusDictionary>().AddSingleton(dict.Object);
+                builder.Services.RemoveService<IRadiusDictionary>().AddSingleton(dict.Object);
             });
 
             var clientConfig = new ClientConfiguration("custom", "shared_secret", AuthenticationSource.ActiveDirectory, "key", "secret")
@@ -205,7 +205,7 @@ namespace MultiFactor.Radius.Adapter.Tests
                 ResponsePacket = RadiusPacketFactory.AccessRequest()
             };
 
-            var srv = host.Services.GetRequiredService<RadiusReplyAttributeEnricher>();
+            var srv = host.Service<RadiusReplyAttributeEnricher>();
             srv.RewriteReplyAttributes(context);
 
             var givenName = context.ResponsePacket.Attributes["givenName"];
@@ -215,9 +215,9 @@ namespace MultiFactor.Radius.Adapter.Tests
         [Fact]
         public void Rewrite_ShouldPullValuesFromLdapAttr()
         {
-            var host = TestHostFactory.CreateHost(services =>
+            var host = TestHostFactory.CreateHost(builder =>
             {
-                services.Configure<TestConfigProviderOptions>(x =>
+                builder.Services.Configure<TestConfigProviderOptions>(x =>
                 {
                     x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-single.config");
                 });
@@ -225,7 +225,7 @@ namespace MultiFactor.Radius.Adapter.Tests
                 var dict = new Mock<IRadiusDictionary>();
                 dict.Setup(x => x.GetAttribute(It.Is<string>(y => y == "givenName"))).Returns(new DictionaryAttribute("givenName", 26, DictionaryAttribute.TYPE_STRING));
                 dict.Setup(x => x.GetAttribute(It.Is<string>(y => y == "displayName"))).Returns(new DictionaryAttribute("displayName", 26, DictionaryAttribute.TYPE_STRING));
-                services.RemoveService<IRadiusDictionary>().AddSingleton(dict.Object);
+                builder.Services.RemoveService<IRadiusDictionary>().AddSingleton(dict.Object);
             });
 
             var clientConfig = new ClientConfiguration("custom", "shared_secret", AuthenticationSource.ActiveDirectory, "key", "secret")
@@ -249,7 +249,7 @@ namespace MultiFactor.Radius.Adapter.Tests
                 }
             };
 
-            var srv = host.Services.GetRequiredService<RadiusReplyAttributeEnricher>();
+            var srv = host.Service<RadiusReplyAttributeEnricher>();
             srv.RewriteReplyAttributes(context);
 
             var givenName = context.ResponsePacket.Attributes["givenName"];

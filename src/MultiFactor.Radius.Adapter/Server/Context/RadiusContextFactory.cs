@@ -27,6 +27,7 @@ using System.Net;
 using System.Net.Sockets;
 using MultiFactor.Radius.Adapter.Core.Radius;
 using MultiFactor.Radius.Adapter.Configuration.Core;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace MultiFactor.Radius.Adapter.Server.Context;
 
@@ -41,7 +42,7 @@ public class RadiusContextFactory
         _radiusResponseSenderFactory = radiusResponseSenderFactory ?? throw new ArgumentNullException(nameof(radiusResponseSenderFactory));
     }
 
-    public RadiusContext CreateContext(IClientConfiguration client, IRadiusPacket packet, UdpClient udpClient, IPEndPoint remote, IPEndPoint proxy)
+    public RadiusContext CreateContext(IClientConfiguration client, IRadiusPacket packet, IUdpClient udpClient, IPEndPoint remote, IPEndPoint proxy)
     {
         if (client is null)
         {

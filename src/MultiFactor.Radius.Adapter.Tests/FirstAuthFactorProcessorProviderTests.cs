@@ -13,15 +13,15 @@ namespace MultiFactor.Radius.Adapter.Tests
         [Fact]
         public void Get_ShouldReturnDefault()
         {
-            var host = TestHostFactory.CreateHost(services =>
+            var host = TestHostFactory.CreateHost(builder =>
             {
-                services.Configure<TestConfigProviderOptions>(x =>
+                builder.Services.Configure<TestConfigProviderOptions>(x =>
                 {
                     x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-single.config");
                 });
             });
 
-            var prov = host.Services.GetRequiredService<IFirstAuthFactorProcessorProvider>();
+            var prov = host.Service<IFirstAuthFactorProcessorProvider>();
             var getter = prov.GetProcessor(AuthenticationSource.None);
 
             getter.Should().NotBeNull().And.BeOfType<DefaultFirstAuthFactorProcessor>();
@@ -32,15 +32,15 @@ namespace MultiFactor.Radius.Adapter.Tests
         [InlineData(AuthenticationSource.Ldap)]
         public void Get_ShouldReturnLdap(AuthenticationSource source)
         {
-            var host = TestHostFactory.CreateHost(services =>
+            var host = TestHostFactory.CreateHost(builder =>
             {
-                services.Configure<TestConfigProviderOptions>(x =>
+                builder.Services.Configure<TestConfigProviderOptions>(x =>
                 {
                     x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-single.config");
                 });
             });
 
-            var prov = host.Services.GetRequiredService<IFirstAuthFactorProcessorProvider>();
+            var prov = host.Service<IFirstAuthFactorProcessorProvider>();
             var getter = prov.GetProcessor(source);
 
             getter.Should().NotBeNull().And.BeOfType<LdapFirstAuthFactorProcessor>();
@@ -49,15 +49,15 @@ namespace MultiFactor.Radius.Adapter.Tests
         [Fact]
         public void Get_ShouldReturnRadius()
         {
-            var host = TestHostFactory.CreateHost(services =>
+            var host = TestHostFactory.CreateHost(builder =>
             {
-                services.Configure<TestConfigProviderOptions>(x =>
+                builder.Services.Configure<TestConfigProviderOptions>(x =>
                 {
                     x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-single.config");
                 });
             });
 
-            var prov = host.Services.GetRequiredService<IFirstAuthFactorProcessorProvider>();
+            var prov = host.Service<IFirstAuthFactorProcessorProvider>();
             var getter = prov.GetProcessor(AuthenticationSource.Radius);
 
             getter.Should().NotBeNull().And.BeOfType<RadiusFirstAuthFactorProcessor>();

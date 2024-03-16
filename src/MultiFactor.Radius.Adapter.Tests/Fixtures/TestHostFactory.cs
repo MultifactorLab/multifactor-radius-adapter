@@ -1,25 +1,24 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
+﻿using Moq;
 using MultiFactor.Radius.Adapter.Configuration.Core;
 using MultiFactor.Radius.Adapter.Core;
 using MultiFactor.Radius.Adapter.Tests.Fixtures.ConfigLoading;
+using System.Net;
 
 namespace MultiFactor.Radius.Adapter.Tests.Fixtures;
 
 internal static class TestHostFactory
 {
-    public static IHost CreateHost(Action<IServiceCollection>? configureServices = null)
+    public static TestHost CreateHost(Action<RadiusHostApplicationBuilder>? configure = null)
     {
-        var builder = RadiusHost.CreateApplicationBuilder();
-        builder.Configure(x =>
-        {
-            x.ConfigureApplication(services =>
-            {
-                services.ReplaceService<IRootConfigurationProvider, TestRootConfigProvider>();
-                services.ReplaceService<IClientConfigurationsProvider, TestClientConfigsProvider>();
-                configureServices?.Invoke(services);
-            });
-        });
-        return builder.Build();
+        var builder = RadiusHost.CreateApplicationBuilder(new[] { "--environment", "Test" });
+
+        builder.Services.ReplaceService<Func<IPEndPoint, IUdpClient>>(prov => endpoint => new Mock<IUdpClient>().Object);
+        builder.Services.ReplaceService<IRootConfigurationProvider, TestRootConfigProvider>();
+        builder.Services.ReplaceService<IClientConfigurationsProvider, TestClientConfigsProvider>();
+
+        builder.ConfigureApplication();
+
+        configure?.Invoke(builder);
+        return new TestHost(builder.Build());
     }
 }

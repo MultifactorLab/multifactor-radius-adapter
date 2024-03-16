@@ -8,7 +8,8 @@ using System;
 using System.Text;
 
 var builder = RadiusHost.CreateApplicationBuilder(args);
-builder.Configure(x => x.ConfigureApplication());
+builder.AddLogging();
+builder.ConfigureApplication();
 
 builder.UseMiddleware<StatusServerMiddleware>();
 builder.UseMiddleware<AccessRequestFilterMiddleware>();

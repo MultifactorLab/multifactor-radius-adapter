@@ -18,15 +18,16 @@ public class AccessChallengeMiddlewareTests
     [Fact]
     public async Task Invoke_HasNotStateAttribute_ShouldInvokeNext()
     {
-        var host = TestHostFactory.CreateHost(services =>
+        var host = TestHostFactory.CreateHost(builder =>
         {
-            services.Configure<TestConfigProviderOptions>(x =>
+            builder.UseMiddleware<AccessChallengeMiddleware>();
+            builder.Services.Configure<TestConfigProviderOptions>(x =>
             {
                 x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-single.config");
             });
         });
 
-        var config = host.Services.GetRequiredService<IServiceConfiguration>();
+        var config = host.Service<IServiceConfiguration>();
         var responseSender = new Mock<IRadiusResponseSender>();
         var context = new RadiusContext(config.Clients[0], responseSender.Object, new Mock<IServiceProvider>().Object)
         {
@@ -35,7 +36,7 @@ public class AccessChallengeMiddlewareTests
 
         var nextDelegate = new Mock<RadiusRequestDelegate>();
 
-        var middleware = host.Services.GetRequiredService<AccessChallengeMiddleware>();
+        var middleware = host.Service<AccessChallengeMiddleware>();
         await middleware.InvokeAsync(context, nextDelegate.Object);
 
         nextDelegate.Verify(q => q.Invoke(It.Is<RadiusContext>(x => x == context)), Times.Once);
@@ -44,19 +45,20 @@ public class AccessChallengeMiddlewareTests
     [Fact]
     public async Task Invoke_HasStateAttributeAndHasNotChallengeState_ShouldInvokeNext()
     {
-        var host = TestHostFactory.CreateHost(services =>
+        var host = TestHostFactory.CreateHost(builder =>
         {
-            services.Configure<TestConfigProviderOptions>(x =>
+            builder.UseMiddleware<AccessChallengeMiddleware>();
+            builder.Services.Configure<TestConfigProviderOptions>(x =>
             {
                 x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-single.config");
             });
 
             var chProc = new Mock<IChallengeProcessor>();
             chProc.Setup(x => x.HasState(It.IsAny<ChallengeRequestIdentifier>())).Returns(false);
-            services.RemoveService<IChallengeProcessor>().AddSingleton(chProc.Object);
+            builder.Services.RemoveService<IChallengeProcessor>().AddSingleton(chProc.Object);
         });
 
-        var config = host.Services.GetRequiredService<IServiceConfiguration>();
+        var config = host.Service<IServiceConfiguration>();
         var responseSender = new Mock<IRadiusResponseSender>();
         var context = new RadiusContext(config.Clients[0], responseSender.Object, new Mock<IServiceProvider>().Object)
         {
@@ -66,7 +68,7 @@ public class AccessChallengeMiddlewareTests
 
         var nextDelegate = new Mock<RadiusRequestDelegate>();
 
-        var middleware = host.Services.GetRequiredService<AccessChallengeMiddleware>();
+        var middleware = host.Service<AccessChallengeMiddleware>();
         await middleware.InvokeAsync(context, nextDelegate.Object);
 
         context.State.Should().BeNullOrEmpty();
@@ -83,18 +85,19 @@ public class AccessChallengeMiddlewareTests
         var chProc = new Mock<IChallengeProcessor>();
         chProc.Setup(x => x.HasState(It.IsAny<ChallengeRequestIdentifier>())).Returns(true);
 
-        var host = TestHostFactory.CreateHost(services =>
+        var host = TestHostFactory.CreateHost(builder =>
         {
-            services.Configure<TestConfigProviderOptions>(x =>
+            builder.UseMiddleware<AccessChallengeMiddleware>();
+            builder.Services.Configure<TestConfigProviderOptions>(x =>
             {
                 x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-single.config");
             });
 
-            services.RemoveService<IRadiusRequestPostProcessor>().AddSingleton(postProcessor.Object);
-            services.RemoveService<IChallengeProcessor>().AddSingleton(chProc.Object);
+            builder.Services.RemoveService<IRadiusRequestPostProcessor>().AddSingleton(postProcessor.Object);
+            builder.Services.RemoveService<IChallengeProcessor>().AddSingleton(chProc.Object);
         });
 
-        var config = host.Services.GetRequiredService<IServiceConfiguration>();
+        var config = host.Service<IServiceConfiguration>();
         var client = config.Clients[0];
         var responseSender = new Mock<IRadiusResponseSender>();
         var context = new RadiusContext(client, responseSender.Object, new Mock<IServiceProvider>().Object)
@@ -107,7 +110,7 @@ public class AccessChallengeMiddlewareTests
 
         var nextDelegate = new Mock<RadiusRequestDelegate>();
 
-        var middleware = host.Services.GetRequiredService<AccessChallengeMiddleware>();
+        var middleware = host.Service<AccessChallengeMiddleware>();
         await middleware.InvokeAsync(context, nextDelegate.Object);
 
         context.State.Should().Be(expectedReqId);

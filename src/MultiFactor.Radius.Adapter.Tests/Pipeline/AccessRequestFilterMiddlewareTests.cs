@@ -17,15 +17,15 @@ namespace MultiFactor.Radius.Adapter.Tests.Pipeline
         [Fact]
         public async Task Invoke_AccessRequest_ShouldInvokeNext()
         {
-            var host = TestHostFactory.CreateHost(services =>
+            var host = TestHostFactory.CreateHost(builder =>
             {
-                services.Configure<TestConfigProviderOptions>(x =>
+                builder.Services.Configure<TestConfigProviderOptions>(x =>
                 {
                     x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-single.config");
                 });
             });
 
-            var config = host.Services.GetRequiredService<IServiceConfiguration>();
+            var config = host.Service<IServiceConfiguration>();
             var responseSender = new Mock<IRadiusResponseSender>();
             var context = new RadiusContext(config.Clients[0], responseSender.Object, new Mock<IServiceProvider>().Object)
             {
@@ -34,7 +34,7 @@ namespace MultiFactor.Radius.Adapter.Tests.Pipeline
 
             var nextDelegate = new Mock<RadiusRequestDelegate>();
 
-            var middleware = host.Services.GetRequiredService<AccessRequestFilterMiddleware>();
+            var middleware = host.Service<AccessRequestFilterMiddleware>();
             await middleware.InvokeAsync(context, nextDelegate.Object);
 
             nextDelegate.Verify(q => q.Invoke(It.Is<RadiusContext>(x => x == context)), Times.Once);
@@ -43,15 +43,15 @@ namespace MultiFactor.Radius.Adapter.Tests.Pipeline
         [Fact]
         public async Task Invoke_NonAccessRequest_ShouldNotInvokeNext()
         {
-            var host = TestHostFactory.CreateHost(services =>
+            var host = TestHostFactory.CreateHost(builder =>
             {
-                services.Configure<TestConfigProviderOptions>(x =>
+                builder.Services.Configure<TestConfigProviderOptions>(x =>
                 {
                     x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-single.config");
                 });
             });
 
-            var config = host.Services.GetRequiredService<IServiceConfiguration>();
+            var config = host.Service<IServiceConfiguration>();
             var responseSender = new Mock<IRadiusResponseSender>();
             var context = new RadiusContext(config.Clients[0], responseSender.Object, new Mock<IServiceProvider>().Object)
             {
@@ -60,7 +60,7 @@ namespace MultiFactor.Radius.Adapter.Tests.Pipeline
 
             var nextDelegate = new Mock<RadiusRequestDelegate>();
 
-            var middleware = host.Services.GetRequiredService<AccessRequestFilterMiddleware>();
+            var middleware = host.Service<AccessRequestFilterMiddleware>();
             await middleware.InvokeAsync(context, nextDelegate.Object);
 
             nextDelegate.Verify(q => q.Invoke(It.Is<RadiusContext>(x => x == context)), Times.Never);

@@ -7,27 +7,46 @@ using System.Collections.Generic;
 
 namespace MultiFactor.Radius.Adapter.Core;
 
+/// <summary>
+/// Represents a hosted RADIUS applications and services builder. [Wraps the default <see cref="HostApplicationBuilder"/>].
+/// </summary>
 internal class RadiusHostApplicationBuilder
 {
     private readonly List<Func<RadiusRequestDelegate, RadiusRequestDelegate>> _components = new();
-    private readonly HostApplicationBuilder _hostApplicationBuilder;
+
+    /// <summary>
+    /// Returns original <see cref="HostApplicationBuilder"/> that has been wrapped by the current RadiusHostApplicationBuilder.
+    /// </summary>
+    public HostApplicationBuilder InternalHostApplicationBuilder { get; }
+    public IServiceCollection Services => InternalHostApplicationBuilder.Services;
 
     public RadiusHostApplicationBuilder(HostApplicationBuilder hostApplicationBuilder)
     {
-        _hostApplicationBuilder = hostApplicationBuilder ?? throw new ArgumentNullException(nameof(hostApplicationBuilder));
+        InternalHostApplicationBuilder = hostApplicationBuilder ?? throw new ArgumentNullException(nameof(hostApplicationBuilder));
     }
 
+    /// <summary>
+    /// Adds a middleware to the radius request pipeline.
+    /// </summary>
+    /// <typeparam name="TMiddleware">Middleware type.</typeparam>
+    /// <returns><see cref="RadiusHostApplicationBuilder"/></returns>
+    /// <exception cref="InvalidOperationException"></exception>
     public RadiusHostApplicationBuilder UseMiddleware<TMiddleware>() where TMiddleware : IRadiusMiddleware
     {
-        _hostApplicationBuilder.Services.AddTransient(typeof(TMiddleware));
+        Services.AddTransient(typeof(TMiddleware));
         Func<RadiusRequestDelegate, RadiusRequestDelegate> middleware = next =>
         {
             return async context =>
             {
-                var middleware = context.RequestServices.GetService<TMiddleware>();
-                if (middleware == null)
+                TMiddleware middleware;
+
+                try
                 {
-                    throw new InvalidOperationException($"Unable to create middleware {typeof(TMiddleware)}");
+                    middleware = context.RequestServices.GetRequiredService<TMiddleware>();
+                }
+                catch (Exception ex)
+                {
+                    throw new InvalidOperationException($"Unable to create middleware {typeof(TMiddleware)}: {ex.Message}", ex);
                 }
 
                 await middleware.InvokeAsync(context, next);
@@ -38,24 +57,17 @@ internal class RadiusHostApplicationBuilder
         return this;
     }
 
-    public RadiusHostApplicationBuilder Configure(Action<HostApplicationBuilder> action)
-    {
-        if (action is null)
-        {
-            throw new ArgumentNullException(nameof(action));
-        }
-
-        action(_hostApplicationBuilder);
-        return this;
-    }
-
+    /// <summary>
+    /// Builds and validate <see cref="IHost"/> and returns it from the internal host builder.
+    /// </summary>
+    /// <returns></returns>
     public IHost Build()
     {
         var requestDelegate = BuildRequestDelegate();
-        _hostApplicationBuilder.Services.AddSingleton(requestDelegate);
-        _hostApplicationBuilder.Services.AddSingleton<IRadiusPipeline, RadiusPipeline>();
+        Services.AddSingleton(requestDelegate);
+        Services.AddSingleton<IRadiusPipeline, RadiusPipeline>();
 
-        return _hostApplicationBuilder.Build();
+        return InternalHostApplicationBuilder.Build();
     }
 
     private RadiusRequestDelegate BuildRequestDelegate()

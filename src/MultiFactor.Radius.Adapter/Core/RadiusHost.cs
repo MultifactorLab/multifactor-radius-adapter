@@ -12,18 +12,25 @@ using MultiFactor.Radius.Adapter.Core.Radius.Attributes;
 using Microsoft.AspNetCore.Http;
 using System.Linq.Expressions;
 using MultiFactor.Radius.Adapter.Server.Pipeline;
+using Microsoft.Extensions.Logging;
+using Serilog;
+using System;
+using System.Net;
 
 namespace MultiFactor.Radius.Adapter.Core;
 
 internal static class RadiusHost
 {
+    /// <summary>
+    /// Creates <see cref="RadiusHostApplicationBuilder"/> and configures all services required ro peocess radius request.
+    /// </summary>
+    /// <param name="args">Positional arguments</param>
+    /// <returns>RadiusHostApplicationBuilder</returns>
     public static RadiusHostApplicationBuilder CreateApplicationBuilder(string[] args = null)
     {
         var builder = Host.CreateApplicationBuilder(args);
 
         builder.Services.AddSingleton(prov => ApplicationVariablesFactory.Create());
-        builder.Services.AddSingleton<IRootConfigurationProvider, DefaultRootConfigurationProvider>();
-
         builder.Services.AddConfiguration();
 
         builder.Services.AddHostedService<ServerHost>();
@@ -33,11 +40,13 @@ internal static class RadiusHost
         builder.Services.AddSingleton<RadiusContextFactory>();
 
         builder.Services.AddSingleton<IRadiusRequestPostProcessor, RadiusRequestPostProcessor>();
+        builder.Services.AddTransient<Func<IPEndPoint, IUdpClient>>(prov => endpoint => new RealUdpClient(endpoint));
         builder.Services.AddSingleton<RadiusResponseSenderFactory>();
         builder.Services.AddSingleton<RadiusReplyAttributeEnricher>();
 
         builder.Services.AddMemoryCache();
 
+        builder.Services.AddSingleton<IRadiusDictionary, RadiusDictionary>();
         builder.Services.AddSingleton<IRadiusPacketParser, RadiusPacketParser>();
         builder.Services.AddSingleton<CacheService>();
 
@@ -48,12 +57,12 @@ internal static class RadiusHost
 
     private static void AddConfiguration(this IServiceCollection services)
     {
+        services.AddSingleton<IRootConfigurationProvider, DefaultRootConfigurationProvider>();
         services.AddSingleton<IClientConfigurationsProvider, DefaultClientConfigurationsProvider>();
-
-        services.AddSingleton<IRadiusDictionary, RadiusDictionary>();
 
         services.AddSingleton<ServiceConfigurationFactory>();
         services.AddSingleton<ClientConfigurationFactory>();
+
         services.AddSingleton(prov =>
         {
             var config = prov.GetRequiredService<ServiceConfigurationFactory>().CreateConfig();

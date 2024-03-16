@@ -22,9 +22,9 @@ public class ProfileLoaderTests
     [Fact]
     public async Task Load_NonExistentUser_ShouldThrow()
     {
-        var host = TestHostFactory.CreateHost(services =>
+        var host = TestHostFactory.CreateHost(builder =>
         {
-            services.Configure<TestConfigProviderOptions>(x =>
+            builder.Services.Configure<TestConfigProviderOptions>(x =>
             {
                 x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-single.config");
             });
@@ -42,7 +42,7 @@ public class ProfileLoaderTests
 
         var clientConfig = new ClientConfiguration("custom", "shared_secret", AuthenticationSource.ActiveDirectory, "key", "secret")
             .SetLoadActiveDirectoryNestedGroups(false);
-        var loader = host.Services.GetRequiredService<ProfileLoader>();
+        var loader = host.Service<ProfileLoader>();
 
         var act = async () => await loader.LoadAsync(clientConfig, adapter.Object, LdapIdentity.ParseUser("some.user@domain.local"));
 
@@ -52,9 +52,9 @@ public class ProfileLoaderTests
     [Fact]
     public async Task Load_ExistentUser_ShouldReturnProfile()
     {
-        var host = TestHostFactory.CreateHost(services =>
+        var host = TestHostFactory.CreateHost(builder =>
         {
-            services.Configure<TestConfigProviderOptions>(x =>
+            builder.Services.Configure<TestConfigProviderOptions>(x =>
             {
                 x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-single.config");
             });
@@ -90,7 +90,7 @@ public class ProfileLoaderTests
         var clientConfig = new ClientConfiguration("custom", "shared_secret", AuthenticationSource.ActiveDirectory, "key", "secret")
             .SetLoadActiveDirectoryNestedGroups(false)
             .SetUseAttributeAsIdentity("mail");
-        var loader = host.Services.GetRequiredService<ProfileLoader>();
+        var loader = host.Service<ProfileLoader>();
 
         var profile = await loader.LoadAsync(clientConfig, adapter.Object, LdapIdentity.ParseUser("some.user@domain.local"));
 
@@ -110,9 +110,9 @@ public class ProfileLoaderTests
     [Fact]
     public async Task Load_HasReplyAttrs_ShouldLoadReplyAttrs()
     {
-        var host = TestHostFactory.CreateHost(services =>
+        var host = TestHostFactory.CreateHost(builder =>
         {
-            services.Configure<TestConfigProviderOptions>(x =>
+            builder.Services.Configure<TestConfigProviderOptions>(x =>
             {
                 x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-single.config");
             });
@@ -144,7 +144,7 @@ public class ProfileLoaderTests
                 new RadiusReplyAttributeValue("displayName")
             })
             .SetLoadActiveDirectoryNestedGroups(false);
-        var loader = host.Services.GetRequiredService<ProfileLoader>();
+        var loader = host.Service<ProfileLoader>();
 
         var profile = await loader.LoadAsync(clientConfig, adapter.Object, LdapIdentity.ParseUser("some.user@domain.local"));
 

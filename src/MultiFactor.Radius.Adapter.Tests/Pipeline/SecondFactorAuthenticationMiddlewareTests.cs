@@ -24,17 +24,17 @@ public class SecondFactorAuthenticationMiddlewareTests
     {
         var postProcessor = new Mock<IRadiusRequestPostProcessor>();
 
-        var host = TestHostFactory.CreateHost(services =>
+        var host = TestHostFactory.CreateHost(builder =>
         {
-            services.Configure<TestConfigProviderOptions>(x =>
+            builder.Services.Configure<TestConfigProviderOptions>(x =>
             {
                 x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-single.config");
             });
 
-            services.RemoveService<IRadiusRequestPostProcessor>().AddSingleton(postProcessor.Object);
+            builder.Services.RemoveService<IRadiusRequestPostProcessor>().AddSingleton(postProcessor.Object);
         });
 
-        var config = host.Services.GetRequiredService<IServiceConfiguration>();
+        var config = host.Service<IServiceConfiguration>();
         var responseSender = new Mock<IRadiusResponseSender>();
         var context = new RadiusContext(config.Clients[0], responseSender.Object, new Mock<IServiceProvider>().Object)
         {
@@ -45,7 +45,7 @@ public class SecondFactorAuthenticationMiddlewareTests
 
         var nextDelegate = new Mock<RadiusRequestDelegate>();
 
-        var middleware = host.Services.GetRequiredService<SecondFactorAuthenticationMiddleware>();
+        var middleware = host.Service<SecondFactorAuthenticationMiddleware>();
         await middleware.InvokeAsync(context, nextDelegate.Object);
 
         nextDelegate.Verify(q => q.Invoke(It.Is<RadiusContext>(x => x == context)), Times.Once);
@@ -57,17 +57,17 @@ public class SecondFactorAuthenticationMiddlewareTests
     {
         var api = new Mock<IMultiFactorApiClient>();
 
-        var host = TestHostFactory.CreateHost(services =>
+        var host = TestHostFactory.CreateHost(builder =>
         {
-            services.Configure<TestConfigProviderOptions>(x =>
+            builder.Services.Configure<TestConfigProviderOptions>(x =>
             {
                 x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-single.config");
             });
 
-            services.RemoveService<IMultiFactorApiClient>().AddSingleton(api.Object);
+            builder.Services.RemoveService<IMultiFactorApiClient>().AddSingleton(api.Object);
         });
 
-        var config = host.Services.GetRequiredService<IServiceConfiguration>();
+        var config = host.Service<IServiceConfiguration>();
         var responseSender = new Mock<IRadiusResponseSender>();
         var context = new RadiusContext(config.Clients[0], responseSender.Object, new Mock<IServiceProvider>().Object)
         {
@@ -75,7 +75,7 @@ public class SecondFactorAuthenticationMiddlewareTests
             RequestPacket = RadiusPacketFactory.AccessRequest()
         };
 
-        var middleware = host.Services.GetRequiredService<SecondFactorAuthenticationMiddleware>();
+        var middleware = host.Service<SecondFactorAuthenticationMiddleware>();
         await middleware.InvokeAsync(context, new Mock<RadiusRequestDelegate>().Object);
 
         context.ResponseCode.Should().Be(PacketCode.AccessReject);
@@ -87,14 +87,14 @@ public class SecondFactorAuthenticationMiddlewareTests
     {
         var api = new Mock<IMultiFactorApiClient>();
 
-        var host = TestHostFactory.CreateHost(services =>
+        var host = TestHostFactory.CreateHost(builder =>
         {
-            services.Configure<TestConfigProviderOptions>(x =>
+            builder.Services.Configure<TestConfigProviderOptions>(x =>
             {
                 x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-single.config");
             });
 
-            services.RemoveService<IMultiFactorApiClient>().AddSingleton(api.Object);
+            builder.Services.RemoveService<IMultiFactorApiClient>().AddSingleton(api.Object);
         });
 
         var client = new ClientConfiguration("custom", "shared_secret", AuthenticationSource.Radius, "key", "secret")
@@ -110,7 +110,7 @@ public class SecondFactorAuthenticationMiddlewareTests
         };
         context.RequestPacket.AddAttribute("User-Name", "#ACSACL#-IP-UserName");
 
-        var middleware = host.Services.GetRequiredService<SecondFactorAuthenticationMiddleware>();
+        var middleware = host.Service<SecondFactorAuthenticationMiddleware>();
         await middleware.InvokeAsync(context, new Mock<RadiusRequestDelegate>().Object);
 
         context.ResponseCode.Should().Be(PacketCode.AccessAccept);
@@ -122,14 +122,14 @@ public class SecondFactorAuthenticationMiddlewareTests
     {
         var api = new Mock<IMultiFactorApiClient>();
 
-        var host = TestHostFactory.CreateHost(services =>
+        var host = TestHostFactory.CreateHost(builder =>
         {
-            services.Configure<TestConfigProviderOptions>(x =>
+            builder.Services.Configure<TestConfigProviderOptions>(x =>
             {
                 x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-single.config");
             });
 
-            services.RemoveService<IMultiFactorApiClient>().AddSingleton(api.Object);
+            builder.Services.RemoveService<IMultiFactorApiClient>().AddSingleton(api.Object);
         });
 
         var client = new ClientConfiguration("custom", "shared_secret", AuthenticationSource.Radius, "key", "secret")
@@ -144,7 +144,7 @@ public class SecondFactorAuthenticationMiddlewareTests
         };
         context.RequestPacket.AddAttribute("User-Name", "#ACSACL#-IP-UserName");
 
-        var middleware = host.Services.GetRequiredService<SecondFactorAuthenticationMiddleware>();
+        var middleware = host.Service<SecondFactorAuthenticationMiddleware>();
         await middleware.InvokeAsync(context, new Mock<RadiusRequestDelegate>().Object);
 
         context.ResponseCode.Should().Be(PacketCode.AccessAccept);
@@ -157,9 +157,9 @@ public class SecondFactorAuthenticationMiddlewareTests
         var chProc = new Mock<IChallengeProcessor>();
         chProc.Setup(x => x.HasState(It.IsAny<ChallengeRequestIdentifier>())).Returns(false);
 
-        var host = TestHostFactory.CreateHost(services =>
+        var host = TestHostFactory.CreateHost(builder =>
         {
-            services.Configure<TestConfigProviderOptions>(x =>
+            builder.Services.Configure<TestConfigProviderOptions>(x =>
             {
                 x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-single.config");
             });
@@ -167,11 +167,11 @@ public class SecondFactorAuthenticationMiddlewareTests
             var api = new Mock<IMultiFactorApiClient>();
             api.Setup(x => x.CreateSecondFactorRequest(It.IsAny<RadiusContext>())).ReturnsAsync(PacketCode.AccessChallenge);
 
-            services.RemoveService<IMultiFactorApiClient>().AddSingleton(api.Object);  
-            services.RemoveService<IChallengeProcessor>().AddSingleton(chProc.Object);
+            builder.Services.RemoveService<IMultiFactorApiClient>().AddSingleton(api.Object);  
+            builder.Services.RemoveService<IChallengeProcessor>().AddSingleton(chProc.Object);
         });
 
-        var config = host.Services.GetRequiredService<IServiceConfiguration>();
+        var config = host.Service<IServiceConfiguration>();
         var responseSender = new Mock<IRadiusResponseSender>();
         var context = new RadiusContext(config.Clients[0], responseSender.Object, new Mock<IServiceProvider>().Object)
         {
@@ -182,7 +182,7 @@ public class SecondFactorAuthenticationMiddlewareTests
         };
         var expectedIdentifier = new ChallengeRequestIdentifier(config.Clients[0], "Qwerty123");
 
-        var middleware = host.Services.GetRequiredService<SecondFactorAuthenticationMiddleware>();
+        var middleware = host.Service<SecondFactorAuthenticationMiddleware>();
         await middleware.InvokeAsync(context, new Mock<RadiusRequestDelegate>().Object);
 
         context.ResponseCode.Should().Be(PacketCode.AccessChallenge);
