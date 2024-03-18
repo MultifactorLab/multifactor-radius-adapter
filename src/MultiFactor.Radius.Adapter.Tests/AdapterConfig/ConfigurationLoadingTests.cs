@@ -2,8 +2,8 @@ using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using MultiFactor.Radius.Adapter.Configuration.Core;
 using MultiFactor.Radius.Adapter.Configuration.Features.PreAuthModeFeature;
-using MultiFactor.Radius.Adapter.Core;
 using MultiFactor.Radius.Adapter.Core.Exceptions;
+using MultiFactor.Radius.Adapter.Framework;
 using MultiFactor.Radius.Adapter.Tests.Fixtures;
 using MultiFactor.Radius.Adapter.Tests.Fixtures.ConfigLoading;
 

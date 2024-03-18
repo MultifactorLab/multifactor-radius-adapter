@@ -1,5 +1,5 @@
 ﻿using Microsoft.Extensions.Hosting;
-using MultiFactor.Radius.Adapter.Core;
+using MultiFactor.Radius.Adapter.Server.Pipeline.StatusServer;
 using System;
 using System.Threading;
 using System.Threading.Tasks;

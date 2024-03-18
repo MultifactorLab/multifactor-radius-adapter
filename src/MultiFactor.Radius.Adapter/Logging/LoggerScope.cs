@@ -26,7 +26,7 @@ using System;
 using Serilog.Context;
 using MultiFactor.Radius.Adapter.Logging.Enrichers;
 using Serilog.Core;
-using MultiFactor.Radius.Adapter.Server.Context;
+using MultiFactor.Radius.Adapter.Framework.Context;
 
 namespace MultiFactor.Radius.Adapter.Logging
 {

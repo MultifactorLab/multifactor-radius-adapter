@@ -2,10 +2,10 @@
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using MultiFactor.Radius.Adapter.Configuration.Core;
-using MultiFactor.Radius.Adapter.Core.Pipeline;
+using MultiFactor.Radius.Adapter.Framework.Context;
+using MultiFactor.Radius.Adapter.Framework.Pipeline;
 using MultiFactor.Radius.Adapter.Server;
-using MultiFactor.Radius.Adapter.Server.Context;
-using MultiFactor.Radius.Adapter.Server.Pipeline;
+using MultiFactor.Radius.Adapter.Server.Pipeline.Bypass2Fa;
 using MultiFactor.Radius.Adapter.Tests.Fixtures;
 using MultiFactor.Radius.Adapter.Tests.Fixtures.ConfigLoading;
 using MultiFactor.Radius.Adapter.Tests.Fixtures.Radius;
@@ -30,13 +30,10 @@ namespace MultiFactor.Radius.Adapter.Tests.Pipeline
                 builder.Services.RemoveService<IRadiusRequestPostProcessor>().AddSingleton(postProcessor.Object);
             });
 
-            var config = host.Service<IServiceConfiguration>();
-            var responseSender = new Mock<IRadiusResponseSender>();
-            var context = new RadiusContext(config.Clients[0], responseSender.Object, new Mock<IServiceProvider>().Object)
+            var context = host.CreateContext(RadiusPacketFactory.AccessRequest(), setupContext: x =>
             {
-                RequestPacket = RadiusPacketFactory.AccessRequest(),
-                Bypass2Fa = true
-            };
+                x.Bypass2Fa = true;
+            });
 
             var nextDelegate = new Mock<RadiusRequestDelegate>();
 
@@ -62,13 +59,10 @@ namespace MultiFactor.Radius.Adapter.Tests.Pipeline
                 builder.Services.RemoveService<IRadiusRequestPostProcessor>().AddSingleton(postProcessor.Object);
             });
 
-            var config = host.Service<IServiceConfiguration>();
-            var responseSender = new Mock<IRadiusResponseSender>();
-            var context = new RadiusContext(config.Clients[0], responseSender.Object, new Mock<IServiceProvider>().Object)
+            var context = host.CreateContext(RadiusPacketFactory.AccessRequest(), setupContext: x =>
             {
-                RequestPacket = RadiusPacketFactory.AccessRequest(),
-                Bypass2Fa = false
-            };
+                x.Bypass2Fa = false;
+            });
 
             var nextDelegate = new Mock<RadiusRequestDelegate>();
 
@@ -96,11 +90,10 @@ namespace MultiFactor.Radius.Adapter.Tests.Pipeline
 
             var config = host.Service<IServiceConfiguration>();
             var responseSender = new Mock<IRadiusResponseSender>();
-            var context = new RadiusContext(config.Clients[0], responseSender.Object, new Mock<IServiceProvider>().Object)
+            var context = host.CreateContext(RadiusPacketFactory.AccessRequest(), setupContext: x =>
             {
-                RequestPacket = RadiusPacketFactory.AccessRequest(),
-                Bypass2Fa = true
-            };
+                x.Bypass2Fa = true;
+            });
 
             var middleware = host.Service<Bypass2FaMidleware>();
             await middleware.InvokeAsync(context, new Mock<RadiusRequestDelegate>().Object);
@@ -126,11 +119,10 @@ namespace MultiFactor.Radius.Adapter.Tests.Pipeline
 
             var config = host.Service<IServiceConfiguration>();
             var responseSender = new Mock<IRadiusResponseSender>();
-            var context = new RadiusContext(config.Clients[0], responseSender.Object, new Mock<IServiceProvider>().Object)
+            var context = host.CreateContext(RadiusPacketFactory.AccessRequest(), setupContext: x =>
             {
-                RequestPacket = RadiusPacketFactory.AccessRequest(),
-                Bypass2Fa = false
-            };
+                x.Bypass2Fa = false;
+            });
 
             var middleware = host.Service<Bypass2FaMidleware>();
             await middleware.InvokeAsync(context, new Mock<RadiusRequestDelegate>().Object);

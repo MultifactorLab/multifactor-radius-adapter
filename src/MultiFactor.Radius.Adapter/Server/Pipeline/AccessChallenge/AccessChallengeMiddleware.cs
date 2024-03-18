@@ -1,0 +1,43 @@
+﻿//Copyright(c) 2020 MultiFactor
+//Please see licence at 
+//https://github.com/MultifactorLab/multifactor-radius-adapter/blob/main/LICENSE.md
+
+using MultiFactor.Radius.Adapter.Framework.Context;
+using MultiFactor.Radius.Adapter.Framework.Pipeline;
+using System;
+using System.Threading.Tasks;
+
+namespace MultiFactor.Radius.Adapter.Server.Pipeline.AccessChallenge
+{
+    public class AccessChallengeMiddleware : IRadiusMiddleware
+    {
+        private readonly IChallengeProcessor _challengeProcessor;
+        private readonly IRadiusRequestPostProcessor _requestPostProcessor;
+
+        public AccessChallengeMiddleware(IChallengeProcessor challengeProcessor, IRadiusRequestPostProcessor requestPostProcessor)
+        {
+            _challengeProcessor = challengeProcessor ?? throw new ArgumentNullException(nameof(challengeProcessor));
+            _requestPostProcessor = requestPostProcessor ?? throw new ArgumentNullException(nameof(requestPostProcessor));
+        }
+
+        public async Task InvokeAsync(RadiusContext context, RadiusRequestDelegate next)
+        {
+            if (context.RequestPacket.Attributes.ContainsKey("State")) //Access-Challenge response 
+            {
+                var identifier = new ChallengeRequestIdentifier(context.ClientConfiguration, context.RequestPacket.GetString("State"));
+
+                if (_challengeProcessor.HasState(identifier))
+                {
+                    // second request with Multifactor challenge
+                    context.ResponseCode = await _challengeProcessor.ProcessChallengeAsync(identifier, context);
+                    context.State = identifier.RequestId;  //state for Access-Challenge message if otp is wrong (3 times allowed)
+
+                    // stop authentication process after otp code verification
+                    return;
+                }
+            }
+
+            await next(context);
+        }
+    }
+}

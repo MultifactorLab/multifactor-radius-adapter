@@ -1,10 +1,8 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Moq;
-using MultiFactor.Radius.Adapter.Configuration.Core;
-using MultiFactor.Radius.Adapter.Core.Pipeline;
-using MultiFactor.Radius.Adapter.Server;
-using MultiFactor.Radius.Adapter.Server.Context;
-using MultiFactor.Radius.Adapter.Server.Pipeline;
+using MultiFactor.Radius.Adapter.Framework.Context;
+using MultiFactor.Radius.Adapter.Framework.Pipeline;
+using MultiFactor.Radius.Adapter.Server.Pipeline.AccessRequestFilter;
 using MultiFactor.Radius.Adapter.Tests.Fixtures;
 using MultiFactor.Radius.Adapter.Tests.Fixtures.ConfigLoading;
 using MultiFactor.Radius.Adapter.Tests.Fixtures.Radius;
@@ -25,13 +23,7 @@ namespace MultiFactor.Radius.Adapter.Tests.Pipeline
                 });
             });
 
-            var config = host.Service<IServiceConfiguration>();
-            var responseSender = new Mock<IRadiusResponseSender>();
-            var context = new RadiusContext(config.Clients[0], responseSender.Object, new Mock<IServiceProvider>().Object)
-            {
-                RequestPacket = RadiusPacketFactory.AccessRequest()
-            };
-
+            var context = host.CreateContext(RadiusPacketFactory.AccessRequest());
             var nextDelegate = new Mock<RadiusRequestDelegate>();
 
             var middleware = host.Service<AccessRequestFilterMiddleware>();
@@ -51,13 +43,7 @@ namespace MultiFactor.Radius.Adapter.Tests.Pipeline
                 });
             });
 
-            var config = host.Service<IServiceConfiguration>();
-            var responseSender = new Mock<IRadiusResponseSender>();
-            var context = new RadiusContext(config.Clients[0], responseSender.Object, new Mock<IServiceProvider>().Object)
-            {
-                RequestPacket = RadiusPacketFactory.StatusServer()
-            };
-
+            var context = host.CreateContext(RadiusPacketFactory.StatusServer());
             var nextDelegate = new Mock<RadiusRequestDelegate>();
 
             var middleware = host.Service<AccessRequestFilterMiddleware>();

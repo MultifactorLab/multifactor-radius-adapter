@@ -40,11 +40,11 @@ using MultiFactor.Radius.Adapter.Core.Radius.Attributes;
 using MultiFactor.Radius.Adapter.Configuration.Core;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.DependencyInjection;
-using MultiFactor.Radius.Adapter.Core.Pipeline;
 using static System.Formats.Asn1.AsnWriter;
 using Microsoft.Extensions.Logging;
-using MultiFactor.Radius.Adapter.Server.Context;
 using System.Runtime.CompilerServices;
+using MultiFactor.Radius.Adapter.Framework.Pipeline;
+using MultiFactor.Radius.Adapter.Framework.Context;
 
 namespace MultiFactor.Radius.Adapter.Server
 {

@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using MultiFactor.Radius.Adapter.Configuration.ConfigurationLoading;
 using MultiFactor.Radius.Adapter.Configuration.Core;
 using MultiFactor.Radius.Adapter.Core;
+using MultiFactor.Radius.Adapter.Framework;
 using Serilog;
 using System.Linq;
 using SerilogLoggerFactory = MultiFactor.Radius.Adapter.Logging.SerilogLoggerFactory;

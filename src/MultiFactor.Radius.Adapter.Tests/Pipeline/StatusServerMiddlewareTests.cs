@@ -2,12 +2,11 @@
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using MultiFactor.Radius.Adapter.Configuration.Core;
-using MultiFactor.Radius.Adapter.Core;
-using MultiFactor.Radius.Adapter.Core.Pipeline;
 using MultiFactor.Radius.Adapter.Core.Radius;
+using MultiFactor.Radius.Adapter.Framework.Context;
+using MultiFactor.Radius.Adapter.Framework.Pipeline;
 using MultiFactor.Radius.Adapter.Server;
-using MultiFactor.Radius.Adapter.Server.Context;
-using MultiFactor.Radius.Adapter.Server.Pipeline;
+using MultiFactor.Radius.Adapter.Server.Pipeline.StatusServer;
 using MultiFactor.Radius.Adapter.Tests.Fixtures;
 using MultiFactor.Radius.Adapter.Tests.Fixtures.ConfigLoading;
 using MultiFactor.Radius.Adapter.Tests.Fixtures.Radius;
@@ -23,23 +22,19 @@ namespace MultiFactor.Radius.Adapter.Tests.Pipeline
             var expectedTs = TimeSpan.FromMinutes(90);
             var expectedVer = "8.8.8";
 
-            var host = TestHostFactory.CreateHost(builder =>
+            var host = TestHostFactory.CreatePipelineTestHost(builder =>
             {
-                builder.UseMiddleware<StatusServerMiddleware>();
-
                 builder.Services.Configure<TestConfigProviderOptions>(x =>
                 {
                     x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-single.config");
                 });
 
+                builder.UseMiddleware<StatusServerMiddleware>();
+
                 var serverInfo = new Mock<IServerInfo>();
                 serverInfo.Setup(x => x.GetUptime()).Returns(expectedTs);
                 serverInfo.Setup(x => x.GetVersion()).Returns(expectedVer);
                 builder.Services.ReplaceService(serverInfo.Object);
-
-                builder.Services.RemoveService<IRadiusPipeline>();
-                builder.Services.AddSingleton<RadiusPipeline>();
-                builder.Services.AddSingleton<IRadiusPipeline>(prov => prov.GetRequiredService<RadiusPipeline>());
 
                 builder.Services.ReplaceService(new Mock<IRadiusResponseSender>().Object);
             });
@@ -66,13 +61,7 @@ namespace MultiFactor.Radius.Adapter.Tests.Pipeline
                 });
             });
 
-            var config = host.Service<IServiceConfiguration>();
-            var responseSender = new Mock<IRadiusResponseSender>();
-            var context = new RadiusContext(config.Clients[0], responseSender.Object, new Mock<IServiceProvider>().Object)
-            {
-                RequestPacket = RadiusPacketFactory.AccessRequest()
-            };
-
+            var context = host.CreateContext(RadiusPacketFactory.AccessRequest());
             var nextDelegate = new Mock<RadiusRequestDelegate>();
 
             var middleware = host.Service<StatusServerMiddleware>();

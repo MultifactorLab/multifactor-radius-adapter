@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Reflection;
+using MultiFactor.Radius.Adapter.Server.Pipeline.StatusServer;
 
 namespace MultiFactor.Radius.Adapter.Core
 {

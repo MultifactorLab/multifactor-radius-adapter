@@ -3,11 +3,12 @@ using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using MultiFactor.Radius.Adapter.Configuration;
 using MultiFactor.Radius.Adapter.Configuration.Core;
-using MultiFactor.Radius.Adapter.Core.Pipeline;
 using MultiFactor.Radius.Adapter.Core.Radius;
+using MultiFactor.Radius.Adapter.Framework.Context;
+using MultiFactor.Radius.Adapter.Framework.Pipeline;
 using MultiFactor.Radius.Adapter.Server;
-using MultiFactor.Radius.Adapter.Server.Context;
-using MultiFactor.Radius.Adapter.Server.Pipeline;
+using MultiFactor.Radius.Adapter.Server.Pipeline.AccessChallenge;
+using MultiFactor.Radius.Adapter.Server.Pipeline.SecondFactorAuthentication;
 using MultiFactor.Radius.Adapter.Services.MultiFactorApi;
 using MultiFactor.Radius.Adapter.Tests.Fixtures;
 using MultiFactor.Radius.Adapter.Tests.Fixtures.ConfigLoading;
@@ -34,14 +35,11 @@ public class SecondFactorAuthenticationMiddlewareTests
             builder.Services.RemoveService<IRadiusRequestPostProcessor>().AddSingleton(postProcessor.Object);
         });
 
-        var config = host.Service<IServiceConfiguration>();
-        var responseSender = new Mock<IRadiusResponseSender>();
-        var context = new RadiusContext(config.Clients[0], responseSender.Object, new Mock<IServiceProvider>().Object)
+        var context = host.CreateContext(RadiusPacketFactory.AccessRequest(), setupContext: x =>
         {
-            RemoteEndpoint = new IPEndPoint(IPAddress.Any, 636),
-            RequestPacket = RadiusPacketFactory.AccessRequest(),
-            Bypass2Fa = false
-        };
+            x.RemoteEndpoint = new IPEndPoint(IPAddress.Any, 636);
+            x.Bypass2Fa = false;
+        });
 
         var nextDelegate = new Mock<RadiusRequestDelegate>();
 
@@ -67,13 +65,10 @@ public class SecondFactorAuthenticationMiddlewareTests
             builder.Services.RemoveService<IMultiFactorApiClient>().AddSingleton(api.Object);
         });
 
-        var config = host.Service<IServiceConfiguration>();
-        var responseSender = new Mock<IRadiusResponseSender>();
-        var context = new RadiusContext(config.Clients[0], responseSender.Object, new Mock<IServiceProvider>().Object)
+        var context = host.CreateContext(RadiusPacketFactory.AccessRequest(), setupContext: x =>
         {
-            RemoteEndpoint = new IPEndPoint(IPAddress.Any, 636),
-            RequestPacket = RadiusPacketFactory.AccessRequest()
-        };
+            x.RemoteEndpoint = new IPEndPoint(IPAddress.Any, 636);
+        });
 
         var middleware = host.Service<SecondFactorAuthenticationMiddleware>();
         await middleware.InvokeAsync(context, new Mock<RadiusRequestDelegate>().Object);
@@ -100,14 +95,11 @@ public class SecondFactorAuthenticationMiddlewareTests
         var client = new ClientConfiguration("custom", "shared_secret", AuthenticationSource.Radius, "key", "secret")
             .SetActiveDirectoryDomain("domain.local")
             .AddActiveDirectoryGroup("Security Group");
-
-        var responseSender = new Mock<IRadiusResponseSender>();
-        var context = new RadiusContext(client, responseSender.Object, new Mock<IServiceProvider>().Object)
+        var context = host.CreateContext(RadiusPacketFactory.AccessRequest(), clientConfig: client, setupContext: x =>
         {
-            RemoteEndpoint = new IPEndPoint(IPAddress.Any, 636),
-            RequestPacket = RadiusPacketFactory.AccessRequest(),
-            UserName = "UserName"
-        };
+            x.UserName = "UserName";
+            x.RemoteEndpoint = new IPEndPoint(IPAddress.Any, 636);
+        });
         context.RequestPacket.AddAttribute("User-Name", "#ACSACL#-IP-UserName");
 
         var middleware = host.Service<SecondFactorAuthenticationMiddleware>();
@@ -135,13 +127,11 @@ public class SecondFactorAuthenticationMiddlewareTests
         var client = new ClientConfiguration("custom", "shared_secret", AuthenticationSource.Radius, "key", "secret")
             .SetActiveDirectoryDomain("domain.local")
             .AddActiveDirectoryGroup("Security Group");
-        var responseSender = new Mock<IRadiusResponseSender>();
-        var context = new RadiusContext(client, responseSender.Object, new Mock<IServiceProvider>().Object)
+        var context = host.CreateContext(RadiusPacketFactory.AccessRequest(), clientConfig: client, setupContext: x => 
         {
-            RemoteEndpoint = new IPEndPoint(IPAddress.Any, 636),
-            RequestPacket = RadiusPacketFactory.AccessRequest(),
-            UserName = "UserName"
-        };
+            x.UserName = "UserName";
+            x.RemoteEndpoint = new IPEndPoint(IPAddress.Any, 636);
+        });
         context.RequestPacket.AddAttribute("User-Name", "#ACSACL#-IP-UserName");
 
         var middleware = host.Service<SecondFactorAuthenticationMiddleware>();
@@ -172,14 +162,12 @@ public class SecondFactorAuthenticationMiddlewareTests
         });
 
         var config = host.Service<IServiceConfiguration>();
-        var responseSender = new Mock<IRadiusResponseSender>();
-        var context = new RadiusContext(config.Clients[0], responseSender.Object, new Mock<IServiceProvider>().Object)
+        var context = host.CreateContext(RadiusPacketFactory.AccessRequest(), clientConfig: config.Clients[0], setupContext: x =>
         {
-            RemoteEndpoint = new IPEndPoint(IPAddress.Any, 636),
-            RequestPacket = RadiusPacketFactory.AccessRequest(),
-            UserName = "#ACSACL#-IP-UserName",
-            State = "Qwerty123"
-        };
+            x.RemoteEndpoint = new IPEndPoint(IPAddress.Any, 636);
+            x.UserName = "#ACSACL#-IP-UserName";
+            x.State = "Qwerty123";
+        });
         var expectedIdentifier = new ChallengeRequestIdentifier(config.Clients[0], "Qwerty123");
 
         var middleware = host.Service<SecondFactorAuthenticationMiddleware>();

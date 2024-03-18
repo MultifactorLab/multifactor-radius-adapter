@@ -5,7 +5,7 @@
 using Microsoft.Extensions.Logging;
 using MultiFactor.Radius.Adapter.Configuration.Core;
 using MultiFactor.Radius.Adapter.Core.Ldap;
-using MultiFactor.Radius.Adapter.Server.Context;
+using MultiFactor.Radius.Adapter.Framework.Context;
 using MultiFactor.Radius.Adapter.Services.Ldap.Connection;
 using MultiFactor.Radius.Adapter.Services.Ldap.ProfileLoading;
 using System;

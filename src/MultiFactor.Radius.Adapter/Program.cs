@@ -1,8 +1,14 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using MultiFactor.Radius.Adapter;
-using MultiFactor.Radius.Adapter.Core;
-using MultiFactor.Radius.Adapter.Server.Pipeline;
+using MultiFactor.Radius.Adapter.Framework;
+using MultiFactor.Radius.Adapter.Server.Pipeline.AccessChallenge;
+using MultiFactor.Radius.Adapter.Server.Pipeline.AccessRequestFilter;
+using MultiFactor.Radius.Adapter.Server.Pipeline.Bypass2Fa;
+using MultiFactor.Radius.Adapter.Server.Pipeline.FirstFactorAuthentication;
+using MultiFactor.Radius.Adapter.Server.Pipeline.SecondFactorAuthentication;
+using MultiFactor.Radius.Adapter.Server.Pipeline.StatusServer;
+using MultiFactor.Radius.Adapter.Server.Pipeline.TransformUserName;
 using Serilog;
 using System;
 using System.Text;

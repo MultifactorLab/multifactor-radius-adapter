@@ -2,10 +2,10 @@
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using MultiFactor.Radius.Adapter.Configuration.Core;
-using MultiFactor.Radius.Adapter.Core.Pipeline;
+using MultiFactor.Radius.Adapter.Framework.Context;
+using MultiFactor.Radius.Adapter.Framework.Pipeline;
 using MultiFactor.Radius.Adapter.Server;
-using MultiFactor.Radius.Adapter.Server.Context;
-using MultiFactor.Radius.Adapter.Server.Pipeline;
+using MultiFactor.Radius.Adapter.Server.Pipeline.AccessChallenge;
 using MultiFactor.Radius.Adapter.Tests.Fixtures;
 using MultiFactor.Radius.Adapter.Tests.Fixtures.ConfigLoading;
 using MultiFactor.Radius.Adapter.Tests.Fixtures.Radius;
@@ -29,10 +29,7 @@ public class AccessChallengeMiddlewareTests
 
         var config = host.Service<IServiceConfiguration>();
         var responseSender = new Mock<IRadiusResponseSender>();
-        var context = new RadiusContext(config.Clients[0], responseSender.Object, new Mock<IServiceProvider>().Object)
-        {
-            RequestPacket = RadiusPacketFactory.AccessRequest()
-        };
+        var context = host.CreateContext(RadiusPacketFactory.AccessRequest());
 
         var nextDelegate = new Mock<RadiusRequestDelegate>();
 
@@ -58,13 +55,11 @@ public class AccessChallengeMiddlewareTests
             builder.Services.RemoveService<IChallengeProcessor>().AddSingleton(chProc.Object);
         });
 
-        var config = host.Service<IServiceConfiguration>();
-        var responseSender = new Mock<IRadiusResponseSender>();
-        var context = new RadiusContext(config.Clients[0], responseSender.Object, new Mock<IServiceProvider>().Object)
+        var packet = RadiusPacketFactory.AccessRequest(x =>
         {
-            RequestPacket = RadiusPacketFactory.AccessRequest()
-        };
-        context.RequestPacket.AddAttribute("State", "SomeState");
+            x.AddAttribute("State", "SomeState");
+        });
+        var context = host.CreateContext(packet);
 
         var nextDelegate = new Mock<RadiusRequestDelegate>();
 
@@ -99,15 +94,12 @@ public class AccessChallengeMiddlewareTests
 
         var config = host.Service<IServiceConfiguration>();
         var client = config.Clients[0];
-        var responseSender = new Mock<IRadiusResponseSender>();
-        var context = new RadiusContext(client, responseSender.Object, new Mock<IServiceProvider>().Object)
+        var packet = RadiusPacketFactory.AccessRequest(x =>
         {
-            RequestPacket = RadiusPacketFactory.AccessRequest()
-        };
-        context.RequestPacket.AddAttribute("State", expectedReqId);
-
+            x.AddAttribute("State", expectedReqId);
+        });
+        var context = host.CreateContext(packet, clientConfig: client);
         var expectedIdentifier = new ChallengeRequestIdentifier(client, expectedReqId);
-
         var nextDelegate = new Mock<RadiusRequestDelegate>();
 
         var middleware = host.Service<AccessChallengeMiddleware>();

@@ -1,5 +1,4 @@
 ﻿using Moq;
-using MultiFactor.Radius.Adapter.Server;
 using MultiFactor.Radius.Adapter.Tests.Fixtures.Radius;
 using System.Net;
 using MultiFactor.Radius.Adapter.Services.MultiFactorApi;
@@ -11,8 +10,9 @@ using MultiFactor.Radius.Adapter.Configuration.Features.PrivacyModeFeature;
 using Microsoft.Extensions.Logging;
 using MultiFactor.Radius.Adapter.Services.Ldap.ProfileLoading;
 using MultiFactor.Radius.Adapter.Services.Ldap;
-using MultiFactor.Radius.Adapter.Server.Context;
 using MultiFactor.Radius.Adapter.Services.MultiFactorApi.Dto;
+using MultiFactor.Radius.Adapter.Framework.Context;
+using MultiFactor.Radius.Adapter.Configuration.Core;
 
 namespace MultiFactor.Radius.Adapter.Tests
 {
@@ -29,8 +29,7 @@ namespace MultiFactor.Radius.Adapter.Tests
         {
             var client = new ClientConfiguration("cli_config", "rds", AuthenticationSource.None, "key", "secret")
                 .SetPrivacyMode(PrivacyModeDescriptor.None);
-            var responseSender = new Mock<IRadiusResponseSender>();
-            var context = new RadiusContext(client, responseSender.Object, new Mock<IServiceProvider>().Object)
+            var context = new RadiusContext(client, new Mock<IUdpClient>().Object, new Mock<IServiceProvider>().Object)
             {
                 UserName = "test_user@multifactor.ru",
                 RemoteEndpoint = new IPEndPoint(IPAddress.Any, 636),
@@ -58,10 +57,8 @@ namespace MultiFactor.Radius.Adapter.Tests
         [Fact]
         public async Task CreateSecondFactorRequest_CachedUser_ShouldReturnAccept()
         {
-            var client = new ClientConfiguration("cli_config", "rds", AuthenticationSource.None, "key", "secret")
-                .SetPrivacyMode(PrivacyModeDescriptor.None);
-            var responseSender = new Mock<IRadiusResponseSender>();
-            var context = new RadiusContext(client, responseSender.Object, new Mock<IServiceProvider>().Object)
+            var client = new ClientConfiguration("cli_config", "rds", AuthenticationSource.None, "key", "secret").SetPrivacyMode(PrivacyModeDescriptor.None);
+            var context = new RadiusContext(client, new Mock<IUdpClient>().Object, new Mock<IServiceProvider>().Object)
             {
                 UserName = "test_user@multifactor.ru",
                 RemoteEndpoint = new IPEndPoint(IPAddress.Any, 636),
@@ -93,8 +90,7 @@ namespace MultiFactor.Radius.Adapter.Tests
         {
             var client = new ClientConfiguration("cli_config", "rds", AuthenticationSource.None, "key", "secret")
                 .SetPrivacyMode(PrivacyModeDescriptor.None);
-            var responseSender = new Mock<IRadiusResponseSender>();
-            var context = new RadiusContext(client, responseSender.Object, new Mock<IServiceProvider>().Object)
+            var context = new RadiusContext(client, new Mock<IUdpClient>().Object, new Mock<IServiceProvider>().Object)
             {
                 UserName = "test_user@multifactor.ru",
                 RemoteEndpoint = new IPEndPoint(IPAddress.Any, 636),
@@ -127,8 +123,7 @@ namespace MultiFactor.Radius.Adapter.Tests
             var client = new ClientConfiguration("cli_config", "rds", AuthenticationSource.None, "key", "secret")
                 .SetPrivacyMode(PrivacyModeDescriptor.None)
                 .SetBypassSecondFactorWhenApiUnreachable(false);
-            var responseSender = new Mock<IRadiusResponseSender>();
-            var context = new RadiusContext(client, responseSender.Object, new Mock<IServiceProvider>().Object)
+            var context = new RadiusContext(client, new Mock<IUdpClient>().Object, new Mock<IServiceProvider>().Object)
             {
                 UserName = "test_user@multifactor.ru",
                 RemoteEndpoint = new IPEndPoint(IPAddress.Any, 636),
@@ -151,8 +146,7 @@ namespace MultiFactor.Radius.Adapter.Tests
         {
             var client = new ClientConfiguration("cli_config", "rds", AuthenticationSource.None, "key", "secret")
                 .SetPrivacyMode(PrivacyModeDescriptor.None);
-            var responseSender = new Mock<IRadiusResponseSender>();
-            var context = new RadiusContext(client, responseSender.Object, new Mock<IServiceProvider>().Object)
+            var context = new RadiusContext(client, new Mock<IUdpClient>().Object, new Mock<IServiceProvider>().Object)
             {
                 UserName = "test_user@multifactor.ru",
                 RemoteEndpoint = new IPEndPoint(IPAddress.Any, 636),
@@ -176,8 +170,7 @@ namespace MultiFactor.Radius.Adapter.Tests
             var client = new ClientConfiguration("cli_config", "rds", AuthenticationSource.None, "key", "secret")
                 .SetPrivacyMode(PrivacyModeDescriptor.None)
                 .SetUseAttributeAsIdentity("some_attr_name");
-            var responseSender = new Mock<IRadiusResponseSender>();
-            var context = new RadiusContext(client, responseSender.Object, new Mock<IServiceProvider>().Object)
+            var context = new RadiusContext(client, new Mock<IUdpClient>().Object, new Mock<IServiceProvider>().Object)
             {
                 RemoteEndpoint = new IPEndPoint(IPAddress.Any, 636),
                 RequestPacket = RadiusPacketFactory.AccessRequest(),  
@@ -204,8 +197,7 @@ namespace MultiFactor.Radius.Adapter.Tests
             var client = new ClientConfiguration("cli_config", "rds", AuthenticationSource.None, "key", "secret")
                 .SetPrivacyMode(PrivacyModeDescriptor.None)
                 .SetUseAttributeAsIdentity("some_attr");
-            var responseSender = new Mock<IRadiusResponseSender>();
-            var context = new RadiusContext(client, responseSender.Object, new Mock<IServiceProvider>().Object)
+            var context = new RadiusContext(client, new Mock<IUdpClient>().Object, new Mock<IServiceProvider>().Object)
             {
                 UserName = "test_user@multifactor.ru",
                 RemoteEndpoint = new IPEndPoint(IPAddress.Any, 636),

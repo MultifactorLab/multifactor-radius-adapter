@@ -5,8 +5,7 @@ using MultiFactor.Radius.Adapter.Configuration;
 using MultiFactor.Radius.Adapter.Configuration.Core;
 using MultiFactor.Radius.Adapter.Core.Radius.Attributes;
 using MultiFactor.Radius.Adapter.Server;
-using MultiFactor.Radius.Adapter.Server.Context;
-using MultiFactor.Radius.Adapter.Server.Pipeline;
+using MultiFactor.Radius.Adapter.Server.Pipeline.PostProcessing;
 using MultiFactor.Radius.Adapter.Tests.Fixtures;
 using MultiFactor.Radius.Adapter.Tests.Fixtures.ConfigLoading;
 using MultiFactor.Radius.Adapter.Tests.Fixtures.Radius;
@@ -165,12 +164,10 @@ namespace MultiFactor.Radius.Adapter.Tests
                 .AddRadiusReplyAttribute("givenName", Array.Empty<RadiusReplyAttributeValue>())
                 .AddRadiusReplyAttribute("displayName", Array.Empty<RadiusReplyAttributeValue>());
             var responseSender = new Mock<IRadiusResponseSender>();
-            var context = new RadiusContext(clientConfig, responseSender.Object, new Mock<IServiceProvider>().Object)
+            var context = host.CreateContext(requestPacket: RadiusPacketFactory.AccessRequest(), clientConfig: clientConfig, x =>
             {
-                RequestPacket = RadiusPacketFactory.AccessRequest(),
-                ResponsePacket = RadiusPacketFactory.AccessRequest()
-            };
-
+                x.ResponsePacket = RadiusPacketFactory.AccessRequest();
+            }); 
             var srv = host.Service<RadiusReplyAttributeEnricher>();
             srv.RewriteReplyAttributes(context);
 
@@ -199,11 +196,10 @@ namespace MultiFactor.Radius.Adapter.Tests
                     new RadiusReplyAttributeValue("val2", null)
                 });
             var responseSender = new Mock<IRadiusResponseSender>();
-            var context = new RadiusContext(clientConfig, responseSender.Object, new Mock<IServiceProvider>().Object)
+            var context = host.CreateContext(requestPacket: RadiusPacketFactory.AccessRequest(), clientConfig: clientConfig, x =>
             {
-                RequestPacket = RadiusPacketFactory.AccessRequest(),
-                ResponsePacket = RadiusPacketFactory.AccessRequest()
-            };
+                x.ResponsePacket = RadiusPacketFactory.AccessRequest();
+            });
 
             var srv = host.Service<RadiusReplyAttributeEnricher>();
             srv.RewriteReplyAttributes(context);
@@ -238,16 +234,15 @@ namespace MultiFactor.Radius.Adapter.Tests
                     new RadiusReplyAttributeValue("displayName")
                 });
             var responseSender = new Mock<IRadiusResponseSender>();
-            var context = new RadiusContext(clientConfig, responseSender.Object, new Mock<IServiceProvider>().Object)
+            var context = host.CreateContext(requestPacket: RadiusPacketFactory.AccessRequest(), clientConfig: clientConfig, x =>
             {
-                RequestPacket = RadiusPacketFactory.AccessRequest(),
-                ResponsePacket = RadiusPacketFactory.AccessRequest(),
-                LdapAttrs = new Dictionary<string, object>
+                x.ResponsePacket = RadiusPacketFactory.AccessRequest();
+                x.LdapAttrs = new Dictionary<string, object>
                 {
                     { "givenName", "Given Name" },
                     { "displayName", "Display Name" },
-                }
-            };
+                };
+            });
 
             var srv = host.Service<RadiusReplyAttributeEnricher>();
             srv.RewriteReplyAttributes(context);

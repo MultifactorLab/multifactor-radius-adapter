@@ -3,7 +3,7 @@
 //https://github.com/MultifactorLab/multifactor-radius-adapter/blob/main/LICENSE.md
 
 using MultiFactor.Radius.Adapter.Configuration.Features.RandomWaiterFeature;
-using MultiFactor.Radius.Adapter.Server.Context;
+using MultiFactor.Radius.Adapter.Framework.Context;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;

@@ -2,7 +2,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using MultiFactor.Radius.Adapter.Configuration;
 using MultiFactor.Radius.Adapter.Configuration.Core;
-using MultiFactor.Radius.Adapter.Server.FirstAuthFactorProcessing;
+using MultiFactor.Radius.Adapter.Server.Pipeline.FirstFactorAuthentication.FirstAuthFactorProcessing;
 using MultiFactor.Radius.Adapter.Tests.Fixtures;
 using MultiFactor.Radius.Adapter.Tests.Fixtures.ConfigLoading;
 

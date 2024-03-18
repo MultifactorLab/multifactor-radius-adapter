@@ -1,13 +1,10 @@
 ﻿using Moq;
-using MultiFactor.Radius.Adapter.Configuration.Core;
-using MultiFactor.Radius.Adapter.Core.Pipeline;
-using MultiFactor.Radius.Adapter.Server.Context;
-using MultiFactor.Radius.Adapter.Server.Pipeline;
-using MultiFactor.Radius.Adapter.Server;
 using MultiFactor.Radius.Adapter.Tests.Fixtures.Radius;
 using MultiFactor.Radius.Adapter.Tests.Fixtures;
 using Microsoft.Extensions.DependencyInjection;
 using MultiFactor.Radius.Adapter.Tests.Fixtures.ConfigLoading;
+using MultiFactor.Radius.Adapter.Framework.Pipeline;
+using MultiFactor.Radius.Adapter.Framework.Context;
 
 namespace MultiFactor.Radius.Adapter.Tests
 {
@@ -32,14 +29,7 @@ namespace MultiFactor.Radius.Adapter.Tests
                 builder.Services.AddSingleton<IRadiusPipeline>(prov => prov.GetRequiredService<RadiusPipeline>());
             });
 
-            var config = host.Service<IServiceConfiguration>();
-            var responseSender = new Mock<IRadiusResponseSender>();
-            var context = new RadiusContext(config.Clients[0], responseSender.Object, new Mock<IServiceProvider>().Object)
-            {
-                RequestPacket = RadiusPacketFactory.AccessRequest(),
-                Bypass2Fa = true
-            };
-
+            var context = host.CreateContext(RadiusPacketFactory.AccessRequest());
             var pipeline = host.Service<RadiusPipeline>();
 
             await pipeline.InvokeAsync(context);
