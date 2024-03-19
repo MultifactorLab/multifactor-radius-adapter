@@ -22,7 +22,8 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.UserGroupsReading
 {
     public class ActiveDirectoryUserGroupsGetter : IUserGroupsGetter
     {
-        public AuthenticationSource AuthenticationSource => AuthenticationSource.ActiveDirectory | AuthenticationSource.None;
+        public AuthenticationSource AuthenticationSource => AuthenticationSource.ActiveDirectory | AuthenticationSource.Radius | AuthenticationSource.None;
+        public LdapCatalogType LdapCatalogType => LdapCatalogType.ActiveDirectory;
 
         public async Task<string[]> GetAllUserGroupsAsync(IClientConfiguration clientConfig, ILdapConnectionAdapter adapter, string userDn)
         {

@@ -22,7 +22,7 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.UserGroupsReading
 
         public async Task<string[]> GetUserGroupsAsync(IClientConfiguration clientConfig, ILdapConnectionAdapter connectionAdapter, string userDn)
         {
-            var getter = _provider.GetUserGroupsGetter(clientConfig.FirstFactorAuthenticationSource);
+            var getter = _provider.GetUserGroupsGetter(clientConfig.FirstFactorAuthenticationSource, clientConfig.LdapCatalogType);
             return await getter.GetAllUserGroupsAsync(clientConfig, connectionAdapter, userDn);
         }
     }

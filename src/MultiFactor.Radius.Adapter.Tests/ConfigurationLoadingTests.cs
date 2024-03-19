@@ -1,7 +1,7 @@
 using FluentAssertions;
-using FluentAssertions.Common;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using MultiFactor.Radius.Adapter.Configuration;
 using MultiFactor.Radius.Adapter.Configuration.Core;
 using MultiFactor.Radius.Adapter.Core.Exceptions;
 using MultiFactor.Radius.Adapter.Tests.Fixtures;
@@ -11,6 +11,24 @@ namespace MultiFactor.Radius.Adapter.Tests;
 
 public class ConfigurationLoadingTests
 {
+    private IHost GetHostWithSingleClientConfig(string config)
+    {
+        return TestHostFactory.CreateHost(services =>
+        {
+            services.RemoveService<IRootConfigurationProvider>().AddSingleton<IRootConfigurationProvider, TestRootConfigProvider>();
+            services.RemoveService<IClientConfigurationsProvider>().AddSingleton<IClientConfigurationsProvider, TestClientConfigsProvider>();
+            services.Configure<TestConfigProviderOptions>(x =>
+            {
+                x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-multi.config");
+                x.ClientConfigFilePaths = new[]
+                {
+                    TestEnvironment.GetAssetPath(TestAssetLocation.ClientsDirectory, config)
+                };
+            });
+        });
+    }
+
+
     [Fact]
     public void ReadConfiguration_ShouldReturnMultiConfig()
     {
@@ -145,5 +163,68 @@ public class ConfigurationLoadingTests
         var act = () => host.Services.GetRequiredService<IServiceConfiguration>();
 
         act.Should().Throw<InvalidConfigurationException>().WithMessage(msg);
+    }
+
+    [Theory]
+    [InlineData("radius-auth-source-without-ldap-catalog-type.config")]
+    public void ReadConfiguration_RadiusAuthSourceWithoutLdapCatalog_ShouldSetOpenLdap(string asset)
+    {
+        var host = GetHostWithSingleClientConfig(asset);
+
+        var config = host.Services.GetRequiredService<IServiceConfiguration>();
+        config.Clients.Should().NotBeEmpty();
+        
+        config.Clients[0].FirstFactorAuthenticationSource.Should().BeDefined();
+        config.Clients[0].FirstFactorAuthenticationSource
+            .Should()
+            .Be(AuthenticationSource.Radius);
+
+        config.Clients[0].LdapCatalogType.Should().Be(LdapCatalogType.OpenLdap);
+    }
+    
+    [Theory]
+    [InlineData("ad-auth-source-without-catalog-type.config")]
+    public void ReadConfiguration_AdAuthSourceWithoutLdapCatalog_ShouldBeActiveDirectory(string asset)
+    {
+        var host = GetHostWithSingleClientConfig(asset);
+
+        var config = host.Services.GetRequiredService<IServiceConfiguration>();
+        config.Clients.Should().NotBeEmpty();
+
+        config.Clients[0].FirstFactorAuthenticationSource.Should().BeDefined();
+        config.Clients[0].FirstFactorAuthenticationSource
+            .Should()
+            .Be(AuthenticationSource.ActiveDirectory);
+
+        config.Clients[0].LdapCatalogType.Should().Be(LdapCatalogType.ActiveDirectory);
+    }
+
+    [Theory]
+    [InlineData("radius-auth-source-with-openldap-catalog-type.config", LdapCatalogType.OpenLdap, AuthenticationSource.Radius)]
+    [InlineData("radius-auth-source-with-freeipa-catalog-type.config", LdapCatalogType.FreeIpa, AuthenticationSource.Radius)]
+    public void ReadConfiguration_RadiusAuthSourceAndActiveDirectory_ShouldRead(string asset, LdapCatalogType ldapCatalog, AuthenticationSource authSource)
+    {
+        var host = GetHostWithSingleClientConfig(asset);
+
+        var config = host.Services.GetRequiredService<IServiceConfiguration>();
+        config.Clients.Should().NotBeEmpty();
+
+        config.Clients[0].FirstFactorAuthenticationSource.Should().BeDefined();
+        config.Clients[0].FirstFactorAuthenticationSource
+            .Should()
+            .Be(authSource);
+
+        config.Clients[0].LdapCatalogType.Should().Be(ldapCatalog);
+    }
+
+    [Theory]
+    [InlineData("ad-auth-source-with-freeipa-catalog-type.config", LdapCatalogType.FreeIpa, AuthenticationSource.ActiveDirectory)]
+    public void ReadConfiguration_AdAuthSourceAndOtherLdapCatalogType_ShouldThrow(string asset, LdapCatalogType ldapCatalog, AuthenticationSource authSource)
+    {
+        var host = GetHostWithSingleClientConfig(asset);
+
+        var act = () => host.Services.GetRequiredService<IServiceConfiguration>();
+
+        act.Should().Throw<InvalidConfigurationException>();
     }
 }

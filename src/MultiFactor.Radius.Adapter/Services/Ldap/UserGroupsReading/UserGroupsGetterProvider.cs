@@ -20,9 +20,9 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.UserGroupsReading
             _defaultUserGroupsGetter = getters.Single(x => x.GetType() == typeof(DefaultUserGroupsGetter));
         }
 
-        public IUserGroupsGetter GetUserGroupsGetter(AuthenticationSource authSource)
+        public IUserGroupsGetter GetUserGroupsGetter(AuthenticationSource authSource, LdapCatalogType ldapCatalog)
         {
-            return _getters.FirstOrDefault(x => x.AuthenticationSource.HasFlag(authSource))
+            return _getters.FirstOrDefault(x => x.AuthenticationSource.HasFlag(authSource) && x.LdapCatalogType.HasFlag(ldapCatalog))
                 ?? _defaultUserGroupsGetter;
         }
     }

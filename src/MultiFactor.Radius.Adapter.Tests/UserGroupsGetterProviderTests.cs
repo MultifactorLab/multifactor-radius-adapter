@@ -25,29 +25,31 @@ public class UserGroupsGetterProviderTests
     }
 
     [Theory]
-    [InlineData(AuthenticationSource.ActiveDirectory)]
-    [InlineData(AuthenticationSource.None)]
-    public void Get_ActiveDirectoryOrNone_ShouldReturnADGetter(AuthenticationSource source)
+    [InlineData(AuthenticationSource.ActiveDirectory, LdapCatalogType.ActiveDirectory)]
+    [InlineData(AuthenticationSource.Radius, LdapCatalogType.ActiveDirectory)]
+    public void Get_ActiveDirectoryOrNone_ShouldReturnADGetter(AuthenticationSource authenticationSource, LdapCatalogType ldapCatalog)
     {
         var host = CreateTestingHost();
 
         var prov = host.Services.GetRequiredService<UserGroupsGetterProvider>();
-        var getter = prov.GetUserGroupsGetter(source);
+        var getter = prov.GetUserGroupsGetter(authenticationSource, ldapCatalog);
 
         getter.Should().NotBeNull().And.BeOfType<ActiveDirectoryUserGroupsGetter>();
     }
     
     [Theory]
-    [InlineData(AuthenticationSource.Radius)]
-    [InlineData(AuthenticationSource.Ldap)]
-    [InlineData((AuthenticationSource)(-1))]
-    public void Get_LdapOrRadiusOrUnknown_ShouldReturnDefaultGetter(AuthenticationSource source)
+    [InlineData(AuthenticationSource.Radius, LdapCatalogType.OpenLdap)]
+    [InlineData(AuthenticationSource.Ldap, LdapCatalogType.ActiveDirectory)]
+    [InlineData(AuthenticationSource.ActiveDirectory, LdapCatalogType.FreeIpa)]
+    [InlineData((AuthenticationSource)(-1), LdapCatalogType.ActiveDirectory)]
+    public void Get_LdapOrRadiusOrUnknown_ShouldReturnDefaultGetter(AuthenticationSource authenticationSource, LdapCatalogType ldapCatalog)
     {
         var host = CreateTestingHost();
 
         var prov = host.Services.GetRequiredService<UserGroupsGetterProvider>();
-        var getter = prov.GetUserGroupsGetter(source);
+        var getter = prov.GetUserGroupsGetter(authenticationSource, ldapCatalog);
 
         getter.Should().NotBeNull().And.BeOfType<DefaultUserGroupsGetter>();
     }
+
 }
