@@ -23,26 +23,14 @@ internal static class TestHostFactory
         builder.Services.ReplaceService<IRootConfigurationProvider, TestRootConfigProvider>();
         builder.Services.ReplaceService<IClientConfigurationsProvider, TestClientConfigsProvider>();
 
+        builder.Services.RemoveService<IRadiusPipeline>();
+        builder.Services.AddSingleton<RadiusPipeline>();
+        builder.Services.AddSingleton<IRadiusPipeline>(prov => prov.GetRequiredService<RadiusPipeline>());
+        builder.Services.ReplaceService(new Mock<IRadiusRequestPostProcessor>().Object);
+
         builder.ConfigureApplication();
 
         configure?.Invoke(builder);
         return new TestHost(builder.Build());
-    }
-
-    /// <summary>
-    /// Creates Radius Test Host and prepare it for pipeline testing
-    /// </summary>
-    /// <param name="configure">Configure host action.</param>
-    /// <returns></returns>
-    public static TestHost CreatePipelineTestHost(Action<RadiusHostApplicationBuilder>? configure = null)
-    {
-        return CreateHost(builder =>
-        {
-            builder.Services.RemoveService<IRadiusPipeline>();
-            builder.Services.AddSingleton<RadiusPipeline>();
-            builder.Services.AddSingleton<IRadiusPipeline>(prov => prov.GetRequiredService<RadiusPipeline>());
-
-            configure?.Invoke(builder);
-        });
     }
 }

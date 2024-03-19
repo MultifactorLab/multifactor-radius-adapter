@@ -21,6 +21,7 @@ namespace MultiFactor.Radius.Adapter.Tests.Pipeline
                 {
                     x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-single.config");
                 });
+                builder.UseMiddleware<AccessRequestFilterMiddleware>();
             });
 
             var context = host.CreateContext(RadiusPacketFactory.AccessRequest());
@@ -41,6 +42,7 @@ namespace MultiFactor.Radius.Adapter.Tests.Pipeline
                 {
                     x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-single.config");
                 });
+                builder.UseMiddleware<AccessRequestFilterMiddleware>();
             });
 
             var context = host.CreateContext(RadiusPacketFactory.StatusServer());

@@ -80,7 +80,7 @@ public class AccessChallengeMiddlewareTests
         var chProc = new Mock<IChallengeProcessor>();
         chProc.Setup(x => x.HasState(It.IsAny<ChallengeRequestIdentifier>())).Returns(true);
 
-        var host = TestHostFactory.CreateHost(builder =>
+        var host = TestHostFactory.CreatePipelineTestHost(builder =>
         {
             builder.UseMiddleware<AccessChallengeMiddleware>();
             builder.Services.Configure<TestConfigProviderOptions>(x =>
@@ -88,8 +88,8 @@ public class AccessChallengeMiddlewareTests
                 x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-single.config");
             });
 
-            builder.Services.RemoveService<IRadiusRequestPostProcessor>().AddSingleton(postProcessor.Object);
-            builder.Services.RemoveService<IChallengeProcessor>().AddSingleton(chProc.Object);
+            builder.Services.ReplaceService(postProcessor.Object);
+            builder.Services.ReplaceService(chProc.Object);
         });
 
         var config = host.Service<IServiceConfiguration>();
@@ -100,14 +100,12 @@ public class AccessChallengeMiddlewareTests
         });
         var context = host.CreateContext(packet, clientConfig: client);
         var expectedIdentifier = new ChallengeRequestIdentifier(client, expectedReqId);
-        var nextDelegate = new Mock<RadiusRequestDelegate>();
 
-        var middleware = host.Service<AccessChallengeMiddleware>();
-        await middleware.InvokeAsync(context, nextDelegate.Object);
+        var pipeline = host.Service<RadiusPipeline>();
+        await pipeline.InvokeAsync(context);
 
         context.State.Should().Be(expectedReqId);
 
-        nextDelegate.Verify(v => v.Invoke(It.IsAny<RadiusContext>()), Times.Never);
         postProcessor.Verify(v => v.InvokeAsync(It.Is<RadiusContext>(x => x == context)), Times.Once);
         chProc.Verify(v => v.ProcessChallengeAsync(It.Is<ChallengeRequestIdentifier>(x => x.Equals(expectedIdentifier)), It.Is<RadiusContext>(x => x == context)), Times.Once);
     }

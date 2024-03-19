@@ -55,6 +55,7 @@ namespace MultiFactor.Radius.Adapter.Tests.Pipeline
         {
             var host = TestHostFactory.CreateHost(builder =>
             {
+                builder.UseMiddleware<StatusServerMiddleware>();
                 builder.Services.Configure<TestConfigProviderOptions>(x =>
                 {
                     x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-single.config");

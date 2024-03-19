@@ -3,6 +3,7 @@ using Microsoft.Extensions.Hosting;
 using MultiFactor.Radius.Adapter.Configuration.Core;
 using MultiFactor.Radius.Adapter.Core.Radius;
 using MultiFactor.Radius.Adapter.Framework.Context;
+using MultiFactor.Radius.Adapter.Framework.Pipeline;
 using MultiFactor.Radius.Adapter.Server;
 using System.Net;
 
@@ -46,5 +47,11 @@ internal class TestHost
         setupContext?.Invoke(ctx);
 
         return ctx;
+    }
+
+    public Task InvokePipeline(RadiusContext ctx)
+    {
+        var pipeline = Service<IRadiusPipeline>();
+        return pipeline.InvokeAsync(ctx);
     }
 }

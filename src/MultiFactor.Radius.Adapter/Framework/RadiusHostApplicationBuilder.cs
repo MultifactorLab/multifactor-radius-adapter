@@ -4,6 +4,7 @@ using System;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using MultiFactor.Radius.Adapter.Framework.Pipeline;
+using Microsoft.AspNetCore.Http;
 
 namespace MultiFactor.Radius.Adapter.Framework;
 

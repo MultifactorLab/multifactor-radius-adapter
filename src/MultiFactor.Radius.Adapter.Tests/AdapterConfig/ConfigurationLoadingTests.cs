@@ -81,11 +81,12 @@ public partial class ConfigurationLoadingTests
 
     [Theory]
     [InlineData("root-empty-logging-level.config", "Configuration error: 'logging-level' element not found")]
-    public void CreateHost_InvalidSettings_ShouldThrow(string asset, string msg)
+    public void CreateHost_InvalidLoggingSettings_ShouldThrow(string asset, string msg)
     {
         var act = () =>
         {
             var builder = RadiusHost.CreateApplicationBuilder();
+            builder.AddLogging();
             builder.ConfigureApplication();
             builder.Services.Configure<TestConfigProviderOptions>(x =>
             {
