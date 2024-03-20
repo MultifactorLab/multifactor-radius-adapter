@@ -21,10 +21,8 @@ namespace MultiFactor.Radius.Adapter.Tests.Pipeline;
 public class SecondFactorAuthenticationMiddlewareTests
 {
     [Fact]
-    public async Task Invoke_ShouldInvokeNextDelegateAndPostProcessor()
+    public async Task Invoke_ShouldNotNextDelegateAndPostProcessor()
     {
-        var postProcessor = new Mock<IRadiusRequestPostProcessor>();
-
         var host = TestHostFactory.CreateHost(builder =>
         {
             builder.Services.Configure<TestConfigProviderOptions>(x =>
@@ -32,7 +30,7 @@ public class SecondFactorAuthenticationMiddlewareTests
                 x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-single.config");
             });
 
-            builder.Services.RemoveService<IRadiusRequestPostProcessor>().AddSingleton(postProcessor.Object);
+            builder.UseMiddleware<SecondFactorAuthenticationMiddleware>();
         });
 
         var context = host.CreateContext(RadiusPacketFactory.AccessRequest(), setupContext: x =>
@@ -42,12 +40,10 @@ public class SecondFactorAuthenticationMiddlewareTests
         });
 
         var nextDelegate = new Mock<RadiusRequestDelegate>();
-
         var middleware = host.Service<SecondFactorAuthenticationMiddleware>();
         await middleware.InvokeAsync(context, nextDelegate.Object);
 
-        nextDelegate.Verify(q => q.Invoke(It.Is<RadiusContext>(x => x == context)), Times.Once);
-        postProcessor.Verify(v => v.InvokeAsync(It.Is<RadiusContext>(x => x == context)), Times.Once);
+        nextDelegate.Verify(v => v.Invoke(It.Is<RadiusContext>(x => x == context)), Times.Never);
     }
     
     [Fact]
@@ -63,6 +59,7 @@ public class SecondFactorAuthenticationMiddlewareTests
             });
 
             builder.Services.RemoveService<IMultiFactorApiClient>().AddSingleton(api.Object);
+            builder.UseMiddleware<SecondFactorAuthenticationMiddleware>();
         });
 
         var context = host.CreateContext(RadiusPacketFactory.AccessRequest(), setupContext: x =>
@@ -90,6 +87,7 @@ public class SecondFactorAuthenticationMiddlewareTests
             });
 
             builder.Services.RemoveService<IMultiFactorApiClient>().AddSingleton(api.Object);
+            builder.UseMiddleware<SecondFactorAuthenticationMiddleware>();
         });
 
         var client = new ClientConfiguration("custom", "shared_secret", AuthenticationSource.Radius, "key", "secret")
@@ -122,6 +120,7 @@ public class SecondFactorAuthenticationMiddlewareTests
             });
 
             builder.Services.RemoveService<IMultiFactorApiClient>().AddSingleton(api.Object);
+            builder.UseMiddleware<SecondFactorAuthenticationMiddleware>();
         });
 
         var client = new ClientConfiguration("custom", "shared_secret", AuthenticationSource.Radius, "key", "secret")
@@ -159,6 +158,7 @@ public class SecondFactorAuthenticationMiddlewareTests
 
             builder.Services.RemoveService<IMultiFactorApiClient>().AddSingleton(api.Object);  
             builder.Services.RemoveService<IChallengeProcessor>().AddSingleton(chProc.Object);
+            builder.UseMiddleware<SecondFactorAuthenticationMiddleware>();
         });
 
         var config = host.Service<IServiceConfiguration>();

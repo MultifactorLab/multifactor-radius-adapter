@@ -22,7 +22,7 @@ namespace MultiFactor.Radius.Adapter.Tests.Pipeline
             var expectedTs = TimeSpan.FromMinutes(90);
             var expectedVer = "8.8.8";
 
-            var host = TestHostFactory.CreatePipelineTestHost(builder =>
+            var host = TestHostFactory.CreateHost(builder =>
             {
                 builder.Services.Configure<TestConfigProviderOptions>(x =>
                 {

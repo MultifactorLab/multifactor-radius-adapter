@@ -80,7 +80,7 @@ public class AccessChallengeMiddlewareTests
         var chProc = new Mock<IChallengeProcessor>();
         chProc.Setup(x => x.HasState(It.IsAny<ChallengeRequestIdentifier>())).Returns(true);
 
-        var host = TestHostFactory.CreatePipelineTestHost(builder =>
+        var host = TestHostFactory.CreateHost(builder =>
         {
             builder.UseMiddleware<AccessChallengeMiddleware>();
             builder.Services.Configure<TestConfigProviderOptions>(x =>
