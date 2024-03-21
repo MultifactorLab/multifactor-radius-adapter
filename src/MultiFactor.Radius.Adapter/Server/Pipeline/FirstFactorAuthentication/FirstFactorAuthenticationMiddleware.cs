@@ -38,6 +38,7 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.FirstFactorAuthentication
             context.AuthenticationState.SetFirstFactor(AuthenticationCode.Reject);
 
             // stop authencation process
+            return;
         }
     }
 }

@@ -19,33 +19,7 @@ namespace MultiFactor.Radius.Adapter.Tests.Pipeline;
 
 [Trait("Category", "Pipeline")]
 public class SecondFactorAuthenticationMiddlewareTests
-{
-    [Fact]
-    public async Task Invoke_ShouldNotNextDelegateAndPostProcessor()
-    {
-        var host = TestHostFactory.CreateHost(builder =>
-        {
-            builder.Services.Configure<TestConfigProviderOptions>(x =>
-            {
-                x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-single.config");
-            });
-
-            builder.UseMiddleware<SecondFactorAuthenticationMiddleware>();
-        });
-
-        var context = host.CreateContext(RadiusPacketFactory.AccessRequest(), setupContext: x =>
-        {
-            x.RemoteEndpoint = new IPEndPoint(IPAddress.Any, 636);
-            x.Bypass2Fa = false;
-        });
-
-        var nextDelegate = new Mock<RadiusRequestDelegate>();
-        var middleware = host.Service<SecondFactorAuthenticationMiddleware>();
-        await middleware.InvokeAsync(context, nextDelegate.Object);
-
-        nextDelegate.Verify(v => v.Invoke(It.Is<RadiusContext>(x => x == context)), Times.Never);
-    }
-    
+{     
     [Fact]
     public async Task Invoke_UsernameIsEmpty_ShouldSetRejectStateAndNotInvokeApi()
     {

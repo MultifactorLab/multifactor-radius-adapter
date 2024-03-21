@@ -2,11 +2,9 @@
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using MultiFactor.Radius.Adapter.Configuration;
-using MultiFactor.Radius.Adapter.Configuration.Core;
 using MultiFactor.Radius.Adapter.Core.Radius;
 using MultiFactor.Radius.Adapter.Framework.Context;
 using MultiFactor.Radius.Adapter.Framework.Pipeline;
-using MultiFactor.Radius.Adapter.Server;
 using MultiFactor.Radius.Adapter.Server.Pipeline.FirstFactorAuthentication;
 using MultiFactor.Radius.Adapter.Server.Pipeline.FirstFactorAuthentication.FirstAuthFactorProcessing;
 using MultiFactor.Radius.Adapter.Tests.Fixtures;
@@ -48,9 +46,8 @@ namespace MultiFactor.Radius.Adapter.Tests.Pipeline
         }
         
         [Fact]
-        public async Task Invoke_FirstFactorReturnsNonAccept_ShouldInvokePostProcessor()
+        public async Task Invoke_FirstFactorReturnsNonAccept_ShouldNotInvokeNext()
         {
-            var postProcessor = new Mock<IRadiusRequestPostProcessor>();
 
             var host = TestHostFactory.CreateHost(builder =>
             {
@@ -66,7 +63,7 @@ namespace MultiFactor.Radius.Adapter.Tests.Pipeline
                 fafpProv.Setup(x => x.GetProcessor(It.IsAny<AuthenticationSource>())).Returns(processor.Object);
 
                 builder.Services.ReplaceService(fafpProv.Object);
-                builder.Services.ReplaceService(postProcessor.Object);
+                builder.UseMiddleware<FirstFactorAuthenticationMiddleware>();
             });
 
             var context = host.CreateContext(RadiusPacketFactory.AccessRequest());
@@ -76,7 +73,6 @@ namespace MultiFactor.Radius.Adapter.Tests.Pipeline
             await middleware.InvokeAsync(context, nextDelegate.Object);
 
             nextDelegate.Verify(v => v.Invoke(It.Is<RadiusContext>(x => x == context)), Times.Never);
-            postProcessor.Verify(v => v.InvokeAsync(It.Is<RadiusContext>(x => x == context)), Times.Once);
         }
         
         [Fact]
@@ -98,7 +94,7 @@ namespace MultiFactor.Radius.Adapter.Tests.Pipeline
                 fafpProv.Setup(x => x.GetProcessor(It.IsAny<AuthenticationSource>())).Returns(processor.Object);
 
                 builder.Services.RemoveService<IFirstAuthFactorProcessorProvider>().AddSingleton(fafpProv.Object);
-                builder.Services.RemoveService<IRadiusRequestPostProcessor>().AddSingleton(postProcessor.Object);
+                builder.UseMiddleware<FirstFactorAuthenticationMiddleware>();
             });
 
             var context = host.CreateContext(RadiusPacketFactory.AccessRequest());
@@ -106,7 +102,6 @@ namespace MultiFactor.Radius.Adapter.Tests.Pipeline
             var middleware = host.Service<FirstFactorAuthenticationMiddleware>();
             await middleware.InvokeAsync(context, new Mock<RadiusRequestDelegate>().Object);
 
-            context.ResponseCode.Should().Be(PacketCode.AccessReject);
             context.AuthenticationState.FirstFactor.Should().Be(AuthenticationCode.Reject);
         }
         
@@ -129,7 +124,7 @@ namespace MultiFactor.Radius.Adapter.Tests.Pipeline
                 fafpProv.Setup(x => x.GetProcessor(It.IsAny<AuthenticationSource>())).Returns(processor.Object);
 
                 builder.Services.RemoveService<IFirstAuthFactorProcessorProvider>().AddSingleton(fafpProv.Object);
-                builder.Services.RemoveService<IRadiusRequestPostProcessor>().AddSingleton(postProcessor.Object);
+                builder.UseMiddleware<FirstFactorAuthenticationMiddleware>();
             });
 
             var context = host.CreateContext(RadiusPacketFactory.AccessRequest());
@@ -137,7 +132,6 @@ namespace MultiFactor.Radius.Adapter.Tests.Pipeline
             var middleware = host.Service<FirstFactorAuthenticationMiddleware>();
             await middleware.InvokeAsync(context, new Mock<RadiusRequestDelegate>().Object);
 
-            context.AuthenticationState.FirstFactor.Should().Be(AuthenticationCode.Accept);
             context.AuthenticationState.FirstFactor.Should().Be(AuthenticationCode.Accept);
         }
     }
