@@ -72,10 +72,9 @@ public class AccessChallengeMiddlewareTests
     }
     
     [Fact]
-    public async Task Invoke_HasStateAttributeAndHasChallengeState_ShouldInvokePostProcessorAndChallengeProcessor()
+    public async Task Invoke_HasStateAttributeAndHasChallengeState_ShouldInvokeChallengeProcessor()
     {
         var expectedReqId = "Qwerty123";
-        var postProcessor = new Mock<IRadiusRequestPostProcessor>();
 
         var chProc = new Mock<ISecondFactorChallengeProcessor>();
         chProc.Setup(x => x.HasState(It.IsAny<ChallengeRequestIdentifier>())).Returns(true);
@@ -88,7 +87,6 @@ public class AccessChallengeMiddlewareTests
                 x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-single.config");
             });
 
-            builder.Services.ReplaceService(postProcessor.Object);
             builder.Services.ReplaceService(chProc.Object);
         });
 
@@ -104,9 +102,6 @@ public class AccessChallengeMiddlewareTests
         var pipeline = host.Service<RadiusPipeline>();
         await pipeline.InvokeAsync(context);
 
-        context.State.Should().Be(expectedReqId);
-
-        postProcessor.Verify(v => v.InvokeAsync(It.Is<RadiusContext>(x => x == context)), Times.Once);
         chProc.Verify(v => v.ProcessChallengeAsync(It.Is<ChallengeRequestIdentifier>(x => x.Equals(expectedIdentifier)), It.Is<RadiusContext>(x => x == context)), Times.Once);
     }
     

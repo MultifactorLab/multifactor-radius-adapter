@@ -43,6 +43,11 @@ internal class RadiusHostApplicationBuilder
         {
             return async context =>
             {
+                if (context.Flags.TerminateFlag)
+                {
+                    return;
+                }
+
                 TMiddleware middleware;
 
                 try

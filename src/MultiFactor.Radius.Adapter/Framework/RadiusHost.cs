@@ -42,7 +42,7 @@ internal static class RadiusHost
 
         builder.Services.AddSingleton<IRadiusRequestPostProcessor, RadiusRequestPostProcessor>();
         builder.Services.AddTransient<Func<IPEndPoint, IUdpClient>>(prov => endpoint => new RealUdpClient(endpoint));
-        builder.Services.AddSingleton<RadiusResponseSenderFactory>();
+        builder.Services.AddSingleton<IRadiusResponseSenderFactory, RadiusResponseSenderFactory>();
         builder.Services.AddSingleton<RadiusReplyAttributeEnricher>();
 
         builder.Services.AddMemoryCache();

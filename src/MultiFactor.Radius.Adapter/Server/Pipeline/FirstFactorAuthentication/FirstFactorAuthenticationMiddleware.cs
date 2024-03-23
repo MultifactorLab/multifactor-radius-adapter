@@ -24,6 +24,12 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.FirstFactorAuthentication
 
         public async Task InvokeAsync(RadiusContext context, RadiusRequestDelegate next)
         {
+            if (context.Authentication.FirstFactor != AuthenticationCode.Awaiting)
+            {
+                await next(context);
+                return;
+            }
+
             var firstAuthProcessor = _firstAuthFactorProcessorProvider.GetProcessor(context.ClientConfiguration.FirstFactorAuthenticationSource);
             var firstFactorAuthenticationResultCode = await firstAuthProcessor.ProcessFirstAuthFactorAsync(context);
             if (firstFactorAuthenticationResultCode == PacketCode.AccessAccept)

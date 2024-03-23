@@ -28,6 +28,7 @@ namespace MultiFactor.Radius.Adapter.Framework.Context
             UdpClient = udpClient ?? throw new ArgumentNullException(nameof(udpClient));
             RequestServices = provider ?? throw new ArgumentNullException(nameof(provider));
             Authentication = new();
+            Flags = new();
         }
 
         public IPEndPoint RemoteEndpoint { get; set; }
@@ -35,6 +36,8 @@ namespace MultiFactor.Radius.Adapter.Framework.Context
 
         public IRadiusPacket RequestPacket { get; init; }
         public IRadiusPacket ResponsePacket { get; set; }
+
+        public RadiusContextFlags Flags { get; }
 
         public DateTime ReceivedAt { get; set; }
         public PacketCode ResponseCode { get; set; }

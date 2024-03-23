@@ -30,7 +30,7 @@ using MultiFactor.Radius.Adapter.Core.Radius;
 
 namespace MultiFactor.Radius.Adapter.Server
 {
-    public class RadiusResponseSenderFactory
+    internal class RadiusResponseSenderFactory : IRadiusResponseSenderFactory
     {
         private readonly IRadiusPacketParser _radiusPacketParser;
         private readonly ILogger<RadiusResponseSender> _logger;

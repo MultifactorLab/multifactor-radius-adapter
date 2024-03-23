@@ -28,4 +28,10 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.FirstFactorAuthentication
         /// <returns><see cref="PacketCode"/> as a result of processing.</returns>
         Task<PacketCode> ProcessFirstAuthFactorAsync(RadiusContext context);
     }
+
+    public enum FirstFactorProcessedCode
+    {
+        Accept,
+        Reject
+    }
 }

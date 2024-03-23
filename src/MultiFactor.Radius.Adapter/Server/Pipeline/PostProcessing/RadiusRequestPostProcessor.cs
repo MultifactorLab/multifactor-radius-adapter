@@ -23,13 +23,13 @@ public class RadiusRequestPostProcessor : IRadiusRequestPostProcessor
     private readonly IServiceConfiguration _serviceConfiguration;
     private readonly RandomWaiter _waiter;
     private readonly RadiusReplyAttributeEnricher _attributeEnricher;
-    private readonly RadiusResponseSenderFactory _senderFactory;
+    private readonly IRadiusResponseSenderFactory _senderFactory;
     private readonly ILogger _logger;
 
     public RadiusRequestPostProcessor(IServiceConfiguration serviceConfiguration,
         RandomWaiter waiter,
         RadiusReplyAttributeEnricher attributeRewriter,
-        RadiusResponseSenderFactory senderFactory,
+        IRadiusResponseSenderFactory senderFactory,
         ILogger<RadiusRequestPostProcessor> logger)
     {
         _serviceConfiguration = serviceConfiguration;
@@ -41,7 +41,7 @@ public class RadiusRequestPostProcessor : IRadiusRequestPostProcessor
 
     public async Task InvokeAsync(RadiusContext context)
     {
-        if (context.ResponseCode == PacketCode.DisconnectNak)
+        if (context.Flags.SkipResponseFlag)
         {
             return; //stop processing
         }
@@ -112,7 +112,6 @@ public class RadiusRequestPostProcessor : IRadiusRequestPostProcessor
             default:
                 throw new NotImplementedException(context.ResponseCode.ToString());
         }
-
 
         //proxy echo required
         if (requestPacket.Attributes.ContainsKey("Proxy-State"))

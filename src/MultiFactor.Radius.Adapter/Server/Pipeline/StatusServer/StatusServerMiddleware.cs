@@ -32,7 +32,8 @@ public class StatusServerMiddleware : IRadiusMiddleware
         var uptime = _serverInfo.GetUptime();
         var version = _serverInfo.GetVersion();
         context.ReplyMessage = $"Server up {uptime.Days} days {uptime.ToString("hh\\:mm\\:ss")}, ver.: {version}";
-        context.ResponseCode = PacketCode.AccessAccept;
         context.Authentication.Accept();
+        context.ResponseCode = context.Authentication.ToPacketCode();
+
     }
 }

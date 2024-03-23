@@ -87,12 +87,14 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.FirstFactorAuthentication.F
                         }
 
                         context.ResponsePacket = responsePacket;
+                        
                         return responsePacket.Header.Code; //Code received from remote radius
                     }
                     else
                     {
                         _logger.LogWarning("Remote Radius Server did not respond on message with id={id}", context.RequestPacket.Header.Identifier);
-                        return PacketCode.DisconnectNak; //reject by default
+                        context.Flags.SkipResponse();
+                        return PacketCode.AccessReject;
                     }
                 }
             }

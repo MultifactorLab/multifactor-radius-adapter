@@ -4,7 +4,6 @@ using MultiFactor.Radius.Adapter;
 using MultiFactor.Radius.Adapter.Framework;
 using MultiFactor.Radius.Adapter.Server.Pipeline.AccessChallenge;
 using MultiFactor.Radius.Adapter.Server.Pipeline.AccessRequestFilter;
-using MultiFactor.Radius.Adapter.Server.Pipeline.Bypass2Fa;
 using MultiFactor.Radius.Adapter.Server.Pipeline.FirstFactorAuthentication;
 using MultiFactor.Radius.Adapter.Server.Pipeline.PreSecondFactorAuthentication;
 using MultiFactor.Radius.Adapter.Server.Pipeline.SecondFactorAuthentication;
@@ -24,7 +23,6 @@ builder.UseMiddleware<TransformUserNameMiddleware>();
 builder.UseMiddleware<AccessChallengeMiddleware>();
 builder.UseMiddleware<PreSecondFactorAuthenticationMiddleware>();
 builder.UseMiddleware<FirstFactorAuthenticationMiddleware>();
-builder.UseMiddleware<Bypass2FaMidleware>();
 builder.UseMiddleware<SecondFactorAuthenticationMiddleware>();
 
 var host = builder.Build();

@@ -38,6 +38,24 @@ public class SecondFactorAuthenticationMiddleware : IRadiusMiddleware
 
     public async Task InvokeAsync(RadiusContext context, RadiusRequestDelegate next)
     {
+        if (context.Authentication.SecondFactor != AuthenticationCode.Awaiting)
+        {
+            await next(context);
+            return;
+        }
+
+        if (context.Bypass2Fa)
+        {
+            // second factor not required
+            _logger.LogInformation("Bypass second factor for user '{user:l}'", context.UserName);
+
+            context.ResponseCode = PacketCode.AccessAccept;
+            context.Authentication.SetSecondFactor(AuthenticationCode.Bypass);
+
+            await next(context);
+            return;
+        }
+
         context.ResponseCode = await ProcessSecondAuthenticationFactor(context);
         if (context.ResponseCode == PacketCode.AccessChallenge)
         {
@@ -48,7 +66,6 @@ public class SecondFactorAuthenticationMiddleware : IRadiusMiddleware
         if (context.ResponseCode == PacketCode.AccessAccept)
         {
             context.Authentication.SetSecondFactor(AuthenticationCode.Accept);
-            return;
         }
 
         await next(context);
