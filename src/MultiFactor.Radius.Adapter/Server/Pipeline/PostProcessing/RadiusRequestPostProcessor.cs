@@ -21,13 +21,13 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.PostProcessing;
 public class RadiusRequestPostProcessor : IRadiusRequestPostProcessor
 {
     private readonly IServiceConfiguration _serviceConfiguration;
-    private readonly RandomWaiter _waiter;
+    private readonly IRandomWaiter _waiter;
     private readonly RadiusReplyAttributeEnricher _attributeEnricher;
     private readonly IRadiusResponseSenderFactory _senderFactory;
     private readonly ILogger _logger;
 
     public RadiusRequestPostProcessor(IServiceConfiguration serviceConfiguration,
-        RandomWaiter waiter,
+        IRandomWaiter waiter,
         RadiusReplyAttributeEnricher attributeRewriter,
         IRadiusResponseSenderFactory senderFactory,
         ILogger<RadiusRequestPostProcessor> logger)

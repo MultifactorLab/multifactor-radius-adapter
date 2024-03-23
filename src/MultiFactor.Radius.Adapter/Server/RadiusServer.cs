@@ -40,7 +40,6 @@ using MultiFactor.Radius.Adapter.Core.Radius.Attributes;
 using MultiFactor.Radius.Adapter.Configuration.Core;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.DependencyInjection;
-using static System.Formats.Asn1.AsnWriter;
 using Microsoft.Extensions.Logging;
 using System.Runtime.CompilerServices;
 using MultiFactor.Radius.Adapter.Framework.Pipeline;
@@ -83,7 +82,6 @@ namespace MultiFactor.Radius.Adapter.Server
         private readonly IRadiusPipeline _pipeline;
         private readonly RadiusContextFactory _radiusContextFactory;
         private readonly Func<IPEndPoint, IUdpClient> _createUdpClient;
-        private readonly RandomWaiter _waiter;
         private IServiceConfiguration _serviceConfiguration;
 
         private CacheService _cacheService;
@@ -101,7 +99,6 @@ namespace MultiFactor.Radius.Adapter.Server
             IRadiusDictionary dictionary, 
             IRadiusPacketParser radiusPacketParser, 
             CacheService cacheService, 
-            RandomWaiter waiter,
             ILogger<RadiusServer> logger,
             IRadiusPipeline pipeline,
             RadiusContextFactory radiusContextFactory,
@@ -117,7 +114,6 @@ namespace MultiFactor.Radius.Adapter.Server
             _radiusContextFactory = radiusContextFactory ?? throw new ArgumentNullException(nameof(radiusContextFactory));
             _createUdpClient = createUdpClient;
             _localEndpoint = serviceConfiguration.ServiceServerEndpoint;
-            _waiter = waiter ?? throw new ArgumentNullException(nameof(waiter));
         }
 
         /// <summary>
