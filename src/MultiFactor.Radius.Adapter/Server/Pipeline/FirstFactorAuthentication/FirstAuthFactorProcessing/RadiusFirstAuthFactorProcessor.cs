@@ -70,28 +70,28 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.FirstFactorAuthentication.F
                 //sending request as is to Remote Radius Server
                 using (var client = new RadiusClient(context.ClientConfiguration.ServiceClientEndpoint, _logger))
                 {
-                    _logger.LogDebug($"Sending AccessRequest message with id={{id}} to Remote Radius Server {context.ClientConfiguration.NpsServerEndpoint}", context.RequestPacket.Identifier);
+                    _logger.LogDebug($"Sending AccessRequest message with id={{id}} to Remote Radius Server {context.ClientConfiguration.NpsServerEndpoint}", context.RequestPacket.Header.Identifier);
 
                     var requestBytes = _packetParser.GetBytes(context.RequestPacket);
-                    var response = await client.SendPacketAsync(context.RequestPacket.Identifier, requestBytes, context.ClientConfiguration.NpsServerEndpoint, TimeSpan.FromSeconds(5));
+                    var response = await client.SendPacketAsync(context.RequestPacket.Header.Identifier, requestBytes, context.ClientConfiguration.NpsServerEndpoint, TimeSpan.FromSeconds(5));
 
                     if (response != null)
                     {
-                        var responsePacket = _packetParser.Parse(response, context.RequestPacket.SharedSecret, context.RequestPacket.Authenticator);
-                        _logger.LogDebug("Received {code:l} message with id={id} from Remote Radius Server", responsePacket.Code.ToString(), responsePacket.Identifier);
+                        var responsePacket = _packetParser.Parse(response, context.RequestPacket.SharedSecret, context.RequestPacket.Header.Authenticator);
+                        _logger.LogDebug("Received {code:l} message with id={id} from Remote Radius Server", responsePacket.Header.Code.ToString(), responsePacket.Header.Identifier);
 
-                        if (responsePacket.Code == PacketCode.AccessAccept)
+                        if (responsePacket.Header.Code == PacketCode.AccessAccept)
                         {
                             var userName = context.UserName;
                             _logger.LogInformation($"User '{{user:l}}' credential and status verified successfully at {context.ClientConfiguration.NpsServerEndpoint}", userName);
                         }
 
                         context.ResponsePacket = responsePacket;
-                        return responsePacket.Code; //Code received from remote radius
+                        return responsePacket.Header.Code; //Code received from remote radius
                     }
                     else
                     {
-                        _logger.LogWarning("Remote Radius Server did not respond on message with id={id}", context.RequestPacket.Identifier);
+                        _logger.LogWarning("Remote Radius Server did not respond on message with id={id}", context.RequestPacket.Header.Identifier);
                         return PacketCode.DisconnectNak; //reject by default
                     }
                 }

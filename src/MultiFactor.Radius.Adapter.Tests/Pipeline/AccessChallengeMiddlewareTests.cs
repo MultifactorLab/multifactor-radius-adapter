@@ -16,7 +16,7 @@ namespace MultiFactor.Radius.Adapter.Tests.Pipeline;
 public class AccessChallengeMiddlewareTests
 {
     [Fact]
-    public async Task Invoke_HasNotStateAttribute_ShouldInvokeNext()
+    public async Task Invoke_HasNoStateAttribute_ShouldInvokeNext()
     {
         var host = TestHostFactory.CreateHost(builder =>
         {
@@ -50,9 +50,9 @@ public class AccessChallengeMiddlewareTests
                 x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-single.config");
             });
 
-            var chProc = new Mock<IChallengeProcessor>();
+            var chProc = new Mock<ISecondFactorChallengeProcessor>();
             chProc.Setup(x => x.HasState(It.IsAny<ChallengeRequestIdentifier>())).Returns(false);
-            builder.Services.RemoveService<IChallengeProcessor>().AddSingleton(chProc.Object);
+            builder.Services.RemoveService<ISecondFactorChallengeProcessor>().AddSingleton(chProc.Object);
         });
 
         var packet = RadiusPacketFactory.AccessRequest(x =>
@@ -77,7 +77,7 @@ public class AccessChallengeMiddlewareTests
         var expectedReqId = "Qwerty123";
         var postProcessor = new Mock<IRadiusRequestPostProcessor>();
 
-        var chProc = new Mock<IChallengeProcessor>();
+        var chProc = new Mock<ISecondFactorChallengeProcessor>();
         chProc.Setup(x => x.HasState(It.IsAny<ChallengeRequestIdentifier>())).Returns(true);
 
         var host = TestHostFactory.CreateHost(builder =>
@@ -108,5 +108,104 @@ public class AccessChallengeMiddlewareTests
 
         postProcessor.Verify(v => v.InvokeAsync(It.Is<RadiusContext>(x => x == context)), Times.Once);
         chProc.Verify(v => v.ProcessChallengeAsync(It.Is<ChallengeRequestIdentifier>(x => x.Equals(expectedIdentifier)), It.Is<RadiusContext>(x => x == context)), Times.Once);
+    }
+    
+    [Fact]
+    public async Task Invoke_ChallengeIsAccept_SecondFactorShouldAccept()
+    {
+        var expectedReqId = "Qwerty123";
+
+        var host = TestHostFactory.CreateHost(builder =>
+        {
+            builder.UseMiddleware<AccessChallengeMiddleware>();
+            builder.Services.Configure<TestConfigProviderOptions>(x =>
+            {
+                x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-single.config");
+            });
+
+            var chProc = new Mock<ISecondFactorChallengeProcessor>();
+            chProc.Setup(x => x.HasState(It.IsAny<ChallengeRequestIdentifier>())).Returns(true);
+            chProc.Setup(x => x.ProcessChallengeAsync(It.IsAny<ChallengeRequestIdentifier>(), It.IsAny<RadiusContext>())).ReturnsAsync(ChallengeCode.Accept);
+            builder.Services.ReplaceService(chProc.Object);
+        });
+
+        var config = host.Service<IServiceConfiguration>();
+        var client = config.Clients[0];
+        var packet = RadiusPacketFactory.AccessRequest(x =>
+        {
+            x.AddAttribute("State", expectedReqId);
+        });
+        var context = host.CreateContext(packet, clientConfig: client);
+
+        var pipeline = host.Service<RadiusPipeline>();
+        await pipeline.InvokeAsync(context);
+
+        Assert.Equal(AuthenticationCode.Accept, context.Authentication.SecondFactor);
+    }
+    
+    [Fact]
+    public async Task Invoke_ChallengeIsReject_SecondFactorShouldReject()
+    {
+        var expectedReqId = "Qwerty123";
+
+        var host = TestHostFactory.CreateHost(builder =>
+        {
+            builder.UseMiddleware<AccessChallengeMiddleware>();
+            builder.Services.Configure<TestConfigProviderOptions>(x =>
+            {
+                x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-single.config");
+            });
+
+            var chProc = new Mock<ISecondFactorChallengeProcessor>();
+            chProc.Setup(x => x.HasState(It.IsAny<ChallengeRequestIdentifier>())).Returns(true);
+            chProc.Setup(x => x.ProcessChallengeAsync(It.IsAny<ChallengeRequestIdentifier>(), It.IsAny<RadiusContext>())).ReturnsAsync(ChallengeCode.Reject);
+            builder.Services.ReplaceService(chProc.Object);
+        });
+
+        var config = host.Service<IServiceConfiguration>();
+        var client = config.Clients[0];
+        var packet = RadiusPacketFactory.AccessRequest(x =>
+        {
+            x.AddAttribute("State", expectedReqId);
+        });
+        var context = host.CreateContext(packet, clientConfig: client);
+
+        var pipeline = host.Service<RadiusPipeline>();
+        await pipeline.InvokeAsync(context);
+
+        Assert.Equal(AuthenticationCode.Reject, context.Authentication.SecondFactor);
+    }
+    
+    [Fact]
+    public async Task Invoke_ChallengeIsInProcess_SecondFactorShouldAwaiting()
+    {
+        var expectedReqId = "Qwerty123";
+
+        var host = TestHostFactory.CreateHost(builder =>
+        {
+            builder.UseMiddleware<AccessChallengeMiddleware>();
+            builder.Services.Configure<TestConfigProviderOptions>(x =>
+            {
+                x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-single.config");
+            });
+
+            var chProc = new Mock<ISecondFactorChallengeProcessor>();
+            chProc.Setup(x => x.HasState(It.IsAny<ChallengeRequestIdentifier>())).Returns(true);
+            chProc.Setup(x => x.ProcessChallengeAsync(It.IsAny<ChallengeRequestIdentifier>(), It.IsAny<RadiusContext>())).ReturnsAsync(ChallengeCode.InProcess);
+            builder.Services.ReplaceService(chProc.Object);
+        });
+
+        var config = host.Service<IServiceConfiguration>();
+        var client = config.Clients[0];
+        var packet = RadiusPacketFactory.AccessRequest(x =>
+        {
+            x.AddAttribute("State", expectedReqId);
+        });
+        var context = host.CreateContext(packet, clientConfig: client);
+
+        var pipeline = host.Service<RadiusPipeline>();
+        await pipeline.InvokeAsync(context);
+
+        Assert.Equal(AuthenticationCode.Awaiting, context.Authentication.SecondFactor);
     }
 }

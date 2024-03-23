@@ -117,7 +117,7 @@ public class SecondFactorAuthenticationMiddlewareTests
     [Fact]
     public async Task Invoke_ApiShouldReturnChallengeRequest_ShouldInvokeAddState()
     {
-        var chProc = new Mock<IChallengeProcessor>();
+        var chProc = new Mock<ISecondFactorChallengeProcessor>();
         chProc.Setup(x => x.HasState(It.IsAny<ChallengeRequestIdentifier>())).Returns(false);
 
         var host = TestHostFactory.CreateHost(builder =>
@@ -131,7 +131,7 @@ public class SecondFactorAuthenticationMiddlewareTests
             api.Setup(x => x.CreateSecondFactorRequest(It.IsAny<RadiusContext>())).ReturnsAsync(PacketCode.AccessChallenge);
 
             builder.Services.RemoveService<IMultiFactorApiClient>().AddSingleton(api.Object);  
-            builder.Services.RemoveService<IChallengeProcessor>().AddSingleton(chProc.Object);
+            builder.Services.RemoveService<ISecondFactorChallengeProcessor>().AddSingleton(chProc.Object);
             builder.UseMiddleware<SecondFactorAuthenticationMiddleware>();
         });
 

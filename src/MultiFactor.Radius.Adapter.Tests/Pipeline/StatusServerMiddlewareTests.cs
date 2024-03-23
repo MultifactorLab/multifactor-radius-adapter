@@ -44,7 +44,7 @@ namespace MultiFactor.Radius.Adapter.Tests.Pipeline
             var pipeline = host.Service<RadiusPipeline>();
             await pipeline.InvokeAsync(context);
 
-            context.AuthenticationState.ToPacketCode().Should().Be(PacketCode.AccessAccept);
+            context.Authentication.ToPacketCode().Should().Be(PacketCode.AccessAccept);
             context.ResponseCode.Should().Be(PacketCode.AccessAccept);
 
             context.ReplyMessage.Should().Be($"Server up {expectedTs.Days} days {expectedTs.ToString("hh\\:mm\\:ss")}, ver.: {expectedVer}");

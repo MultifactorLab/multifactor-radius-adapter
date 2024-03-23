@@ -21,13 +21,13 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.AccessRequestFilter
 
         public async Task InvokeAsync(RadiusContext context, RadiusRequestDelegate next)
         {
-            if (context.RequestPacket.Code == PacketCode.AccessRequest)
+            if (context.RequestPacket.Header.Code == PacketCode.AccessRequest)
             {
                 await next(context);
                 return;
             }
 
-            _logger.LogWarning("Unprocessable packet type: {code}", context.RequestPacket.Code);
+            _logger.LogWarning("Unprocessable packet type: {code}", context.RequestPacket.Header.Code);
         }
     }
 }

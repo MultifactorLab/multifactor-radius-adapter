@@ -24,14 +24,46 @@
 //OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 //SOFTWARE.
 
+using MultiFactor.Radius.Adapter.Core.Radius.Metadata;
 using System;
 
 namespace MultiFactor.Radius.Adapter.Core.Radius
 {
-    public interface IRadiusPacketParser
+    public class RadiusAuthenticator
     {
-        byte[] GetBytes(IRadiusPacket packet);
-        IRadiusPacket Parse(byte[] packetBytes, SharedSecret sharedSecret, byte[] requestAuthenticator = null,
-            Action<RadiusPacketOptions> configure = null);
+        public byte[] Value { get; }
+
+        public RadiusAuthenticator()
+        {
+            Value = new byte[16];
+        }
+
+        public RadiusAuthenticator(byte[] value)
+        {
+            if (value is null)
+            {
+                throw new ArgumentNullException(nameof(value));
+            }
+
+            if (value.Length != 16)
+            {
+                throw new ArgumentException("Authenticator content length should equal to 16", nameof(value));
+            }
+
+            Value = value;
+        }
+
+        public static RadiusAuthenticator Parse(byte[] packetBytes)
+        {
+            if (packetBytes is null)
+            {
+                throw new ArgumentNullException(nameof(packetBytes));
+            }
+
+            var authenticator = new byte[RadiusFieldOffsets.AuthenticatorFieldLength];
+            Buffer.BlockCopy(packetBytes, RadiusFieldOffsets.AuthenticatorFieldPosition, authenticator, 0, RadiusFieldOffsets.AuthenticatorFieldLength);
+
+            return new RadiusAuthenticator(authenticator);
+        }
     }
 }

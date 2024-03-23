@@ -84,7 +84,7 @@ namespace MultiFactor.Radius.Adapter.Tests.Pipeline
             await host.InvokePipeline(context);
 
             context.ResponseCode.Should().Be(Core.Radius.PacketCode.AccessAccept);
-            context.AuthenticationState.SecondFactor.Should().Be(AuthenticationCode.Accept);
+            context.Authentication.SecondFactor.Should().Be(AuthenticationCode.Accept);
         }
 
         [Fact]
@@ -107,7 +107,7 @@ namespace MultiFactor.Radius.Adapter.Tests.Pipeline
             await host.InvokePipeline(context);
 
             context.ResponseCode.Should().Be(Core.Radius.PacketCode.AccessReject);
-            context.AuthenticationState.SecondFactor.Should().Be(AuthenticationCode.Awaiting);
+            context.Authentication.SecondFactor.Should().Be(AuthenticationCode.Awaiting);
         }
     }
 }

@@ -53,22 +53,22 @@ namespace MultiFactor.Radius.Adapter.Server
             {
                 if (debugLog)
                 {
-                    _logger.LogDebug("{code:l} sent to {host:l}:{port} via {proxyhost:l}:{proxyport} id={id}", responsePacket.Code.ToString(), remoteEndpoint.Address, remoteEndpoint.Port, proxyEndpoint.Address, proxyEndpoint.Port, responsePacket.Identifier);
+                    _logger.LogDebug("{code:l} sent to {host:l}:{port} via {proxyhost:l}:{proxyport} id={id}", responsePacket.Header.Code.ToString(), remoteEndpoint.Address, remoteEndpoint.Port, proxyEndpoint.Address, proxyEndpoint.Port, responsePacket.Header.Identifier);
                 }
                 else
                 {
-                    _logger.LogInformation("{code:l} sent to {host:l}:{port} via {proxyhost:l}:{proxyport} id={id} user='{user:l}'", responsePacket.Code.ToString(), remoteEndpoint.Address, remoteEndpoint.Port, proxyEndpoint.Address, proxyEndpoint.Port, responsePacket.Identifier, user);
+                    _logger.LogInformation("{code:l} sent to {host:l}:{port} via {proxyhost:l}:{proxyport} id={id} user='{user:l}'", responsePacket.Header.Code.ToString(), remoteEndpoint.Address, remoteEndpoint.Port, proxyEndpoint.Address, proxyEndpoint.Port, responsePacket.Header.Identifier, user);
                 }
             }
             else
             {
                 if (debugLog)
                 {
-                    _logger.LogDebug("{code:l} sent to {host:l}:{port} id={id}", responsePacket.Code.ToString(), remoteEndpoint.Address, remoteEndpoint.Port, responsePacket.Identifier);
+                    _logger.LogDebug("{code:l} sent to {host:l}:{port} id={id}", responsePacket.Header.Code.ToString(), remoteEndpoint.Address, remoteEndpoint.Port, responsePacket.Header.Identifier);
                 }
                 else
                 {
-                    _logger.LogInformation("{code:l} sent to {host:l}:{port} id={id} user='{user:l}'", responsePacket.Code.ToString(), remoteEndpoint.Address, remoteEndpoint.Port, responsePacket.Identifier, user);
+                    _logger.LogInformation("{code:l} sent to {host:l}:{port} id={id} user='{user:l}'", responsePacket.Header.Code.ToString(), remoteEndpoint.Address, remoteEndpoint.Port, responsePacket.Header.Identifier, user);
                 }
             }
         }

@@ -23,7 +23,7 @@ public class StatusServerMiddleware : IRadiusMiddleware
 
     public async Task InvokeAsync(RadiusContext context, RadiusRequestDelegate next)
     {
-        if (context.RequestPacket.Code != PacketCode.StatusServer)
+        if (context.RequestPacket.Header.Code != PacketCode.StatusServer)
         {
             await next(context);
             return;
@@ -33,6 +33,6 @@ public class StatusServerMiddleware : IRadiusMiddleware
         var version = _serverInfo.GetVersion();
         context.ReplyMessage = $"Server up {uptime.Days} days {uptime.ToString("hh\\:mm\\:ss")}, ver.: {version}";
         context.ResponseCode = PacketCode.AccessAccept;
-        context.AuthenticationState.Accept();
+        context.Authentication.Accept();
     }
 }

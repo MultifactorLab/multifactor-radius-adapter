@@ -40,23 +40,11 @@ namespace MultiFactor.Radius.Adapter.Core.Radius
     {
         private readonly RadiusPacketOptions _options = new RadiusPacketOptions();
 
-        public PacketCode Code
-        {
-            get;
-            internal set;
-        }
-        public byte Identifier
-        {
-            get;
-            set;
-        }
-        public byte[] Authenticator { get; set; } = new byte[16];
+        public RadiusPacketHeader Header { get; }
+        public RadiusAuthenticator Authenticator { get; }
+
         public IDictionary<string, List<object>> Attributes { get; set; } = new Dictionary<string, List<object>>();
-        public byte[] SharedSecret
-        {
-            get;
-            internal set;
-        }
+        public SharedSecret SharedSecret { get; } 
         public byte[] RequestAuthenticator
         {
             get;
@@ -69,7 +57,7 @@ namespace MultiFactor.Radius.Adapter.Core.Radius
         {
             get
             {
-                return Code == PacketCode.AccessChallenge && AuthenticationType == AuthenticationType.EAP;
+                return Header.Code == PacketCode.AccessChallenge && AuthenticationType == AuthenticationType.EAP;
             }
         }
         /// <summary>
@@ -171,40 +159,12 @@ namespace MultiFactor.Radius.Adapter.Core.Radius
             return null;
         }
 
-        internal RadiusPacket()
+        public RadiusPacket(RadiusPacketHeader header, RadiusAuthenticator authenticator, SharedSecret sharedSecret)
         {
+            Header = header ?? throw new ArgumentNullException(nameof(header));
+            Authenticator = authenticator ?? throw new ArgumentNullException(nameof(authenticator));
+            SharedSecret = sharedSecret ?? throw new ArgumentNullException(nameof(sharedSecret));
         }
-
-
-        /// <summary>
-        /// Create a new packet with a random authenticator
-        /// </summary>
-        /// <param name="code"></param>
-        /// <param name="identifier"></param>
-        /// <param name="secret"></param>
-        /// <param name="authenticator">Set authenticator for testing</param>
-        public RadiusPacket(PacketCode code, byte identifier, string secret)
-        {
-            Code = code;
-            Identifier = identifier;
-            SharedSecret = Encoding.UTF8.GetBytes(secret);
-
-            // Generate random authenticator for access request packets
-            if (Code == PacketCode.AccessRequest || Code == PacketCode.StatusServer)
-            {
-                using (var csp = RandomNumberGenerator.Create())
-                {
-                    csp.GetNonZeroBytes(Authenticator);
-                }
-            }
-
-            // A Message authenticator is required in status server packets, calculated last
-            if (Code == PacketCode.StatusServer)
-            {
-                AddAttribute("Message-Authenticator", new byte[16]);
-            }
-        }
-
 
         /// <summary>
         /// Creates a response packet with code, authenticator, identifier and secret from the request packet.
@@ -213,13 +173,19 @@ namespace MultiFactor.Radius.Adapter.Core.Radius
         /// <returns></returns>
         public IRadiusPacket CreateResponsePacket(PacketCode responseCode)
         {
-            return new RadiusPacket
+            var header = RadiusPacketHeader.Create(responseCode, Header.Identifier);
+            var packet = new RadiusPacket(header, Authenticator, SharedSecret)
             {
-                Code = responseCode,
-                SharedSecret = SharedSecret,
-                Identifier = Identifier,
-                RequestAuthenticator = Authenticator
+                RequestAuthenticator = Authenticator.Value
             };
+
+            // A Message authenticator is required in status server and access packets, calculated last
+            if (Header.Code == PacketCode.AccessRequest || Header.Code == PacketCode.StatusServer)
+            {
+                packet.AddAttribute("Message-Authenticator", new byte[16]);
+            }
+
+            return packet;
         }
 
         public void Configure(Action<RadiusPacketOptions> configure)
@@ -319,8 +285,8 @@ namespace MultiFactor.Radius.Adapter.Core.Radius
 
         public string CreateUniqueKey(IPEndPoint remoteEndpoint)
         {
-            var base64Authenticator = Authenticator.Base64();
-            return $"{Code.ToString("d")}:{Identifier}:{remoteEndpoint}:{UserName}:{base64Authenticator}";
+            var base64Authenticator = Authenticator.Value.Base64();
+            return $"{Header.Code.ToString("d")}:{Header.Identifier}:{remoteEndpoint}:{UserName}:{base64Authenticator}";
         }
 
         private string GetCallingStationId()

@@ -11,10 +11,10 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.AccessChallenge
 {
     public class AccessChallengeMiddleware : IRadiusMiddleware
     {
-        private readonly IChallengeProcessor _challengeProcessor;
+        private readonly ISecondFactorChallengeProcessor _challengeProcessor;
         private readonly IRadiusRequestPostProcessor _requestPostProcessor;
 
-        public AccessChallengeMiddleware(IChallengeProcessor challengeProcessor, IRadiusRequestPostProcessor requestPostProcessor)
+        public AccessChallengeMiddleware(ISecondFactorChallengeProcessor challengeProcessor, IRadiusRequestPostProcessor requestPostProcessor)
         {
             _challengeProcessor = challengeProcessor ?? throw new ArgumentNullException(nameof(challengeProcessor));
             _requestPostProcessor = requestPostProcessor ?? throw new ArgumentNullException(nameof(requestPostProcessor));
@@ -22,21 +22,39 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.AccessChallenge
 
         public async Task InvokeAsync(RadiusContext context, RadiusRequestDelegate next)
         {
-            if (context.RequestPacket.Attributes.ContainsKey("State")) //Access-Challenge response 
+            if (!context.RequestPacket.Attributes.ContainsKey("State"))
             {
-                var identifier = new ChallengeRequestIdentifier(context.ClientConfiguration, context.RequestPacket.GetString("State"));
-
-                if (_challengeProcessor.HasState(identifier))
-                {
-                    // second request with Multifactor challenge
-                    context.ResponseCode = await _challengeProcessor.ProcessChallengeAsync(identifier, context);
-                    context.State = identifier.RequestId;  //state for Access-Challenge message if otp is wrong (3 times allowed)
-
-                    // stop authentication process after otp code verification
-                    return;
-                }
+                await next(context);
+                return;
             }
 
+            var identifier = new ChallengeRequestIdentifier(context.ClientConfiguration, context.RequestPacket.GetString("State"));
+            if (!_challengeProcessor.HasState(identifier))
+            {
+                await next(context);
+                return;
+            }
+
+            // second request with Multifactor challenge
+            var resultCode = await _challengeProcessor.ProcessChallengeAsync(identifier, context);
+            switch (resultCode)
+            {
+                case ChallengeCode.Accept:
+                    // 2fa was passed
+                    context.Authentication.SetSecondFactor(AuthenticationCode.Accept);
+                    break;
+
+                case ChallengeCode.Reject:
+                    context.Authentication.SetSecondFactor(AuthenticationCode.Reject);
+                    context.State = identifier.RequestId;
+                    break;
+
+                case ChallengeCode.InProcess:
+                    context.State = identifier.RequestId;
+                    break;
+
+            }
+            
             await next(context);
         }
     }

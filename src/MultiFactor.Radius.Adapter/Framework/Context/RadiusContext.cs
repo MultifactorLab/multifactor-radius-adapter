@@ -27,7 +27,7 @@ namespace MultiFactor.Radius.Adapter.Framework.Context
             ClientConfiguration = clientConfiguration ?? throw new ArgumentNullException(nameof(clientConfiguration));
             UdpClient = udpClient ?? throw new ArgumentNullException(nameof(udpClient));
             RequestServices = provider ?? throw new ArgumentNullException(nameof(provider));
-            AuthenticationState = new();
+            Authentication = new();
         }
 
         public IPEndPoint RemoteEndpoint { get; set; }
@@ -57,7 +57,7 @@ namespace MultiFactor.Radius.Adapter.Framework.Context
         public IClientConfiguration ClientConfiguration { get; }
         public IUdpClient UdpClient { get; }
 
-        public AuthenticationState AuthenticationState { get; }
+        public AuthenticationState Authentication { get; }
 
         public void SetProfile(ILdapProfile profile)
         {

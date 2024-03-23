@@ -14,13 +14,13 @@ using System.Threading.Tasks;
 
 namespace MultiFactor.Radius.Adapter.Server.Pipeline.AccessChallenge
 {
-    public class ChallengeProcessor : IChallengeProcessor
+    public class SecondFactorChallengeProcessor : ISecondFactorChallengeProcessor
     {
         private readonly ConcurrentDictionary<ChallengeRequestIdentifier, RadiusContext> _stateChallengePendingRequests = new();
         private readonly IMultiFactorApiClient _multiFactorApiClient;
-        private readonly ILogger<ChallengeProcessor> _logger;
+        private readonly ILogger<SecondFactorChallengeProcessor> _logger;
 
-        public ChallengeProcessor(IMultiFactorApiClient multiFactorApiClient, ILogger<ChallengeProcessor> logger)
+        public SecondFactorChallengeProcessor(IMultiFactorApiClient multiFactorApiClient, ILogger<SecondFactorChallengeProcessor> logger)
         {
             _multiFactorApiClient = multiFactorApiClient ?? throw new ArgumentNullException(nameof(multiFactorApiClient));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -29,14 +29,20 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.AccessChallenge
         /// <summary>
         /// Verify one time password from user input
         /// </summary>
-        public async Task<PacketCode> ProcessChallengeAsync(ChallengeRequestIdentifier identifier, RadiusContext context)
+        public async Task<ChallengeCode> ProcessChallengeAsync(ChallengeRequestIdentifier identifier, RadiusContext context)
         {
+            _logger.LogInformation("Processing challenge {State:l} for message id={id} from {host:l}:{port}", 
+                identifier.RequestId,
+                context.RequestPacket.Header.Identifier,
+                context.RemoteEndpoint.Address,
+                context.RemoteEndpoint.Port);
+
             var userName = context.UserName;
 
             if (string.IsNullOrEmpty(userName))
             {
-                _logger.LogWarning("Can't find User-Name in message id={id} from {host:l}:{port}", context.RequestPacket.Identifier, context.RemoteEndpoint.Address, context.RemoteEndpoint.Port);
-                return PacketCode.AccessReject;
+                _logger.LogWarning("Can't find User-Name in message id={id} from {host:l}:{port}", context.RequestPacket.Header.Identifier, context.RemoteEndpoint.Address, context.RemoteEndpoint.Port);
+                return ChallengeCode.Reject;
             }
 
             string userAnswer;
@@ -49,8 +55,8 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.AccessChallenge
 
                     if (string.IsNullOrEmpty(userAnswer))
                     {
-                        _logger.LogWarning("Can't find User-Password with user response in message id={id} from {host:l}:{port}", context.RequestPacket.Identifier, context.RemoteEndpoint.Address, context.RemoteEndpoint.Port);
-                        return PacketCode.AccessReject;
+                        _logger.LogWarning("Can't find User-Password with user response in message id={id} from {host:l}:{port}", context.RequestPacket.Header.Identifier, context.RemoteEndpoint.Address, context.RemoteEndpoint.Port);
+                        return ChallengeCode.Reject;
                     }
 
                     break;
@@ -59,8 +65,8 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.AccessChallenge
 
                     if (msChapResponse == null)
                     {
-                        _logger.LogWarning("Can't find MS-CHAP2-Response in message id={id} from {host:l}:{port}", context.RequestPacket.Identifier, context.RemoteEndpoint.Address, context.RemoteEndpoint.Port);
-                        return PacketCode.AccessReject;
+                        _logger.LogWarning("Can't find MS-CHAP2-Response in message id={id} from {host:l}:{port}", context.RequestPacket.Header.Identifier, context.RemoteEndpoint.Address, context.RemoteEndpoint.Port);
+                        return ChallengeCode.Reject;
                     }
 
                     //forti behaviour
@@ -69,8 +75,8 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.AccessChallenge
 
                     break;
                 default:
-                    _logger.LogWarning("Unable to process {auth} challange in message id={id} from {host:l}:{port}", context.RequestPacket.AuthenticationType, context.RequestPacket.Identifier, context.RemoteEndpoint.Address, context.RemoteEndpoint.Port);
-                    return PacketCode.AccessReject;
+                    _logger.LogWarning("Unable to process {auth} challange in message id={id} from {host:l}:{port}", context.RequestPacket.AuthenticationType, context.RequestPacket.Header.Identifier, context.RemoteEndpoint.Address, context.RemoteEndpoint.Port);
+                    return ChallengeCode.Reject;
             }
 
             // copy initial request profile to challenge request context
@@ -87,14 +93,16 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.AccessChallenge
                         context.ResponsePacket = stateChallengePendingRequest.ResponsePacket;
                         context.LdapAttrs = stateChallengePendingRequest.LdapAttrs;
                     }
+
                     RemoveStateChallengeRequest(identifier);
-                    break;
+                    return ChallengeCode.Accept;
+
                 case PacketCode.AccessReject:
                     RemoveStateChallengeRequest(identifier);
-                    break;
+                    return ChallengeCode.Reject;
             }
 
-            return response;
+            return ChallengeCode.InProcess;
         }
 
         public bool HasState(ChallengeRequestIdentifier identifier)
@@ -110,7 +118,7 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.AccessChallenge
             if (!_stateChallengePendingRequests.TryAdd(identifier, context))
             {
                 _logger.LogError("Unable to cache request id={id} for the '{cfg:l}' configuration",
-                    context.RequestPacket.Identifier, context.ClientConfiguration.Name);
+                    context.RequestPacket.Header.Identifier, context.ClientConfiguration.Name);
             }
         }
 

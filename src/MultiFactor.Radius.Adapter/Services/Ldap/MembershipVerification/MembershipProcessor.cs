@@ -45,7 +45,7 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.MembershipVerification
             var userName = context.UserName;
             if (string.IsNullOrEmpty(userName))
             {
-                _logger.LogWarning("Verification user' membership failed: can't find 'User-Name' attribute (messageId: {id}, from: {host:l}:{port})", context.RequestPacket.Identifier, context.RemoteEndpoint.Address, context.RemoteEndpoint.Port);
+                _logger.LogWarning("Verification user' membership failed: can't find 'User-Name' attribute (messageId: {id}, from: {host:l}:{port})", context.RequestPacket.Header.Identifier, context.RemoteEndpoint.Address, context.RemoteEndpoint.Port);
                 return result;
             }
 
@@ -92,7 +92,7 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.MembershipVerification
             var userName = request.UserName;
             if (string.IsNullOrEmpty(userName))
             {
-                throw new Exception($"Can't find User-Name in message id={request.RequestPacket.Identifier} from {request.RemoteEndpoint.Address}:{request.RemoteEndpoint.Port}");
+                throw new Exception($"Can't find User-Name in message id={request.RequestPacket.Header.Identifier} from {request.RemoteEndpoint.Address}:{request.RemoteEndpoint.Port}");
             }
             var user = LdapIdentity.ParseUser(userName);
             var attributes = new Dictionary<string, string[]>();

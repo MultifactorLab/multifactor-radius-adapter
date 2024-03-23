@@ -31,10 +31,9 @@ namespace MultiFactor.Radius.Adapter.Core.Radius
 {
     public interface IRadiusPacket
     {
-        byte Identifier { get; set; }
-        byte[] Authenticator { get; set; }
-        byte[] SharedSecret { get; }
-        PacketCode Code { get; }
+        RadiusPacketHeader Header { get; }
+        SharedSecret SharedSecret { get; }
+        RadiusAuthenticator Authenticator { get; }
         byte[] RequestAuthenticator { get; }
         bool IsEapMessageChallenge { get; }
         bool IsVendorAclRequest { get; }

@@ -19,13 +19,13 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.SecondFactorAuthentication;
 
 public class SecondFactorAuthenticationMiddleware : IRadiusMiddleware
 {
-    private readonly IChallengeProcessor _challengeProcessor;
+    private readonly ISecondFactorChallengeProcessor _challengeProcessor;
     private readonly IMultiFactorApiClient _multiFactorApiClient;
     private readonly IRadiusRequestPostProcessor _requestPostProcessor;
     private readonly ILogger<SecondFactorAuthenticationMiddleware> _logger;
 
     public SecondFactorAuthenticationMiddleware(
-        IChallengeProcessor challengeProcessor,
+        ISecondFactorChallengeProcessor challengeProcessor,
         IMultiFactorApiClient multiFactorApiClient,
         IRadiusRequestPostProcessor requestPostProcessor,
         ILogger<SecondFactorAuthenticationMiddleware> logger)
@@ -47,7 +47,7 @@ public class SecondFactorAuthenticationMiddleware : IRadiusMiddleware
 
         if (context.ResponseCode == PacketCode.AccessAccept)
         {
-            context.AuthenticationState.SetSecondFactor(AuthenticationCode.Accept);
+            context.Authentication.SetSecondFactor(AuthenticationCode.Accept);
             return;
         }
 
@@ -61,7 +61,7 @@ public class SecondFactorAuthenticationMiddleware : IRadiusMiddleware
     {
         if (string.IsNullOrEmpty(context.SecondFactorIdentity))
         {
-            _logger.LogWarning("Can't find User-Name in message id={id} from {host:l}:{port}", context.RequestPacket.Identifier, context.RemoteEndpoint.Address, context.RemoteEndpoint.Port);
+            _logger.LogWarning("Can't find User-Name in message id={id} from {host:l}:{port}", context.RequestPacket.Header.Identifier, context.RemoteEndpoint.Address, context.RemoteEndpoint.Port);
             return PacketCode.AccessReject;
         }
 

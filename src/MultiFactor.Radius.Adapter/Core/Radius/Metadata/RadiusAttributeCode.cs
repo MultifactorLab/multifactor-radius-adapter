@@ -24,14 +24,23 @@
 //OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 //SOFTWARE.
 
-using System;
-
-namespace MultiFactor.Radius.Adapter.Core.Radius
+namespace MultiFactor.Radius.Adapter.Core.Radius.Metadata
 {
-    public interface IRadiusPacketParser
+    internal static class RadiusAttributeCode
     {
-        byte[] GetBytes(IRadiusPacket packet);
-        IRadiusPacket Parse(byte[] packetBytes, SharedSecret sharedSecret, byte[] requestAuthenticator = null,
-            Action<RadiusPacketOptions> configure = null);
+        /// <summary>
+        /// User-Password
+        /// </summary>
+        public const int UserPassword = 2;
+
+        /// <summary>
+        /// Vendor-Specific
+        /// </summary>
+        public const int VendorSpecific = 26;
+
+        /// <summary>
+        /// Message-Authenticator
+        /// </summary>
+        public const int MessageAuthenticator = 80;
     }
 }

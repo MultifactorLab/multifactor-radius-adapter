@@ -49,7 +49,7 @@ public class RadiusRequestPostProcessor : IRadiusRequestPostProcessor
         if (context.ResponsePacket?.IsEapMessageChallenge == true)
         {
             //EAP authentication in process, just proxy response
-            _logger.LogDebug("Proxying EAP-Message Challenge to {host:l}:{port} id={id}", context.RemoteEndpoint.Address, context.RemoteEndpoint.Port, context.RequestPacket.Identifier);
+            _logger.LogDebug("Proxying EAP-Message Challenge to {host:l}:{port} id={id}", context.RemoteEndpoint.Address, context.RemoteEndpoint.Port, context.RequestPacket.Header.Identifier);
             var responseSender = _senderFactory.CreateSender(context.UdpClient);
             responseSender.Send(context.ResponsePacket, context.RequestPacket?.UserName, context.RemoteEndpoint, context.ProxyEndpoint, true);
 
@@ -59,7 +59,7 @@ public class RadiusRequestPostProcessor : IRadiusRequestPostProcessor
         if (context.RequestPacket.IsVendorAclRequest && context.ResponsePacket != null)
         {
             //ACL and other rules transfer, just proxy response
-            _logger.LogDebug("Proxying #ACSACL# to {host:l}:{port} id={id}", context.RemoteEndpoint.Address, context.RemoteEndpoint.Port, context.RequestPacket.Identifier);
+            _logger.LogDebug("Proxying #ACSACL# to {host:l}:{port} id={id}", context.RemoteEndpoint.Address, context.RemoteEndpoint.Port, context.RequestPacket.Header.Identifier);
             var responseSender = _senderFactory.CreateSender(context.UdpClient);
             responseSender.Send(context.ResponsePacket, context.RequestPacket?.UserName, context.RemoteEndpoint, context.ProxyEndpoint, true);
 
@@ -81,7 +81,7 @@ public class RadiusRequestPostProcessor : IRadiusRequestPostProcessor
                     context.ResponsePacket = responsePacket;
                 }
 
-                if (context.RequestPacket.Code == PacketCode.StatusServer)
+                if (context.RequestPacket.Header.Code == PacketCode.StatusServer)
                 {
                     responsePacket.AddAttribute("Reply-Message", context.ReplyMessage);
                 }
@@ -102,7 +102,7 @@ public class RadiusRequestPostProcessor : IRadiusRequestPostProcessor
             case PacketCode.AccessReject:
                 if (context.ResponsePacket != null) //copy from remote radius reply
                 {
-                    if (context.ResponsePacket.Code == PacketCode.AccessReject) //for mschap pwd change only
+                    if (context.ResponsePacket.Header.Code == PacketCode.AccessReject) //for mschap pwd change only
                     {
                         context.ResponsePacket.CopyTo(responsePacket);
                     }
@@ -123,7 +123,7 @@ public class RadiusRequestPostProcessor : IRadiusRequestPostProcessor
             }
         }
 
-        var debugLog = context.RequestPacket.Code == PacketCode.StatusServer;
+        var debugLog = context.RequestPacket.Header.Code == PacketCode.StatusServer;
         var sender = _senderFactory.CreateSender(context.UdpClient);
         sender.Send(responsePacket, context.RequestPacket?.UserName, context.RemoteEndpoint, context.ProxyEndpoint, debugLog);
     }

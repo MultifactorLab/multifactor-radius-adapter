@@ -43,7 +43,7 @@ internal static class ConfigureApplicationExtension
 
         builder.Services.AddSingleton<IMultiFactorApiClient, MultiFactorApiClient>();
 
-        builder.Services.AddSingleton<IChallengeProcessor, ChallengeProcessor>();
+        builder.Services.AddSingleton<ISecondFactorChallengeProcessor, SecondFactorChallengeProcessor>();
 
         builder.Services.AddFirstAuthFactorProcessing();
 

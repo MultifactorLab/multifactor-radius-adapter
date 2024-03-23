@@ -102,7 +102,7 @@ namespace MultiFactor.Radius.Adapter.Tests.Pipeline
             var middleware = host.Service<FirstFactorAuthenticationMiddleware>();
             await middleware.InvokeAsync(context, new Mock<RadiusRequestDelegate>().Object);
 
-            context.AuthenticationState.FirstFactor.Should().Be(AuthenticationCode.Reject);
+            context.Authentication.FirstFactor.Should().Be(AuthenticationCode.Reject);
         }
         
         [Fact]
@@ -132,7 +132,7 @@ namespace MultiFactor.Radius.Adapter.Tests.Pipeline
             var middleware = host.Service<FirstFactorAuthenticationMiddleware>();
             await middleware.InvokeAsync(context, new Mock<RadiusRequestDelegate>().Object);
 
-            context.AuthenticationState.FirstFactor.Should().Be(AuthenticationCode.Accept);
+            context.Authentication.FirstFactor.Should().Be(AuthenticationCode.Accept);
         }
     }
 }

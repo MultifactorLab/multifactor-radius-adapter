@@ -28,14 +28,14 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.FirstFactorAuthentication
             var firstFactorAuthenticationResultCode = await firstAuthProcessor.ProcessFirstAuthFactorAsync(context);
             if (firstFactorAuthenticationResultCode == PacketCode.AccessAccept)
             {
-                context.AuthenticationState.SetFirstFactor(AuthenticationCode.Accept);
+                context.Authentication.SetFirstFactor(AuthenticationCode.Accept);
                 await next(context);
                 return;
             }
 
             // first factor authentication rejected
             context.ResponseCode = firstFactorAuthenticationResultCode;
-            context.AuthenticationState.SetFirstFactor(AuthenticationCode.Reject);
+            context.Authentication.SetFirstFactor(AuthenticationCode.Reject);
 
             // stop authencation process
             return;

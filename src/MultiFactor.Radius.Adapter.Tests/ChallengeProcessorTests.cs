@@ -24,8 +24,8 @@ namespace MultiFactor.Radius.Adapter.Tests
             const string reqId = "RequestId";
 
             var api = new Mock<IMultiFactorApiClient>();
-            var logger = new Mock<ILogger<ChallengeProcessor>>();
-            var processor = new ChallengeProcessor(api.Object, logger.Object);
+            var logger = new Mock<ILogger<SecondFactorChallengeProcessor>>();
+            var processor = new SecondFactorChallengeProcessor(api.Object, logger.Object);
 
             var client = new ClientConfiguration("cli_config", "rds", AuthenticationSource.None, "key", "secret");
             var identifier = new ChallengeRequestIdentifier(client, reqId);
@@ -45,8 +45,8 @@ namespace MultiFactor.Radius.Adapter.Tests
             const string reqId = "RequestId";
 
             var api = new Mock<IMultiFactorApiClient>();
-            var logger = new Mock<ILogger<ChallengeProcessor>>();
-            var processor = new ChallengeProcessor(api.Object, logger.Object);
+            var logger = new Mock<ILogger<SecondFactorChallengeProcessor>>();
+            var processor = new SecondFactorChallengeProcessor(api.Object, logger.Object);
 
             var client = new ClientConfiguration("cli_config", "rds", AuthenticationSource.None, "key", "secret");
             var identifier = new ChallengeRequestIdentifier(client, reqId);
@@ -59,7 +59,7 @@ namespace MultiFactor.Radius.Adapter.Tests
 
             var result = await processor.ProcessChallengeAsync(identifier, context);
 
-            result.Should().Be(PacketCode.AccessReject);
+            Assert.Equal(ChallengeCode.Reject, result);
         }
         
         [Fact]
@@ -68,8 +68,8 @@ namespace MultiFactor.Radius.Adapter.Tests
             const string reqId = "RequestId";
 
             var api = new Mock<IMultiFactorApiClient>();
-            var logger = new Mock<ILogger<ChallengeProcessor>>();
-            var processor = new ChallengeProcessor(api.Object, logger.Object);
+            var logger = new Mock<ILogger<SecondFactorChallengeProcessor>>();
+            var processor = new SecondFactorChallengeProcessor(api.Object, logger.Object);
 
             var client = new ClientConfiguration("cli_config", "rds", AuthenticationSource.None, "key", "secret");
             var identifier = new ChallengeRequestIdentifier(client, reqId);
@@ -86,7 +86,7 @@ namespace MultiFactor.Radius.Adapter.Tests
 
             var result = await processor.ProcessChallengeAsync(identifier, context);
 
-            result.Should().Be(PacketCode.AccessReject);
+            Assert.Equal(ChallengeCode.Reject, result);
         }
         
         [Fact]
@@ -95,8 +95,8 @@ namespace MultiFactor.Radius.Adapter.Tests
             const string reqId = "RequestId";
 
             var api = new Mock<IMultiFactorApiClient>();
-            var logger = new Mock<ILogger<ChallengeProcessor>>();
-            var processor = new ChallengeProcessor(api.Object, logger.Object);
+            var logger = new Mock<ILogger<SecondFactorChallengeProcessor>>();
+            var processor = new SecondFactorChallengeProcessor(api.Object, logger.Object);
 
             var client = new ClientConfiguration("cli_config", "rds", AuthenticationSource.None, "key", "secret");
             var identifier = new ChallengeRequestIdentifier(client, reqId);
@@ -113,7 +113,7 @@ namespace MultiFactor.Radius.Adapter.Tests
 
             var result = await processor.ProcessChallengeAsync(identifier, context);
 
-            result.Should().Be(PacketCode.AccessReject);
+            Assert.Equal(ChallengeCode.Reject, result);
         }
         
         [Theory]
@@ -125,8 +125,8 @@ namespace MultiFactor.Radius.Adapter.Tests
             const string reqId = "RequestId";
 
             var api = new Mock<IMultiFactorApiClient>();
-            var logger = new Mock<ILogger<ChallengeProcessor>>();
-            var processor = new ChallengeProcessor(api.Object, logger.Object);
+            var logger = new Mock<ILogger<SecondFactorChallengeProcessor>>();
+            var processor = new SecondFactorChallengeProcessor(api.Object, logger.Object);
 
             var client = new ClientConfiguration("cli_config", "rds", AuthenticationSource.None, "key", "secret");
             var identifier = new ChallengeRequestIdentifier(client, reqId);
@@ -143,7 +143,7 @@ namespace MultiFactor.Radius.Adapter.Tests
 
             var result = await processor.ProcessChallengeAsync(identifier, context);
 
-            result.Should().Be(PacketCode.AccessReject);
+            Assert.Equal(ChallengeCode.Reject, result);
         }
 
         [Fact]
@@ -154,8 +154,8 @@ namespace MultiFactor.Radius.Adapter.Tests
             var api = new Mock<IMultiFactorApiClient>();
             api.Setup(x => x.Challenge(It.IsAny<RadiusContext>(), It.IsAny<string>(), It.IsAny<ChallengeRequestIdentifier>()))
                 .ReturnsAsync(PacketCode.AccessAccept);
-            var logger = new Mock<ILogger<ChallengeProcessor>>();
-            var processor = new ChallengeProcessor(api.Object, logger.Object);
+            var logger = new Mock<ILogger<SecondFactorChallengeProcessor>>();
+            var processor = new SecondFactorChallengeProcessor(api.Object, logger.Object);
 
             var client = new ClientConfiguration("cli_config", "rds", AuthenticationSource.None, "key", "secret");
             var context = new RadiusContext(client, new Mock<IUdpClient>().Object, new Mock<IServiceProvider>().Object)
@@ -192,7 +192,7 @@ namespace MultiFactor.Radius.Adapter.Tests
 
             var result = await processor.ProcessChallengeAsync(new ChallengeRequestIdentifier(client, reqId), newContext);
 
-            result.Should().Be(PacketCode.AccessAccept);
+            Assert.Equal(ChallengeCode.Accept, result);
 
             newContext.UserGroups.Should().BeEquivalentTo(context.UserGroups);
             newContext.LdapAttrs.Should().BeEquivalentTo(context.LdapAttrs);

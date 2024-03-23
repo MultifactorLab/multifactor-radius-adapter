@@ -8,10 +8,17 @@ using System.Threading.Tasks;
 
 namespace MultiFactor.Radius.Adapter.Server.Pipeline.AccessChallenge
 {
-    public interface IChallengeProcessor
+    public interface ISecondFactorChallengeProcessor
     {
         void AddState(ChallengeRequestIdentifier identifier, RadiusContext context);
         bool HasState(ChallengeRequestIdentifier identifier);
-        Task<PacketCode> ProcessChallengeAsync(ChallengeRequestIdentifier identifier, RadiusContext context);
+        Task<ChallengeCode> ProcessChallengeAsync(ChallengeRequestIdentifier identifier, RadiusContext context);
+    }
+
+    public enum ChallengeCode
+    {
+        Accept,
+        Reject,
+        InProcess
     }
 }

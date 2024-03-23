@@ -233,7 +233,8 @@ namespace MultiFactor.Radius.Adapter.Server
                 return;
             }
 
-            var requestPacket = _radiusPacketParser.Parse(packetBytes, Encoding.UTF8.GetBytes(clientConfiguration.RadiusSharedSecret),
+            var secret = new SharedSecret(clientConfiguration.RadiusSharedSecret);
+            var requestPacket = _radiusPacketParser.Parse(packetBytes, secret,
               configure: x => x.CallingStationIdAttribute = clientConfiguration.CallingStationIdVendorAttribute);
 
             var context = _radiusContextFactory.CreateContext(clientConfiguration, requestPacket, _udpClient, remoteEndpoint, proxyEndpoint);
@@ -249,55 +250,55 @@ namespace MultiFactor.Radius.Adapter.Server
                 _logger.LogDebug("Retransmissed request from {host:l}:{port} id={id} client '{client:l}', ignoring",
                     context.RemoteEndpoint.Address,
                     context.RemoteEndpoint.Port,
-                    packet.Identifier,
+                    packet.Header.Identifier,
                     context.ClientConfiguration.Name);
                 return;
             }
 
             if (context.ProxyEndpoint != null)
             {
-                if (packet.Code == PacketCode.StatusServer)
+                if (packet.Header.Code == PacketCode.StatusServer)
                 {
                     _logger.LogInformation("Received {code:l} from {host:l}:{port} proxied by {proxyhost:l}:{proxyport} id={id} client '{client:l}'", 
-                    packet.Code.ToString(),
+                    packet.Header.Code.ToString(),
                     context.RemoteEndpoint.Address,
                     context.RemoteEndpoint.Port,
                     context.ProxyEndpoint.Address,
                     context.ProxyEndpoint.Port,
-                    packet.Identifier,
+                    packet.Header.Identifier,
                     context.ClientConfiguration.Name);
                 }
                 else
                 {
                     _logger.LogInformation("Received {code:l} from {host:l}:{port} proxied by {proxyhost:l}:{proxyport} id={id} user='{user:l}' client '{client:l}'", 
-                        packet.Code.ToString(),
+                        packet.Header.Code.ToString(),
                         context.RemoteEndpoint.Address,
                         context.RemoteEndpoint.Port,
                         context.ProxyEndpoint.Address,
                         context.ProxyEndpoint.Port,
-                        packet.Identifier,
+                        packet.Header.Identifier,
                         packet.UserName,
                         context.ClientConfiguration.Name);
                 }
             }
             else
             {
-                if (packet.Code == PacketCode.StatusServer)
+                if (packet.Header.Code == PacketCode.StatusServer)
                 {
                     _logger.LogDebug("Received {code:l} from {host:l}:{port} id={id} client '{client:l}'",
-                        packet.Code.ToString(), 
+                        packet.Header.Code.ToString(), 
                         context.RemoteEndpoint.Address, 
                         context.RemoteEndpoint.Port,
-                        packet.Identifier,
+                        packet.Header.Identifier,
                         context.ClientConfiguration.Name);
                 }
                 else
                 {
                     _logger.LogInformation("Received {code:l} from {host:l}:{port} id={id} user='{user:l}' client '{client:l}'",
-                        packet.Code.ToString(), 
+                        packet.Header.Code.ToString(), 
                         context.RemoteEndpoint.Address, 
                         context.RemoteEndpoint.Port,
-                        packet.Identifier,
+                        packet.Header.Identifier,
                         packet.UserName, 
                         context.ClientConfiguration.Name);
                 }
