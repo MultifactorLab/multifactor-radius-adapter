@@ -36,7 +36,7 @@ namespace MultiFactor.Radius.Adapter.Logging
         {
             var enrichers = new ILogEventEnricher[]
             {
-                CorrelationIdLogEventEnricher.Create(context.ClientConfiguration),
+                CorrelationIdLogEventEnricher.Create(context.Configuration),
                 RadiusPacketLogEventEnricher.Create(context)
             };
             using (LogContext.Push(enrichers))

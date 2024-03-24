@@ -63,7 +63,7 @@ public class LdapService
 
         var user = LdapIdentity.ParseUser(userName);
 
-        var formatter = _bindIdentityFormatterFactory.CreateFormatter(context.ClientConfiguration);
+        var formatter = _bindIdentityFormatterFactory.CreateFormatter(context.Configuration);
         var bindDn = formatter.FormatIdentity(user, ldapUri);
 
         _logger.LogDebug("Verifying user '{user:l}' credential and status at '{ldapUri:l}'", 
@@ -72,7 +72,7 @@ public class LdapService
         try
         {
             using (var connection = await LdapConnectionAdapter.CreateAsync(ldapUri, user, password, 
-                config => config.SetBindIdentityFormatter(_bindIdentityFormatterFactory.CreateFormatter(context.ClientConfiguration))
+                config => config.SetBindIdentityFormatter(_bindIdentityFormatterFactory.CreateFormatter(context.Configuration))
             ))
             {
                 var domain = await connection.WhereAmIAsync();
@@ -80,12 +80,12 @@ public class LdapService
                 _logger.LogInformation("User '{user:l}' credential and status verified successfully in '{domain:l}'", 
                     user.Name, domain.Name);
 
-                var profile = await _profileLoader.LoadAsync(context.ClientConfiguration, connection, user);
+                var profile = await _profileLoader.LoadAsync(context.Configuration, connection, user);
 
                 //user must be member of security group
-                if (context.ClientConfiguration.ActiveDirectoryGroups.Any())
+                if (context.Configuration.ActiveDirectoryGroups.Any())
                 {
-                    var accessGroup = context.ClientConfiguration.ActiveDirectoryGroups.FirstOrDefault(group => IsMemberOf(profile, group));
+                    var accessGroup = context.Configuration.ActiveDirectoryGroups.FirstOrDefault(group => IsMemberOf(profile, group));
                     if (accessGroup != null)
                     {
                         _logger.LogDebug("User '{user:l}' is a member of the access group '{group:l}' in {domain:l}", 
@@ -94,15 +94,15 @@ public class LdapService
                     else
                     {
                         _logger.LogWarning("User '{user:l}' is not a member of any access group ({accGroups:l}) in '{domain:l}'", 
-                            user.Name, string.Join(", ", context.ClientConfiguration.ActiveDirectoryGroups), profile.BaseDn.Name);
+                            user.Name, string.Join(", ", context.Configuration.ActiveDirectoryGroups), profile.BaseDn.Name);
                         return false;
                     }
                 }
 
                 //only users from group must process 2fa
-                if (context.ClientConfiguration.ActiveDirectory2FaGroup.Any())
+                if (context.Configuration.ActiveDirectory2FaGroup.Any())
                 {
-                    var mfaGroup = context.ClientConfiguration.ActiveDirectory2FaGroup.FirstOrDefault(group => IsMemberOf(profile, group));
+                    var mfaGroup = context.Configuration.ActiveDirectory2FaGroup.FirstOrDefault(group => IsMemberOf(profile, group));
                     if (mfaGroup != null)
                     {
                         _logger.LogDebug("User '{user:l}' is a member of the 2FA group '{group:l}' in '{domain:l}'", 
@@ -111,26 +111,26 @@ public class LdapService
                     else
                     {
                         _logger.LogInformation("User '{user:l}' is not a member of any 2FA group ({groups:l}) in '{domain:l}'", 
-                            user.Name, string.Join(", ", context.ClientConfiguration.ActiveDirectory2FaGroup), profile.BaseDn.Name);
-                        context.Bypass2Fa = true;
+                            user.Name, string.Join(", ", context.Configuration.ActiveDirectory2FaGroup), profile.BaseDn.Name);
+                        context.SetSecondFactorAuth(AuthenticationCode.Bypass);
                     }
                 }
 
                 //users from group must not process 2fa
-                if (!context.Bypass2Fa && context.ClientConfiguration.ActiveDirectory2FaBypassGroup.Any())
+                if (context.Authentication.SecondFactor != AuthenticationCode.Bypass && context.Configuration.ActiveDirectory2FaBypassGroup.Any())
                 {
-                    var bypassGroup = context.ClientConfiguration.ActiveDirectory2FaBypassGroup.FirstOrDefault(group => IsMemberOf(profile, group));
+                    var bypassGroup = context.Configuration.ActiveDirectory2FaBypassGroup.FirstOrDefault(group => IsMemberOf(profile, group));
 
                     if (bypassGroup != null)
                     {
                         _logger.LogInformation("User '{user:l}' is a member of the 2FA bypass group '{group:l}' in '{domain:l}'", 
                             user.Name, bypassGroup.Trim(), profile.BaseDn.Name);
-                        context.Bypass2Fa = true;
+                        context.SetSecondFactorAuth(AuthenticationCode.Bypass);
                     }
                     else
                     {
                         _logger.LogDebug("User '{user:l}' is not a member of any 2FA bypass group ({groups:l}) in '{domain:l}'", 
-                            user.Name, string.Join(", ", context.ClientConfiguration.ActiveDirectory2FaBypassGroup), profile.BaseDn.Name);
+                            user.Name, string.Join(", ", context.Configuration.ActiveDirectory2FaBypassGroup), profile.BaseDn.Name);
                     }
                 }
 

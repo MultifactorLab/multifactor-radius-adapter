@@ -33,29 +33,33 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.AccessChallenge
         {
             _logger.LogInformation("Processing challenge {State:l} for message id={id} from {host:l}:{port}", 
                 identifier.RequestId,
-                context.RequestPacket.Header.Identifier,
+                context.Header.Identifier,
                 context.RemoteEndpoint.Address,
                 context.RemoteEndpoint.Port);
 
-            var userName = context.UserName;
-
-            if (string.IsNullOrEmpty(userName))
+            if (string.IsNullOrEmpty(context.UserName))
             {
-                _logger.LogWarning("Can't find User-Name in message id={id} from {host:l}:{port}", context.RequestPacket.Header.Identifier, context.RemoteEndpoint.Address, context.RemoteEndpoint.Port);
+                _logger.LogWarning("Unable to process challenge {State:l} for message id={id} from {host:l}:{port}: Can't find User-Name",
+                    identifier.RequestId, 
+                    context.Header.Identifier,
+                    context.RemoteEndpoint.Address,
+                    context.RemoteEndpoint.Port);
                 return ChallengeCode.Reject;
             }
 
             string userAnswer;
-
             switch (context.RequestPacket.AuthenticationType)
             {
                 case AuthenticationType.PAP:
                     //user-password attribute holds second request challenge from user
-                    userAnswer = context.RequestPacket.GetString("User-Password");
+                    userAnswer = context.Passphrase.Raw;
 
                     if (string.IsNullOrEmpty(userAnswer))
                     {
-                        _logger.LogWarning("Can't find User-Password with user response in message id={id} from {host:l}:{port}", context.RequestPacket.Header.Identifier, context.RemoteEndpoint.Address, context.RemoteEndpoint.Port);
+                        _logger.LogWarning("Can't find User-Password with user response in message id={id} from {host:l}:{port}", 
+                            context.Header.Identifier, 
+                            context.RemoteEndpoint.Address, 
+                            context.RemoteEndpoint.Port);
                         return ChallengeCode.Reject;
                     }
 
@@ -65,7 +69,11 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.AccessChallenge
 
                     if (msChapResponse == null)
                     {
-                        _logger.LogWarning("Can't find MS-CHAP2-Response in message id={id} from {host:l}:{port}", context.RequestPacket.Header.Identifier, context.RemoteEndpoint.Address, context.RemoteEndpoint.Port);
+                        _logger.LogWarning("Unable to process challenge {State:l} for message id={id} from {host:l}:{port}: Can't find MS-CHAP2-Response",
+                            identifier.RequestId, 
+                            context.Header.Identifier, 
+                            context.RemoteEndpoint.Address,
+                            context.RemoteEndpoint.Port);
                         return ChallengeCode.Reject;
                     }
 
@@ -75,7 +83,12 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.AccessChallenge
 
                     break;
                 default:
-                    _logger.LogWarning("Unable to process {auth} challange in message id={id} from {host:l}:{port}", context.RequestPacket.AuthenticationType, context.RequestPacket.Header.Identifier, context.RemoteEndpoint.Address, context.RemoteEndpoint.Port);
+                    _logger.LogWarning("Unable to process challenge {State:l} for message id={id} from {host:l}:{port}: Unsupported authentication type '{Auth}'",
+                        identifier.RequestId,
+                        context.Header.Identifier,
+                        context.RemoteEndpoint.Address,
+                        context.RemoteEndpoint.Port,
+                        context.RequestPacket.AuthenticationType);
                     return ChallengeCode.Reject;
             }
 
@@ -83,8 +96,9 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.AccessChallenge
             var stateChallengePendingRequest = GetStateChallengeRequest(identifier);
             stateChallengePendingRequest?.CopyProfileToContext(context);
 
-            PacketCode response = await _multiFactorApiClient.Challenge(context, userAnswer, identifier);
-            switch (response)
+            var response = await _multiFactorApiClient.Challenge(context, userAnswer, identifier);
+            context.ReplyMessage = response.ReplyMessage;
+            switch (response.Code)
             {
                 case PacketCode.AccessAccept:
                     if (stateChallengePendingRequest != null)
@@ -95,10 +109,22 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.AccessChallenge
                     }
 
                     RemoveStateChallengeRequest(identifier);
+                    _logger.LogDebug("Challenge {State:l} was processed for message id={id} from {host:l}:{port} with result '{Result}'",
+                        identifier.RequestId,
+                        context.Header.Identifier,
+                        context.RemoteEndpoint.Address,
+                        context.RemoteEndpoint.Port, 
+                        response.Code);
                     return ChallengeCode.Accept;
 
                 case PacketCode.AccessReject:
                     RemoveStateChallengeRequest(identifier);
+                    _logger.LogDebug("Challenge {State:l} was processed for message id={id} from {host:l}:{port} with result '{Result}'",
+                        identifier.RequestId,
+                        context.Header.Identifier,
+                        context.RemoteEndpoint.Address,
+                        context.RemoteEndpoint.Port, 
+                        response.Code);
                     return ChallengeCode.Reject;
             }
 
@@ -118,7 +144,7 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.AccessChallenge
             if (!_stateChallengePendingRequests.TryAdd(identifier, context))
             {
                 _logger.LogError("Unable to cache request id={id} for the '{cfg:l}' configuration",
-                    context.RequestPacket.Header.Identifier, context.ClientConfiguration.Name);
+                    context.RequestPacket.Header.Identifier, context.Configuration.Name);
             }
         }
 

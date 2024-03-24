@@ -24,7 +24,7 @@ namespace MultiFactor.Radius.Adapter.Tests
             var prov = host.Service<IFirstAuthFactorProcessorProvider>();
             var getter = prov.GetProcessor(AuthenticationSource.None);
 
-            getter.Should().NotBeNull().And.BeOfType<DefaultFirstAuthFactorProcessor>();
+            getter.Should().NotBeNull().And.BeOfType<AnonymousFirstAuthFactorProcessor>();
         }
         
         [Theory]

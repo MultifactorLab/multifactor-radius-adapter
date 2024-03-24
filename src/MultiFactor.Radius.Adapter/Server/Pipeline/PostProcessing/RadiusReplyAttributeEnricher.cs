@@ -30,7 +30,7 @@ public class RadiusReplyAttributeEnricher
             throw new ArgumentNullException(nameof(context));
         }
 
-        foreach (var attr in context.ClientConfiguration.RadiusReplyAttributes)
+        foreach (var attr in context.Configuration.RadiusReplyAttributes)
         {
             var breakLoop = false;
             var convertedValues = new List<object>();

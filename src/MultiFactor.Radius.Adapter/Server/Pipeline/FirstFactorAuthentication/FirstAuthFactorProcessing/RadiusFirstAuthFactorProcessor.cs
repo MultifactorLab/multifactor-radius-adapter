@@ -40,21 +40,21 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.FirstFactorAuthentication.F
             var code = await ProcessRadiusAuthAsync(context);
             if (code != PacketCode.AccessAccept) return code;
 
-            if (context.ClientConfiguration.CheckMembership)
+            if (context.Configuration.CheckMembership)
             {
                 var result = await _membershipProcessor.ProcessMembershipAsync(context);
                 var handler = new MembershipProcessingResultHandler(result);
 
-                handler.EnrichRequest(context);
+                handler.EnrichContext(context);
                 return handler.GetDecision();
             }
 
-            if (context.ClientConfiguration.UseIdentityAttribyte)
+            if (context.Configuration.UseIdentityAttribute)
             {
-                var profile = await _membershipProcessor.LoadProfileWithRequiredAttributeAsync(context, context.ClientConfiguration, context.ClientConfiguration.TwoFAIdentityAttribyte);
+                var profile = await _membershipProcessor.LoadProfileWithRequiredAttributeAsync(context, context.Configuration, context.Configuration.TwoFAIdentityAttribute);
                 if (profile == null)
                 {
-                    _logger.LogWarning("Attribute '{TwoFAIdentityAttribyte}' was not loaded", context.ClientConfiguration.TwoFAIdentityAttribyte);
+                    _logger.LogWarning("Attribute '{TwoFAIdentityAttribyte}' was not loaded", context.Configuration.TwoFAIdentityAttribute);
                     return PacketCode.AccessReject;
                 }
                 context.SetProfile(profile);
@@ -68,12 +68,12 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.FirstFactorAuthentication.F
             try
             {
                 //sending request as is to Remote Radius Server
-                using (var client = new RadiusClient(context.ClientConfiguration.ServiceClientEndpoint, _logger))
+                using (var client = new RadiusClient(context.Configuration.ServiceClientEndpoint, _logger))
                 {
-                    _logger.LogDebug($"Sending AccessRequest message with id={{id}} to Remote Radius Server {context.ClientConfiguration.NpsServerEndpoint}", context.RequestPacket.Header.Identifier);
+                    _logger.LogDebug($"Sending AccessRequest message with id={{id}} to Remote Radius Server {context.Configuration.NpsServerEndpoint}", context.RequestPacket.Header.Identifier);
 
                     var requestBytes = _packetParser.GetBytes(context.RequestPacket);
-                    var response = await client.SendPacketAsync(context.RequestPacket.Header.Identifier, requestBytes, context.ClientConfiguration.NpsServerEndpoint, TimeSpan.FromSeconds(5));
+                    var response = await client.SendPacketAsync(context.RequestPacket.Header.Identifier, requestBytes, context.Configuration.NpsServerEndpoint, TimeSpan.FromSeconds(5));
 
                     if (response != null)
                     {
@@ -83,7 +83,7 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.FirstFactorAuthentication.F
                         if (responsePacket.Header.Code == PacketCode.AccessAccept)
                         {
                             var userName = context.UserName;
-                            _logger.LogInformation($"User '{{user:l}}' credential and status verified successfully at {context.ClientConfiguration.NpsServerEndpoint}", userName);
+                            _logger.LogInformation($"User '{{user:l}}' credential and status verified successfully at {context.Configuration.NpsServerEndpoint}", userName);
                         }
 
                         context.ResponsePacket = responsePacket;

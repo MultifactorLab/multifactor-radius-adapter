@@ -35,13 +35,22 @@ namespace MultiFactor.Radius.Adapter.Services.ActiveDirectory.MembershipVerifica
         /// Sets some request's property values.
         /// </summary>
         /// <param name="context">Pending request.</param>
-        public void EnrichRequest(RadiusContext context)
+        public void EnrichContext(RadiusContext context)
         {
             var profile = _processingResult.Succeeded.Select(x => x.Profile).FirstOrDefault(x => x != null);
-            if (profile == null) return;
+            if (profile == null) 
+            { 
+                return; 
+            }
 
             context.SetProfile(profile);
-            context.Bypass2Fa = IsBypassed();
+
+            var bypassed = IsBypassed();
+            if (bypassed)
+            {
+                context.SetSecondFactorAuth(AuthenticationCode.Bypass);
+            }
+
             context.LdapAttrs = profile.LdapAttrs.ToDictionary(k => k.Key, v => v.Value);
 
             if (profile.MemberOf != null)
@@ -53,10 +62,20 @@ namespace MultiFactor.Radius.Adapter.Services.ActiveDirectory.MembershipVerifica
         private bool IsBypassed()
         {
             var succeeded = _processingResult.Succeeded.ToList();
+            if (!succeeded.Any())
+            {
+                return false;
+            }
 
-            if (!succeeded.Any()) return false;
-            if (succeeded.Any(x => x.IsMemberOf2FaBypassGroup)) return true;
-            if (succeeded.Any(x => x.Are2FaGroupsSpecified && !x.IsMemberOf2FaGroups)) return true;
+            if (succeeded.Any(x => x.IsMemberOf2FaBypassGroup))
+            {
+                return true;
+            }
+
+            if (succeeded.Any(x => x.Are2FaGroupsSpecified && !x.IsMemberOf2FaGroups))
+            {
+                return true;
+            }
 
             return false;
         }

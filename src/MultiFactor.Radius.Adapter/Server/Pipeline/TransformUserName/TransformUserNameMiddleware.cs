@@ -11,18 +11,21 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.TransformUserName
 {
     public class TransformUserNameMiddleware : IRadiusMiddleware
     {
-        public async Task InvokeAsync(RadiusContext context, RadiusRequestDelegate next)
+        public Task InvokeAsync(RadiusContext context, RadiusRequestDelegate next)
         {
             ProcessUserNameTransformRules(context);
-            await next(context);
+            return next(context);
         }
 
         private void ProcessUserNameTransformRules(RadiusContext context)
         {
             var userName = context.UserName;
-            if (string.IsNullOrEmpty(userName)) return;
+            if (string.IsNullOrEmpty(userName))
+            {
+                return;
+            }
 
-            foreach (var rule in context.ClientConfiguration.UserNameTransformRules)
+            foreach (var rule in context.Configuration.UserNameTransformRules)
             {
                 var regex = new Regex(rule.Match);
                 if (rule.Count != null)

@@ -30,7 +30,7 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.FirstFactorAuthentication
                 return;
             }
 
-            var firstAuthProcessor = _firstAuthFactorProcessorProvider.GetProcessor(context.ClientConfiguration.FirstFactorAuthenticationSource);
+            var firstAuthProcessor = _firstAuthFactorProcessorProvider.GetProcessor(context.Configuration.FirstFactorAuthenticationSource);
             var firstFactorAuthenticationResultCode = await firstAuthProcessor.ProcessFirstAuthFactorAsync(context);
             if (firstFactorAuthenticationResultCode == PacketCode.AccessAccept)
             {

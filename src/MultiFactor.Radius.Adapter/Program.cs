@@ -21,6 +21,7 @@ builder.UseMiddleware<StatusServerMiddleware>();
 builder.UseMiddleware<AccessRequestFilterMiddleware>();
 builder.UseMiddleware<TransformUserNameMiddleware>();
 builder.UseMiddleware<AccessChallengeMiddleware>();
+builder.UseMiddleware<AnonymousFirstFactorAuthenticationMiddleware>();
 builder.UseMiddleware<PreSecondFactorAuthenticationMiddleware>();
 builder.UseMiddleware<FirstFactorAuthenticationMiddleware>();
 builder.UseMiddleware<SecondFactorAuthenticationMiddleware>();

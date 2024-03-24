@@ -44,13 +44,11 @@ public class SecondFactorAuthenticationMiddleware : IRadiusMiddleware
             return;
         }
 
-        if (context.Bypass2Fa)
+        if (context.Authentication.SecondFactor == AuthenticationCode.Bypass)
         {
             // second factor not required
             _logger.LogInformation("Bypass second factor for user '{user:l}'", context.UserName);
-
-            context.ResponseCode = PacketCode.AccessAccept;
-            context.Authentication.SetSecondFactor(AuthenticationCode.Bypass);
+            context.ResponseCode = context.Authentication.ToPacketCode();
 
             await next(context);
             return;
@@ -59,7 +57,7 @@ public class SecondFactorAuthenticationMiddleware : IRadiusMiddleware
         context.ResponseCode = await ProcessSecondAuthenticationFactor(context);
         if (context.ResponseCode == PacketCode.AccessChallenge)
         {
-            _challengeProcessor.AddState(new ChallengeRequestIdentifier(context.ClientConfiguration, context.State), context);
+            _challengeProcessor.AddState(new ChallengeRequestIdentifier(context.Configuration, context.State), context);
             return;
         }
 
@@ -85,7 +83,7 @@ public class SecondFactorAuthenticationMiddleware : IRadiusMiddleware
         if (context.RequestPacket.IsVendorAclRequest)
         {
             // security check
-            if (context.ClientConfiguration.FirstFactorAuthenticationSource == AuthenticationSource.Radius)
+            if (context.Configuration.FirstFactorAuthenticationSource == AuthenticationSource.Radius)
             {
                 _logger.LogInformation("Bypass second factor for user {user:l}", context.UserName);
                 return PacketCode.AccessAccept;

@@ -28,7 +28,7 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.AccessChallenge
                 return;
             }
 
-            var identifier = new ChallengeRequestIdentifier(context.ClientConfiguration, context.RequestPacket.GetString("State"));
+            var identifier = new ChallengeRequestIdentifier(context.Configuration, context.RequestPacket.GetString("State"));
             if (!_challengeProcessor.HasState(identifier))
             {
                 await next(context);
@@ -42,20 +42,22 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.AccessChallenge
                 case ChallengeCode.Accept:
                     // 2fa was passed
                     context.Authentication.SetSecondFactor(AuthenticationCode.Accept);
+                    await next(context); ;
                     break;
 
                 case ChallengeCode.Reject:
                     context.Authentication.SetSecondFactor(AuthenticationCode.Reject);
                     context.State = identifier.RequestId;
-                    break;
+                    return;
 
                 case ChallengeCode.InProcess:
                     context.State = identifier.RequestId;
-                    break;
+                    return;
+
+                default:
+                    throw new NotImplementedException($"Unexpected challenge rsult: {resultCode}");
 
             }
-            
-            await next(context);
         }
     }
 }

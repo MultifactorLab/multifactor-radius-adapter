@@ -24,7 +24,7 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.MembershipVerification
             .AsReadOnly();
 
         /// <summary>
-        /// Adds atomic verification result to a complex rsult.
+        /// Adds atomic verification result to a complex result.
         /// </summary>
         /// <param name="result">Verification result for the specified domain.</param>
         public void AddDomainResult(MembershipVerificationResult result)

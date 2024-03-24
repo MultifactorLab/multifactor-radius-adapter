@@ -73,7 +73,6 @@ internal static class ConfigureApplicationExtension
     {
         services.AddSingleton<IFirstAuthFactorProcessor, LdapFirstAuthFactorProcessor>();
         services.AddSingleton<IFirstAuthFactorProcessor, RadiusFirstAuthFactorProcessor>();
-        services.AddSingleton<IFirstAuthFactorProcessor, DefaultFirstAuthFactorProcessor>();
         services.AddSingleton<IFirstAuthFactorProcessorProvider, FirstAuthFactorProcessorProvider>();
     }
 

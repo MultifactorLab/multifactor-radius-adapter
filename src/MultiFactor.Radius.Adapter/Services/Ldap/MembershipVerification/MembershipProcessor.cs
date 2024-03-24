@@ -51,21 +51,21 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.MembershipVerification
 
             ILdapProfile profile = null;
             //trying to authenticate for each domain/forest
-            foreach (var domain in context.ClientConfiguration.SplittedActiveDirectoryDomains)
+            foreach (var domain in context.Configuration.SplittedActiveDirectoryDomains)
             {
                 try
                 {
                     var user = LdapIdentity.ParseUser(userName);
 
                     _logger.LogDebug("Verifying user '{user:l}' membership at '{domain:l}'", user.Name, domain);
-                    using (var connAdapter = await _connectionAdapterFactory.CreateAdapterAsTechnicalAccAsync(domain, context.ClientConfiguration))
+                    using (var connAdapter = await _connectionAdapterFactory.CreateAdapterAsTechnicalAccAsync(domain, context.Configuration))
                     {
                         if (profile == null)
                         {
-                            profile = await _profileLoader.LoadAsync(context.ClientConfiguration, connAdapter, user);
+                            profile = await _profileLoader.LoadAsync(context.Configuration, connAdapter, user);
                         }
 
-                        var res = _membershipVerifier.VerifyMembership(context.ClientConfiguration, profile, domain, user);
+                        var res = _membershipVerifier.VerifyMembership(context.Configuration, profile, domain, user);
                         result.AddDomainResult(res);
 
                         if (res.IsSuccess) break;
@@ -99,7 +99,10 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.MembershipVerification
 
             foreach (var domain in clientConfig.SplittedActiveDirectoryDomains)
             {
-                if (attributes.Any()) break;
+                if (attributes.Any())
+                {
+                    break;
+                }
 
                 var domainIdentity = LdapIdentity.FqdnToDn(domain);
 
@@ -108,7 +111,10 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.MembershipVerification
                     using (var connAdapter = await _connectionAdapterFactory.CreateAdapterAsTechnicalAccAsync(domain, clientConfig))
                     {
                         attributes = await _profileLoader.LoadAttributesAsync(clientConfig, connAdapter, user, new[] { attr });
-                        if (!attributes.Any()) continue;
+                        if (!attributes.Any())
+                        {
+                            continue;
+                        }
 
                         var profile = LdapProfile.CreateBuilder(domainIdentity, domain);
                         profile.SetIdentityAttribute(attributes[attr].FirstOrDefault());

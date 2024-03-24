@@ -6,6 +6,7 @@
 using Microsoft.Extensions.Logging;
 using MultiFactor.Radius.Adapter.Configuration;
 using MultiFactor.Radius.Adapter.Configuration.Core;
+using MultiFactor.Radius.Adapter.Configuration.Features.PreAuthModeFeature;
 using MultiFactor.Radius.Adapter.Configuration.Features.PrivacyModeFeature;
 using MultiFactor.Radius.Adapter.Core;
 using MultiFactor.Radius.Adapter.Core.Http;
@@ -14,6 +15,7 @@ using MultiFactor.Radius.Adapter.Core.Serialization;
 using MultiFactor.Radius.Adapter.Framework.Context;
 using MultiFactor.Radius.Adapter.Server;
 using MultiFactor.Radius.Adapter.Services.MultiFactorApi.Dto;
+using MultiFactor.Radius.Adapter.Services.MultiFactorApi.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -25,6 +27,179 @@ using System.Threading.Tasks;
 
 namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi
 {
+    internal class MultifactorApiAdapter
+    {
+        private readonly IMultiFactorApiClient _api;
+        private readonly IServiceConfiguration _serviceConfiguration;
+        private readonly IAuthenticatedClientCache _authenticatedClientCache;
+        private readonly ILogger<MultifactorApiAdapter> _logger;
+
+        public MultifactorApiAdapter(IMultiFactorApiClient api, 
+            IServiceConfiguration serviceConfiguration, 
+            IAuthenticatedClientCache authenticatedClientCache,
+            ILogger<MultifactorApiAdapter> logger)
+        {
+            _api = api;
+            _serviceConfiguration = serviceConfiguration;
+            _authenticatedClientCache = authenticatedClientCache;
+            _logger = logger;
+        }
+
+        public async Task<SecondFactorResponse> CreateSecondFactorRequestAsync(RadiusContext context)
+        {
+            if (context is null)
+            {
+                throw new ArgumentNullException(nameof(context));
+            }
+
+            if (string.IsNullOrEmpty(context.SecondFactorIdentity))
+            {
+                _logger.LogWarning("Empty user name for second factor request. Request rejected.");
+                return new SecondFactorResponse(PacketCode.AccessReject);
+            }
+
+            var userName = context.SecondFactorIdentity;
+            var displayName = context.DisplayName;
+            var email = context.EmailAddress;
+            var userPhone = context.UserPhone;
+            var callingStationId = context.RequestPacket.CallingStationId;
+            var calledStationId = context.RequestPacket.CalledStationId; //only for winlogon yet
+
+            //remove user information for privacy
+            switch (context.Configuration.PrivacyMode.Mode)
+            {
+                case PrivacyMode.Full:
+                    displayName = null;
+                    email = null;
+                    userPhone = null;
+                    callingStationId = "";
+                    calledStationId = null;
+                    break;
+
+                case PrivacyMode.Partial:
+                    if (!context.Configuration.PrivacyMode.HasField("Name"))
+                    {
+                        displayName = null;
+                    }
+
+                    if (!context.Configuration.PrivacyMode.HasField("Email"))
+                    {
+                        email = null;
+                    }
+
+                    if (!context.Configuration.PrivacyMode.HasField("Phone"))
+                    {
+                        userPhone = null;
+                    }
+
+                    if (!context.Configuration.PrivacyMode.HasField("RemoteHost"))
+                    {
+                        callingStationId = "";
+                    }
+
+                    calledStationId = null;
+
+                    break;
+            }
+
+            //try to get authenticated client to bypass second factor if configured
+            if (_authenticatedClientCache.TryHitCache(context.RequestPacket.CallingStationId, userName, context.Configuration))
+            {
+                _logger.LogInformation("Bypass second factor for user '{user:l}' with calling-station-id {csi:l} from {host:l}:{port}",
+                    userName, 
+                    context.RequestPacket.CallingStationId, 
+                    context.RemoteEndpoint.Address, 
+                    context.RemoteEndpoint.Port);
+                return new SecondFactorResponse(PacketCode.AccessAccept);
+            }
+
+            var payload = new CreateRequestDto
+            {
+                Identity = userName,
+                Name = displayName,
+                Email = email,
+                Phone = userPhone,
+                PassCode = GetPassCodeOrNull(context),
+                CallingStationId = callingStationId,
+                CalledStationId = calledStationId,
+                Capabilities = new CapabilitiesDto
+                {
+                    InlineEnroll = true
+                },
+                GroupPolicyPreset = new GroupPolicyPresetDto
+                {
+                    SignUpGroups = context.Configuration.SignUpGroups
+                }
+            };
+
+            try
+            {
+                var auth = context.Configuration.ApiCredential.GetHttpBasicAuthorizationHeaderValue()
+
+                var response = await SendRequest("access/requests/ra", payload, context.Configuration);
+                var responseCode = ConvertToRadiusCode(response);
+
+                context.State = response?.Id;
+                context.ReplyMessage = response?.ReplyMessage;
+
+                if (responseCode == PacketCode.AccessAccept && !response.Bypassed)
+                {
+                    LogGrantedInfo(userName, response, context);
+                    _authenticatedClientCache.SetCache(context.RequestPacket.CallingStationId, userName, context.Configuration);
+                }
+
+                if (responseCode == PacketCode.AccessReject)
+                {
+                    var reason = response?.ReplyMessage;
+                    var phone = response?.Phone;
+                    _logger.LogWarning("Second factor verification for user '{user:l}' from {host:l}:{port} failed with reason='{reason:l}'. User phone {phone:l}", userName, context.RemoteEndpoint.Address, context.RemoteEndpoint.Port, reason, phone);
+                }
+
+                return responseCode;
+            }
+            catch (Exception ex)
+            {
+                return HandleException(ex, userName, context);
+            }
+        }
+
+        private static string GetPassCodeOrNull(RadiusContext context)
+        {
+            //check static challenge
+            var challenge = context.RequestPacket.TryGetChallenge();
+            if (challenge != null)
+            {
+                return challenge;
+            }
+
+            //check password challenge (otp or passcode)
+            var passphrase = context.Passphrase;
+            switch (context.Configuration.PreAuthnMode.Mode)
+            {
+                case PreAuthMode.Otp:
+                    return passphrase.Otp;
+
+                case PreAuthMode.Push:
+                    return "m";
+
+                case PreAuthMode.Telegram:
+                    return "t";
+            }
+
+            if (passphrase.IsEmpty)
+            {
+                return null;
+            }
+
+            if (context.FirstFactorAuthenticationSource != AuthenticationSource.None)
+            {
+                return null;
+            }
+
+            return context.Passphrase.Otp ?? passphrase.ProviderCode;
+        }
+    }
+
     /// <summary>
     /// Service to interact with multifactor web api
     /// </summary>
@@ -58,7 +233,7 @@ namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi
             }
 
             //remove user information for privacy
-            switch (context.ClientConfiguration.PrivacyMode.Mode)
+            switch (context.Configuration.PrivacyMode.Mode)
             {
                 case PrivacyMode.Full:
                     displayName = null;
@@ -69,22 +244,22 @@ namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi
                     break;
 
                 case PrivacyMode.Partial:
-                    if (!context.ClientConfiguration.PrivacyMode.HasField("Name"))
+                    if (!context.Configuration.PrivacyMode.HasField("Name"))
                     {
                         displayName = null;
                     }
 
-                    if (!context.ClientConfiguration.PrivacyMode.HasField("Email"))
+                    if (!context.Configuration.PrivacyMode.HasField("Email"))
                     {
                         email = null;
                     }
 
-                    if (!context.ClientConfiguration.PrivacyMode.HasField("Phone"))
+                    if (!context.Configuration.PrivacyMode.HasField("Phone"))
                     {
                         userPhone = null;
                     }
 
-                    if (!context.ClientConfiguration.PrivacyMode.HasField("RemoteHost"))
+                    if (!context.Configuration.PrivacyMode.HasField("RemoteHost"))
                     {
                         callingStationId = "";
                     }
@@ -95,7 +270,7 @@ namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi
             }
 
             //try to get authenticated client to bypass second factor if configured
-            if (_authenticatedClientCache.TryHitCache(context.RequestPacket.CallingStationId, userName, context.ClientConfiguration))
+            if (_authenticatedClientCache.TryHitCache(context.RequestPacket.CallingStationId, userName, context.Configuration))
             {
                 _logger.LogInformation("Bypass second factor for user '{user:l}' with calling-station-id {csi:l} from {host:l}:{port}",
                     userName, context.RequestPacket.CallingStationId, context.RemoteEndpoint.Address, context.RemoteEndpoint.Port);
@@ -117,13 +292,13 @@ namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi
                 },
                 GroupPolicyPreset = new GroupPolicyPresetDto
                 {
-                    SignUpGroups = context.ClientConfiguration.SignUpGroups
+                    SignUpGroups = context.Configuration.SignUpGroups
                 }
             };
 
             try
             {
-                var response = await SendRequest("access/requests/ra", payload, context.ClientConfiguration);
+                var response = await SendRequest("access/requests/ra", payload, context.Configuration);
                 var responseCode = ConvertToRadiusCode(response);
 
                 context.State = response?.Id;
@@ -132,7 +307,7 @@ namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi
                 if (responseCode == PacketCode.AccessAccept && !response.Bypassed)
                 {
                     LogGrantedInfo(userName, response, context);
-                    _authenticatedClientCache.SetCache(context.RequestPacket.CallingStationId, userName, context.ClientConfiguration);
+                    _authenticatedClientCache.SetCache(context.RequestPacket.CallingStationId, userName, context.Configuration);
                 }
 
                 if (responseCode == PacketCode.AccessReject)
@@ -162,7 +337,7 @@ namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi
 
             try
             {
-                var response = await SendRequest("access/requests/ra/challenge", payload, context.ClientConfiguration);
+                var response = await SendRequest("access/requests/ra/challenge", payload, context.Configuration);
                 var responseCode = ConvertToRadiusCode(response);
 
                 context.ReplyMessage = response.ReplyMessage;
@@ -170,7 +345,7 @@ namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi
                 if (responseCode == PacketCode.AccessAccept && !response.Bypassed)
                 {
                     LogGrantedInfo(userName, response, context);
-                    _authenticatedClientCache.SetCache(context.RequestPacket.CallingStationId, userName, context.ClientConfiguration);
+                    _authenticatedClientCache.SetCache(context.RequestPacket.CallingStationId, userName, context.Configuration);
                 }
 
                 return responseCode;
@@ -221,7 +396,7 @@ namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi
                     context.RemoteEndpoint.Port,
                     apiEx.Message);
 
-                if (context.ClientConfiguration.BypassSecondFactorWhenApiUnreachable)
+                if (context.Configuration.BypassSecondFactorWhenApiUnreachable)
                 {
                     _logger.LogWarning("Bypass second factor for user '{user:l}' from {host:l}:{port}",
                         username,
@@ -268,7 +443,7 @@ namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi
             var userPassword = context.RequestPacket.TryGetUserPassword();
 
             //only if first authentication factor is None, assuming that Password contains OTP code
-            if (context.ClientConfiguration.FirstFactorAuthenticationSource != AuthenticationSource.None)
+            if (context.Configuration.FirstFactorAuthenticationSource != AuthenticationSource.None)
             {
                 return null;
             }

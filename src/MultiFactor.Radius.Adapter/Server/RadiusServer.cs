@@ -247,7 +247,7 @@ namespace MultiFactor.Radius.Adapter.Server
                     context.RemoteEndpoint.Address,
                     context.RemoteEndpoint.Port,
                     packet.Header.Identifier,
-                    context.ClientConfiguration.Name);
+                    context.Configuration.Name);
                 return;
             }
 
@@ -262,7 +262,7 @@ namespace MultiFactor.Radius.Adapter.Server
                     context.ProxyEndpoint.Address,
                     context.ProxyEndpoint.Port,
                     packet.Header.Identifier,
-                    context.ClientConfiguration.Name);
+                    context.Configuration.Name);
                 }
                 else
                 {
@@ -274,7 +274,7 @@ namespace MultiFactor.Radius.Adapter.Server
                         context.ProxyEndpoint.Port,
                         packet.Header.Identifier,
                         packet.UserName,
-                        context.ClientConfiguration.Name);
+                        context.Configuration.Name);
                 }
             }
             else
@@ -286,7 +286,7 @@ namespace MultiFactor.Radius.Adapter.Server
                         context.RemoteEndpoint.Address, 
                         context.RemoteEndpoint.Port,
                         packet.Header.Identifier,
-                        context.ClientConfiguration.Name);
+                        context.Configuration.Name);
                 }
                 else
                 {
@@ -296,7 +296,7 @@ namespace MultiFactor.Radius.Adapter.Server
                         context.RemoteEndpoint.Port,
                         packet.Header.Identifier,
                         packet.UserName, 
-                        context.ClientConfiguration.Name);
+                        context.Configuration.Name);
                 }
             }
 

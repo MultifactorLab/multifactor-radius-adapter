@@ -2,7 +2,9 @@
 //Please see licence at 
 //https://github.com/MultifactorLab/multifactor-radius-adapter/blob/main/LICENSE.md
 
+using MultiFactor.Radius.Adapter.Configuration;
 using MultiFactor.Radius.Adapter.Configuration.Core;
+using MultiFactor.Radius.Adapter.Configuration.Features.PreAuthModeFeature;
 using MultiFactor.Radius.Adapter.Core.Ldap;
 using MultiFactor.Radius.Adapter.Core.Radius;
 using MultiFactor.Radius.Adapter.Server;
@@ -24,7 +26,7 @@ namespace MultiFactor.Radius.Adapter.Framework.Context
             ReceivedAt = DateTime.Now;
             ResponseCode = PacketCode.AccessReject;
             UserGroups = new List<string>();
-            ClientConfiguration = clientConfiguration ?? throw new ArgumentNullException(nameof(clientConfiguration));
+            Configuration = clientConfiguration ?? throw new ArgumentNullException(nameof(clientConfiguration));
             UdpClient = udpClient ?? throw new ArgumentNullException(nameof(udpClient));
             RequestServices = provider ?? throw new ArgumentNullException(nameof(provider));
             Authentication = new();
@@ -35,6 +37,7 @@ namespace MultiFactor.Radius.Adapter.Framework.Context
         public IPEndPoint ProxyEndpoint { get; init; }
 
         public IRadiusPacket RequestPacket { get; init; }
+        public RadiusPacketHeader Header => RequestPacket.Header;
         public IRadiusPacket ResponsePacket { get; set; }
 
         public RadiusContextFlags Flags { get; }
@@ -43,24 +46,32 @@ namespace MultiFactor.Radius.Adapter.Framework.Context
         public PacketCode ResponseCode { get; set; }
         public string State { get; set; }
         public string ReplyMessage { get; set; }
+
         public string UserName { get; set; }
+        public UserPassphrase Passphrase { get; init; }
+
         public string Upn => _ldapProfile?.Upn;
         public string DisplayName => _ldapProfile?.DisplayName;
         public string UserPhone => _ldapProfile?.Phone;
         public string EmailAddress => _ldapProfile?.Email;
-        public bool Bypass2Fa { get; set; }
 
         /// <summary>
         /// Should use for 2FA request to MFA API.
         /// </summary>
-        public string SecondFactorIdentity => ClientConfiguration.UseIdentityAttribyte ? _ldapProfile?.SecondFactorIdentity : UserName;
+        public string SecondFactorIdentity => Configuration.UseIdentityAttribute ? _ldapProfile?.SecondFactorIdentity : UserName;
         public IList<string> UserGroups { get; set; }
         public IDictionary<string, object> LdapAttrs { get; set; }
         public IServiceProvider RequestServices { get; set; }
-        public IClientConfiguration ClientConfiguration { get; }
+
+        public IClientConfiguration Configuration { get; }
+        public AuthenticationSource FirstFactorAuthenticationSource => Configuration.FirstFactorAuthenticationSource;
+        public PreAuthMode PreAuthMode => Configuration.PreAuthnMode.Mode;
+
         public IUdpClient UdpClient { get; }
 
         public AuthenticationState Authentication { get; }
+        public void SetFirstFactorAuth(AuthenticationCode code) => Authentication.SetFirstFactor(code);
+        public void SetSecondFactorAuth(AuthenticationCode code) => Authentication.SetSecondFactor(code);
 
         public void SetProfile(ILdapProfile profile)
         {

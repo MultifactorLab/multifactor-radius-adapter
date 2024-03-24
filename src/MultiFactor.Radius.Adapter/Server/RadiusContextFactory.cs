@@ -29,6 +29,7 @@ using MultiFactor.Radius.Adapter.Core.Radius;
 using MultiFactor.Radius.Adapter.Configuration.Core;
 using Microsoft.Extensions.DependencyInjection;
 using MultiFactor.Radius.Adapter.Framework.Context;
+using MultiFactor.Radius.Adapter.Configuration;
 
 namespace MultiFactor.Radius.Adapter.Server;
 
@@ -63,7 +64,8 @@ public class RadiusContextFactory
             RemoteEndpoint = remote,
             ProxyEndpoint = proxy,
             RequestPacket = packet,
-            UserName = packet.UserName
+            UserName = packet.UserName,
+            Passphrase = UserPassphrase.Parse(packet.TryGetUserPassword(), client.PreAuthnMode)
         };
     }
 }

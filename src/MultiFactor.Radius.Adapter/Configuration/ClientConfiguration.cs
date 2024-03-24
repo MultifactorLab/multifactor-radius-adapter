@@ -130,7 +130,7 @@ namespace MultiFactor.Radius.Adapter.Configuration
         /// <summary>
         /// Name of the attribute that will be used as an identifier in MFA request
         /// </summary>
-        public string TwoFAIdentityAttribyte { get; private set; }
+        public string TwoFAIdentityAttribute { get; private set; }
 
         /// <summary>
         /// This service RADIUS UDP Client endpoint
@@ -390,7 +390,7 @@ namespace MultiFactor.Radius.Adapter.Configuration
 
         public ClientConfiguration SetUseAttributeAsIdentity(string val)
         {
-            TwoFAIdentityAttribyte = val;
+            TwoFAIdentityAttribute = val;
             return this;
         }
         
