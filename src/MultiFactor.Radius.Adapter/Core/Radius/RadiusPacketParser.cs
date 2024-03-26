@@ -411,6 +411,11 @@ namespace MultiFactor.Radius.Adapter.Core.Radius
                     Array.Reverse(contentBytes);
                     return contentBytes;
 
+                case int _value:
+                    contentBytes = BitConverter.GetBytes(_value);
+                    Array.Reverse(contentBytes);
+                    return contentBytes;
+
                 case byte[] _value:
                     return _value;
 
