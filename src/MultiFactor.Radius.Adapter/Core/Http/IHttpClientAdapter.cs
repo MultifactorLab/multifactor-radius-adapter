@@ -1,10 +1,12 @@
-﻿using System.Collections.Generic;
+﻿using MultiFactor.Radius.Adapter.Services.MultiFactorApi;
+using System.Collections.Generic;
+using System.Net.Http;
 using System.Threading.Tasks;
 
 namespace MultiFactor.Radius.Adapter.Core.Http
 {
     public interface IHttpClientAdapter
     {
-        Task<T> PostAsync<T>(string uri, object data = null, IReadOnlyDictionary<string, string> headers = null);
+        Task<T> PostAsync<T>(string endpoint, object data, IReadOnlyDictionary<string, string> headers = null);
     }
 }

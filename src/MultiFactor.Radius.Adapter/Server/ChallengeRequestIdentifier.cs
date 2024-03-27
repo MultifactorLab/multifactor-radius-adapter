@@ -13,11 +13,19 @@ public class ChallengeRequestIdentifier
 
     public string RequestId { get; }
 
-    public ChallengeRequestIdentifier(IClientConfiguration client, string requestId)
+    public static ChallengeRequestIdentifier Empty => new ChallengeRequestIdentifier();
+
+    private ChallengeRequestIdentifier()
     {
-        if (client is null)
+        _identifier = null;
+        RequestId = null;
+    }
+
+    public ChallengeRequestIdentifier(string clientName, string requestId)
+    {
+        if (string.IsNullOrWhiteSpace(clientName))
         {
-            throw new ArgumentNullException(nameof(client));
+            throw new ArgumentException($"'{nameof(clientName)}' cannot be null or whitespace.", nameof(clientName));
         }
 
         if (string.IsNullOrWhiteSpace(requestId))
@@ -25,7 +33,7 @@ public class ChallengeRequestIdentifier
             throw new ArgumentException($"'{nameof(requestId)}' cannot be null or whitespace.", nameof(requestId));
         }
 
-        _identifier = $"{client.Name}-{requestId}";
+        _identifier = $"{clientName}-{requestId}";
         RequestId = requestId;
     }
 
@@ -42,7 +50,7 @@ public class ChallengeRequestIdentifier
         var other = obj as ChallengeRequestIdentifier;
         if (other == null) return false;
 
-        return _identifier == other._identifier;
+        return _identifier != null && _identifier == other._identifier;
     }
 
     public override int GetHashCode()

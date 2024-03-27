@@ -47,6 +47,17 @@ namespace MultiFactor.Radius.Adapter.Framework.Context
         public string State { get; set; }
         public string ReplyMessage { get; set; }
 
+        public void SetChallengeState(string state, string replyMessage)
+        {
+            if (string.IsNullOrWhiteSpace(state))
+            {
+                throw new ArgumentException($"'{nameof(state)}' cannot be null or whitespace.", nameof(state));
+            }
+
+            State = state;
+            ReplyMessage = replyMessage;
+        }
+
         public string UserName { get; set; }
         public UserPassphrase Passphrase { get; init; }
 

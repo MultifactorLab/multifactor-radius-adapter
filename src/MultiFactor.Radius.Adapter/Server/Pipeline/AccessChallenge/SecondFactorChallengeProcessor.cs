@@ -17,12 +17,12 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.AccessChallenge
     public class SecondFactorChallengeProcessor : ISecondFactorChallengeProcessor
     {
         private readonly ConcurrentDictionary<ChallengeRequestIdentifier, RadiusContext> _stateChallengePendingRequests = new();
-        private readonly IMultiFactorApiClient _multiFactorApiClient;
+        private readonly IMultifactorApiAdapter _apiAdapter;
         private readonly ILogger<SecondFactorChallengeProcessor> _logger;
 
-        public SecondFactorChallengeProcessor(IMultiFactorApiClient multiFactorApiClient, ILogger<SecondFactorChallengeProcessor> logger)
+        public SecondFactorChallengeProcessor(IMultifactorApiAdapter apiAdapter, ILogger<SecondFactorChallengeProcessor> logger)
         {
-            _multiFactorApiClient = multiFactorApiClient ?? throw new ArgumentNullException(nameof(multiFactorApiClient));
+            _apiAdapter = apiAdapter ?? throw new ArgumentNullException(nameof(apiAdapter));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
@@ -96,7 +96,7 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.AccessChallenge
             var stateChallengePendingRequest = GetStateChallengeRequest(identifier);
             stateChallengePendingRequest?.CopyProfileToContext(context);
 
-            var response = await _multiFactorApiClient.Challenge(context, userAnswer, identifier);
+            var response = await _apiAdapter.ChallengeAsync(context, userAnswer, identifier);
             context.ReplyMessage = response.ReplyMessage;
             switch (response.Code)
             {
@@ -139,13 +139,19 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.AccessChallenge
         /// <summary>
         /// Add authenticated request to local cache for otp/challenge
         /// </summary>
-        public void AddState(ChallengeRequestIdentifier identifier, RadiusContext context)
+        public ChallengeRequestIdentifier AddState(RadiusContext context)
         {
-            if (!_stateChallengePendingRequests.TryAdd(identifier, context))
+            var id = new ChallengeRequestIdentifier(context.Configuration.Name, context.State);
+            if (_stateChallengePendingRequests.TryAdd(id, context))
             {
-                _logger.LogError("Unable to cache request id={id} for the '{cfg:l}' configuration",
-                    context.RequestPacket.Header.Identifier, context.Configuration.Name);
+                _logger.LogInformation("Challenge {State:l} was added for message id={id}", 
+                    id.RequestId, context.Header.Identifier);
+                return id;
             }
+
+            _logger.LogError("Unable to cache request id={id} for the '{cfg:l}' configuration",
+                context.Header.Identifier, context.Configuration.Name);
+            return ChallengeRequestIdentifier.Empty;
         }
 
         /// <summary>

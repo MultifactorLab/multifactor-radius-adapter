@@ -3,12 +3,12 @@ using System.Text;
 
 namespace MultiFactor.Radius.Adapter.Core
 {
-    public class MultifactorApiCredential
+    public class ApiCredential
     {
-        private readonly string _key;
-        private readonly string _secret;
+        public string Usr { get; }
+        public string Pwd { get; }
 
-        public MultifactorApiCredential(string key, string secret)
+        public ApiCredential(string key, string secret)
         {
             if (string.IsNullOrWhiteSpace(key))
             {
@@ -20,13 +20,8 @@ namespace MultiFactor.Radius.Adapter.Core
                 throw new ArgumentException($"'{nameof(secret)}' cannot be null or whitespace.", nameof(secret));
             }
 
-            _key = key;
-            _secret = secret;
-        }
-
-        public string GetHttpBasicAuthorizationHeaderValue()
-        {
-            return Convert.ToBase64String(Encoding.ASCII.GetBytes($"{_key}:{_secret}"));
+            Usr = key;
+            Pwd = secret;
         }
     }
 }

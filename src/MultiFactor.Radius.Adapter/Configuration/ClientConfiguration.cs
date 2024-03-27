@@ -36,7 +36,7 @@ namespace MultiFactor.Radius.Adapter.Configuration
             Name = name;
             RadiusSharedSecret = rdsSharedSecret;
             FirstFactorAuthenticationSource = firstFactorAuthSource;
-            ApiCredential = new MultifactorApiCredential(apiKey, apiSecret);
+            ApiCredential = new ApiCredential(apiKey, apiSecret);
         }
 
         /// <summary>
@@ -54,7 +54,7 @@ namespace MultiFactor.Radius.Adapter.Configuration
         /// </summary>
         public AuthenticationSource FirstFactorAuthenticationSource { get; }
 
-        public MultifactorApiCredential ApiCredential { get; }
+        public ApiCredential ApiCredential { get; }
 
         /// <summary>
         /// Load user profile from AD and check group membership and 
@@ -184,7 +184,7 @@ namespace MultiFactor.Radius.Adapter.Configuration
         }
 
         public RandomWaiterConfig InvalidCredentialDelay { get; private set; }
-        public PreAuthModeDescriptor PreAuthnMode { get; private set; }
+        public PreAuthModeDescriptor PreAuthnMode { get; private set; } = PreAuthModeDescriptor.Default;
 
         public ClientConfiguration SetBypassSecondFactorWhenApiUnreachable(bool val)
         {

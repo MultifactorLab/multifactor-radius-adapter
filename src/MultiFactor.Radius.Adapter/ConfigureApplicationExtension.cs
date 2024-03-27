@@ -29,6 +29,7 @@ using MultiFactor.Radius.Adapter.Services.MultiFactorApi;
 using Serilog.Extensions.Logging;
 using System;
 using System.Net.Http;
+using System.Security.Authentication;
 
 namespace MultiFactor.Radius.Adapter;
 
@@ -41,7 +42,8 @@ internal static class ConfigureApplicationExtension
             throw new ArgumentNullException(nameof(builder));
         }
 
-        builder.Services.AddSingleton<IMultiFactorApiClient, MultiFactorApiClient>();
+        builder.Services.AddSingleton<IMultifactorApiAdapter, MultifactorApiAdapter>();
+        builder.Services.AddSingleton<IMultifactorApiClient, MultifactorApiClient>();
 
         builder.Services.AddSingleton<ISecondFactorChallengeProcessor, SecondFactorChallengeProcessor>();
 
@@ -78,7 +80,6 @@ internal static class ConfigureApplicationExtension
 
     private static void AddHttpServices(this IServiceCollection services)
     {
-        services.AddSingleton<IJsonDataSerializer, SystemTextJsonDataSerializer>();
         services.AddSingleton<IHttpClientAdapter, HttpClientAdapter>();
         services.AddHttpContextAccessor();
         services.AddTransient<MfTraceIdHeaderSetter>();
@@ -93,7 +94,13 @@ internal static class ConfigureApplicationExtension
             var config = prov.GetRequiredService<IServiceConfiguration>();
             var handler = new HttpClientHandler();
 
-            if (string.IsNullOrWhiteSpace(config.ApiProxy)) return handler;
+            handler.MaxConnectionsPerServer = 100;
+            handler.SslProtocols = SslProtocols.Tls13 | SslProtocols.Tls12;
+
+            if (string.IsNullOrWhiteSpace(config.ApiProxy))
+            {
+                return handler;
+            }
 
             if (!WebProxyFactory.TryCreateWebProxy(config.ApiProxy, out var webProxy))
             {

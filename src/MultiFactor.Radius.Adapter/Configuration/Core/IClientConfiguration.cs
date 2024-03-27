@@ -23,7 +23,7 @@ namespace MultiFactor.Radius.Adapter.Configuration.Core
         AuthenticationSource FirstFactorAuthenticationSource { get; }
         string LdapBindDn { get; }
         bool LoadActiveDirectoryNestedGroups { get; }
-        MultifactorApiCredential ApiCredential { get; }
+        ApiCredential ApiCredential { get; }
         string Name { get; }
         IPEndPoint NpsServerEndpoint { get; }
         string[] PhoneAttributes { get; }

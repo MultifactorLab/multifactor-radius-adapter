@@ -20,30 +20,22 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.SecondFactorAuthentication;
 public class SecondFactorAuthenticationMiddleware : IRadiusMiddleware
 {
     private readonly ISecondFactorChallengeProcessor _challengeProcessor;
-    private readonly IMultiFactorApiClient _multiFactorApiClient;
-    private readonly IRadiusRequestPostProcessor _requestPostProcessor;
+    private readonly IMultifactorApiAdapter _apiAdapter;
     private readonly ILogger<SecondFactorAuthenticationMiddleware> _logger;
 
     public SecondFactorAuthenticationMiddleware(
         ISecondFactorChallengeProcessor challengeProcessor,
-        IMultiFactorApiClient multiFactorApiClient,
+        IMultifactorApiAdapter apiAdapter,
         IRadiusRequestPostProcessor requestPostProcessor,
         ILogger<SecondFactorAuthenticationMiddleware> logger)
     {
-        _challengeProcessor = challengeProcessor ?? throw new ArgumentNullException(nameof(challengeProcessor));
-        _multiFactorApiClient = multiFactorApiClient ?? throw new ArgumentNullException(nameof(multiFactorApiClient));
-        _requestPostProcessor = requestPostProcessor ?? throw new ArgumentNullException(nameof(requestPostProcessor));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _challengeProcessor = challengeProcessor;
+        _apiAdapter = apiAdapter;
+        _logger = logger;
     }
 
     public async Task InvokeAsync(RadiusContext context, RadiusRequestDelegate next)
     {
-        if (context.Authentication.SecondFactor != AuthenticationCode.Awaiting)
-        {
-            await next(context);
-            return;
-        }
-
         if (context.Authentication.SecondFactor == AuthenticationCode.Bypass)
         {
             // second factor not required
@@ -54,42 +46,59 @@ public class SecondFactorAuthenticationMiddleware : IRadiusMiddleware
             return;
         }
 
-        context.ResponseCode = await ProcessSecondAuthenticationFactor(context);
-        if (context.ResponseCode == PacketCode.AccessChallenge)
+        if (context.Authentication.SecondFactor != AuthenticationCode.Awaiting)
         {
-            _challengeProcessor.AddState(new ChallengeRequestIdentifier(context.Configuration, context.State), context);
+            await next(context);
+            return;
+        }
+
+        if (string.IsNullOrEmpty(context.SecondFactorIdentity))
+        {
+            _logger.LogWarning("Unable to process 2FA authentication for message id={id} from {host:l}:{port}: Can't find User-Name",
+                context.Header.Identifier, 
+                context.RemoteEndpoint.Address, 
+                context.RemoteEndpoint.Port); 
+            
+            context.SetSecondFactorAuth(AuthenticationCode.Reject);
+            context.ResponseCode = context.Authentication.ToPacketCode();
+            return;
+        }
+
+        if (context.RequestPacket.IsVendorAclRequest)
+        {
+            // security check
+            if (context.FirstFactorAuthenticationSource == AuthenticationSource.Radius)
+            {
+                _logger.LogInformation("Bypass second factor for user '{user:l}' from {host:l}:{port}",
+                    context.UserName,
+                    context.RemoteEndpoint.Address,
+                    context.RemoteEndpoint.Port);
+
+                context.SetSecondFactorAuth(AuthenticationCode.Bypass);
+                context.ResponseCode = context.Authentication.ToPacketCode();
+
+                await next(context);
+                return;
+            }
+        }
+
+        var response = await _apiAdapter.CreateSecondFactorRequestAsync(context);
+        context.State = response.State;
+        context.ReplyMessage = response.ReplyMessage;
+
+        if (response.Code == PacketCode.AccessChallenge)
+        {
+            _challengeProcessor.AddState(context);
+            context.ResponseCode = context.Authentication.ToPacketCode();
             return;
         }
 
         if (context.ResponseCode == PacketCode.AccessAccept)
         {
             context.Authentication.SetSecondFactor(AuthenticationCode.Accept);
+            context.ResponseCode = context.Authentication.ToPacketCode();
         }
 
         await next(context);
-    }
-
-    /// <summary>
-    /// Authenticate request at MultiFactor with user-name only
-    /// </summary>
-    private async Task<PacketCode> ProcessSecondAuthenticationFactor(RadiusContext context)
-    {
-        if (string.IsNullOrEmpty(context.SecondFactorIdentity))
-        {
-            _logger.LogWarning("Can't find User-Name in message id={id} from {host:l}:{port}", context.RequestPacket.Header.Identifier, context.RemoteEndpoint.Address, context.RemoteEndpoint.Port);
-            return PacketCode.AccessReject;
-        }
-
-        if (context.RequestPacket.IsVendorAclRequest)
-        {
-            // security check
-            if (context.Configuration.FirstFactorAuthenticationSource == AuthenticationSource.Radius)
-            {
-                _logger.LogInformation("Bypass second factor for user {user:l}", context.UserName);
-                return PacketCode.AccessAccept;
-            }
-        }
-
-        return await _multiFactorApiClient.CreateSecondFactorRequest(context);
     }
 }

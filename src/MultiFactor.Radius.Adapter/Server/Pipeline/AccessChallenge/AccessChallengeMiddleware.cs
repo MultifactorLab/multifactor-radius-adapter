@@ -28,7 +28,7 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.AccessChallenge
                 return;
             }
 
-            var identifier = new ChallengeRequestIdentifier(context.Configuration, context.RequestPacket.GetString("State"));
+            var identifier = new ChallengeRequestIdentifier(context.Configuration.Name, context.RequestPacket.GetString("State"));
             if (!_challengeProcessor.HasState(identifier))
             {
                 await next(context);

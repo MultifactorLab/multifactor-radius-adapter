@@ -10,7 +10,7 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.AccessChallenge
 {
     public interface ISecondFactorChallengeProcessor
     {
-        void AddState(ChallengeRequestIdentifier identifier, RadiusContext context);
+        ChallengeRequestIdentifier AddState(RadiusContext context);
         bool HasState(ChallengeRequestIdentifier identifier);
         Task<ChallengeCode> ProcessChallengeAsync(ChallengeRequestIdentifier identifier, RadiusContext context);
     }

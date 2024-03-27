@@ -97,7 +97,7 @@ public class AccessChallengeMiddlewareTests
             x.AddAttribute("State", expectedReqId);
         });
         var context = host.CreateContext(packet, clientConfig: client);
-        var expectedIdentifier = new ChallengeRequestIdentifier(client, expectedReqId);
+        var expectedIdentifier = new ChallengeRequestIdentifier(client.Name, expectedReqId);
 
         var pipeline = host.Service<RadiusPipeline>();
         await pipeline.InvokeAsync(context);

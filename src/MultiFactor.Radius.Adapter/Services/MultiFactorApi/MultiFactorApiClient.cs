@@ -3,364 +3,74 @@
 //https://github.com/MultifactorLab/multifactor-radius-adapter/blob/main/LICENSE.md
 
 
+using LdapForNet.Adsddl;
 using Microsoft.Extensions.Logging;
-using MultiFactor.Radius.Adapter.Configuration;
-using MultiFactor.Radius.Adapter.Configuration.Core;
-using MultiFactor.Radius.Adapter.Configuration.Features.PreAuthModeFeature;
-using MultiFactor.Radius.Adapter.Configuration.Features.PrivacyModeFeature;
 using MultiFactor.Radius.Adapter.Core;
 using MultiFactor.Radius.Adapter.Core.Http;
-using MultiFactor.Radius.Adapter.Core.Radius;
 using MultiFactor.Radius.Adapter.Core.Serialization;
-using MultiFactor.Radius.Adapter.Framework.Context;
-using MultiFactor.Radius.Adapter.Server;
 using MultiFactor.Radius.Adapter.Services.MultiFactorApi.Dto;
-using MultiFactor.Radius.Adapter.Services.MultiFactorApi.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using System.Net.Http.Headers;
 
 namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi
 {
-    internal class MultifactorApiAdapter
-    {
-        private readonly IMultiFactorApiClient _api;
-        private readonly IServiceConfiguration _serviceConfiguration;
-        private readonly IAuthenticatedClientCache _authenticatedClientCache;
-        private readonly ILogger<MultifactorApiAdapter> _logger;
-
-        public MultifactorApiAdapter(IMultiFactorApiClient api, 
-            IServiceConfiguration serviceConfiguration, 
-            IAuthenticatedClientCache authenticatedClientCache,
-            ILogger<MultifactorApiAdapter> logger)
-        {
-            _api = api;
-            _serviceConfiguration = serviceConfiguration;
-            _authenticatedClientCache = authenticatedClientCache;
-            _logger = logger;
-        }
-
-        public async Task<SecondFactorResponse> CreateSecondFactorRequestAsync(RadiusContext context)
-        {
-            if (context is null)
-            {
-                throw new ArgumentNullException(nameof(context));
-            }
-
-            if (string.IsNullOrEmpty(context.SecondFactorIdentity))
-            {
-                _logger.LogWarning("Empty user name for second factor request. Request rejected.");
-                return new SecondFactorResponse(PacketCode.AccessReject);
-            }
-
-            var userName = context.SecondFactorIdentity;
-            var displayName = context.DisplayName;
-            var email = context.EmailAddress;
-            var userPhone = context.UserPhone;
-            var callingStationId = context.RequestPacket.CallingStationId;
-            var calledStationId = context.RequestPacket.CalledStationId; //only for winlogon yet
-
-            //remove user information for privacy
-            switch (context.Configuration.PrivacyMode.Mode)
-            {
-                case PrivacyMode.Full:
-                    displayName = null;
-                    email = null;
-                    userPhone = null;
-                    callingStationId = "";
-                    calledStationId = null;
-                    break;
-
-                case PrivacyMode.Partial:
-                    if (!context.Configuration.PrivacyMode.HasField("Name"))
-                    {
-                        displayName = null;
-                    }
-
-                    if (!context.Configuration.PrivacyMode.HasField("Email"))
-                    {
-                        email = null;
-                    }
-
-                    if (!context.Configuration.PrivacyMode.HasField("Phone"))
-                    {
-                        userPhone = null;
-                    }
-
-                    if (!context.Configuration.PrivacyMode.HasField("RemoteHost"))
-                    {
-                        callingStationId = "";
-                    }
-
-                    calledStationId = null;
-
-                    break;
-            }
-
-            //try to get authenticated client to bypass second factor if configured
-            if (_authenticatedClientCache.TryHitCache(context.RequestPacket.CallingStationId, userName, context.Configuration))
-            {
-                _logger.LogInformation("Bypass second factor for user '{user:l}' with calling-station-id {csi:l} from {host:l}:{port}",
-                    userName, 
-                    context.RequestPacket.CallingStationId, 
-                    context.RemoteEndpoint.Address, 
-                    context.RemoteEndpoint.Port);
-                return new SecondFactorResponse(PacketCode.AccessAccept);
-            }
-
-            var payload = new CreateRequestDto
-            {
-                Identity = userName,
-                Name = displayName,
-                Email = email,
-                Phone = userPhone,
-                PassCode = GetPassCodeOrNull(context),
-                CallingStationId = callingStationId,
-                CalledStationId = calledStationId,
-                Capabilities = new CapabilitiesDto
-                {
-                    InlineEnroll = true
-                },
-                GroupPolicyPreset = new GroupPolicyPresetDto
-                {
-                    SignUpGroups = context.Configuration.SignUpGroups
-                }
-            };
-
-            try
-            {
-                var auth = context.Configuration.ApiCredential.GetHttpBasicAuthorizationHeaderValue()
-
-                var response = await SendRequest("access/requests/ra", payload, context.Configuration);
-                var responseCode = ConvertToRadiusCode(response);
-
-                context.State = response?.Id;
-                context.ReplyMessage = response?.ReplyMessage;
-
-                if (responseCode == PacketCode.AccessAccept && !response.Bypassed)
-                {
-                    LogGrantedInfo(userName, response, context);
-                    _authenticatedClientCache.SetCache(context.RequestPacket.CallingStationId, userName, context.Configuration);
-                }
-
-                if (responseCode == PacketCode.AccessReject)
-                {
-                    var reason = response?.ReplyMessage;
-                    var phone = response?.Phone;
-                    _logger.LogWarning("Second factor verification for user '{user:l}' from {host:l}:{port} failed with reason='{reason:l}'. User phone {phone:l}", userName, context.RemoteEndpoint.Address, context.RemoteEndpoint.Port, reason, phone);
-                }
-
-                return responseCode;
-            }
-            catch (Exception ex)
-            {
-                return HandleException(ex, userName, context);
-            }
-        }
-
-        private static string GetPassCodeOrNull(RadiusContext context)
-        {
-            //check static challenge
-            var challenge = context.RequestPacket.TryGetChallenge();
-            if (challenge != null)
-            {
-                return challenge;
-            }
-
-            //check password challenge (otp or passcode)
-            var passphrase = context.Passphrase;
-            switch (context.Configuration.PreAuthnMode.Mode)
-            {
-                case PreAuthMode.Otp:
-                    return passphrase.Otp;
-
-                case PreAuthMode.Push:
-                    return "m";
-
-                case PreAuthMode.Telegram:
-                    return "t";
-            }
-
-            if (passphrase.IsEmpty)
-            {
-                return null;
-            }
-
-            if (context.FirstFactorAuthenticationSource != AuthenticationSource.None)
-            {
-                return null;
-            }
-
-            return context.Passphrase.Otp ?? passphrase.ProviderCode;
-        }
-    }
-
     /// <summary>
     /// Service to interact with multifactor web api
     /// </summary>
-    public class MultiFactorApiClient : IMultiFactorApiClient
+    internal class MultifactorApiClient : IMultifactorApiClient
     {
         private readonly IAuthenticatedClientCache _authenticatedClientCache;
-        private ILogger<MultiFactorApiClient> _logger;
+        private ILogger<MultifactorApiClient> _logger;
         private readonly IHttpClientAdapter _httpClientAdapter;
 
-        public MultiFactorApiClient(IAuthenticatedClientCache authenticatedClientCache, ILogger<MultiFactorApiClient> logger, IHttpClientAdapter httpClientAdapter)
+        public MultifactorApiClient(IAuthenticatedClientCache authenticatedClientCache, ILogger<MultifactorApiClient> logger, IHttpClientAdapter httpClientAdapter)
         {
             _authenticatedClientCache = authenticatedClientCache ?? throw new ArgumentNullException(nameof(authenticatedClientCache));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _httpClientAdapter = httpClientAdapter ?? throw new ArgumentNullException(nameof(httpClientAdapter));
         }
 
-        public async Task<PacketCode> CreateSecondFactorRequest(RadiusContext context)
+        public Task<AccessRequestDto> CreateRequestAsync(CreateRequestDto dto, BasicAuthHeaderValue auth)
         {
-            var userName = context.SecondFactorIdentity;
-            var displayName = context.DisplayName;
-            var email = context.EmailAddress;
-            var userPhone = context.UserPhone;
-            var callingStationId = context.RequestPacket.CallingStationId;
-
-            string calledStationId = context.RequestPacket.CalledStationId; //only for winlogon yet
-
-            if (string.IsNullOrEmpty(userName))
+            if (dto is null)
             {
-                _logger.LogWarning("Empty user name for second factor request. Request rejected.");
-                return PacketCode.AccessReject;
+                throw new ArgumentNullException(nameof(dto));
             }
 
-            //remove user information for privacy
-            switch (context.Configuration.PrivacyMode.Mode)
+            if (auth is null)
             {
-                case PrivacyMode.Full:
-                    displayName = null;
-                    email = null;
-                    userPhone = null;
-                    callingStationId = "";
-                    calledStationId = null;
-                    break;
-
-                case PrivacyMode.Partial:
-                    if (!context.Configuration.PrivacyMode.HasField("Name"))
-                    {
-                        displayName = null;
-                    }
-
-                    if (!context.Configuration.PrivacyMode.HasField("Email"))
-                    {
-                        email = null;
-                    }
-
-                    if (!context.Configuration.PrivacyMode.HasField("Phone"))
-                    {
-                        userPhone = null;
-                    }
-
-                    if (!context.Configuration.PrivacyMode.HasField("RemoteHost"))
-                    {
-                        callingStationId = "";
-                    }
-
-                    calledStationId = null;
-
-                    break;
+                throw new ArgumentNullException(nameof(auth));
             }
 
-            //try to get authenticated client to bypass second factor if configured
-            if (_authenticatedClientCache.TryHitCache(context.RequestPacket.CallingStationId, userName, context.Configuration))
-            {
-                _logger.LogInformation("Bypass second factor for user '{user:l}' with calling-station-id {csi:l} from {host:l}:{port}",
-                    userName, context.RequestPacket.CallingStationId, context.RemoteEndpoint.Address, context.RemoteEndpoint.Port);
-                return PacketCode.AccessAccept;
-            }
-
-            var payload = new CreateRequestDto
-            {
-                Identity = userName,
-                Name = displayName,
-                Email = email,
-                Phone = userPhone,
-                PassCode = GetPassCodeOrNull(context),
-                CallingStationId = callingStationId,
-                CalledStationId = calledStationId,
-                Capabilities = new CapabilitiesDto
-                {
-                    InlineEnroll = true
-                },
-                GroupPolicyPreset = new GroupPolicyPresetDto
-                {
-                    SignUpGroups = context.Configuration.SignUpGroups
-                }
-            };
-
-            try
-            {
-                var response = await SendRequest("access/requests/ra", payload, context.Configuration);
-                var responseCode = ConvertToRadiusCode(response);
-
-                context.State = response?.Id;
-                context.ReplyMessage = response?.ReplyMessage;
-
-                if (responseCode == PacketCode.AccessAccept && !response.Bypassed)
-                {
-                    LogGrantedInfo(userName, response, context);
-                    _authenticatedClientCache.SetCache(context.RequestPacket.CallingStationId, userName, context.Configuration);
-                }
-
-                if (responseCode == PacketCode.AccessReject)
-                {
-                    var reason = response?.ReplyMessage;
-                    var phone = response?.Phone;
-                    _logger.LogWarning("Second factor verification for user '{user:l}' from {host:l}:{port} failed with reason='{reason:l}'. User phone {phone:l}", userName, context.RemoteEndpoint.Address, context.RemoteEndpoint.Port, reason, phone);
-                }
-
-                return responseCode;
-            }
-            catch (Exception ex)
-            {
-                return HandleException(ex, userName, context);
-            }
+            return SendRequest("access/requests/ra", dto, auth);
         }
 
-        public async Task<PacketCode> Challenge(RadiusContext context, string answer, ChallengeRequestIdentifier identifier)
+        public Task<AccessRequestDto> ChallengeAsync(ChallengeDto dto, BasicAuthHeaderValue auth)
         {
-            var userName = context.SecondFactorIdentity;
-            var payload = new ChallengeDto
+            if (dto is null)
             {
-                Identity = userName,
-                Challenge = answer,
-                RequestId = identifier.RequestId
-            };
-
-            try
-            {
-                var response = await SendRequest("access/requests/ra/challenge", payload, context.Configuration);
-                var responseCode = ConvertToRadiusCode(response);
-
-                context.ReplyMessage = response.ReplyMessage;
-
-                if (responseCode == PacketCode.AccessAccept && !response.Bypassed)
-                {
-                    LogGrantedInfo(userName, response, context);
-                    _authenticatedClientCache.SetCache(context.RequestPacket.CallingStationId, userName, context.Configuration);
-                }
-
-                return responseCode;
+                throw new ArgumentNullException(nameof(dto));
             }
-            catch (Exception ex)
+
+            if (auth is null)
             {
-                return HandleException(ex, userName, context);
+                throw new ArgumentNullException(nameof(auth));
             }
+
+            return SendRequest("access/requests/ra/challenge", dto, auth);
         }
 
-        private async Task<AccessRequestDto> SendRequest(string url, object payload, IClientConfiguration clientConfiguration)
+        private async Task<AccessRequestDto> SendRequest(string url, object payload, BasicAuthHeaderValue auth)
         {
             var headers = new Dictionary<string, string>
             {
-                {"Authorization", $"Basic {clientConfiguration.ApiCredential.GetHttpBasicAuthorizationHeaderValue()}" }
+                {"Authorization", $"Basic {auth}" }
             };
 
             try
@@ -373,133 +83,14 @@ namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi
 
                 return response.Model;
             }
-            catch (TaskCanceledException ex)
+            catch (TaskCanceledException tce)
             {
-                var message = ex is TaskCanceledException ? "Timed out" : ex.Message;
-                var err = $"Multifactor API host unreachable: {url}. Reason: {message}";
-                throw new MultifactorApiUnreachableException(err, ex);
+                throw new MultifactorApiUnreachableException($"Multifactor API host unreachable: {url}. Reason: Http request timeout", tce);
             }
             catch (Exception ex)
             {
-                var err = $"Multifactor API host unreachable: {url}. Reason: {ex.Message}";
-                throw new MultifactorApiUnreachableException(err, ex);
+                throw new MultifactorApiUnreachableException($"Multifactor API host unreachable: {url}. Reason: {ex.Message}", ex);
             }
-        }
-
-        private PacketCode HandleException(Exception ex, string username, RadiusContext context)
-        {
-            if (ex is MultifactorApiUnreachableException apiEx)
-            {
-                _logger.LogError("Error occured while requesting API for user '{user:l}' from {host:l}:{port}, {msg:l}",
-                    username,
-                    context.RemoteEndpoint.Address,
-                    context.RemoteEndpoint.Port,
-                    apiEx.Message);
-
-                if (context.Configuration.BypassSecondFactorWhenApiUnreachable)
-                {
-                    _logger.LogWarning("Bypass second factor for user '{user:l}' from {host:l}:{port}",
-                        username,
-                        context.RemoteEndpoint.Address,
-                        context.RemoteEndpoint.Port);
-                    return ConvertToRadiusCode(AccessRequestDto.Bypass);
-                }
-            }
-
-            return ConvertToRadiusCode(null);
-        }
-
-        private PacketCode ConvertToRadiusCode(AccessRequestDto multifactorAccessRequest)
-        {
-            if (multifactorAccessRequest == null)
-            {
-                return PacketCode.AccessReject;
-            }
-
-            switch (multifactorAccessRequest.Status)
-            {
-                case Literals.RadiusCode.Granted:     //authenticated by push
-                    return PacketCode.AccessAccept;
-                case Literals.RadiusCode.Denied:
-                    return PacketCode.AccessReject; //access denied
-                case Literals.RadiusCode.AwaitingAuthentication:
-                    return PacketCode.AccessChallenge;  //otp code required
-                default:
-                    _logger.LogWarning($"Got unexpected status from API: {multifactorAccessRequest.Status}");
-                    return PacketCode.AccessReject; //access denied
-            }
-        }
-
-        private string GetPassCodeOrNull(RadiusContext context)
-        {
-            //check static challenge
-            var challenge = context.RequestPacket.TryGetChallenge();
-            if (challenge != null)
-            {
-                return challenge;
-            }
-
-            //check password challenge (otp or passcode)
-            var userPassword = context.RequestPacket.TryGetUserPassword();
-
-            //only if first authentication factor is None, assuming that Password contains OTP code
-            if (context.Configuration.FirstFactorAuthenticationSource != AuthenticationSource.None)
-            {
-                return null;
-            }
-
-            /* valid passcodes:
-             *  6 digits: otp
-             *  t: Telegram
-             *  m: MobileApp
-             *  s: SMS
-             *  c: PhoneCall
-             */
-
-            if (string.IsNullOrEmpty(userPassword))
-            {
-                return null;
-            }
-
-            var isOtp = Regex.IsMatch(userPassword.Trim(), "^[0-9]{1,6}$");
-            if (isOtp)
-            {
-                return userPassword.Trim();
-            }
-
-            if (new[] { "t", "m", "s", "c" }.Any(c => c == userPassword.Trim().ToLower()))
-            {
-                return userPassword.Trim().ToLower();
-            }
-
-            //not a passcode
-            return null;
-        }
-
-        private void LogGrantedInfo(string userName, AccessRequestDto response, RadiusContext context)
-        {
-            string countryValue = null;
-            string regionValue = null;
-            string cityValue = null;
-            string callingStationId = context?.RequestPacket?.CallingStationId;
-
-            if (response != null && IPAddress.TryParse(callingStationId, out var ip))
-            {
-                countryValue = response.CountryCode;
-                regionValue = response.Region;
-                cityValue = response.City;
-                callingStationId = ip.ToString();
-            }
-
-            _logger.LogInformation("Second factor for user '{user:l}' verified successfully. Authenticator: '{authenticator:l}', account: '{account:l}', country: '{country:l}', region: '{region:l}', city: '{city:l}', calling-station-id: {clientIp}, authenticatorId: {authenticatorId}",
-                        userName,
-                        response?.Authenticator,
-                        response?.Account,
-                        countryValue,
-                        regionValue,
-                        cityValue,
-                        callingStationId,
-                        response.AuthenticatorId);
         }
     }
 }

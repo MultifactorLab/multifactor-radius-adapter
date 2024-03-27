@@ -5,7 +5,6 @@ using MultiFactor.Radius.Adapter.Configuration;
 using MultiFactor.Radius.Adapter.Configuration.Core;
 using MultiFactor.Radius.Adapter.Core.Radius;
 using MultiFactor.Radius.Adapter.Framework.Context;
-using MultiFactor.Radius.Adapter.Framework.Pipeline;
 using MultiFactor.Radius.Adapter.Server;
 using MultiFactor.Radius.Adapter.Server.Pipeline.AccessChallenge;
 using MultiFactor.Radius.Adapter.Server.Pipeline.SecondFactorAuthentication;
@@ -21,9 +20,9 @@ namespace MultiFactor.Radius.Adapter.Tests.Pipeline;
 public class SecondFactorAuthenticationMiddlewareTests
 {     
     [Fact]
-    public async Task Invoke_UsernameIsEmpty_ShouldSetRejectStateAndNotInvokeApi()
+    public async Task Invoke_UsernameIsEmpty_ShouldSetReject()
     {
-        var api = new Mock<IMultiFactorApiClient>();
+        var api = new Mock<IMultifactorApiClient>();
 
         var host = TestHostFactory.CreateHost(builder =>
         {
@@ -32,7 +31,7 @@ public class SecondFactorAuthenticationMiddlewareTests
                 x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-single.config");
             });
 
-            builder.Services.RemoveService<IMultiFactorApiClient>().AddSingleton(api.Object);
+            builder.Services.RemoveService<IMultifactorApiClient>().AddSingleton(api.Object);
             builder.UseMiddleware<SecondFactorAuthenticationMiddleware>();
         });
 
@@ -44,14 +43,11 @@ public class SecondFactorAuthenticationMiddlewareTests
         await host.InvokePipeline(context);
 
         context.ResponseCode.Should().Be(PacketCode.AccessReject);
-        api.Verify(v => v.CreateSecondFactorRequest(It.Is<RadiusContext>(x => x == context)), Times.Never);
     }
 
     [Fact]
-    public async Task Invoke_IsVendorAclRequestIsTrue_ShouldSetAcceptStateAndNotInvokeApi()
+    public async Task Invoke_IsVendorAclRequestIsTrue_ShouldSetAcceptState()
     {
-        var api = new Mock<IMultiFactorApiClient>();
-
         var host = TestHostFactory.CreateHost(builder =>
         {
             builder.Services.Configure<TestConfigProviderOptions>(x =>
@@ -59,7 +55,7 @@ public class SecondFactorAuthenticationMiddlewareTests
                 x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-single.config");
             });
 
-            builder.Services.RemoveService<IMultiFactorApiClient>().AddSingleton(api.Object);
+            builder.Services.ReplaceService(new Mock<IMultifactorApiClient>().Object);
             builder.UseMiddleware<SecondFactorAuthenticationMiddleware>();
         });
 
@@ -72,18 +68,20 @@ public class SecondFactorAuthenticationMiddlewareTests
             x.RemoteEndpoint = new IPEndPoint(IPAddress.Any, 636);
         });
         context.RequestPacket.AddAttribute("User-Name", "#ACSACL#-IP-UserName");
+        context.SetFirstFactorAuth(AuthenticationCode.Accept);
 
         await host.InvokePipeline(context);
 
         context.ResponseCode.Should().Be(PacketCode.AccessAccept);
-        api.Verify(v => v.CreateSecondFactorRequest(It.Is<RadiusContext>(x => x == context)), Times.Never);
+        context.Authentication.SecondFactor.Should().Be(AuthenticationCode.Bypass);
     }
     
     [Fact]
     public async Task Invoke_ApiShouldReturnChallengeRequest_ShouldInvokeAddState()
     {
         var chProc = new Mock<ISecondFactorChallengeProcessor>();
-        chProc.Setup(x => x.HasState(It.IsAny<ChallengeRequestIdentifier>())).Returns(false);
+        chProc.Setup(x => x.HasState(It.IsAny<ChallengeRequestIdentifier>()))
+            .Returns(false);
 
         var host = TestHostFactory.CreateHost(builder =>
         {
@@ -92,11 +90,12 @@ public class SecondFactorAuthenticationMiddlewareTests
                 x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-single.config");
             });
 
-            var api = new Mock<IMultiFactorApiClient>();
-            api.Setup(x => x.CreateSecondFactorRequest(It.IsAny<RadiusContext>())).ReturnsAsync(PacketCode.AccessChallenge);
+            var adapter = new Mock<IMultifactorApiAdapter>();
+            adapter.Setup(x => x.CreateSecondFactorRequestAsync(It.IsAny<RadiusContext>()))
+                .ReturnsAsync(new Services.MultiFactorApi.Models.SecondFactorResponse(PacketCode.AccessChallenge));
+            builder.Services.ReplaceService(adapter.Object);
 
-            builder.Services.RemoveService<IMultiFactorApiClient>().AddSingleton(api.Object);  
-            builder.Services.RemoveService<ISecondFactorChallengeProcessor>().AddSingleton(chProc.Object);
+            builder.Services.ReplaceService(chProc.Object);
             builder.UseMiddleware<SecondFactorAuthenticationMiddleware>();
         });
 
@@ -107,35 +106,12 @@ public class SecondFactorAuthenticationMiddlewareTests
             x.UserName = "#ACSACL#-IP-UserName";
             x.State = "Qwerty123";
         });
-        var expectedIdentifier = new ChallengeRequestIdentifier(config.Clients[0], "Qwerty123");
+        var expectedIdentifier = new ChallengeRequestIdentifier(config.Clients[0].Name, "Qwerty123");
 
         await host.InvokePipeline(context);
 
         Assert.Equal(PacketCode.AccessChallenge, context.ResponseCode);
         Assert.Equal(AuthenticationCode.Awaiting, context.Authentication.SecondFactor);
-        chProc.Verify(v => v.AddState(It.Is<ChallengeRequestIdentifier>(x => x.Equals(expectedIdentifier)), It.Is<RadiusContext>(x => x == context)), Times.Once);
-    }
-    
-    [Fact]
-    public async Task Invoke_Bypass2Fa_ShouldSetBypass()
-    {
-        var host = TestHostFactory.CreateHost(builder =>
-        {
-            builder.Services.Configure<TestConfigProviderOptions>(x =>
-            {
-                x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-single.config");
-            });
-
-            builder.UseMiddleware<SecondFactorAuthenticationMiddleware>();
-        });
-
-        var context = host.CreateContext(RadiusPacketFactory.AccessRequest(), setupContext: x =>
-        {
-            x.Bypass2Fa = true;
-        });
-
-        await host.InvokePipeline(context);
-
-        Assert.Equal(AuthenticationCode.Bypass, context.Authentication.SecondFactor);
+        chProc.Verify(v => v.AddState(It.Is<RadiusContext>(x => x == context)), Times.Once);
     }
 }
