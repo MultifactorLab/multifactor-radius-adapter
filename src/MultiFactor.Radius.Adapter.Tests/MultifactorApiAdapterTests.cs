@@ -238,7 +238,7 @@ namespace MultiFactor.Radius.Adapter.Tests
                 x.RemoteEndpoint = new IPEndPoint(IPAddress.Any, 636);
             });
 
-            var profile = LdapProfile.CreateBuilder(LdapIdentity.ParseUser("test_user@multifactor.ru"), "dn").SetIdentityAttribute("some_attr_value").Build();
+            var profile = new LdapProfile(LdapIdentity.ParseUser("test_user@multifactor.ru"), "dn").SetIdentityAttribute("some_attr_value");
             context.SetProfile(profile);
 
             var adapter = host.Service<MultifactorApiAdapter>();
@@ -278,8 +278,7 @@ namespace MultiFactor.Radius.Adapter.Tests
                 x.RemoteEndpoint = new IPEndPoint(IPAddress.Any, 636);
             });
 
-            var profile = LdapProfile.CreateBuilder(LdapIdentity.ParseUser("test_user@multifactor.ru"), "dn")
-                .Build();
+            var profile = new LdapProfile(LdapIdentity.ParseUser("test_user@multifactor.ru"), "dn");
             context.SetProfile(profile);
 
             var adapter = host.Service<MultifactorApiAdapter>();

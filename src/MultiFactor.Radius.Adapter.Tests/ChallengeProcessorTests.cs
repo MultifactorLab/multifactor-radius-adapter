@@ -184,7 +184,7 @@ namespace MultiFactor.Radius.Adapter.Tests
                 State = reqId
             };
             var testDn = "CN=User Name,CN=Users,DC=domain,DC=local";
-            context.SetProfile(LdapProfile.CreateBuilder(LdapIdentity.BaseDn(testDn), testDn).SetIdentityAttribute("multifactor").Build());
+            context.SetProfile(new LdapProfile(LdapIdentity.BaseDn(testDn), testDn).SetIdentityAttribute("multifactor"));
             processor.AddState(context);
             var newPacket = RadiusPacketFactory.AccessChallenge(x =>
             {

@@ -4,7 +4,7 @@ using MultiFactor.Radius.Adapter.Core.Ldap;
 
 namespace MultiFactor.Radius.Adapter.Services.Ldap.ProfileLoading
 {
-    public class LdapProfile : ILdapProfile, ILdapProfileBuilder
+    public class LdapProfile : ILdapProfile
     {
         public LdapIdentity BaseDn { get; set; }
         public string DistinguishedName { get; set; }
@@ -22,7 +22,7 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.ProfileLoading
         private readonly Dictionary<string, object> _ldapAttrs = new();
         public IReadOnlyDictionary<string, object> LdapAttrs => _ldapAttrs;
 
-        private LdapProfile(LdapIdentity baseDn, string dn)
+        public LdapProfile(LdapIdentity baseDn, string dn)
         {
             if (string.IsNullOrWhiteSpace(dn))
             {
@@ -31,11 +31,6 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.ProfileLoading
 
             BaseDn = baseDn ?? throw new System.ArgumentNullException(nameof(baseDn));
             DistinguishedName = dn;
-        }
-
-        public static ILdapProfileBuilder CreateBuilder(LdapIdentity baseDn, string distinguishedName)
-        {
-            return new LdapProfile(baseDn, distinguishedName);
         }
 
         private static string EscapeDn(string dn)
@@ -54,12 +49,7 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.ProfileLoading
             return ret;
         }
 
-        public ILdapProfile Build()
-        {
-            return this;
-        }
-
-        public ILdapProfileBuilder AddMemberOf(string group)
+        public LdapProfile AddMemberOf(string group)
         {
             if (string.IsNullOrWhiteSpace(group))
             {
@@ -74,7 +64,7 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.ProfileLoading
             return this;
         }
 
-        public ILdapProfileBuilder SetUpn(string upn)
+        public LdapProfile SetUpn(string upn)
         {
             if (string.IsNullOrWhiteSpace(upn))
             {
@@ -85,7 +75,7 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.ProfileLoading
             return this;
         }
 
-        public ILdapProfileBuilder SetDisplayName(string displayname)
+        public LdapProfile SetDisplayName(string displayname)
         {
             if (string.IsNullOrWhiteSpace(displayname))
             {
@@ -96,19 +86,19 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.ProfileLoading
             return this;
         }
 
-        public ILdapProfileBuilder SetEmail(string email)
+        public LdapProfile SetEmail(string email)
         {
             Email = email ?? throw new System.ArgumentNullException(nameof(email));
             return this;
         }
 
-        public ILdapProfileBuilder SetPhone(string phone)
+        public LdapProfile SetPhone(string phone)
         {
             Phone = phone ?? throw new System.ArgumentNullException(nameof(phone));
             return this;
         }
 
-        public ILdapProfileBuilder AddLdapAttr(string attr, object value)
+        public LdapProfile AddLdapAttr(string attr, object value)
         {
             if (string.IsNullOrWhiteSpace(attr))
             {
@@ -119,7 +109,7 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.ProfileLoading
             return this;
         }
 
-        public ILdapProfileBuilder SetIdentityAttribute(string identityAttribute)
+        public LdapProfile SetIdentityAttribute(string identityAttribute)
         {
             SecondFactorIdentity = identityAttribute ?? throw new System.ArgumentNullException(nameof(identityAttribute));
             return this;

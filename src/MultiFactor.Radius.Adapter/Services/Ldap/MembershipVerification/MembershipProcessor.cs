@@ -116,9 +116,9 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.MembershipVerification
                             continue;
                         }
 
-                        var profile = LdapProfile.CreateBuilder(domainIdentity, domain);
+                        var profile = new LdapProfile(domainIdentity, domain);
                         profile.SetIdentityAttribute(attributes[attr].FirstOrDefault());
-                        return profile.Build();
+                        return profile;
                     }
                 }
                 catch (Exception ex)

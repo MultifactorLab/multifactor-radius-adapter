@@ -51,7 +51,7 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.ProfileLoading
             var entry = response.SingleOrDefault();
             if (entry == null) throw new LdapUserNotFoundException(user.Name, domain.Name);         
 
-            var profile = LdapProfile.CreateBuilder(LdapIdentity.BaseDn(entry.Dn), entry.Dn);
+            var profile = new LdapProfile(LdapIdentity.BaseDn(entry.Dn), entry.Dn);
 
             var attrs = entry.DirectoryAttributes;
             if (attrs.TryGetValue("displayName", out var displayNameAttr))
@@ -114,7 +114,7 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.ProfileLoading
                 }
             }
 
-            return profile.Build();
+            return profile;
         }
 
         public async Task<Dictionary<string, string[]>> LoadAttributesAsync(IClientConfiguration clientConfig, ILdapConnectionAdapter adapter, LdapIdentity user, params string[] attrs)

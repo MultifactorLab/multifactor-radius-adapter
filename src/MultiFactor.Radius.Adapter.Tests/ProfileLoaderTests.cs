@@ -60,14 +60,13 @@ public class ProfileLoaderTests
             });
         });
 
-        var expectedProfile = LdapProfile.CreateBuilder(LdapIdentity.BaseDn("CN=User Name,CN=Users,DC=domain,DC=local"), "CN=User Name,CN=Users,DC=domain,DC=local")
+        var expectedProfile = new LdapProfile(LdapIdentity.BaseDn("CN=User Name,CN=Users,DC=domain,DC=local"), "CN=User Name,CN=Users,DC=domain,DC=local")
             .SetDisplayName("User Name")
             .SetEmail("username@post.org")
             .SetUpn("user.name@domain.local")
             .AddLdapAttr("sAMAccountName", "user.name")
             .AddLdapAttr("userPrincipalName", "user.name@domain.local")
-            .AddMemberOf("Users")
-            .Build();
+            .AddMemberOf("Users");
 
         var entry = LdapEntryFactory.Create("CN=User Name,CN=Users,DC=domain,DC=local", x =>
         {
@@ -118,10 +117,9 @@ public class ProfileLoaderTests
             });
         });
 
-        var expectedProfile = LdapProfile.CreateBuilder(LdapIdentity.BaseDn("CN=User Name,CN=Users,DC=domain,DC=local"), "CN=User Name,CN=Users,DC=domain,DC=local")
+        var expectedProfile = new LdapProfile(LdapIdentity.BaseDn("CN=User Name,CN=Users,DC=domain,DC=local"), "CN=User Name,CN=Users,DC=domain,DC=local")
             .AddLdapAttr("givenName", "User")
-            .AddLdapAttr("displayName", "User Name")
-            .Build();
+            .AddLdapAttr("displayName", "User Name");
 
         var entry = LdapEntryFactory.Create("CN=User Name,CN=Users,DC=domain,DC=local", x =>
         {
