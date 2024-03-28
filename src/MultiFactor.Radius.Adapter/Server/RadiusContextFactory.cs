@@ -59,13 +59,11 @@ public class RadiusContextFactory
             throw new ArgumentNullException(nameof(udpClient));
         }
 
-        return new RadiusContext(client, udpClient, _serviceProvider)
+        return new RadiusContext(packet, client, udpClient, _serviceProvider)
         {
             RemoteEndpoint = remote,
             ProxyEndpoint = proxy,
-            RequestPacket = packet,
-            UserName = packet.UserName,
-            Passphrase = UserPassphrase.Parse(packet.TryGetUserPassword(), client.PreAuthnMode)
+            UserName = packet.UserName
         };
     }
 }

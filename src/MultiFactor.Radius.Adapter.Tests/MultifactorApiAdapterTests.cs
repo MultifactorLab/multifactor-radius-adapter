@@ -163,6 +163,7 @@ namespace MultiFactor.Radius.Adapter.Tests
             {
                 x.UserName = "test_user@multifactor.ru";
                 x.RemoteEndpoint = new IPEndPoint(IPAddress.Any, 636);
+                x.RequestPacket.AddAttribute("Calling-Station-Id", "192.168.1.1");
             });
 
             var adapter = host.Service<MultifactorApiAdapter>();
@@ -197,6 +198,7 @@ namespace MultiFactor.Radius.Adapter.Tests
             {
                 x.UserName = "test_user@multifactor.ru";
                 x.RemoteEndpoint = new IPEndPoint(IPAddress.Any, 636);
+                x.RequestPacket.AddAttribute("Calling-Station-Id", "192.168.1.1");
             });
 
             var adapter = host.Service<MultifactorApiAdapter>();
@@ -283,7 +285,7 @@ namespace MultiFactor.Radius.Adapter.Tests
             var adapter = host.Service<MultifactorApiAdapter>();
             var result = await adapter.CreateSecondFactorRequestAsync(context);
 
-            Assert.Equal(PacketCode.AccessAccept, result.Code);
+            Assert.Equal(PacketCode.AccessReject, result.Code);
         }
     }
 }

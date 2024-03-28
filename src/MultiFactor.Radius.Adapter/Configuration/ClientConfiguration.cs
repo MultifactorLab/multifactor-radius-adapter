@@ -154,7 +154,7 @@ namespace MultiFactor.Radius.Adapter.Configuration
         /// </summary>
         public string SignUpGroups { get; private set; }
 
-        public AuthenticatedClientCacheConfig AuthenticationCacheLifetime { get; private set; }
+        public AuthenticatedClientCacheConfig AuthenticationCacheLifetime { get; private set; } = AuthenticatedClientCacheConfig.Default;
 
         private readonly Dictionary<string, RadiusReplyAttributeValue[]> _radiusReplyAttributes = new();
 

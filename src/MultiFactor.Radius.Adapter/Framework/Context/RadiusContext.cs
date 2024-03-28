@@ -2,6 +2,7 @@
 //Please see licence at 
 //https://github.com/MultifactorLab/multifactor-radius-adapter/blob/main/LICENSE.md
 
+using Elastic.CommonSchema;
 using MultiFactor.Radius.Adapter.Configuration;
 using MultiFactor.Radius.Adapter.Configuration.Core;
 using MultiFactor.Radius.Adapter.Configuration.Features.PreAuthModeFeature;
@@ -11,6 +12,7 @@ using MultiFactor.Radius.Adapter.Server;
 using System;
 using System.Collections.Generic;
 using System.Net;
+using System.Net.Sockets;
 
 namespace MultiFactor.Radius.Adapter.Framework.Context
 {
@@ -21,8 +23,9 @@ namespace MultiFactor.Radius.Adapter.Framework.Context
     {
         private ILdapProfile _ldapProfile;
 
-        public RadiusContext(IClientConfiguration clientConfiguration, IUdpClient udpClient, IServiceProvider provider)
+        public RadiusContext(IRadiusPacket request, IClientConfiguration clientConfiguration, IUdpClient udpClient, IServiceProvider provider)
         {
+            RequestPacket = request ?? throw new ArgumentNullException(nameof(request));
             ReceivedAt = DateTime.Now;
             ResponseCode = PacketCode.AccessReject;
             UserGroups = new List<string>();
@@ -31,12 +34,13 @@ namespace MultiFactor.Radius.Adapter.Framework.Context
             RequestServices = provider ?? throw new ArgumentNullException(nameof(provider));
             Authentication = new();
             Flags = new();
+            Passphrase = UserPassphrase.Parse(request.TryGetUserPassword(), clientConfiguration.PreAuthnMode);
         }
 
         public IPEndPoint RemoteEndpoint { get; set; }
         public IPEndPoint ProxyEndpoint { get; init; }
 
-        public IRadiusPacket RequestPacket { get; init; }
+        public IRadiusPacket RequestPacket { get; }
         public RadiusPacketHeader Header => RequestPacket.Header;
         public IRadiusPacket ResponsePacket { get; set; }
 
@@ -59,7 +63,7 @@ namespace MultiFactor.Radius.Adapter.Framework.Context
         }
 
         public string UserName { get; set; }
-        public UserPassphrase Passphrase { get; init; }
+        public UserPassphrase Passphrase { get; }
 
         public string Upn => _ldapProfile?.Upn;
         public string DisplayName => _ldapProfile?.DisplayName;
@@ -72,13 +76,14 @@ namespace MultiFactor.Radius.Adapter.Framework.Context
         public string SecondFactorIdentity => Configuration.UseIdentityAttribute ? _ldapProfile?.SecondFactorIdentity : UserName;
         public IList<string> UserGroups { get; set; }
         public IDictionary<string, object> LdapAttrs { get; set; }
-        public IServiceProvider RequestServices { get; set; }
 
+        public IServiceProvider RequestServices { get; set; }
+        public IUdpClient UdpClient { get; }
         public IClientConfiguration Configuration { get; }
+
         public AuthenticationSource FirstFactorAuthenticationSource => Configuration.FirstFactorAuthenticationSource;
         public PreAuthMode PreAuthMode => Configuration.PreAuthnMode.Mode;
 
-        public IUdpClient UdpClient { get; }
 
         public AuthenticationState Authentication { get; }
         public void SetFirstFactorAuth(AuthenticationCode code) => Authentication.SetFirstFactor(code);
