@@ -9,6 +9,7 @@ using MultiFactor.Radius.Adapter.Configuration.Features.PreAuthModeFeature;
 using MultiFactor.Radius.Adapter.Core.Ldap;
 using MultiFactor.Radius.Adapter.Core.Radius;
 using MultiFactor.Radius.Adapter.Server;
+using MultiFactor.Radius.Adapter.Services.Ldap.Profile;
 using System;
 using System.Collections.Generic;
 using System.Net;
@@ -21,8 +22,6 @@ namespace MultiFactor.Radius.Adapter.Framework.Context
     /// </summary>
     public class RadiusContext
     {
-        private ILdapProfile _ldapProfile;
-
         public RadiusContext(IRadiusPacket request, IClientConfiguration clientConfiguration, IUdpClient udpClient, IServiceProvider provider)
         {
             RequestPacket = request ?? throw new ArgumentNullException(nameof(request));
@@ -35,6 +34,7 @@ namespace MultiFactor.Radius.Adapter.Framework.Context
             Authentication = new();
             Flags = new();
             Passphrase = UserPassphrase.Parse(request.TryGetUserPassword(), clientConfiguration.PreAuthnMode);
+            Profile = LdapProfile.Empty;
         }
 
         public IPEndPoint RemoteEndpoint { get; set; }
@@ -65,17 +65,16 @@ namespace MultiFactor.Radius.Adapter.Framework.Context
         public string UserName { get; set; }
         public UserPassphrase Passphrase { get; }
 
-        public string Upn => _ldapProfile?.Upn;
-        public string DisplayName => _ldapProfile?.DisplayName;
-        public string UserPhone => _ldapProfile?.Phone;
-        public string EmailAddress => _ldapProfile?.Email;
+        public string Upn => Profile?.Upn;
+        public string DisplayName => Profile?.DisplayName;
+        public string UserPhone => Profile?.Phone;
+        public string EmailAddress => Profile?.Email;
 
         /// <summary>
         /// Should use for 2FA request to MFA API.
         /// </summary>
-        public string SecondFactorIdentity => Configuration.UseIdentityAttribute ? _ldapProfile?.SecondFactorIdentity : UserName;
+        public string SecondFactorIdentity => Configuration.UseIdentityAttribute ? Profile?.SecondFactorIdentity : UserName;
         public IList<string> UserGroups { get; set; }
-        public IDictionary<string, object> LdapAttrs { get; set; }
 
         public IServiceProvider RequestServices { get; set; }
         public IUdpClient UdpClient { get; }
@@ -89,17 +88,19 @@ namespace MultiFactor.Radius.Adapter.Framework.Context
         public void SetFirstFactorAuth(AuthenticationCode code) => Authentication.SetFirstFactor(code);
         public void SetSecondFactorAuth(AuthenticationCode code) => Authentication.SetSecondFactor(code);
 
-        public void SetProfile(ILdapProfile profile)
+        public LdapProfile Profile { get; private set; }
+
+        public void SetProfile(LdapProfile profile)
         {
-            _ldapProfile = profile ?? throw new ArgumentNullException(nameof(profile));
+            Profile = profile ?? throw new ArgumentNullException(nameof(profile));
         }
 
         public void CopyProfileToContext(RadiusContext other)
         {
             // null if no AD request. winlogon, for example
-            if (_ldapProfile != null)
+            if (Profile != null)
             {
-                other.SetProfile(_ldapProfile);
+                other.SetProfile(Profile);
             }
         }
     }

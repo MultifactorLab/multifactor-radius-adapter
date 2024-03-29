@@ -1,11 +1,9 @@
 ﻿using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using MultiFactor.Radius.Adapter.Configuration;
-using MultiFactor.Radius.Adapter.Configuration.Core;
-using MultiFactor.Radius.Adapter.Core.Ldap;
 using MultiFactor.Radius.Adapter.Services.Ldap;
 using MultiFactor.Radius.Adapter.Services.Ldap.MembershipVerification;
-using MultiFactor.Radius.Adapter.Services.Ldap.ProfileLoading;
+using MultiFactor.Radius.Adapter.Services.Ldap.Profile;
 using MultiFactor.Radius.Adapter.Tests.Fixtures;
 using MultiFactor.Radius.Adapter.Tests.Fixtures.ConfigLoading;
 
@@ -49,14 +47,16 @@ namespace MultiFactor.Radius.Adapter.Tests
             var client = new ClientConfiguration("custom", "shared_secret", AuthenticationSource.None, "key", "secret")
                 .SetActiveDirectoryDomain("domain.local")
                 .AddActiveDirectoryGroup("Security Group");
-            var profile = new LdapProfile(LdapIdentity.BaseDn("CN=User Name,CN=Users,DC=domain,DC=local"), "CN=User Name,CN=Users,DC=domain,DC=local")
-                .SetDisplayName("User Name")
-                .SetEmail("username@post.org")
-                .SetUpn("user.name@domain.local")
-                .AddLdapAttr("sAMAccountName", "user.name")
-                .AddLdapAttr("userPrincipalName", "user.name@domain.local")
-                .AddMemberOf("Users")
-                .AddMemberOf("Security Group");
+            var attrs = new LdapAttributes()
+                .Add("displayName", "User Name")
+                .Add("mail", "username@post.org")
+                .Add("userPrincipalName", "user.name@domain.local")
+                .Add("sAMAccountName", "user.name")
+                .Add("memberOf", new[] { "Users", "Security Group" });
+            var profile = new LdapProfile(LdapIdentity.BaseDn("CN=User Name,CN=Users,DC=domain,DC=local"),
+                attrs,
+                Array.Empty<string>(),
+                null);
 
             var verifier = host.Service<MembershipVerifier>();
             var result = verifier.VerifyMembership(client, profile, client.SplittedActiveDirectoryDomains[0], profile.ExtractUpnBasedUser());
@@ -146,14 +146,13 @@ namespace MultiFactor.Radius.Adapter.Tests
             var client = new ClientConfiguration("custom", "shared_secret", AuthenticationSource.None, "key", "secret")
                 .SetActiveDirectoryDomain("domain.local")
                 .AddActiveDirectory2FaGroup("2FA Group");
-            var profile = new LdapProfile(LdapIdentity.BaseDn("CN=User Name,CN=Users,DC=domain,DC=local"), "CN=User Name,CN=Users,DC=domain,DC=local")
-                .SetDisplayName("User Name")
-                .SetEmail("username@post.org")
-                .SetUpn("user.name@domain.local")
-                .AddLdapAttr("sAMAccountName", "user.name")
-                .AddLdapAttr("userPrincipalName", "user.name@domain.local")
-                .AddMemberOf("Users")
-                .AddMemberOf("2FA Group");
+            var attrs = new LdapAttributes();
+            attrs.Add("displayName", "User Name")
+                .Add("mail", "username@post.org")
+                .Add("userPrincipalName", "user.name@domain.local")
+                .Add("sAMAccountName", "user.name")
+                .Add("memberOf", new[] { "Users", "2FA Group" });
+            var profile = new LdapProfile(LdapIdentity.BaseDn("CN=User Name,CN=Users,DC=domain,DC=local"), attrs, Array.Empty<string>(), null);
 
             var verifier = host.Service<MembershipVerifier>();
             var result = verifier.VerifyMembership(client, profile, client.SplittedActiveDirectoryDomains[0], profile.ExtractUpnBasedUser());
@@ -244,14 +243,13 @@ namespace MultiFactor.Radius.Adapter.Tests
             var client = new ClientConfiguration("custom", "shared_secret", AuthenticationSource.None, "key", "secret")
                 .SetActiveDirectoryDomain("domain.local")
                 .AddActiveDirectory2FaBypassGroup("2FA Bypass Group");
-            var profile = new LdapProfile(LdapIdentity.BaseDn("CN=User Name,CN=Users,DC=domain,DC=local"), "CN=User Name,CN=Users,DC=domain,DC=local")
-                .SetDisplayName("User Name")
-                .SetEmail("username@post.org")
-                .SetUpn("user.name@domain.local")
-                .AddLdapAttr("sAMAccountName", "user.name")
-                .AddLdapAttr("userPrincipalName", "user.name@domain.local")
-                .AddMemberOf("Users")
-                .AddMemberOf("2FA Bypass Group");
+            var attrs = new LdapAttributes();
+            attrs.Add("displayName", "User Name")
+                .Add("mail", "username@post.org")
+                .Add("userPrincipalName", "user.name@domain.local")
+                .Add("sAMAccountName", "user.name")
+                .Add("memberOf", new[] { "Users", "2FA Bypass Group"});
+            var profile = new LdapProfile(LdapIdentity.BaseDn("CN=User Name,CN=Users,DC=domain,DC=local"), attrs, Array.Empty<string>(), null);
 
             var verifier = host.Service<MembershipVerifier>();
             var result = verifier.VerifyMembership(client, profile, client.SplittedActiveDirectoryDomains[0], profile.ExtractUpnBasedUser());
@@ -276,16 +274,13 @@ namespace MultiFactor.Radius.Adapter.Tests
                 .AddActiveDirectoryGroup("Security Group")
                 .AddActiveDirectory2FaGroup("2FA Group")
                 .AddActiveDirectory2FaBypassGroup("2FA Bypass Group");
-            var profile = new LdapProfile(LdapIdentity.BaseDn("CN=User Name,CN=Users,DC=domain,DC=local"), "CN=User Name,CN=Users,DC=domain,DC=local")
-                .SetDisplayName("User Name")
-                .SetEmail("username@post.org")
-                .SetUpn("user.name@domain.local")
-                .AddLdapAttr("sAMAccountName", "user.name")
-                .AddLdapAttr("userPrincipalName", "user.name@domain.local")
-                .AddMemberOf("Users")
-                .AddMemberOf("2FA Bypass Group")
-                .AddMemberOf("2FA Group")
-                .AddMemberOf("Security Group");
+            var attrs = new LdapAttributes();
+            attrs.Add("displayName", "User Name")
+                .Add("mail", "username@post.org")
+                .Add("userPrincipalName", "user.name@domain.local")
+                .Add("sAMAccountName", "user.name")
+                .Add("memberOf", new[] { "Users", "2FA Bypass Group", "2FA Group", "Security Group" });
+            var profile = new LdapProfile(LdapIdentity.BaseDn("CN=User Name,CN=Users,DC=domain,DC=local"), attrs, Array.Empty<string>(), null);
 
             var verifier = host.Service<MembershipVerifier>();
             var result = verifier.VerifyMembership(client, profile, client.SplittedActiveDirectoryDomains[0], profile.ExtractUpnBasedUser());
@@ -295,15 +290,19 @@ namespace MultiFactor.Radius.Adapter.Tests
             result.IsMemberOf2FaBypassGroup.Should().BeTrue();
         }
 
-        private static ILdapProfile GetProfile()
+        private static LdapProfile GetProfile()
         {
-            return new LdapProfile(LdapIdentity.BaseDn("CN=User Name,CN=Users,DC=domain,DC=local"), "CN=User Name,CN=Users,DC=domain,DC=local")
-                .SetDisplayName("User Name")
-                .SetEmail("username@post.org")
-                .SetUpn("user.name@domain.local")
-                .AddLdapAttr("sAMAccountName", "user.name")
-                .AddLdapAttr("userPrincipalName", "user.name@domain.local")
-                .AddMemberOf("Users");
+            var attrs = new LdapAttributes()
+                .Add("displayName", "User Name")
+                .Add("mail", "username@post.org")
+                .Add("userPrincipalName", "user.name@domain.local")
+                .Add("sAMAccountName", "user.name")
+                .Add("memberOf", "Users");
+            return new LdapProfile(
+                LdapIdentity.BaseDn("CN=User Name,CN=Users,DC=domain,DC=local"), 
+                attrs,
+                Array.Empty<string>(),
+                null);
         }
     }
 }

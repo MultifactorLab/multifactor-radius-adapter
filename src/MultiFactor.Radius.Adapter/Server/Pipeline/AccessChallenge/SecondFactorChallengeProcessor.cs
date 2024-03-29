@@ -105,7 +105,7 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.AccessChallenge
                     {
                         context.UserGroups = stateChallengePendingRequest.UserGroups;
                         context.ResponsePacket = stateChallengePendingRequest.ResponsePacket;
-                        context.LdapAttrs = stateChallengePendingRequest.LdapAttrs;
+                        context.Profile.UpdateAttributes(stateChallengePendingRequest.Profile.Attributes);
                     }
 
                     RemoveStateChallengeRequest(identifier);

@@ -1,6 +1,5 @@
 ﻿using FluentAssertions;
 using Microsoft.Extensions.Logging;
-using Microsoft.VisualStudio.TestPlatform.CommunicationUtilities;
 using Moq;
 using MultiFactor.Radius.Adapter.Configuration;
 using MultiFactor.Radius.Adapter.Configuration.Core;
@@ -9,7 +8,7 @@ using MultiFactor.Radius.Adapter.Framework.Context;
 using MultiFactor.Radius.Adapter.Server;
 using MultiFactor.Radius.Adapter.Server.Pipeline.AccessChallenge;
 using MultiFactor.Radius.Adapter.Services.Ldap;
-using MultiFactor.Radius.Adapter.Services.Ldap.ProfileLoading;
+using MultiFactor.Radius.Adapter.Services.Ldap.Profile;
 using MultiFactor.Radius.Adapter.Services.MultiFactorApi;
 using MultiFactor.Radius.Adapter.Services.MultiFactorApi.Models;
 using MultiFactor.Radius.Adapter.Tests.Fixtures.Radius;
@@ -177,14 +176,11 @@ namespace MultiFactor.Radius.Adapter.Tests
                     "User Group 1",
                     "User Group 2"
                 },
-                LdapAttrs = new Dictionary<string, object>
-                {
-                    { "sAmaccountName", "user name" }
-                },
                 State = reqId
             };
             var testDn = "CN=User Name,CN=Users,DC=domain,DC=local";
-            context.SetProfile(new LdapProfile(LdapIdentity.BaseDn(testDn), testDn).SetIdentityAttribute("multifactor"));
+            var attrs = new LdapAttributes().Add("sAmaccountName", "user name");
+            context.SetProfile(new LdapProfile(LdapIdentity.BaseDn(testDn), attrs, Array.Empty<string>(), null).SetIdentityAttribute("multifactor"));
             processor.AddState(context);
             var newPacket = RadiusPacketFactory.AccessChallenge(x =>
             {
@@ -202,7 +198,7 @@ namespace MultiFactor.Radius.Adapter.Tests
             Assert.Equal(ChallengeCode.Accept, result);
 
             newContext.UserGroups.Should().BeEquivalentTo(context.UserGroups);
-            newContext.LdapAttrs.Should().BeEquivalentTo(context.LdapAttrs);
+            newContext.Profile.Attributes.Should().BeEquivalentTo(context.Profile.Attributes);
         }
     }
 }

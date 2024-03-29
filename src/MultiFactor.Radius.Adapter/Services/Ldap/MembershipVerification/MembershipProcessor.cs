@@ -7,7 +7,7 @@ using MultiFactor.Radius.Adapter.Configuration.Core;
 using MultiFactor.Radius.Adapter.Core.Ldap;
 using MultiFactor.Radius.Adapter.Framework.Context;
 using MultiFactor.Radius.Adapter.Services.Ldap.Connection;
-using MultiFactor.Radius.Adapter.Services.Ldap.ProfileLoading;
+using MultiFactor.Radius.Adapter.Services.Ldap.Profile;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -49,7 +49,7 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.MembershipVerification
                 return result;
             }
 
-            ILdapProfile profile = null;
+            LdapProfile profile = null;
             //trying to authenticate for each domain/forest
             foreach (var domain in context.Configuration.SplittedActiveDirectoryDomains)
             {
@@ -87,7 +87,7 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.MembershipVerification
         /// <summary>
         /// Load required attribute and set it in user profile
         /// </summary>
-        public async Task<ILdapProfile> LoadProfileWithRequiredAttributeAsync(RadiusContext request, IClientConfiguration clientConfig, string attr)
+        public async Task<LdapProfile> LoadProfileWithRequiredAttributeAsync(RadiusContext request, IClientConfiguration clientConfig, string attr)
         {
             var userName = request.UserName;
             if (string.IsNullOrEmpty(userName))
@@ -116,7 +116,8 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.MembershipVerification
                             continue;
                         }
 
-                        var profile = new LdapProfile(domainIdentity, domain);
+                        var attrs = new LdapAttributes(attributes);
+                        var profile = new LdapProfile(domainIdentity, attrs, clientConfig.PhoneAttributes, clientConfig.TwoFAIdentityAttribute);
                         profile.SetIdentityAttribute(attributes[attr].FirstOrDefault());
                         return profile;
                     }

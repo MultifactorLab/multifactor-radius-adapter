@@ -5,7 +5,7 @@
 using Microsoft.Extensions.Logging;
 using MultiFactor.Radius.Adapter.Configuration.Core;
 using MultiFactor.Radius.Adapter.Core.Ldap;
-using MultiFactor.Radius.Adapter.Services.Ldap.ProfileLoading;
+using MultiFactor.Radius.Adapter.Services.Ldap.Profile;
 using System;
 using System.Linq;
 
@@ -20,7 +20,7 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.MembershipVerification
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
-        public MembershipVerificationResult VerifyMembership(IClientConfiguration clientConfig, ILdapProfile profile, string domain, LdapIdentity user)
+        public MembershipVerificationResult VerifyMembership(IClientConfiguration clientConfig, LdapProfile profile, string domain, LdapIdentity user)
         {
             if (clientConfig is null) throw new ArgumentNullException(nameof(clientConfig));
             if (profile is null) throw new ArgumentNullException(nameof(profile));
@@ -88,9 +88,9 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.MembershipVerification
             return resBuilder.Build();
         }
 
-        private bool IsMemberOf(ILdapProfile profile, string group)
+        private bool IsMemberOf(LdapProfile profile, string group)
         {
-            return profile.MemberOf?.Any(g => g.ToLower() == group.ToLower().Trim()) ?? false;
+            return profile.MemberOf.Any(g => g.ToLower() == group.ToLower().Trim());
         }
     }
 }

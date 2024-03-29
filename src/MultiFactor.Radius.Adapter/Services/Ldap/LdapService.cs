@@ -12,7 +12,7 @@ using MultiFactor.Radius.Adapter.Core.Services.Ldap;
 using MultiFactor.Radius.Adapter.Framework.Context;
 using MultiFactor.Radius.Adapter.Services.BindIdentityFormatting;
 using MultiFactor.Radius.Adapter.Services.Ldap.Connection;
-using MultiFactor.Radius.Adapter.Services.Ldap.ProfileLoading;
+using MultiFactor.Radius.Adapter.Services.Ldap.Profile;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -135,7 +135,6 @@ public class LdapService
                 }
 
                 context.SetProfile(profile);
-                context.LdapAttrs = profile.LdapAttrs.ToDictionary(k => k.Key, v => v.Value);
 
                 if (profile.MemberOf != null)
                 {
@@ -186,9 +185,9 @@ public class LdapService
         return new LdapIdentity { Name = defaultNamingContext, Type = IdentityType.DistinguishedName };
     }
 
-    protected bool IsMemberOf(ILdapProfile profile, string group)
+    protected bool IsMemberOf(LdapProfile profile, string group)
     {
-        return profile.MemberOf?.Any(g => g.ToLower() == group.ToLower().Trim()) ?? false;
+        return profile.MemberOf.Any(g => g.ToLower() == group.ToLower().Trim());
     }
 
     protected async Task<IList<LdapEntry>> Query(LdapConnection connection, string baseDn, string filter, LdapSearchScope scope, params string[] attributes)

@@ -3,16 +3,16 @@ using LdapForNet;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using MultiFactor.Radius.Adapter.Configuration;
-using MultiFactor.Radius.Adapter.Configuration.Core;
 using MultiFactor.Radius.Adapter.Core.Exceptions;
 using MultiFactor.Radius.Adapter.Core.Ldap;
 using MultiFactor.Radius.Adapter.Server;
 using MultiFactor.Radius.Adapter.Services.Ldap;
-using MultiFactor.Radius.Adapter.Services.Ldap.ProfileLoading;
+using MultiFactor.Radius.Adapter.Services.Ldap.Profile;
 using MultiFactor.Radius.Adapter.Tests.Fixtures;
 using MultiFactor.Radius.Adapter.Tests.Fixtures.ConfigLoading;
 using MultiFactor.Radius.Adapter.Tests.Fixtures.LdapResponse;
 using static LdapForNet.Native.Native;
+using LdapAttributes = MultiFactor.Radius.Adapter.Services.Ldap.Profile.LdapAttributes;
 
 namespace MultiFactor.Radius.Adapter.Tests;
 
@@ -60,13 +60,14 @@ public class ProfileLoaderTests
             });
         });
 
-        var expectedProfile = new LdapProfile(LdapIdentity.BaseDn("CN=User Name,CN=Users,DC=domain,DC=local"), "CN=User Name,CN=Users,DC=domain,DC=local")
-            .SetDisplayName("User Name")
-            .SetEmail("username@post.org")
-            .SetUpn("user.name@domain.local")
-            .AddLdapAttr("sAMAccountName", "user.name")
-            .AddLdapAttr("userPrincipalName", "user.name@domain.local")
-            .AddMemberOf("Users");
+        var attrs = new LdapAttributes();
+        var baseDn = LdapIdentity.BaseDn("CN=User Name,CN=Users,DC=domain,DC=local");
+        var expectedProfile = new LdapProfile(baseDn, attrs, Array.Empty<string>(), null);
+        attrs.Add("displayName", "User Name")
+            .Add("mail", "username@post.org")
+            .Add("userPrincipalName", "user.name@domain.local")
+            .Add("sAMAccountName", "user.name")
+            .Add("memberOf", "Users");
 
         var entry = LdapEntryFactory.Create("CN=User Name,CN=Users,DC=domain,DC=local", x =>
         {
@@ -101,7 +102,7 @@ public class ProfileLoaderTests
         profile.Email.Should().Be(expectedProfile.Email);
         profile.Phone.Should().Be(expectedProfile.Phone);
         profile.Upn.Should().Be(expectedProfile.Upn);
-        profile.LdapAttrs.Should().BeEmpty();
+        profile.Attributes.Keys.Should().BeEmpty();
         profile.MemberOf.Should().BeEquivalentTo(expectedProfile.MemberOf);
         profile.SecondFactorIdentity.Should().BeEquivalentTo(expectedProfile.Email);
     }
@@ -117,9 +118,12 @@ public class ProfileLoaderTests
             });
         });
 
-        var expectedProfile = new LdapProfile(LdapIdentity.BaseDn("CN=User Name,CN=Users,DC=domain,DC=local"), "CN=User Name,CN=Users,DC=domain,DC=local")
-            .AddLdapAttr("givenName", "User")
-            .AddLdapAttr("displayName", "User Name");
+        var attrs = new LdapAttributes();
+        var baseDn = LdapIdentity.BaseDn("CN=User Name,CN=Users,DC=domain,DC=local");
+        var expectedProfile = new LdapProfile(baseDn, attrs, Array.Empty<string>(), null);
+        attrs.Add("givenName", "User")
+            .Add("displayName", "User Name")
+            .Add("", "CN=User Name,CN=Users,DC=domain,DC=local");
 
         var entry = LdapEntryFactory.Create("CN=User Name,CN=Users,DC=domain,DC=local", x =>
         {
@@ -146,6 +150,6 @@ public class ProfileLoaderTests
 
         var profile = await loader.LoadAsync(clientConfig, adapter.Object, LdapIdentity.ParseUser("some.user@domain.local"));
 
-        profile.LdapAttrs.Should().BeEquivalentTo(expectedProfile.LdapAttrs);
+        profile.Attributes.Should().BeEquivalentTo(expectedProfile.Attributes);
     }
 }

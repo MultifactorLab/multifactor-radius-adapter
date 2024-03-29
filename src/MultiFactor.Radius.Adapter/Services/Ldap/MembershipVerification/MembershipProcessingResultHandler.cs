@@ -51,7 +51,7 @@ namespace MultiFactor.Radius.Adapter.Services.ActiveDirectory.MembershipVerifica
                 context.SetSecondFactorAuth(AuthenticationCode.Bypass);
             }
 
-            context.LdapAttrs = profile.LdapAttrs.ToDictionary(k => k.Key, v => v.Value);
+            context.Profile.UpdateAttributes(profile.Attributes);
 
             if (profile.MemberOf != null)
             {

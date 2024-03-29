@@ -8,7 +8,6 @@ using MultiFactor.Radius.Adapter.Configuration;
 using MultiFactor.Radius.Adapter.Core.Radius;
 using MultiFactor.Radius.Adapter.Configuration.Features.PrivacyModeFeature;
 using Microsoft.Extensions.Logging;
-using MultiFactor.Radius.Adapter.Services.Ldap.ProfileLoading;
 using MultiFactor.Radius.Adapter.Services.Ldap;
 using MultiFactor.Radius.Adapter.Services.MultiFactorApi.Dto;
 using MultiFactor.Radius.Adapter.Framework.Context;
@@ -18,6 +17,7 @@ using Microsoft.Extensions.DependencyInjection;
 using MultiFactor.Radius.Adapter.Tests.Fixtures.ConfigLoading;
 using Elastic.CommonSchema;
 using static MultiFactor.Radius.Adapter.Services.MultiFactorApi.Literals;
+using MultiFactor.Radius.Adapter.Services.Ldap.Profile;
 
 namespace MultiFactor.Radius.Adapter.Tests
 {
@@ -238,7 +238,7 @@ namespace MultiFactor.Radius.Adapter.Tests
                 x.RemoteEndpoint = new IPEndPoint(IPAddress.Any, 636);
             });
 
-            var profile = new LdapProfile(LdapIdentity.ParseUser("test_user@multifactor.ru"), "dn").SetIdentityAttribute("some_attr_value");
+            var profile = new LdapProfile(LdapIdentity.ParseUser("test_user@multifactor.ru"), new LdapAttributes(), Array.Empty<string>(), "some_attr_value");
             context.SetProfile(profile);
 
             var adapter = host.Service<MultifactorApiAdapter>();
@@ -278,7 +278,7 @@ namespace MultiFactor.Radius.Adapter.Tests
                 x.RemoteEndpoint = new IPEndPoint(IPAddress.Any, 636);
             });
 
-            var profile = new LdapProfile(LdapIdentity.ParseUser("test_user@multifactor.ru"), "dn");
+            var profile = new LdapProfile(LdapIdentity.ParseUser("test_user@multifactor.ru"), new LdapAttributes(), Array.Empty<string>(), null);
             context.SetProfile(profile);
 
             var adapter = host.Service<MultifactorApiAdapter>();

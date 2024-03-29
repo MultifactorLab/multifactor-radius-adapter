@@ -6,6 +6,7 @@ using MultiFactor.Radius.Adapter.Configuration.Core;
 using MultiFactor.Radius.Adapter.Core.Radius.Attributes;
 using MultiFactor.Radius.Adapter.Server;
 using MultiFactor.Radius.Adapter.Server.Pipeline.PostProcessing;
+using MultiFactor.Radius.Adapter.Services.Ldap.Profile;
 using MultiFactor.Radius.Adapter.Tests.Fixtures;
 using MultiFactor.Radius.Adapter.Tests.Fixtures.ConfigLoading;
 using MultiFactor.Radius.Adapter.Tests.Fixtures.Radius;
@@ -237,12 +238,9 @@ namespace MultiFactor.Radius.Adapter.Tests
             var context = host.CreateContext(requestPacket: RadiusPacketFactory.AccessRequest(), clientConfig: clientConfig, x =>
             {
                 x.ResponsePacket = RadiusPacketFactory.AccessRequest();
-                x.LdapAttrs = new Dictionary<string, object>
-                {
-                    { "givenName", "Given Name" },
-                    { "displayName", "Display Name" },
-                };
             });
+            var attrs = new LdapAttributes().Add("givenName", "Given Name").Add("displayName", "Display Name");
+            context.Profile.UpdateAttributes(attrs);
 
             var srv = host.Service<RadiusReplyAttributeEnricher>();
             srv.RewriteReplyAttributes(context);

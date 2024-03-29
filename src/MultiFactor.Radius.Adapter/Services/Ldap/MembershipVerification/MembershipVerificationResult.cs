@@ -3,7 +3,7 @@
 //https://github.com/MultifactorLab/MultiFactor.Radius.Adapter/blob/master/LICENSE.md
 
 using MultiFactor.Radius.Adapter.Core.Ldap;
-using MultiFactor.Radius.Adapter.Services.Ldap.ProfileLoading;
+using MultiFactor.Radius.Adapter.Services.Ldap.Profile;
 using System;
 
 namespace MultiFactor.Radius.Adapter.Services.Ldap.MembershipVerification
@@ -32,7 +32,7 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.MembershipVerification
         /// <summary>
         /// User profile from the current domain.
         /// </summary>
-        public ILdapProfile Profile { get; private set; }
+        public LdapProfile Profile { get; private set; }
 
         protected MembershipVerificationResult(string domain)
         {
@@ -61,7 +61,7 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.MembershipVerification
                 return this;
             }
 
-            public MembershipVerificationResultBuilder SetProfile(ILdapProfile profile)
+            public MembershipVerificationResultBuilder SetProfile(LdapProfile profile)
             {
                 _result.Profile = profile;
                 return this;
