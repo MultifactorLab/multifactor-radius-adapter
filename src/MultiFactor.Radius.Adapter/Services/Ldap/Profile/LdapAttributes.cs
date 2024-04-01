@@ -8,6 +8,11 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.Profile;
 
 internal class LdapAttributes : ILdapAttributes
 {
+    private readonly string[] _zeroOrSingleValueAttrs = new[]
+    {
+        "distinguishedName"
+    };
+
     private readonly Dictionary<string, List<string>> _attrs;
 
     public ReadOnlyCollection<string> Keys => new ReadOnlyCollection<string>(_attrs.Keys.ToList());
@@ -42,12 +47,6 @@ internal class LdapAttributes : ILdapAttributes
         if (source is null)
         {
             throw new ArgumentNullException(nameof(source));
-        }
-
-        if (source is LdapAttributes ldapAttributes)
-        {
-            _attrs = ldapAttributes._attrs;
-            return;
         }
 
         _attrs = new Dictionary<string, List<string>>();
@@ -120,6 +119,8 @@ internal class LdapAttributes : ILdapAttributes
 
         _attrs[attr].AddRange(value);
         _attrs[attr] = _attrs[attr].Where(x => x is not null).Distinct().ToList();
+
+        Validate(attr, _attrs[attr]);
         return this;
     }
     
@@ -154,6 +155,15 @@ internal class LdapAttributes : ILdapAttributes
         var attr = attribute.ToLower(CultureInfo.InvariantCulture);
         _attrs[attr] = new List<string>(value);
 
+        Validate(attr, _attrs[attr]);
         return this;
+    }
+
+    private void Validate(string attribute, IReadOnlyList<string> value)
+    {
+        if (_zeroOrSingleValueAttrs.Contains(attribute, StringComparer.OrdinalIgnoreCase) && value.Count > 1)
+        {
+            throw new InvalidOperationException($"Attribute '{attribute}' can only have one value");
+        }
     }
 }

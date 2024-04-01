@@ -182,7 +182,7 @@ public class LdapService
 
         var defaultNamingContext = result.DirectoryAttributes["defaultNamingContext"].GetValue<string>();
 
-        return new LdapIdentity { Name = defaultNamingContext, Type = IdentityType.DistinguishedName };
+        return new LdapIdentity(defaultNamingContext, IdentityType.DistinguishedName);
     }
 
     protected bool IsMemberOf(LdapProfile profile, string group)

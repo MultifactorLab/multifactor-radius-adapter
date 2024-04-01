@@ -6,8 +6,19 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap
 {
     public class LdapIdentity
     {
-        public string Name { get; set; }
-        public IdentityType Type { get; set; }
+        public string Name { get; private set; }
+        public IdentityType Type { get; private set; }
+
+        public LdapIdentity (string name, IdentityType type)
+        {
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                throw new ArgumentException($"'{nameof(name)}' cannot be null or whitespace.", nameof(name));
+            }
+
+            Name = name;
+            Type = type;
+        }
 
         public static LdapIdentity ParseUser(string name)
         {
@@ -35,11 +46,7 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap
             var domains = name.Split(new[] { '.' }, StringSplitOptions.RemoveEmptyEntries);
             var dn = domains.Select(p => $"DC={p}").ToArray();
 
-            return new LdapIdentity
-            {
-                Name = string.Join(",", dn),
-                Type = IdentityType.DistinguishedName
-            };
+            return new LdapIdentity(string.Join(",", dn), IdentityType.DistinguishedName);
         }
         
         /// <summary>
@@ -49,11 +56,7 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap
         {
             var ncs = dn.Split(new[] { ',' } , StringSplitOptions.RemoveEmptyEntries);
             var baseDn = ncs.Where(nc => nc.ToLower().StartsWith("dc="));
-            return new LdapIdentity
-            {
-                Type = IdentityType.DistinguishedName,
-                Name = string.Join(",", baseDn)
-            };
+            return new LdapIdentity(string.Join(",", baseDn), IdentityType.DistinguishedName);
         }
 
         private static LdapIdentity Parse(string name, bool isUser)
@@ -80,11 +83,7 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap
                 type = IdentityType.UserPrincipalName;
             }
 
-            return new LdapIdentity
-            {
-                Name = identity,
-                Type = type
-            };
+            return new LdapIdentity(identity, type);
         }
 
         /// <summary>

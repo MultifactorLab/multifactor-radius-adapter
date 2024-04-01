@@ -73,7 +73,7 @@ namespace MultiFactor.Radius.Adapter.Framework.Context
         /// <summary>
         /// Should use for 2FA request to MFA API.
         /// </summary>
-        public string SecondFactorIdentity => Configuration.UseIdentityAttribute ? Profile?.SecondFactorIdentity : UserName;
+        public string SecondFactorIdentity => Configuration.UseIdentityAttribute ? Profile.SecondFactorIdentity : UserName;
         public IList<string> UserGroups { get; set; }
 
         public IServiceProvider RequestServices { get; set; }

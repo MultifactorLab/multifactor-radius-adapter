@@ -14,7 +14,7 @@ public class LdapProfile
     private string _secondFactorIdentityAttr;
 
     public LdapIdentity BaseDn { get; set; }
-    public string DistinguishedName => Attributes.GetValue("distinguishedname");
+    public string DistinguishedName => Attributes.GetValue("distinguishedName");
     public string DistinguishedNameEscaped => EscapeDn(DistinguishedName);
 
     public string Upn => Attributes.GetValue("userprincipalname");
@@ -94,8 +94,9 @@ public class LdapProfile
         return this;
     }
 
-    public void UpdateAttributes(ILdapAttributes attributes)
+    public LdapProfile UpdateAttributes(ILdapAttributes attributes)
     {
         Attributes = attributes ?? throw new ArgumentNullException(nameof(attributes));
+        return this;
     }
 }

@@ -48,10 +48,17 @@ public class ProfileLoader
         var profile = new LdapProfile(LdapIdentity.BaseDn(entry.Dn), profileAttributes, clientConfig.PhoneAttributes, clientConfig.TwoFAIdentityAttribute);
 
         var attrs = entry.DirectoryAttributes;
-        foreach (var attr in queryAttributes.Where(x => !x.Equals("memberof", StringComparison.OrdinalIgnoreCase)))
+        var keys = queryAttributes.Where(x => !x.Equals("memberof", StringComparison.OrdinalIgnoreCase));
+        foreach (var key in keys)
         {
-            var value = attrs[attr]?.GetValues<string>().Cast<string>().ToArray() ?? Array.Empty<string>();
-            profileAttributes.Add(attr, value);
+            if (!attrs.Contains(key))
+            {
+                profileAttributes.Add(key, Array.Empty<string>());
+                continue;
+            }     
+            
+            var values = attrs[key].GetValues<string>();
+            profileAttributes.Add(key, values);    
         }
 
         //groups

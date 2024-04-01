@@ -81,10 +81,7 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap
                 throw new ArgumentException($"'{nameof(defaultNamingContext)}' cannot be null or whitespace.", nameof(defaultNamingContext));
             }
 
-            return new LdapDomain(new LdapIdentity 
-            { 
-                Name = defaultNamingContext, Type = IdentityType.DistinguishedName 
-            });
+            return new LdapDomain(new LdapIdentity(defaultNamingContext, IdentityType.DistinguishedName));
         }
     }
 }
