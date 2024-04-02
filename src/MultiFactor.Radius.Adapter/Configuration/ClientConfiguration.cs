@@ -85,7 +85,7 @@ namespace MultiFactor.Radius.Adapter.Configuration
         /// </summary>
         public bool BypassSecondFactorWhenApiUnreachable { get; private set; }
 
-        public PrivacyModeDescriptor PrivacyMode { get; private set; }
+        public PrivacyModeDescriptor PrivacyMode { get; private set; } = PrivacyModeDescriptor.Default;
 
         /// <summary>
         /// Active Directory Domain

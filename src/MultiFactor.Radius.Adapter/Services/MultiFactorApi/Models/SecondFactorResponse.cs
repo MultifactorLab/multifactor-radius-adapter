@@ -3,7 +3,8 @@
 //https://github.com/MultifactorLab/multifactor-radius-adapter/blob/main/LICENSE.md
 
 using MultiFactor.Radius.Adapter.Core.Radius;
+using MultiFactor.Radius.Adapter.Framework.Context;
 
 namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi.Models;
 
-public record SecondFactorResponse(PacketCode Code, string State = null, string ReplyMessage = null);
+public record SecondFactorResponse(AuthenticationCode Code, string State = null, string ReplyMessage = null);

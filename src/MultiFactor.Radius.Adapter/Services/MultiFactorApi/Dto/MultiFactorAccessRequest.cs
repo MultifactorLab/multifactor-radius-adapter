@@ -9,7 +9,7 @@ public class AccessRequestDto
     public string Id { get; set; }
     public string Identity { get; set; }
     public string Phone { get; set; }
-    public string Status { get; set; }
+    public RequestStatus Status { get; set; }
     public string ReplyMessage { get; set; }
     public bool Bypassed { get; set; }
     public string Authenticator { get; set; }
@@ -23,7 +23,7 @@ public class AccessRequestDto
     {
         get
         {
-            return new AccessRequestDto { Status = Literals.RadiusCode.Granted, Bypassed = true };
+            return new AccessRequestDto { Status = RequestStatus.Granted, Bypassed = true };
         }
     }
 }

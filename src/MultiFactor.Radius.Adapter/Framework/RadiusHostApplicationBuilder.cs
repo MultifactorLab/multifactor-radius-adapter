@@ -75,13 +75,13 @@ internal class RadiusHostApplicationBuilder
     {
         var requestDelegate = BuildRequestDelegate();
         Services.AddSingleton(requestDelegate);
-        Services.AddSingleton<IRadiusPipeline, RadiusPipeline>();
+        Services.AddSingleton<RadiusPipeline>();
 
         return InternalHostApplicationBuilder.Build();
     }
 
     /// <summary>
-    /// Composes a chain from the delegates.<br/>
+    /// Composes a chain of the delegates.<br/>
     /// From the list [delegate1, delegate2, delegate3] you will get the following call chain:
     /// <code>
     /// delegate1(RadiusContext context) 

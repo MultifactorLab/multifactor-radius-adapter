@@ -71,5 +71,25 @@ namespace MultiFactor.Radius.Adapter.Tests.Pipeline
 
             context.Authentication.FirstFactor.Should().Be(AuthenticationCode.Accept);
         }
+        
+        [Fact]
+        public async Task Invoke_FirstFactorSourceIsNoneAndNoMembershipVerification_ShouldSetAcceptState()
+        {
+            var host = TestHostFactory.CreateHost(builder =>
+            {
+                builder.Services.Configure<TestConfigProviderOptions>(x =>
+                {
+                    x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-single.config");
+                });
+
+                builder.UseMiddleware<AnonymousFirstFactorAuthenticationMiddleware>();
+            });
+
+            var client = new ClientConfiguration("custom", "shared_secret", AuthenticationSource.None, "key", "secret");
+            var context = host.CreateContext(RadiusPacketFactory.AccessRequest(), clientConfig: client);
+            await host.InvokePipeline(context);
+
+            Assert.Equal(AuthenticationCode.Accept, context.Authentication.FirstFactor);
+        }
     }
 }

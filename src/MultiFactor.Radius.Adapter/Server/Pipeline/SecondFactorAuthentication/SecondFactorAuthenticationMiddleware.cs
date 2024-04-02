@@ -86,17 +86,13 @@ public class SecondFactorAuthenticationMiddleware : IRadiusMiddleware
         context.State = response.State;
         context.ReplyMessage = response.ReplyMessage;
 
-        if (response.Code == PacketCode.AccessChallenge)
+        context.SetSecondFactorAuth(response.Code);
+        context.ResponseCode = context.Authentication.ToPacketCode();
+
+        if (response.Code == AuthenticationCode.Awaiting)
         {
             _challengeProcessor.AddState(context);
-            context.ResponseCode = context.Authentication.ToPacketCode();
             return;
-        }
-
-        if (context.ResponseCode == PacketCode.AccessAccept)
-        {
-            context.Authentication.SetSecondFactor(AuthenticationCode.Accept);
-            context.ResponseCode = context.Authentication.ToPacketCode();
         }
 
         await next(context);

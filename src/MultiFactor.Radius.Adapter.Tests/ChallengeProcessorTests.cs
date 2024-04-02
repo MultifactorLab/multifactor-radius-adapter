@@ -158,7 +158,7 @@ namespace MultiFactor.Radius.Adapter.Tests
 
             var adapter = new Mock<IMultifactorApiAdapter>();
             adapter.Setup(x => x.ChallengeAsync(It.IsAny<RadiusContext>(), It.IsAny<string>(), It.IsAny<ChallengeRequestIdentifier>()))
-                .ReturnsAsync(new ChallengeResponse(PacketCode.AccessAccept));
+                .ReturnsAsync(new ChallengeResponse(AuthenticationCode.Accept));
             var logger = new Mock<ILogger<SecondFactorChallengeProcessor>>();
             var processor = new SecondFactorChallengeProcessor(adapter.Object, logger.Object);
 

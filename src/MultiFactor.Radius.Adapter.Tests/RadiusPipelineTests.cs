@@ -23,10 +23,6 @@ namespace MultiFactor.Radius.Adapter.Tests
                 });
 
                 builder.Services.ReplaceService(postProcessor.Object);
-
-                builder.Services.RemoveService<IRadiusPipeline>();
-                builder.Services.AddSingleton<RadiusPipeline>();
-                builder.Services.AddSingleton<IRadiusPipeline>(prov => prov.GetRequiredService<RadiusPipeline>());
             });
 
             var context = host.CreateContext(RadiusPacketFactory.AccessRequest());

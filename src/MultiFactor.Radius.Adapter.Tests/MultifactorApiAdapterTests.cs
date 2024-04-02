@@ -7,17 +7,14 @@ using MultiFactor.Radius.Adapter.Services;
 using MultiFactor.Radius.Adapter.Configuration;
 using MultiFactor.Radius.Adapter.Core.Radius;
 using MultiFactor.Radius.Adapter.Configuration.Features.PrivacyModeFeature;
-using Microsoft.Extensions.Logging;
 using MultiFactor.Radius.Adapter.Services.Ldap;
 using MultiFactor.Radius.Adapter.Services.MultiFactorApi.Dto;
-using MultiFactor.Radius.Adapter.Framework.Context;
 using MultiFactor.Radius.Adapter.Configuration.Core;
 using MultiFactor.Radius.Adapter.Tests.Fixtures;
 using Microsoft.Extensions.DependencyInjection;
 using MultiFactor.Radius.Adapter.Tests.Fixtures.ConfigLoading;
-using Elastic.CommonSchema;
-using static MultiFactor.Radius.Adapter.Services.MultiFactorApi.Literals;
 using MultiFactor.Radius.Adapter.Services.Ldap.Profile;
+using MultiFactor.Radius.Adapter.Framework.Context;
 
 namespace MultiFactor.Radius.Adapter.Tests
 {
@@ -25,12 +22,9 @@ namespace MultiFactor.Radius.Adapter.Tests
     public class MultifactorApiAdapterTests
     {
         [Theory]
-        [InlineData("")]
-        [InlineData(" ")]
-        [InlineData(null)]
-        [InlineData("Denied")]
-        [InlineData("SomeUnexpectedStatus")]
-        public async Task CreateSecondFactorRequest_BadStatus_ShouldReturnReject(string status)
+        [InlineData(RequestStatus.Denied)]
+        [InlineData((RequestStatus) 999)]
+        public async Task CreateSecondFactorRequest_BadStatus_ShouldReturnReject(RequestStatus status)
         {
             var host = TestHostFactory.CreateHost(builder =>
             {
@@ -51,7 +45,7 @@ namespace MultiFactor.Radius.Adapter.Tests
             });
             
             var client = new ClientConfiguration("cli_config", "rds", AuthenticationSource.None, "key", "secret")
-                .SetPrivacyMode(PrivacyModeDescriptor.None);
+                .SetPrivacyMode(PrivacyModeDescriptor.Default);
             var context = host.CreateContext(RadiusPacketFactory.AccessRequest(), clientConfig: client, x =>
             {
                 x.UserName = "test_user@multifactor.ru";
@@ -61,7 +55,7 @@ namespace MultiFactor.Radius.Adapter.Tests
             var adapter = host.Service<MultifactorApiAdapter>();
             var result = await adapter.CreateSecondFactorRequestAsync(context);
 
-            Assert.Equal(PacketCode.AccessReject, result.Code);
+            Assert.Equal(AuthenticationCode.Reject, result.Code);
         }
         
         [Fact]
@@ -85,7 +79,7 @@ namespace MultiFactor.Radius.Adapter.Tests
                 builder.Services.ReplaceService(cache.Object);
             });
 
-            var client = new ClientConfiguration("cli_config", "rds", AuthenticationSource.None, "key", "secret").SetPrivacyMode(PrivacyModeDescriptor.None);
+            var client = new ClientConfiguration("cli_config", "rds", AuthenticationSource.None, "key", "secret").SetPrivacyMode(PrivacyModeDescriptor.Default);
             var context = host.CreateContext(RadiusPacketFactory.AccessRequest(), client, x =>
             {
                 x.UserName = "test_user@multifactor.ru";
@@ -95,7 +89,7 @@ namespace MultiFactor.Radius.Adapter.Tests
             var adapter = host.Service<MultifactorApiAdapter>();
             var result = await adapter.CreateSecondFactorRequestAsync(context);
 
-            Assert.Equal(PacketCode.AccessAccept, result.Code);
+            Assert.Equal(AuthenticationCode.Bypass, result.Code);
         }
         
         [Fact]
@@ -115,7 +109,7 @@ namespace MultiFactor.Radius.Adapter.Tests
                 api.Setup(x => x.CreateRequestAsync(It.IsAny<CreateRequestDto>(), It.IsAny<BasicAuthHeaderValue>()))
                     .ReturnsAsync(new AccessRequestDto
                     {
-                        Status = RadiusCode.Denied
+                        Status = RequestStatus.Denied
                     });
                 builder.Services.ReplaceService(api.Object);
 
@@ -124,7 +118,7 @@ namespace MultiFactor.Radius.Adapter.Tests
                 builder.Services.ReplaceService(cache.Object);
             });
 
-            var client = new ClientConfiguration("cli_config", "rds", AuthenticationSource.None, "key", "secret").SetPrivacyMode(PrivacyModeDescriptor.None);
+            var client = new ClientConfiguration("cli_config", "rds", AuthenticationSource.None, "key", "secret").SetPrivacyMode(PrivacyModeDescriptor.Default);
             var context = host.CreateContext(RadiusPacketFactory.AccessRequest(), client, x =>
             {
                 x.UserName = "test_user@multifactor.ru";
@@ -134,7 +128,7 @@ namespace MultiFactor.Radius.Adapter.Tests
             var adapter = host.Service<MultifactorApiAdapter>();
             var result = await adapter.CreateSecondFactorRequestAsync(context);
 
-            Assert.Equal(PacketCode.AccessReject, result.Code);
+            Assert.Equal(AuthenticationCode.Reject, result.Code);
         }
         
         [Fact]
@@ -157,7 +151,7 @@ namespace MultiFactor.Radius.Adapter.Tests
             });
 
             var client = new ClientConfiguration("cli_config", "rds", AuthenticationSource.None, "key", "secret")
-                .SetPrivacyMode(PrivacyModeDescriptor.None)
+                .SetPrivacyMode(PrivacyModeDescriptor.Default)
                 .SetBypassSecondFactorWhenApiUnreachable(false);
             var context = host.CreateContext(RadiusPacketFactory.AccessRequest(), client, x =>
             {
@@ -169,7 +163,7 @@ namespace MultiFactor.Radius.Adapter.Tests
             var adapter = host.Service<MultifactorApiAdapter>();
             var result = await adapter.CreateSecondFactorRequestAsync(context);
 
-            Assert.Equal(PacketCode.AccessReject, result.Code);
+            Assert.Equal(AuthenticationCode.Reject, result.Code);
         }
         
         [Fact]
@@ -192,7 +186,7 @@ namespace MultiFactor.Radius.Adapter.Tests
             });
 
             var client = new ClientConfiguration("cli_config", "rds", AuthenticationSource.None, "key", "secret")
-                .SetPrivacyMode(PrivacyModeDescriptor.None)
+                .SetPrivacyMode(PrivacyModeDescriptor.Default)
                 .SetBypassSecondFactorWhenApiUnreachable(true);
             var context = host.CreateContext(RadiusPacketFactory.AccessRequest(), client, x =>
             {
@@ -204,7 +198,7 @@ namespace MultiFactor.Radius.Adapter.Tests
             var adapter = host.Service<MultifactorApiAdapter>();
             var result = await adapter.CreateSecondFactorRequestAsync(context);
 
-            Assert.Equal(PacketCode.AccessAccept, result.Code);
+            Assert.Equal(AuthenticationCode.Bypass, result.Code);
         }
 
         [Fact]
@@ -224,13 +218,13 @@ namespace MultiFactor.Radius.Adapter.Tests
                 api.Setup(x => x.CreateRequestAsync(It.IsAny<CreateRequestDto>(), It.IsAny<BasicAuthHeaderValue>()))
                     .ReturnsAsync(new AccessRequestDto
                     {
-                        Status = RadiusCode.Granted
+                        Status = RequestStatus.Granted
                     });
                 builder.Services.ReplaceService(api.Object);
             });
 
             var client = new ClientConfiguration("cli_config", "rds", AuthenticationSource.None, "key", "secret")
-                .SetPrivacyMode(PrivacyModeDescriptor.None)
+                .SetPrivacyMode(PrivacyModeDescriptor.Default)
                 .SetUseAttributeAsIdentity("some_attr_name");
             var context = host.CreateContext(RadiusPacketFactory.AccessRequest(), client, x =>
             {
@@ -245,7 +239,7 @@ namespace MultiFactor.Radius.Adapter.Tests
             var adapter = host.Service<MultifactorApiAdapter>();
             var result = await adapter.CreateSecondFactorRequestAsync(context);
 
-            Assert.Equal(PacketCode.AccessAccept, result.Code);
+            Assert.Equal(AuthenticationCode.Accept, result.Code);
         }
 
         [Fact]
@@ -265,13 +259,13 @@ namespace MultiFactor.Radius.Adapter.Tests
                 api.Setup(x => x.CreateRequestAsync(It.IsAny<CreateRequestDto>(), It.IsAny<BasicAuthHeaderValue>()))
                     .ReturnsAsync(new AccessRequestDto
                     {
-                        Status = RadiusCode.Granted
+                        Status = RequestStatus.Granted
                     });
                 builder.Services.ReplaceService(api.Object);
             });
 
             var client = new ClientConfiguration("cli_config", "rds", AuthenticationSource.None, "key", "secret")
-                .SetPrivacyMode(PrivacyModeDescriptor.None)
+                .SetPrivacyMode(PrivacyModeDescriptor.Default)
                 .SetUseAttributeAsIdentity("some_attr_name");
             var context = host.CreateContext(RadiusPacketFactory.AccessRequest(), client, x =>
             {
@@ -285,7 +279,7 @@ namespace MultiFactor.Radius.Adapter.Tests
             var adapter = host.Service<MultifactorApiAdapter>();
             var result = await adapter.CreateSecondFactorRequestAsync(context);
 
-            Assert.Equal(PacketCode.AccessReject, result.Code);
+            Assert.Equal(AuthenticationCode.Reject, result.Code);
         }
     }
 }

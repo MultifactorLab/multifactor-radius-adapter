@@ -51,7 +51,7 @@ internal class TestHost
 
     public Task InvokePipeline(RadiusContext ctx)
     {
-        var pipeline = Service<IRadiusPipeline>();
+        var pipeline = Service<RadiusPipeline>();
         return pipeline.InvokeAsync(ctx);
     }
 }

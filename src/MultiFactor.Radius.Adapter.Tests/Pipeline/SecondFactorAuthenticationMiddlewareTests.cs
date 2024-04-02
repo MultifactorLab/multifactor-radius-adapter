@@ -3,12 +3,14 @@ using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using MultiFactor.Radius.Adapter.Configuration;
 using MultiFactor.Radius.Adapter.Configuration.Core;
+using MultiFactor.Radius.Adapter.Core.Http;
 using MultiFactor.Radius.Adapter.Core.Radius;
 using MultiFactor.Radius.Adapter.Framework.Context;
 using MultiFactor.Radius.Adapter.Server;
 using MultiFactor.Radius.Adapter.Server.Pipeline.AccessChallenge;
 using MultiFactor.Radius.Adapter.Server.Pipeline.SecondFactorAuthentication;
 using MultiFactor.Radius.Adapter.Services.MultiFactorApi;
+using MultiFactor.Radius.Adapter.Services.MultiFactorApi.Dto;
 using MultiFactor.Radius.Adapter.Tests.Fixtures;
 using MultiFactor.Radius.Adapter.Tests.Fixtures.ConfigLoading;
 using MultiFactor.Radius.Adapter.Tests.Fixtures.Radius;
@@ -75,6 +77,42 @@ public class SecondFactorAuthenticationMiddlewareTests
         context.ResponseCode.Should().Be(PacketCode.AccessAccept);
         context.Authentication.SecondFactor.Should().Be(AuthenticationCode.Bypass);
     }
+
+    [Fact]
+    public async Task Invoke_ApiErrorAndBypassSettingIsEnabled_ShouldBypass()
+    {
+        var host = TestHostFactory.CreateHost(builder =>
+        {
+            builder.Services.Configure<TestConfigProviderOptions>(x =>
+            {
+                x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-single.config");
+            });
+
+            var api = new Mock<IMultifactorApiClient>();
+            api.Setup(x => x.CreateRequestAsync(It.IsAny<CreateRequestDto>(), It.IsAny<BasicAuthHeaderValue>()))
+                .ThrowsAsync(new MultifactorApiUnreachableException());
+
+            builder.Services.ReplaceService(api.Object);
+            builder.UseMiddleware<SecondFactorAuthenticationMiddleware>();
+        });
+
+        var client = new ClientConfiguration("custom", "shared_secret", AuthenticationSource.None, "key", "secret")
+            .SetBypassSecondFactorWhenApiUnreachable(true);
+
+        var context = host.CreateContext(RadiusPacketFactory.AccessRequest(), clientConfig: client, setupContext: x =>
+        {
+            x.UserName = "UserName";
+            x.RemoteEndpoint = new IPEndPoint(IPAddress.Any, 636);
+        });
+
+        // first factor midleware was invoked
+        context.SetFirstFactorAuth(AuthenticationCode.Accept);
+
+        await host.InvokePipeline(context);
+
+        context.ResponseCode.Should().Be(PacketCode.AccessAccept);
+        context.Authentication.SecondFactor.Should().Be(AuthenticationCode.Bypass);
+    }
     
     [Fact]
     public async Task Invoke_ApiShouldReturnChallengeRequest_ShouldInvokeAddState()
@@ -92,7 +130,7 @@ public class SecondFactorAuthenticationMiddlewareTests
 
             var adapter = new Mock<IMultifactorApiAdapter>();
             adapter.Setup(x => x.CreateSecondFactorRequestAsync(It.IsAny<RadiusContext>()))
-                .ReturnsAsync(new Services.MultiFactorApi.Models.SecondFactorResponse(PacketCode.AccessChallenge));
+                .ReturnsAsync(new Services.MultiFactorApi.Models.SecondFactorResponse(AuthenticationCode.Awaiting));
             builder.Services.ReplaceService(adapter.Object);
 
             builder.Services.ReplaceService(chProc.Object);

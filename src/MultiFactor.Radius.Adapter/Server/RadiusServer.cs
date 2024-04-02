@@ -79,7 +79,7 @@ namespace MultiFactor.Radius.Adapter.Server
         private readonly IRadiusDictionary _dictionary;
         private int _concurrentHandlerCount = 0;
         private readonly ILogger _logger;
-        private readonly IRadiusPipeline _pipeline;
+        private readonly RadiusPipeline _pipeline;
         private readonly RadiusContextFactory _radiusContextFactory;
         private readonly Func<IPEndPoint, IUdpClient> _createUdpClient;
         private IServiceConfiguration _serviceConfiguration;
@@ -100,7 +100,7 @@ namespace MultiFactor.Radius.Adapter.Server
             IRadiusPacketParser radiusPacketParser, 
             CacheService cacheService, 
             ILogger<RadiusServer> logger,
-            IRadiusPipeline pipeline,
+            RadiusPipeline pipeline,
             RadiusContextFactory radiusContextFactory,
             // need for tests only
             Func<IPEndPoint, IUdpClient> createUdpClient)

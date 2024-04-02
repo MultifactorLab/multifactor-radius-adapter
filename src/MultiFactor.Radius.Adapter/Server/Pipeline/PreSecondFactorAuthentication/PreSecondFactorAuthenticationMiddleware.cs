@@ -92,14 +92,14 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.PreSecondFactorAuthenticati
                     context.ReplyMessage = response.ReplyMessage;
 
 
-                    if (response.Code == PacketCode.AccessChallenge)
+                    if (response.Code == AuthenticationCode.Awaiting)
                     {
                         _challengeProcessor.AddState(context); 
                         context.ResponseCode = context.Authentication.ToPacketCode();
                         return;
                     }
 
-                    if (response.Code != PacketCode.AccessAccept)
+                    if (response.Code != AuthenticationCode.Accept)
                     {
                         context.Authentication.SetSecondFactor(AuthenticationCode.Reject);
                         context.ResponseCode = context.Authentication.ToPacketCode();

@@ -23,9 +23,6 @@ internal static class TestHostFactory
         builder.Services.ReplaceService<IRootConfigurationProvider, TestRootConfigProvider>();
         builder.Services.ReplaceService<IClientConfigurationsProvider, TestClientConfigsProvider>();
 
-        builder.Services.RemoveService<IRadiusPipeline>();
-        builder.Services.AddSingleton<RadiusPipeline>();
-        builder.Services.AddSingleton<IRadiusPipeline>(prov => prov.GetRequiredService<RadiusPipeline>());
         builder.Services.ReplaceService(new Mock<IRadiusRequestPostProcessor>().Object);
 
         builder.ConfigureApplication();

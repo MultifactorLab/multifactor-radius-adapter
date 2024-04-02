@@ -48,7 +48,7 @@ namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi
             if (string.IsNullOrEmpty(context.SecondFactorIdentity))
             {
                 _logger.LogWarning("Empty user name for second factor request. Request rejected.");
-                return new SecondFactorResponse(PacketCode.AccessReject);
+                return new SecondFactorResponse(AuthenticationCode.Reject);
             }
 
             var identity = context.SecondFactorIdentity;
@@ -103,7 +103,7 @@ namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi
                     context.RequestPacket.CallingStationId,
                     context.RemoteEndpoint.Address,
                     context.RemoteEndpoint.Port);
-                return new SecondFactorResponse(PacketCode.AccessAccept);
+                return new SecondFactorResponse(AuthenticationCode.Bypass);
             }
 
             var payload = new CreateRequestDto
@@ -131,14 +131,14 @@ namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi
                 var auth = new BasicAuthHeaderValue(cred.Usr, cred.Pwd);
 
                 var response = await _api.CreateRequestAsync(payload, auth);
-                var responseCode = ConvertToRadiusCode(response);
-                if (responseCode == PacketCode.AccessAccept && !response.Bypassed)
+                var responseCode = ConvertToAuthCode(response);
+                if (responseCode == AuthenticationCode.Accept && !response.Bypassed)
                 {
                     LogGrantedInfo(identity, response, context);
                     _authenticatedClientCache.SetCache(context.RequestPacket.CallingStationId, identity, context.Configuration);
                 }
 
-                if (responseCode == PacketCode.AccessReject)
+                if (responseCode == AuthenticationCode.Reject)
                 {
                     var reason = response?.ReplyMessage;
                     var phone = response?.Phone;
@@ -162,7 +162,7 @@ namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi
 
                 if (!context.Configuration.BypassSecondFactorWhenApiUnreachable)
                 {
-                    var radCode = ConvertToRadiusCode(null);
+                    var radCode = ConvertToAuthCode(null);
                     return new SecondFactorResponse(radCode);
                 }
 
@@ -171,7 +171,7 @@ namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi
                     context.RemoteEndpoint.Address,
                     context.RemoteEndpoint.Port);
 
-                var code = ConvertToRadiusCode(AccessRequestDto.Bypass);
+                var code = ConvertToAuthCode(AccessRequestDto.Bypass);
                 return new SecondFactorResponse(code);
             }
             catch (Exception ex)
@@ -182,7 +182,7 @@ namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi
                     context.RemoteEndpoint.Port,
                     ex.Message);
 
-                var code = ConvertToRadiusCode(null);
+                var code = ConvertToAuthCode(null);
                 return new SecondFactorResponse(code);
             }
         }
@@ -213,8 +213,8 @@ namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi
                 var auth = new BasicAuthHeaderValue(cred.Usr, cred.Pwd);
 
                 var response = await _api.ChallengeAsync(payload, auth);
-                var responseCode = ConvertToRadiusCode(response);
-                if (responseCode == PacketCode.AccessAccept && !response.Bypassed)
+                var responseCode = ConvertToAuthCode(response);
+                if (responseCode == AuthenticationCode.Accept && !response.Bypassed)
                 {
                     LogGrantedInfo(identity, response, context);
                     _authenticatedClientCache.SetCache(context.RequestPacket.CallingStationId, identity, context.Configuration);
@@ -232,15 +232,15 @@ namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi
 
                 if (!context.Configuration.BypassSecondFactorWhenApiUnreachable)
                 {
-                    var radCode = ConvertToRadiusCode(null);
-                    return new ChallengeResponse(radCode);
+                    var authCode = ConvertToAuthCode(null);
+                    return new ChallengeResponse(authCode);
                 }
 
                 _logger.LogWarning("Bypass second factor for user '{user:l}' from {host:l}:{port}",
                         identity,
                         context.RemoteEndpoint.Address,
                         context.RemoteEndpoint.Port);
-                var code = ConvertToRadiusCode(AccessRequestDto.Bypass);
+                var code = ConvertToAuthCode(AccessRequestDto.Bypass);
 
                 return new ChallengeResponse(code);
             }
@@ -252,7 +252,7 @@ namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi
                     context.RemoteEndpoint.Port,
                     ex.Message);
 
-                var code = ConvertToRadiusCode(null);
+                var code = ConvertToAuthCode(null);
                 return new ChallengeResponse(code);
             }
         }
@@ -293,24 +293,30 @@ namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi
             return context.Passphrase.Otp ?? passphrase.ProviderCode;
         }
 
-        private PacketCode ConvertToRadiusCode(AccessRequestDto multifactorAccessRequest)
+        private AuthenticationCode ConvertToAuthCode(AccessRequestDto multifactorAccessRequest)
         {
             if (multifactorAccessRequest == null)
             {
-                return PacketCode.AccessReject;
+                return AuthenticationCode.Reject;
             }
 
             switch (multifactorAccessRequest.Status)
             {
-                case Literals.RadiusCode.Granted:     //authenticated by push
-                    return PacketCode.AccessAccept;
-                case Literals.RadiusCode.Denied:
-                    return PacketCode.AccessReject; //access denied
-                case Literals.RadiusCode.AwaitingAuthentication:
-                    return PacketCode.AccessChallenge;  //otp code required
+                case RequestStatus.Granted when multifactorAccessRequest.Bypassed:
+                    return AuthenticationCode.Bypass;
+                
+                case RequestStatus.Granted:
+                    return AuthenticationCode.Accept;
+
+                case RequestStatus.Denied:
+                    return AuthenticationCode.Reject;
+
+                case RequestStatus.AwaitingAuthentication:
+                    return AuthenticationCode.Awaiting;
+
                 default:
                     _logger.LogWarning($"Got unexpected status from API: {multifactorAccessRequest.Status}");
-                    return PacketCode.AccessReject; //access denied
+                    return AuthenticationCode.Reject;
             }
         }
 

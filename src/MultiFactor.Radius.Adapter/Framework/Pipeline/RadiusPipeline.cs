@@ -7,7 +7,7 @@ using MultiFactor.Radius.Adapter.Framework.Context;
 
 namespace MultiFactor.Radius.Adapter.Framework.Pipeline;
 
-public class RadiusPipeline : IRadiusPipeline
+public class RadiusPipeline
 {
     private readonly RadiusRequestDelegate _requestDelegate;
     private readonly IRadiusRequestPostProcessor _postProcessor;

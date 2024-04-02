@@ -100,7 +100,7 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.AccessChallenge
             context.ReplyMessage = response.ReplyMessage;
             switch (response.Code)
             {
-                case PacketCode.AccessAccept:
+                case AuthenticationCode.Accept:
                     if (stateChallengePendingRequest != null)
                     {
                         context.UserGroups = stateChallengePendingRequest.UserGroups;
@@ -117,7 +117,7 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.AccessChallenge
                         response.Code);
                     return ChallengeCode.Accept;
 
-                case PacketCode.AccessReject:
+                case AuthenticationCode.Reject:
                     RemoveStateChallengeRequest(identifier);
                     _logger.LogDebug("Challenge {State:l} was processed for message id={id} from {host:l}:{port} with result '{Result}'",
                         identifier.RequestId,
