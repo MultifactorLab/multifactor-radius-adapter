@@ -134,7 +134,7 @@ public class LdapService
                     }
                 }
 
-                context.SetProfile(profile);
+                context.UpdateProfile(profile);
 
                 if (profile.MemberOf != null)
                 {

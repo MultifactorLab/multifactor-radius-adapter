@@ -38,13 +38,18 @@ namespace MultiFactor.Radius.Adapter.Core.Radius
     /// </summary>
     public class RadiusPacket : IRadiusPacket
     {
+        private readonly Dictionary<string, string> _transformMap = new();
+
         private readonly RadiusPacketOptions _options = new RadiusPacketOptions();
+
+        private string UserPassword => GetString("User-Password");
 
         public RadiusPacketHeader Header { get; }
         public RadiusAuthenticator Authenticator { get; }
 
         public IDictionary<string, List<object>> Attributes { get; set; } = new Dictionary<string, List<object>>();
         public SharedSecret SharedSecret { get; } 
+
         public byte[] RequestAuthenticator
         {
             get;
@@ -106,8 +111,10 @@ namespace MultiFactor.Radius.Adapter.Core.Radius
                 return AuthenticationType.Unknown;
             }
         }
-        public string UserName => GetString("User-Name");
-        internal string UserPassword => GetString("User-Password");
+        public string UserName => _transformMap.ContainsKey("User-Name") 
+            ? _transformMap["User-Name"] 
+            : GetString("User-Name");
+
         public string RemoteHostName
         {
             get
@@ -234,7 +241,6 @@ namespace MultiFactor.Radius.Adapter.Core.Radius
             return null;
         }
 
-
         /// <summary>
         /// Gets multiple attribute values with the same name cast to type
         /// </summary>
@@ -256,19 +262,21 @@ namespace MultiFactor.Radius.Adapter.Core.Radius
             packet.Attributes.Remove("Proxy-State"); //should be newer
         }
 
-
         public void AddAttribute(string name, string value)
         {
             AddAttributeObject(name, value);
         }
+
         public void AddAttribute(string name, uint value)
         {
             AddAttributeObject(name, value);
         }
+
         public void AddAttribute(string name, IPAddress value)
         {
             AddAttributeObject(name, value);
         }
+
         public void AddAttribute(string name, byte[] value)
         {
             AddAttributeObject(name, value);
@@ -298,6 +306,21 @@ namespace MultiFactor.Radius.Adapter.Core.Radius
                     ?? RemoteHostName;
             }
             return GetString("Calling-Station-Id") ?? RemoteHostName;
+        }
+
+        public void AddTransformation(string attribute, string transformedValue)
+        {
+            if (string.IsNullOrWhiteSpace(attribute))
+            {
+                throw new ArgumentException($"'{nameof(attribute)}' cannot be null or whitespace.", nameof(attribute));
+            }
+
+            if (transformedValue is null)
+            {
+                throw new ArgumentNullException(nameof(transformedValue));
+            }
+
+            _transformMap[attribute] = transformedValue;
         }
     }
 }

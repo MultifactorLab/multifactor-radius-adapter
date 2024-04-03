@@ -51,8 +51,6 @@ internal static class RadiusHost
         builder.Services.AddSingleton<IRadiusPacketParser, RadiusPacketParser>();
         builder.Services.AddSingleton<CacheService>();
 
-        builder.Services.AddSingleton<IRandomWaiter>(prov => new RandomWaiter(prov.GetRequiredService<IServiceConfiguration>().InvalidCredentialDelay));
-
         return new RadiusHostApplicationBuilder(builder);
     }
 

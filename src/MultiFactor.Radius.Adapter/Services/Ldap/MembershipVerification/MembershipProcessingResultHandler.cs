@@ -43,7 +43,7 @@ namespace MultiFactor.Radius.Adapter.Services.ActiveDirectory.MembershipVerifica
                 return; 
             }
 
-            context.SetProfile(profile);
+            context.UpdateProfile(profile);
 
             var bypassed = IsBypassed();
             if (bypassed)

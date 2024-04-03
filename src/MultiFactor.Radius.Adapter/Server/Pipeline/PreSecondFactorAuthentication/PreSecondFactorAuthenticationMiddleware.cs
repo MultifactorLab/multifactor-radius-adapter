@@ -88,9 +88,8 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.PreSecondFactorAuthenticati
                     }
 
                     var response = await _apiAdapter.CreateSecondFactorRequestAsync(context);
-                    context.State = response.State;
+                    context.SetChallengeState(response.State);
                     context.ReplyMessage = response.ReplyMessage;
-
 
                     if (response.Code == AuthenticationCode.Awaiting)
                     {

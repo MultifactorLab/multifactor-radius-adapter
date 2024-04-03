@@ -83,7 +83,7 @@ public class SecondFactorAuthenticationMiddleware : IRadiusMiddleware
         }
 
         var response = await _apiAdapter.CreateSecondFactorRequestAsync(context);
-        context.State = response.State;
+        context.SetChallengeState(response.State);
         context.ReplyMessage = response.ReplyMessage;
 
         context.SetSecondFactorAuth(response.Code);

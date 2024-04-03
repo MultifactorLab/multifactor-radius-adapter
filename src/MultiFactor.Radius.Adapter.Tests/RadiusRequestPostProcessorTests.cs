@@ -62,37 +62,6 @@ namespace MultiFactor.Radius.Adapter.Tests
         }
         
         [Fact]
-        public async Task AccessReject_ShouldInvokeWaiter()
-        {
-            var waiter = new Mock<IRandomWaiter>();
-            var host = TestHostFactory.CreateHost(builder =>
-            {
-                builder.Services.Configure<TestConfigProviderOptions>(x =>
-                {
-                    x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-single.config");
-                });
-
-                builder.Services.RemoveService<IRadiusRequestPostProcessor>();
-                builder.Services.AddSingleton<RadiusRequestPostProcessor>();
-                builder.Services.AddSingleton<IRadiusRequestPostProcessor>(prov => prov.GetRequiredService<RadiusRequestPostProcessor>());
-
-                var factory = new Mock<IRadiusResponseSenderFactory>();
-                factory.Setup(x => x.CreateSender(It.IsAny<IUdpClient>())).Returns(new Mock<IRadiusResponseSender>().Object); 
-                builder.Services.ReplaceService(factory.Object);
-
-                builder.Services.ReplaceService(waiter.Object);
-            });
-
-            var context = host.CreateContext(RadiusPacketFactory.AccessReject());
-            context.ResponseCode = PacketCode.AccessReject;
-
-            var srv = host.Service<RadiusRequestPostProcessor>();
-            await srv.InvokeAsync(context);
-
-            waiter.Verify(x => x.WaitSomeTimeAsync(), Times.Once);
-        }
-        
-        [Fact]
         public async Task ProxyEcho_ShouldSetAttr()
         {
             var host = TestHostFactory.CreateHost(builder =>

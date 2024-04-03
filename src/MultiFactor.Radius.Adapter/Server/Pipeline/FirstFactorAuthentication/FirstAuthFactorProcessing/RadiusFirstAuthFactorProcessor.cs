@@ -57,7 +57,7 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.FirstFactorAuthentication.F
                     _logger.LogWarning("Attribute '{TwoFAIdentityAttribyte}' was not loaded", context.Configuration.TwoFAIdentityAttribute);
                     return PacketCode.AccessReject;
                 }
-                context.SetProfile(profile);
+                context.UpdateProfile(profile);
             }
 
             return PacketCode.AccessAccept;

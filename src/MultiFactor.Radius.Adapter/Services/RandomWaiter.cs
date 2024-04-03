@@ -7,7 +7,7 @@ namespace MultiFactor.Radius.Adapter.Services
     /// <summary>
     /// The Waiter with built-in randomizer. Randomizer uses MIN and MAX delay values defined in the service configuration.
     /// </summary>
-    internal class RandomWaiter : IRandomWaiter
+    internal class RandomWaiter
     {
         private readonly Random _random = new Random();
         private readonly RandomWaiterConfig _config;

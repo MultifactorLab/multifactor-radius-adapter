@@ -234,7 +234,7 @@ namespace MultiFactor.Radius.Adapter.Tests
 
             var attrs = new LdapAttributes().Add("some_attr_name", "some_attr_value");
             var profile = new LdapProfile(LdapIdentity.ParseUser("test_user@multifactor.ru"), attrs, Array.Empty<string>(), "some_attr_name");
-            context.SetProfile(profile);
+            context.UpdateProfile(profile);
 
             var adapter = host.Service<MultifactorApiAdapter>();
             var result = await adapter.CreateSecondFactorRequestAsync(context);
@@ -274,7 +274,7 @@ namespace MultiFactor.Radius.Adapter.Tests
             });
 
             var profile = new LdapProfile(LdapIdentity.ParseUser("test_user@multifactor.ru"), new LdapAttributes(), Array.Empty<string>(), null);
-            context.SetProfile(profile);
+            context.UpdateProfile(profile);
 
             var adapter = host.Service<MultifactorApiAdapter>();
             var result = await adapter.CreateSecondFactorRequestAsync(context);

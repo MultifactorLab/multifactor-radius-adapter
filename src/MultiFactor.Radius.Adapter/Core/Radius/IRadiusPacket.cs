@@ -42,6 +42,9 @@ namespace MultiFactor.Radius.Adapter.Core.Radius
 
         AuthenticationType AuthenticationType { get; }
 
+        /// <summary>
+        /// Returns the User-Name attribute value.
+        /// </summary>
         string UserName { get; }
         string TryGetUserPassword();
         string TryGetChallenge();
@@ -65,5 +68,6 @@ namespace MultiFactor.Radius.Adapter.Core.Radius
         IDictionary<string, List<object>> Attributes { get; set; }
 
         string CreateUniqueKey(IPEndPoint remoteEndpoint);
+        void AddTransformation(string attribute, string transformedValue);
     }
 }

@@ -21,19 +21,16 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.PostProcessing;
 public class RadiusRequestPostProcessor : IRadiusRequestPostProcessor
 {
     private readonly IServiceConfiguration _serviceConfiguration;
-    private readonly IRandomWaiter _waiter;
     private readonly RadiusReplyAttributeEnricher _attributeEnricher;
     private readonly IRadiusResponseSenderFactory _senderFactory;
     private readonly ILogger _logger;
 
     public RadiusRequestPostProcessor(IServiceConfiguration serviceConfiguration,
-        IRandomWaiter waiter,
         RadiusReplyAttributeEnricher attributeRewriter,
         IRadiusResponseSenderFactory senderFactory,
         ILogger<RadiusRequestPostProcessor> logger)
     {
         _serviceConfiguration = serviceConfiguration;
-        _waiter = waiter;
         _attributeEnricher = attributeRewriter;
         _senderFactory = senderFactory;
         _logger = logger;
@@ -107,7 +104,7 @@ public class RadiusRequestPostProcessor : IRadiusRequestPostProcessor
                         context.ResponsePacket.CopyTo(responsePacket);
                     }
                 }
-                await _waiter.WaitSomeTimeAsync();
+                await new RandomWaiter(context.Configuration.InvalidCredentialDelay).WaitSomeTimeAsync();
                 break;
             default:
                 throw new NotImplementedException(context.ResponseCode.ToString());

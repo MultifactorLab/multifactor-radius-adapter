@@ -70,7 +70,7 @@ namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi
         {
             var headers = new Dictionary<string, string>
             {
-                {"Authorization", $"Basic {auth}" }
+                {"Authorization", $"Basic {auth.GetBase64()}" }
             };
 
             try

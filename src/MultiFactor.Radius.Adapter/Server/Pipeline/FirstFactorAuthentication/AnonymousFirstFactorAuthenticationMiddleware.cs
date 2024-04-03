@@ -73,7 +73,7 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.FirstFactorAuthentication
                     context.ResponseCode = context.Authentication.ToPacketCode();
                     return;
                 }
-                context.SetProfile(profile);
+                context.UpdateProfile(profile);
             }
 
             if (isNoneFirstFactorSource)

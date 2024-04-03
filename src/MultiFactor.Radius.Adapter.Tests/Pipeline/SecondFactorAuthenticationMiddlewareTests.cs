@@ -64,9 +64,10 @@ public class SecondFactorAuthenticationMiddlewareTests
         var client = new ClientConfiguration("custom", "shared_secret", AuthenticationSource.Radius, "key", "secret")
             .SetActiveDirectoryDomain("domain.local")
             .AddActiveDirectoryGroup("Security Group");
-        var context = host.CreateContext(RadiusPacketFactory.AccessRequest(), clientConfig: client, setupContext: x =>
+        var packet = RadiusPacketFactory.AccessRequest();
+        packet.AddAttribute("User-Name", "UserName");
+        var context = host.CreateContext(packet, clientConfig: client, setupContext: x =>
         {
-            x.UserName = "UserName";
             x.RemoteEndpoint = new IPEndPoint(IPAddress.Any, 636);
         });
         context.RequestPacket.AddAttribute("User-Name", "#ACSACL#-IP-UserName");
@@ -79,7 +80,7 @@ public class SecondFactorAuthenticationMiddlewareTests
     }
 
     [Fact]
-    public async Task Invoke_ApiErrorAndBypassSettingIsEnabled_ShouldBypass()
+    public async Task Invoke_ApiUnreachErrorAndBypassSettingIsEnabled_ShouldBypass()
     {
         var host = TestHostFactory.CreateHost(builder =>
         {
@@ -115,6 +116,80 @@ public class SecondFactorAuthenticationMiddlewareTests
     }
     
     [Fact]
+    public async Task Invoke_ApiUnreachErrorAndBypassSettingIsDisabled_ShouldReject()
+    {
+        var host = TestHostFactory.CreateHost(builder =>
+        {
+            builder.Services.Configure<TestConfigProviderOptions>(x =>
+            {
+                x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-single.config");
+            });
+
+            var api = new Mock<IMultifactorApiClient>();
+            api.Setup(x => x.CreateRequestAsync(It.IsAny<CreateRequestDto>(), It.IsAny<BasicAuthHeaderValue>()))
+                .ThrowsAsync(new MultifactorApiUnreachableException());
+
+            builder.Services.ReplaceService(api.Object);
+            builder.UseMiddleware<SecondFactorAuthenticationMiddleware>();
+        });
+
+        var client = new ClientConfiguration("custom", "shared_secret", AuthenticationSource.None, "key", "secret")
+            .SetBypassSecondFactorWhenApiUnreachable(false);
+
+        var packet = RadiusPacketFactory.AccessRequest();
+        packet.AddAttribute("User-Name", "UserName");
+        var context = host.CreateContext(RadiusPacketFactory.AccessRequest(), clientConfig: client, setupContext: x =>
+        {
+            x.RemoteEndpoint = new IPEndPoint(IPAddress.Any, 636);
+        });
+
+        // first factor midleware was invoked
+        context.SetFirstFactorAuth(AuthenticationCode.Accept);
+
+        await host.InvokePipeline(context);
+
+        context.ResponseCode.Should().Be(PacketCode.AccessReject);
+        context.Authentication.SecondFactor.Should().Be(AuthenticationCode.Reject);
+    }
+
+    [Fact]
+    public async Task Invoke_ApiCommonErrorAndBypassSettingIsEnabled_ShouldReject()
+    {
+        var host = TestHostFactory.CreateHost(builder =>
+        {
+            builder.Services.Configure<TestConfigProviderOptions>(x =>
+            {
+                x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-single.config");
+            });
+
+            var api = new Mock<IMultifactorApiClient>();
+            api.Setup(x => x.CreateRequestAsync(It.IsAny<CreateRequestDto>(), It.IsAny<BasicAuthHeaderValue>()))
+                .ThrowsAsync(new Exception());
+
+            builder.Services.ReplaceService(api.Object);
+            builder.UseMiddleware<SecondFactorAuthenticationMiddleware>();
+        });
+
+        var client = new ClientConfiguration("custom", "shared_secret", AuthenticationSource.None, "key", "secret")
+            .SetBypassSecondFactorWhenApiUnreachable(true);
+
+        var packet = RadiusPacketFactory.AccessRequest();
+        packet.AddAttribute("User-Name", "UserName");
+        var context = host.CreateContext(packet, clientConfig: client, setupContext: x =>
+        {
+            x.RemoteEndpoint = new IPEndPoint(IPAddress.Any, 636);
+        });
+
+        // first factor midleware was invoked
+        context.SetFirstFactorAuth(AuthenticationCode.Accept);
+
+        await host.InvokePipeline(context);
+
+        context.ResponseCode.Should().Be(PacketCode.AccessReject);
+        context.Authentication.SecondFactor.Should().Be(AuthenticationCode.Reject);
+    }
+
+    [Fact]
     public async Task Invoke_ApiShouldReturnChallengeRequest_ShouldInvokeAddState()
     {
         var chProc = new Mock<ISecondFactorChallengeProcessor>();
@@ -138,10 +213,11 @@ public class SecondFactorAuthenticationMiddlewareTests
         });
 
         var config = host.Service<IServiceConfiguration>();
-        var context = host.CreateContext(RadiusPacketFactory.AccessRequest(), clientConfig: config.Clients[0], setupContext: x =>
+        var packet = RadiusPacketFactory.AccessRequest();
+        packet.AddAttribute("User-Name", "#ACSACL#-IP-UserName");
+        var context = host.CreateContext(packet, clientConfig: config.Clients[0], setupContext: x =>
         {
             x.RemoteEndpoint = new IPEndPoint(IPAddress.Any, 636);
-            x.UserName = "#ACSACL#-IP-UserName";
             x.State = "Qwerty123";
         });
         var expectedIdentifier = new ChallengeRequestIdentifier(config.Clients[0].Name, "Qwerty123");

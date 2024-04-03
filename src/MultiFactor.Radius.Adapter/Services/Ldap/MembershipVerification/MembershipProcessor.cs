@@ -87,14 +87,13 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.MembershipVerification
         /// <summary>
         /// Load required attribute and set it in user profile
         /// </summary>
-        public async Task<LdapProfile> LoadProfileWithRequiredAttributeAsync(RadiusContext request, IClientConfiguration clientConfig, string attr)
+        public async Task<LdapProfile> LoadProfileWithRequiredAttributeAsync(RadiusContext context, IClientConfiguration clientConfig, string attr)
         {
-            var userName = request.UserName;
-            if (string.IsNullOrEmpty(userName))
+            if (string.IsNullOrEmpty(context.UserName))
             {
-                throw new Exception($"Can't find User-Name in message id={request.RequestPacket.Header.Identifier} from {request.RemoteEndpoint.Address}:{request.RemoteEndpoint.Port}");
+                throw new Exception($"Can't find User-Name in message id={context.RequestPacket.Header.Identifier} from {context.RemoteEndpoint.Address}:{context.RemoteEndpoint.Port}");
             }
-            var user = LdapIdentity.ParseUser(userName);
+            var user = LdapIdentity.ParseUser(context.UserName);
             var attributes = new Dictionary<string, string[]>();
 
             foreach (var domain in clientConfig.SplittedActiveDirectoryDomains)
@@ -124,7 +123,7 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.MembershipVerification
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, $"Loading attributes of user '{{user:l}}' at {domainIdentity} failed", userName);
+                    _logger.LogError(ex, $"Loading attributes of user '{{user:l}}' at {domainIdentity} failed", context.UserName);
                     _logger.LogInformation("Run MultiFactor.Raduis.Adapter as user with domain read permissions (basically any domain user)");
                     continue;
                 }

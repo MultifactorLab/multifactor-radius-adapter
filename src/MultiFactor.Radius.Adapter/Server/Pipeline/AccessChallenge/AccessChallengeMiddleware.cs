@@ -47,11 +47,11 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.AccessChallenge
 
                 case ChallengeCode.Reject:
                     context.Authentication.SetSecondFactor(AuthenticationCode.Reject);
-                    context.State = identifier.RequestId;
+                    context.SetChallengeState(identifier.RequestId);
                     return;
 
                 case ChallengeCode.InProcess:
-                    context.State = identifier.RequestId;
+                    context.SetChallengeState(identifier.RequestId); 
                     return;
 
                 default:

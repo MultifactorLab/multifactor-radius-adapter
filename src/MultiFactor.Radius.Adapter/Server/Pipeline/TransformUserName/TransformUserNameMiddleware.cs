@@ -38,7 +38,7 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.TransformUserName
                 }
             }
 
-            context.UserName = userName;
+            context.TransformRadiusRequestAttribute("User-Name", userName);
         }
     }
 }

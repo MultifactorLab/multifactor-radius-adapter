@@ -62,8 +62,7 @@ public class RadiusContextFactory
         return new RadiusContext(packet, client, udpClient, _serviceProvider)
         {
             RemoteEndpoint = remote,
-            ProxyEndpoint = proxy,
-            UserName = packet.UserName
+            ProxyEndpoint = proxy
         };
     }
 }
