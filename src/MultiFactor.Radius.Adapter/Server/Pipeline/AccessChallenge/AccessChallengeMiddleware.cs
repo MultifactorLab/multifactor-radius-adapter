@@ -28,8 +28,8 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.AccessChallenge
                 return;
             }
 
-            var identifier = new ChallengeRequestIdentifier(context.Configuration.Name, context.RequestPacket.GetString("State"));
-            if (!_challengeProcessor.HasState(identifier))
+            var identifier = new ChallengeIdentifier(context.Configuration.Name, context.RequestPacket.GetString("State"));
+            if (!_challengeProcessor.HasChallengeContext(identifier))
             {
                 await next(context);
                 return;
@@ -47,11 +47,11 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.AccessChallenge
 
                 case ChallengeCode.Reject:
                     context.Authentication.SetSecondFactor(AuthenticationCode.Reject);
-                    context.SetChallengeState(identifier.RequestId);
+                    context.SetMessageState(identifier.RequestId);
                     return;
 
                 case ChallengeCode.InProcess:
-                    context.SetChallengeState(identifier.RequestId); 
+                    context.SetMessageState(identifier.RequestId); 
                     return;
 
                 default:

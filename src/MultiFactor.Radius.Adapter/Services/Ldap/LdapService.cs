@@ -135,11 +135,6 @@ public class LdapService
                 }
 
                 context.UpdateProfile(profile);
-
-                if (profile.MemberOf != null)
-                {
-                    context.UserGroups = profile.MemberOf;
-                }
             }
 
             return true;
@@ -210,7 +205,7 @@ public class LdapService
                 case "525":
                     return "user not found";
                 case "52e":
-                    return "invalid credentials";
+                    return "AD invalid credentials";
                 case "530":
                     return "not permitted to logon at this time​";
                 case "531":

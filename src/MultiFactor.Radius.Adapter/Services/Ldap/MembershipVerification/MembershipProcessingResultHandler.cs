@@ -50,13 +50,6 @@ namespace MultiFactor.Radius.Adapter.Services.ActiveDirectory.MembershipVerifica
             {
                 context.SetSecondFactorAuth(AuthenticationCode.Bypass);
             }
-
-            context.Profile.UpdateAttributes(profile.Attributes);
-
-            if (profile.MemberOf != null)
-            {
-                context.UserGroups = profile.MemberOf;
-            }
         }
 
         private bool IsBypassed()

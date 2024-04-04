@@ -12,7 +12,7 @@ namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi
 {
     public interface IMultifactorApiAdapter
     {
-        Task<ChallengeResponse> ChallengeAsync(RadiusContext context, string answer, ChallengeRequestIdentifier identifier);
+        Task<ChallengeResponse> ChallengeAsync(RadiusContext context, string answer, ChallengeIdentifier identifier);
         Task<SecondFactorResponse> CreateSecondFactorRequestAsync(RadiusContext context);
     }
 }

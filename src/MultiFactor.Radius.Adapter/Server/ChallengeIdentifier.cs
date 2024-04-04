@@ -7,21 +7,21 @@ using System;
 
 namespace MultiFactor.Radius.Adapter.Server;
 
-public class ChallengeRequestIdentifier
+public class ChallengeIdentifier
 {
     private readonly string _identifier;
 
     public string RequestId { get; }
 
-    public static ChallengeRequestIdentifier Empty => new ChallengeRequestIdentifier();
+    public static ChallengeIdentifier Empty => new ChallengeIdentifier();
 
-    private ChallengeRequestIdentifier()
+    private ChallengeIdentifier()
     {
         _identifier = null;
         RequestId = null;
     }
 
-    public ChallengeRequestIdentifier(string clientName, string requestId)
+    public ChallengeIdentifier(string clientName, string requestId)
     {
         if (string.IsNullOrWhiteSpace(clientName))
         {
@@ -47,7 +47,7 @@ public class ChallengeRequestIdentifier
         if (obj is null) return false;
         if (obj == this) return true;
 
-        var other = obj as ChallengeRequestIdentifier;
+        var other = obj as ChallengeIdentifier;
         if (other == null) return false;
 
         return _identifier != null && _identifier == other._identifier;

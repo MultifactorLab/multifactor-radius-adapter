@@ -12,6 +12,7 @@ using MultiFactor.Radius.Adapter.Server;
 using MultiFactor.Radius.Adapter.Services.Ldap.Profile;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Net;
 using System.Net.Sockets;
 
@@ -30,7 +31,6 @@ namespace MultiFactor.Radius.Adapter.Framework.Context
             RequestPacket = request ?? throw new ArgumentNullException(nameof(request));
             ReceivedAt = DateTime.Now;
             ResponseCode = PacketCode.AccessReject;
-            UserGroups = new List<string>();
             Configuration = clientConfiguration ?? throw new ArgumentNullException(nameof(clientConfiguration));
             UdpClient = udpClient ?? throw new ArgumentNullException(nameof(udpClient));
             RequestServices = provider ?? throw new ArgumentNullException(nameof(provider));
@@ -72,13 +72,13 @@ namespace MultiFactor.Radius.Adapter.Framework.Context
 
         public string UserName => RequestPacket.UserName;
 
-        public UserPassphrase Passphrase { get; }
+        public UserPassphrase Passphrase { get; private set; }
 
         /// <summary>
         /// Should use for 2FA request to MFA API.
         /// </summary>
         public string SecondFactorIdentity => Configuration.UseIdentityAttribute ? Profile.SecondFactorIdentity : UserName;
-        public IList<string> UserGroups { get; set; }
+        public ReadOnlyCollection<string> UserGroups => Profile.MemberOf;
 
         public IServiceProvider RequestServices { get; }
         public IUdpClient UdpClient { get; }
@@ -88,7 +88,7 @@ namespace MultiFactor.Radius.Adapter.Framework.Context
         public PreAuthMode PreAuthMode => Configuration.PreAuthnMode.Mode;
 
 
-        public AuthenticationState Authentication { get; }
+        public AuthenticationState Authentication { get; private set; }
         public void SetFirstFactorAuth(AuthenticationCode code) => Authentication.SetFirstFactor(code);
         public void SetSecondFactorAuth(AuthenticationCode code) => Authentication.SetSecondFactor(code);
 
@@ -107,15 +107,12 @@ namespace MultiFactor.Radius.Adapter.Framework.Context
             }
 
             // null if no AD request. winlogon, for example
-            if (Profile != null)
-            {
-                other.UpdateProfile(Profile);
-            }
+            other.UpdateProfile(Profile);
         }
 
         public void TransformRadiusRequestAttribute(string attribute, string newValue) => RequestPacket.AddTransformation(attribute, newValue);
 
-        public void SetChallengeState(string state)
+        public void SetMessageState(string state)
         {
             if (string.IsNullOrWhiteSpace(state))
             {
@@ -123,6 +120,19 @@ namespace MultiFactor.Radius.Adapter.Framework.Context
             }
 
             State = state;
+        }
+
+        public void UpdateFromChallengeRequest(RadiusContext context)
+        {
+            if (context is null)
+            {
+                throw new ArgumentNullException(nameof(context));
+            }
+
+            ResponsePacket = context.ResponsePacket;
+            Profile.UpdateAttributes(context.Profile.Attributes);
+            Authentication = context.Authentication;
+            Passphrase = context.Passphrase;
         }
     }
 }

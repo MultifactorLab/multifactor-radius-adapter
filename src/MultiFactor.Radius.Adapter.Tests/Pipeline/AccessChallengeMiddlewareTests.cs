@@ -51,14 +51,12 @@ public class AccessChallengeMiddlewareTests
             });
 
             var chProc = new Mock<ISecondFactorChallengeProcessor>();
-            chProc.Setup(x => x.HasState(It.IsAny<ChallengeRequestIdentifier>())).Returns(false);
+            chProc.Setup(x => x.HasChallengeContext(It.IsAny<ChallengeIdentifier>())).Returns(false);
             builder.Services.RemoveService<ISecondFactorChallengeProcessor>().AddSingleton(chProc.Object);
         });
 
-        var packet = RadiusPacketFactory.AccessRequest(x =>
-        {
-            x.AddAttribute("State", "SomeState");
-        });
+        var packet = RadiusPacketFactory.AccessRequest();
+        packet.AddAttribute("State", "SomeState");
         var context = host.CreateContext(packet);
 
         var nextDelegate = new Mock<RadiusRequestDelegate>();
@@ -77,7 +75,7 @@ public class AccessChallengeMiddlewareTests
         var expectedReqId = "Qwerty123";
 
         var chProc = new Mock<ISecondFactorChallengeProcessor>();
-        chProc.Setup(x => x.HasState(It.IsAny<ChallengeRequestIdentifier>())).Returns(true);
+        chProc.Setup(x => x.HasChallengeContext(It.IsAny<ChallengeIdentifier>())).Returns(true);
 
         var host = TestHostFactory.CreateHost(builder =>
         {
@@ -92,17 +90,15 @@ public class AccessChallengeMiddlewareTests
 
         var config = host.Service<IServiceConfiguration>();
         var client = config.Clients[0];
-        var packet = RadiusPacketFactory.AccessRequest(x =>
-        {
-            x.AddAttribute("State", expectedReqId);
-        });
+        var packet = RadiusPacketFactory.AccessRequest();
+        packet.AddAttribute("State", expectedReqId);
         var context = host.CreateContext(packet, clientConfig: client);
-        var expectedIdentifier = new ChallengeRequestIdentifier(client.Name, expectedReqId);
+        var expectedIdentifier = new ChallengeIdentifier(client.Name, expectedReqId);
 
         var pipeline = host.Service<RadiusPipeline>();
         await pipeline.InvokeAsync(context);
 
-        chProc.Verify(v => v.ProcessChallengeAsync(It.Is<ChallengeRequestIdentifier>(x => x.Equals(expectedIdentifier)), It.Is<RadiusContext>(x => x == context)), Times.Once);
+        chProc.Verify(v => v.ProcessChallengeAsync(It.Is<ChallengeIdentifier>(x => x.Equals(expectedIdentifier)), It.Is<RadiusContext>(x => x == context)), Times.Once);
     }
     
     [Fact]
@@ -119,17 +115,16 @@ public class AccessChallengeMiddlewareTests
             });
 
             var chProc = new Mock<ISecondFactorChallengeProcessor>();
-            chProc.Setup(x => x.HasState(It.IsAny<ChallengeRequestIdentifier>())).Returns(true);
-            chProc.Setup(x => x.ProcessChallengeAsync(It.IsAny<ChallengeRequestIdentifier>(), It.IsAny<RadiusContext>())).ReturnsAsync(ChallengeCode.Accept);
+            chProc.Setup(x => x.HasChallengeContext(It.IsAny<ChallengeIdentifier>())).Returns(true);
+            chProc.Setup(x => x.ProcessChallengeAsync(It.IsAny<ChallengeIdentifier>(), It.IsAny<RadiusContext>())).ReturnsAsync(ChallengeCode.Accept);
             builder.Services.ReplaceService(chProc.Object);
         });
 
         var config = host.Service<IServiceConfiguration>();
         var client = config.Clients[0];
-        var packet = RadiusPacketFactory.AccessRequest(x =>
-        {
-            x.AddAttribute("State", expectedReqId);
-        });
+        var packet = RadiusPacketFactory.AccessRequest();
+        packet.AddAttribute("State", expectedReqId);
+
         var context = host.CreateContext(packet, clientConfig: client);
 
         var pipeline = host.Service<RadiusPipeline>();
@@ -152,17 +147,15 @@ public class AccessChallengeMiddlewareTests
             });
 
             var chProc = new Mock<ISecondFactorChallengeProcessor>();
-            chProc.Setup(x => x.HasState(It.IsAny<ChallengeRequestIdentifier>())).Returns(true);
-            chProc.Setup(x => x.ProcessChallengeAsync(It.IsAny<ChallengeRequestIdentifier>(), It.IsAny<RadiusContext>())).ReturnsAsync(ChallengeCode.Reject);
+            chProc.Setup(x => x.HasChallengeContext(It.IsAny<ChallengeIdentifier>())).Returns(true);
+            chProc.Setup(x => x.ProcessChallengeAsync(It.IsAny<ChallengeIdentifier>(), It.IsAny<RadiusContext>())).ReturnsAsync(ChallengeCode.Reject);
             builder.Services.ReplaceService(chProc.Object);
         });
 
         var config = host.Service<IServiceConfiguration>();
         var client = config.Clients[0];
-        var packet = RadiusPacketFactory.AccessRequest(x =>
-        {
-            x.AddAttribute("State", expectedReqId);
-        });
+        var packet = RadiusPacketFactory.AccessRequest();
+        packet.AddAttribute("State", expectedReqId);
         var context = host.CreateContext(packet, clientConfig: client);
 
         var pipeline = host.Service<RadiusPipeline>();
@@ -185,17 +178,15 @@ public class AccessChallengeMiddlewareTests
             });
 
             var chProc = new Mock<ISecondFactorChallengeProcessor>();
-            chProc.Setup(x => x.HasState(It.IsAny<ChallengeRequestIdentifier>())).Returns(true);
-            chProc.Setup(x => x.ProcessChallengeAsync(It.IsAny<ChallengeRequestIdentifier>(), It.IsAny<RadiusContext>())).ReturnsAsync(ChallengeCode.InProcess);
+            chProc.Setup(x => x.HasChallengeContext(It.IsAny<ChallengeIdentifier>())).Returns(true);
+            chProc.Setup(x => x.ProcessChallengeAsync(It.IsAny<ChallengeIdentifier>(), It.IsAny<RadiusContext>())).ReturnsAsync(ChallengeCode.InProcess);
             builder.Services.ReplaceService(chProc.Object);
         });
 
         var config = host.Service<IServiceConfiguration>();
         var client = config.Clients[0];
-        var packet = RadiusPacketFactory.AccessRequest(x =>
-        {
-            x.AddAttribute("State", expectedReqId);
-        });
+        var packet = RadiusPacketFactory.AccessRequest();
+        packet.AddAttribute("State", expectedReqId);
         var context = host.CreateContext(packet, clientConfig: client);
 
         var pipeline = host.Service<RadiusPipeline>();

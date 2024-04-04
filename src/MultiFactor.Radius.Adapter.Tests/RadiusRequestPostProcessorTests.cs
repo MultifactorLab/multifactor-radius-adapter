@@ -9,7 +9,6 @@ using MultiFactor.Radius.Adapter.Server;
 using MultiFactor.Radius.Adapter.Configuration.Core;
 using MultiFactor.Radius.Adapter.Core.Radius;
 using System.Net;
-using MultiFactor.Radius.Adapter.Services;
 
 namespace MultiFactor.Radius.Adapter.Tests
 {
@@ -38,7 +37,7 @@ namespace MultiFactor.Radius.Adapter.Tests
             var context = host.CreateContext(RadiusPacketFactory.AccessChallenge());
             context.ResponseCode = PacketCode.AccessChallenge;
             context.ReplyMessage = "My Message";
-            context.State = "My State";
+            context.SetMessageState("My State");
 
             IRadiusPacket? sentPacket = null;
             var fakeSender = Mock.Get(host.Service<IRadiusResponseSenderFactory>().CreateSender(null));

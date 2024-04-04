@@ -220,21 +220,33 @@ namespace MultiFactor.Radius.Adapter.Core.Radius
         /// </summary>
         public string GetString(string name)
         {
-            if (Attributes.ContainsKey(name))
+            if (!Attributes.ContainsKey(name))
             {
-                var value = Attributes[name].Single();
+                return null;
+            }
 
-                if (value != null)
+            object value = null;
+            try
+            {
+                value = Attributes[name].Single();
+            }
+            catch (InvalidOperationException ex)
+            {
+                throw new Exception("Multiple attributes with the same name are found", ex);
+            }
+
+            if (value != null)
+            {
+                switch (value)
                 {
-                    switch (value)
-                    {
-                        case byte[] _value:
-                            return Encoding.UTF8.GetString(_value);
-                        case string _value:
-                            return _value;
-                        default:
-                            return value.ToString();
-                    }
+                    case byte[] _value:
+                        return Encoding.UTF8.GetString(_value);
+
+                    case string _value:
+                        return _value;
+
+                    default:
+                        return value.ToString();
                 }
             }
 

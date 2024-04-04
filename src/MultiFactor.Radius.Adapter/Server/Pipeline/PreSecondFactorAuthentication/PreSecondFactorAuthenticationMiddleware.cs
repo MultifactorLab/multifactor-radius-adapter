@@ -32,7 +32,9 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.PreSecondFactorAuthenticati
             if (isBypassed)
             {
                 _logger.LogInformation("Bypass pre-auth second factor for user '{user:l}' from {host:l}:{port}",
-                    context.UserName, context.RemoteEndpoint.Address, context.RemoteEndpoint.Port);
+                    context.UserName, 
+                    context.RemoteEndpoint.Address, 
+                    context.RemoteEndpoint.Port);
 
                 context.ResponseCode = context.Authentication.ToPacketCode();
                 await next(context);
@@ -50,7 +52,10 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.PreSecondFactorAuthenticati
                 case PreAuthMode.Otp when context.Passphrase.Otp == null:
                     context.Authentication.SetSecondFactor(AuthenticationCode.Reject);
                     context.ResponseCode = context.Authentication.ToPacketCode();
-                    _logger.LogError("The pre-auth second factor was rejected: otp code is empty");
+                    _logger.LogError("The pre-auth second factor was rejected: otp code is empty. User '{user:l}' from {host:l}:{port}",
+                        context.UserName, 
+                        context.RemoteEndpoint.Address, 
+                        context.RemoteEndpoint.Port);
                     return;
 
                 case PreAuthMode.Otp:
@@ -74,7 +79,7 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.PreSecondFactorAuthenticati
                         // security check
                         if (context.FirstFactorAuthenticationSource == AuthenticationSource.Radius)
                         {
-                            _logger.LogInformation("Bypass second factor for user '{user:l}' from {host:l}:{port}",
+                            _logger.LogInformation("Bypass pre-auth second factor for user '{user:l}' from {host:l}:{port}",
                                 context.UserName,
                                 context.RemoteEndpoint.Address,
                                 context.RemoteEndpoint.Port);
@@ -88,25 +93,29 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.PreSecondFactorAuthenticati
                     }
 
                     var response = await _apiAdapter.CreateSecondFactorRequestAsync(context);
-                    context.SetChallengeState(response.State);
+                    if (!string.IsNullOrWhiteSpace(response.State))
+                    {
+                        context.SetMessageState(response.State);
+                    }
+
                     context.ReplyMessage = response.ReplyMessage;
+                    context.SetSecondFactorAuth(response.Code);
+                    context.ResponseCode = context.Authentication.ToPacketCode();
 
                     if (response.Code == AuthenticationCode.Awaiting)
                     {
-                        _challengeProcessor.AddState(context); 
-                        context.ResponseCode = context.Authentication.ToPacketCode();
+                        _challengeProcessor.AddChallengeContext(context);
                         return;
                     }
 
-                    if (response.Code != AuthenticationCode.Accept)
+                    if (response.Code == AuthenticationCode.Reject)
                     {
-                        context.Authentication.SetSecondFactor(AuthenticationCode.Reject);
-                        context.ResponseCode = context.Authentication.ToPacketCode();
-                        _logger.LogError("The pre-auth second factor was rejected");
-                        return;
+                        _logger.LogError("The pre-auth second factor was rejected for user '{user:l}' from {host:l}:{port}",
+                            context.UserName,
+                            context.RemoteEndpoint.Address,
+                            context.RemoteEndpoint.Port);
                     }
 
-                    context.SetSecondFactorAuth(AuthenticationCode.Accept);
                     break;
 
                 case PreAuthMode.None:

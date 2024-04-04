@@ -65,7 +65,6 @@ public class SecondFactorAuthenticationMiddlewareTests
             .SetActiveDirectoryDomain("domain.local")
             .AddActiveDirectoryGroup("Security Group");
         var packet = RadiusPacketFactory.AccessRequest();
-        packet.AddAttribute("User-Name", "UserName");
         var context = host.CreateContext(packet, clientConfig: client, setupContext: x =>
         {
             x.RemoteEndpoint = new IPEndPoint(IPAddress.Any, 636);
@@ -100,9 +99,10 @@ public class SecondFactorAuthenticationMiddlewareTests
         var client = new ClientConfiguration("custom", "shared_secret", AuthenticationSource.None, "key", "secret")
             .SetBypassSecondFactorWhenApiUnreachable(true);
 
-        var context = host.CreateContext(RadiusPacketFactory.AccessRequest(), clientConfig: client, setupContext: x =>
+        var packet = RadiusPacketFactory.AccessRequest();
+        packet.AddAttribute("User-Name", "UserName");
+        var context = host.CreateContext(packet, clientConfig: client, setupContext: x =>
         {
-            x.UserName = "UserName";
             x.RemoteEndpoint = new IPEndPoint(IPAddress.Any, 636);
         });
 
@@ -193,7 +193,7 @@ public class SecondFactorAuthenticationMiddlewareTests
     public async Task Invoke_ApiShouldReturnChallengeRequest_ShouldInvokeAddState()
     {
         var chProc = new Mock<ISecondFactorChallengeProcessor>();
-        chProc.Setup(x => x.HasState(It.IsAny<ChallengeRequestIdentifier>()))
+        chProc.Setup(x => x.HasChallengeContext(It.IsAny<ChallengeIdentifier>()))
             .Returns(false);
 
         var host = TestHostFactory.CreateHost(builder =>
@@ -218,14 +218,14 @@ public class SecondFactorAuthenticationMiddlewareTests
         var context = host.CreateContext(packet, clientConfig: config.Clients[0], setupContext: x =>
         {
             x.RemoteEndpoint = new IPEndPoint(IPAddress.Any, 636);
-            x.State = "Qwerty123";
         });
-        var expectedIdentifier = new ChallengeRequestIdentifier(config.Clients[0].Name, "Qwerty123");
+        context.SetMessageState("Qwerty123");
+        var expectedIdentifier = new ChallengeIdentifier(config.Clients[0].Name, "Qwerty123");
 
         await host.InvokePipeline(context);
 
         Assert.Equal(PacketCode.AccessChallenge, context.ResponseCode);
         Assert.Equal(AuthenticationCode.Awaiting, context.Authentication.SecondFactor);
-        chProc.Verify(v => v.AddState(It.Is<RadiusContext>(x => x == context)), Times.Once);
+        chProc.Verify(v => v.AddChallengeContext(It.Is<RadiusContext>(x => x == context)), Times.Once);
     }
 }

@@ -46,9 +46,10 @@ namespace MultiFactor.Radius.Adapter.Tests
             
             var client = new ClientConfiguration("cli_config", "rds", AuthenticationSource.None, "key", "secret")
                 .SetPrivacyMode(PrivacyModeDescriptor.Default);
-            var context = host.CreateContext(RadiusPacketFactory.AccessRequest(), clientConfig: client, x =>
+            var packet = RadiusPacketFactory.AccessRequest();
+            packet.AddAttribute("User-Name", "test_user@multifactor.ru");
+            var context = host.CreateContext(packet, clientConfig: client, x =>
             {
-                x.UserName = "test_user@multifactor.ru";
                 x.RemoteEndpoint = new IPEndPoint(IPAddress.Any, 636);
             });
 
@@ -80,9 +81,10 @@ namespace MultiFactor.Radius.Adapter.Tests
             });
 
             var client = new ClientConfiguration("cli_config", "rds", AuthenticationSource.None, "key", "secret").SetPrivacyMode(PrivacyModeDescriptor.Default);
-            var context = host.CreateContext(RadiusPacketFactory.AccessRequest(), client, x =>
+            var packet = RadiusPacketFactory.AccessRequest();
+            packet.AddAttribute("User-Name", "test_user@multifactor.ru");
+            var context = host.CreateContext(packet, client, x =>
             {
-                x.UserName = "test_user@multifactor.ru";
                 x.RemoteEndpoint = new IPEndPoint(IPAddress.Any, 636);
             });
 
@@ -119,9 +121,10 @@ namespace MultiFactor.Radius.Adapter.Tests
             });
 
             var client = new ClientConfiguration("cli_config", "rds", AuthenticationSource.None, "key", "secret").SetPrivacyMode(PrivacyModeDescriptor.Default);
-            var context = host.CreateContext(RadiusPacketFactory.AccessRequest(), client, x =>
+            var packet = RadiusPacketFactory.AccessRequest();
+            packet.AddAttribute("User-Name", "test_user@multifactor.ru");
+            var context = host.CreateContext(packet, client, x =>
             {
-                x.UserName = "test_user@multifactor.ru";
                 x.RemoteEndpoint = new IPEndPoint(IPAddress.Any, 636);
             });
 
@@ -153,9 +156,10 @@ namespace MultiFactor.Radius.Adapter.Tests
             var client = new ClientConfiguration("cli_config", "rds", AuthenticationSource.None, "key", "secret")
                 .SetPrivacyMode(PrivacyModeDescriptor.Default)
                 .SetBypassSecondFactorWhenApiUnreachable(false);
-            var context = host.CreateContext(RadiusPacketFactory.AccessRequest(), client, x =>
+            var packet = RadiusPacketFactory.AccessRequest();
+            packet.AddAttribute("User-Name", "test_user@multifactor.ru");
+            var context = host.CreateContext(packet, client, x =>
             {
-                x.UserName = "test_user@multifactor.ru";
                 x.RemoteEndpoint = new IPEndPoint(IPAddress.Any, 636);
                 x.RequestPacket.AddAttribute("Calling-Station-Id", "192.168.1.1");
             });
@@ -188,9 +192,10 @@ namespace MultiFactor.Radius.Adapter.Tests
             var client = new ClientConfiguration("cli_config", "rds", AuthenticationSource.None, "key", "secret")
                 .SetPrivacyMode(PrivacyModeDescriptor.Default)
                 .SetBypassSecondFactorWhenApiUnreachable(true);
-            var context = host.CreateContext(RadiusPacketFactory.AccessRequest(), client, x =>
+            var packet = RadiusPacketFactory.AccessRequest();
+            packet.AddAttribute("User-Name", "test_user@multifactor.ru");
+            var context = host.CreateContext(packet, client, x =>
             {
-                x.UserName = "test_user@multifactor.ru";
                 x.RemoteEndpoint = new IPEndPoint(IPAddress.Any, 636);
                 x.RequestPacket.AddAttribute("Calling-Station-Id", "192.168.1.1");
             });
@@ -226,9 +231,10 @@ namespace MultiFactor.Radius.Adapter.Tests
             var client = new ClientConfiguration("cli_config", "rds", AuthenticationSource.None, "key", "secret")
                 .SetPrivacyMode(PrivacyModeDescriptor.Default)
                 .SetUseAttributeAsIdentity("some_attr_name");
-            var context = host.CreateContext(RadiusPacketFactory.AccessRequest(), client, x =>
+            var packet = RadiusPacketFactory.AccessRequest();
+            packet.AddAttribute("User-Name", "test_user@multifactor.ru");
+            var context = host.CreateContext(packet, client, x =>
             {
-                x.UserName = "test_user@multifactor.ru";
                 x.RemoteEndpoint = new IPEndPoint(IPAddress.Any, 636);
             });
 
@@ -267,9 +273,10 @@ namespace MultiFactor.Radius.Adapter.Tests
             var client = new ClientConfiguration("cli_config", "rds", AuthenticationSource.None, "key", "secret")
                 .SetPrivacyMode(PrivacyModeDescriptor.Default)
                 .SetUseAttributeAsIdentity("some_attr_name");
-            var context = host.CreateContext(RadiusPacketFactory.AccessRequest(), client, x =>
+            var packet = RadiusPacketFactory.AccessRequest();
+            packet.AddAttribute("User-Name", "test_user@multifactor.ru");
+            var context = host.CreateContext(packet, client, x =>
             {
-                x.UserName = "test_user@multifactor.ru";
                 x.RemoteEndpoint = new IPEndPoint(IPAddress.Any, 636);
             });
 

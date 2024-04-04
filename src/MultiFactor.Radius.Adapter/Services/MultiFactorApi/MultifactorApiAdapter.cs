@@ -52,9 +52,9 @@ namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi
             }
 
             var identity = context.SecondFactorIdentity;
-            var displayName = context.DisplayName;
-            var email = context.EmailAddress;
-            var userPhone = context.UserPhone;
+            var displayName = context.Profile.DisplayName;
+            var email = context.Profile.Email;
+            var userPhone = context.Profile.Phone;
             var callingStationId = context.RequestPacket.CallingStationId;
             var calledStationId = context.RequestPacket.CalledStationId; //only for winlogon yet
 
@@ -187,7 +187,7 @@ namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi
             }
         }
 
-        public async Task<ChallengeResponse> ChallengeAsync(RadiusContext context, string answer, ChallengeRequestIdentifier identifier)
+        public async Task<ChallengeResponse> ChallengeAsync(RadiusContext context, string answer, ChallengeIdentifier identifier)
         {
             if (context is null)
             {

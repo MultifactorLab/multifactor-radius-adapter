@@ -16,7 +16,7 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.AccessChallenge
 {
     public class SecondFactorChallengeProcessor : ISecondFactorChallengeProcessor
     {
-        private readonly ConcurrentDictionary<ChallengeRequestIdentifier, RadiusContext> _stateChallengePendingRequests = new();
+        private readonly ConcurrentDictionary<ChallengeIdentifier, RadiusContext> _challengeContexts = new();
         private readonly IMultifactorApiAdapter _apiAdapter;
         private readonly ILogger<SecondFactorChallengeProcessor> _logger;
 
@@ -29,7 +29,7 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.AccessChallenge
         /// <summary>
         /// Verify one time password from user input
         /// </summary>
-        public async Task<ChallengeCode> ProcessChallengeAsync(ChallengeRequestIdentifier identifier, RadiusContext context)
+        public async Task<ChallengeCode> ProcessChallengeAsync(ChallengeIdentifier identifier, RadiusContext context)
         {
             _logger.LogInformation("Processing challenge {State:l} for message id={id} from {host:l}:{port}", 
                 identifier.RequestId,
@@ -93,22 +93,24 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.AccessChallenge
             }
 
             // copy initial request profile to challenge request context
-            var stateChallengePendingRequest = GetStateChallengeRequest(identifier);
-            stateChallengePendingRequest?.CopyProfileToContext(context);
+            var challengeContext = GetChallengeContext(identifier);
+            if (challengeContext == null)
+            {
+                throw new InvalidOperationException($"Challenge context with identifier '{identifier}' was not found");
+            }
+            //challengeContext?.CopyProfileToContext(context);
 
-            var response = await _apiAdapter.ChallengeAsync(context, userAnswer, identifier);
+            var response = await _apiAdapter.ChallengeAsync(challengeContext, userAnswer, identifier);
             context.ReplyMessage = response.ReplyMessage;
             switch (response.Code)
             {
                 case AuthenticationCode.Accept:
-                    if (stateChallengePendingRequest != null)
+                    if (challengeContext != null)
                     {
-                        context.UserGroups = stateChallengePendingRequest.UserGroups;
-                        context.ResponsePacket = stateChallengePendingRequest.ResponsePacket;
-                        context.Profile.UpdateAttributes(stateChallengePendingRequest.Profile.Attributes);
+                        context.UpdateFromChallengeRequest(challengeContext);
                     }
 
-                    RemoveStateChallengeRequest(identifier);
+                    RemoveChallengeContext(identifier);
                     _logger.LogDebug("Challenge {State:l} was processed for message id={id} from {host:l}:{port} with result '{Result}'",
                         identifier.RequestId,
                         context.Header.Identifier,
@@ -118,7 +120,7 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.AccessChallenge
                     return ChallengeCode.Accept;
 
                 case AuthenticationCode.Reject:
-                    RemoveStateChallengeRequest(identifier);
+                    RemoveChallengeContext(identifier);
                     _logger.LogDebug("Challenge {State:l} was processed for message id={id} from {host:l}:{port} with result '{Result}'",
                         identifier.RequestId,
                         context.Header.Identifier,
@@ -131,18 +133,18 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.AccessChallenge
             return ChallengeCode.InProcess;
         }
 
-        public bool HasState(ChallengeRequestIdentifier identifier)
+        public bool HasChallengeContext(ChallengeIdentifier identifier)
         {
-            return _stateChallengePendingRequests.ContainsKey(identifier);
+            return _challengeContexts.ContainsKey(identifier);
         }
 
         /// <summary>
         /// Add authenticated request to local cache for otp/challenge
         /// </summary>
-        public ChallengeRequestIdentifier AddState(RadiusContext context)
+        public ChallengeIdentifier AddChallengeContext(RadiusContext context)
         {
-            var id = new ChallengeRequestIdentifier(context.Configuration.Name, context.State);
-            if (_stateChallengePendingRequests.TryAdd(id, context))
+            var id = new ChallengeIdentifier(context.Configuration.Name, context.State);
+            if (_challengeContexts.TryAdd(id, context))
             {
                 _logger.LogInformation("Challenge {State:l} was added for message id={id}", 
                     id.RequestId, context.Header.Identifier);
@@ -151,15 +153,15 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.AccessChallenge
 
             _logger.LogError("Unable to cache request id={id} for the '{cfg:l}' configuration",
                 context.Header.Identifier, context.Configuration.Name);
-            return ChallengeRequestIdentifier.Empty;
+            return ChallengeIdentifier.Empty;
         }
 
         /// <summary>
         /// Get authenticated request from local cache for otp/challenge
         /// </summary>
-        private RadiusContext GetStateChallengeRequest(ChallengeRequestIdentifier identifier)
+        private RadiusContext GetChallengeContext(ChallengeIdentifier identifier)
         {
-            if (_stateChallengePendingRequests.TryGetValue(identifier, out RadiusContext request))
+            if (_challengeContexts.TryGetValue(identifier, out RadiusContext request))
             {
                 return request;
             }
@@ -172,9 +174,9 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.AccessChallenge
         /// Remove authenticated request from local cache
         /// </summary>
         /// <param name="state"></param>
-        private void RemoveStateChallengeRequest(ChallengeRequestIdentifier identifier)
+        private void RemoveChallengeContext(ChallengeIdentifier identifier)
         {
-            _stateChallengePendingRequests.TryRemove(identifier, out RadiusContext _);
+            _challengeContexts.TryRemove(identifier, out RadiusContext _);
         }
     }
 }

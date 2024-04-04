@@ -36,12 +36,13 @@ public class SecondFactorAuthenticationMiddleware : IRadiusMiddleware
 
     public async Task InvokeAsync(RadiusContext context, RadiusRequestDelegate next)
     {
-        if (context.Authentication.SecondFactor == AuthenticationCode.Bypass)
+        var isBypassed = context.Authentication.SecondFactor == AuthenticationCode.Bypass;
+        if (isBypassed)
         {
-            // second factor not required
-            _logger.LogInformation("Bypass second factor for user '{user:l}'", context.UserName);
+            _logger.LogInformation("Bypass second factor for user '{user:l}' from {host:l}:{port}", context.UserName, context.RemoteEndpoint.Address, context.RemoteEndpoint.Port);
             context.ResponseCode = context.Authentication.ToPacketCode();
 
+            context.ResponseCode = context.Authentication.ToPacketCode();
             await next(context);
             return;
         }
@@ -83,15 +84,18 @@ public class SecondFactorAuthenticationMiddleware : IRadiusMiddleware
         }
 
         var response = await _apiAdapter.CreateSecondFactorRequestAsync(context);
-        context.SetChallengeState(response.State);
-        context.ReplyMessage = response.ReplyMessage;
+        if (!string.IsNullOrWhiteSpace(response.State))
+        {
+            context.SetMessageState(response.State);
+        }
 
+        context.ReplyMessage = response.ReplyMessage;
         context.SetSecondFactorAuth(response.Code);
         context.ResponseCode = context.Authentication.ToPacketCode();
 
         if (response.Code == AuthenticationCode.Awaiting)
         {
-            _challengeProcessor.AddState(context);
+            _challengeProcessor.AddChallengeContext(context);
             return;
         }
 
