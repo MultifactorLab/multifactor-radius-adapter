@@ -68,6 +68,12 @@ namespace MultiFactor.Radius.Adapter.Core.Radius
         IDictionary<string, List<object>> Attributes { get; set; }
 
         string CreateUniqueKey(IPEndPoint remoteEndpoint);
+
+        /// <summary>
+        /// Adds new value for the attribute that will be returned instead of original value. The original value will not be deleted.
+        /// </summary>
+        /// <param name="attribute"></param>
+        /// <param name="transformedValue"></param>
         void AddTransformation(string attribute, string transformedValue);
     }
 }

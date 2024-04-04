@@ -56,7 +56,6 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.FirstFactorAuthentication
                     _logger.LogError("Failed to validate user profile.");
 
                     context.SetFirstFactorAuth(AuthenticationCode.Reject);
-                    context.ResponseCode = context.Authentication.ToPacketCode();
                     return;
                 }
             }
@@ -70,7 +69,6 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.FirstFactorAuthentication
                     _logger.LogError("Failed to validate user profile.");
 
                     context.SetFirstFactorAuth(AuthenticationCode.Reject);
-                    context.ResponseCode = context.Authentication.ToPacketCode();
                     return;
                 }
                 context.UpdateProfile(profile);

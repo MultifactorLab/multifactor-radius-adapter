@@ -35,13 +35,11 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.FirstFactorAuthentication
             if (firstFactorAuthenticationResultCode == PacketCode.AccessAccept)
             {
                 context.Authentication.SetFirstFactor(AuthenticationCode.Accept);
-                context.ResponseCode = context.Authentication.ToPacketCode();
                 await next(context);
                 return;
             }
 
             // first factor authentication rejected
-            context.ResponseCode = firstFactorAuthenticationResultCode;
             context.Authentication.SetFirstFactor(AuthenticationCode.Reject);
 
             // stop authencation process

@@ -98,10 +98,9 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.AccessChallenge
             {
                 throw new InvalidOperationException($"Challenge context with identifier '{identifier}' was not found");
             }
-            //challengeContext?.CopyProfileToContext(context);
 
             var response = await _apiAdapter.ChallengeAsync(challengeContext, userAnswer, identifier);
-            context.ReplyMessage = response.ReplyMessage;
+            context.SetReplyMessage(response.ReplyMessage);
             switch (response.Code)
             {
                 case AuthenticationCode.Accept:

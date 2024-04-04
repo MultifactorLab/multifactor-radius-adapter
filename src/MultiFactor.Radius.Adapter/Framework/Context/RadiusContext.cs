@@ -30,7 +30,6 @@ namespace MultiFactor.Radius.Adapter.Framework.Context
         {
             RequestPacket = request ?? throw new ArgumentNullException(nameof(request));
             ReceivedAt = DateTime.Now;
-            ResponseCode = PacketCode.AccessReject;
             Configuration = clientConfiguration ?? throw new ArgumentNullException(nameof(clientConfiguration));
             UdpClient = udpClient ?? throw new ArgumentNullException(nameof(udpClient));
             RequestServices = provider ?? throw new ArgumentNullException(nameof(provider));
@@ -50,25 +49,14 @@ namespace MultiFactor.Radius.Adapter.Framework.Context
         public RadiusContextFlags Flags { get; }
 
         public DateTime ReceivedAt { get; }
-        public PacketCode ResponseCode { get; set; }
+        public PacketCode ResponseCode => Authentication.ToPacketCode();
 
         /// <summary>
         /// Challenge state.
         /// </summary>
         public string State { get; private set; }
 
-        public string ReplyMessage { get; set; }
-
-        public void SetChallengeState(string state, string replyMessage)
-        {
-            if (string.IsNullOrWhiteSpace(state))
-            {
-                throw new ArgumentException($"'{nameof(state)}' cannot be null or whitespace.", nameof(state));
-            }
-
-            State = state;
-            ReplyMessage = replyMessage;
-        }
+        public string ReplyMessage { get; private set; }
 
         public string UserName => RequestPacket.UserName;
 
@@ -99,27 +87,16 @@ namespace MultiFactor.Radius.Adapter.Framework.Context
             Profile = profile ?? throw new ArgumentNullException(nameof(profile));
         }
 
-        public void CopyProfileToContext(RadiusContext other)
-        {
-            if (other is null)
-            {
-                throw new ArgumentNullException(nameof(other));
-            }
-
-            // null if no AD request. winlogon, for example
-            other.UpdateProfile(Profile);
-        }
-
         public void TransformRadiusRequestAttribute(string attribute, string newValue) => RequestPacket.AddTransformation(attribute, newValue);
 
         public void SetMessageState(string state)
         {
-            if (string.IsNullOrWhiteSpace(state))
-            {
-                throw new ArgumentException($"'{nameof(state)}' cannot be null or whitespace.", nameof(state));
-            }
-
             State = state;
+        }
+
+        public void SetReplyMessage(string msg)
+        {
+            ReplyMessage = msg;
         }
 
         public void UpdateFromChallengeRequest(RadiusContext context)

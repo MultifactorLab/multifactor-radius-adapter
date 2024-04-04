@@ -35,8 +35,7 @@ namespace MultiFactor.Radius.Adapter.Tests
             });
 
             var context = host.CreateContext(RadiusPacketFactory.AccessChallenge());
-            context.ResponseCode = PacketCode.AccessChallenge;
-            context.ReplyMessage = "My Message";
+            context.SetReplyMessage("My Message");
             context.SetMessageState("My State");
 
             IRadiusPacket? sentPacket = null;
@@ -80,7 +79,7 @@ namespace MultiFactor.Radius.Adapter.Tests
             });
 
             var context = host.CreateContext(RadiusPacketFactory.AccessRequest());
-            context.ResponseCode = PacketCode.AccessAccept;
+            context.Authentication.Accept();
             context.RequestPacket.AddAttribute("Proxy-State", "VAL");
 
             IRadiusPacket? sentPacket = null;

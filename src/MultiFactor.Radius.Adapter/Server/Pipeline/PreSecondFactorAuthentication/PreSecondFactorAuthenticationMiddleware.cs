@@ -36,7 +36,6 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.PreSecondFactorAuthenticati
                     context.RemoteEndpoint.Address, 
                     context.RemoteEndpoint.Port);
 
-                context.ResponseCode = context.Authentication.ToPacketCode();
                 await next(context);
                 return;
             }
@@ -51,7 +50,6 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.PreSecondFactorAuthenticati
             {
                 case PreAuthMode.Otp when context.Passphrase.Otp == null:
                     context.Authentication.SetSecondFactor(AuthenticationCode.Reject);
-                    context.ResponseCode = context.Authentication.ToPacketCode();
                     _logger.LogError("The pre-auth second factor was rejected: otp code is empty. User '{user:l}' from {host:l}:{port}",
                         context.UserName, 
                         context.RemoteEndpoint.Address, 
@@ -70,7 +68,6 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.PreSecondFactorAuthenticati
                             context.RemoteEndpoint.Port);
 
                         context.SetSecondFactorAuth(AuthenticationCode.Reject);
-                        context.ResponseCode = context.Authentication.ToPacketCode();
                         return;
                     }
 
@@ -85,7 +82,6 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.PreSecondFactorAuthenticati
                                 context.RemoteEndpoint.Port);
 
                             context.SetSecondFactorAuth(AuthenticationCode.Bypass);
-                            context.ResponseCode = context.Authentication.ToPacketCode();
 
                             await next(context);
                             return;
@@ -93,14 +89,9 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.PreSecondFactorAuthenticati
                     }
 
                     var response = await _apiAdapter.CreateSecondFactorRequestAsync(context);
-                    if (!string.IsNullOrWhiteSpace(response.State))
-                    {
-                        context.SetMessageState(response.State);
-                    }
-
-                    context.ReplyMessage = response.ReplyMessage;
+                    context.SetMessageState(response.State);
+                    context.SetReplyMessage(response.ReplyMessage);
                     context.SetSecondFactorAuth(response.Code);
-                    context.ResponseCode = context.Authentication.ToPacketCode();
 
                     if (response.Code == AuthenticationCode.Awaiting)
                     {

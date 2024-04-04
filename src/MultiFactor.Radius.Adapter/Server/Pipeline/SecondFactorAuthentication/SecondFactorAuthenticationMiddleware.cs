@@ -40,9 +40,6 @@ public class SecondFactorAuthenticationMiddleware : IRadiusMiddleware
         if (isBypassed)
         {
             _logger.LogInformation("Bypass second factor for user '{user:l}' from {host:l}:{port}", context.UserName, context.RemoteEndpoint.Address, context.RemoteEndpoint.Port);
-            context.ResponseCode = context.Authentication.ToPacketCode();
-
-            context.ResponseCode = context.Authentication.ToPacketCode();
             await next(context);
             return;
         }
@@ -61,7 +58,6 @@ public class SecondFactorAuthenticationMiddleware : IRadiusMiddleware
                 context.RemoteEndpoint.Port); 
             
             context.SetSecondFactorAuth(AuthenticationCode.Reject);
-            context.ResponseCode = context.Authentication.ToPacketCode();
             return;
         }
 
@@ -76,7 +72,6 @@ public class SecondFactorAuthenticationMiddleware : IRadiusMiddleware
                     context.RemoteEndpoint.Port);
 
                 context.SetSecondFactorAuth(AuthenticationCode.Bypass);
-                context.ResponseCode = context.Authentication.ToPacketCode();
 
                 await next(context);
                 return;
@@ -84,14 +79,9 @@ public class SecondFactorAuthenticationMiddleware : IRadiusMiddleware
         }
 
         var response = await _apiAdapter.CreateSecondFactorRequestAsync(context);
-        if (!string.IsNullOrWhiteSpace(response.State))
-        {
-            context.SetMessageState(response.State);
-        }
-
-        context.ReplyMessage = response.ReplyMessage;
+        context.SetMessageState(response.State);
+        context.SetReplyMessage(response.ReplyMessage);
         context.SetSecondFactorAuth(response.Code);
-        context.ResponseCode = context.Authentication.ToPacketCode();
 
         if (response.Code == AuthenticationCode.Awaiting)
         {
