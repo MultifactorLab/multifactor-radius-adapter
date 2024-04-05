@@ -47,7 +47,7 @@ namespace MultiFactor.Radius.Adapter.Tests
             var client = new ClientConfiguration("custom", "shared_secret", AuthenticationSource.None, "key", "secret")
                 .SetActiveDirectoryDomain("domain.local")
                 .AddActiveDirectoryGroup("Security Group");
-            var attrs = new LdapAttributes()
+            var attrs = new LdapAttributes("CN=User Name,CN=Users,DC=domain,DC=local")
                 .Add("displayName", "User Name")
                 .Add("mail", "username@post.org")
                 .Add("userPrincipalName", "user.name@domain.local")
@@ -146,7 +146,7 @@ namespace MultiFactor.Radius.Adapter.Tests
             var client = new ClientConfiguration("custom", "shared_secret", AuthenticationSource.None, "key", "secret")
                 .SetActiveDirectoryDomain("domain.local")
                 .AddActiveDirectory2FaGroup("2FA Group");
-            var attrs = new LdapAttributes();
+            var attrs = new LdapAttributes("CN=User Name,CN=Users,DC=domain,DC=local");
             attrs.Add("displayName", "User Name")
                 .Add("mail", "username@post.org")
                 .Add("userPrincipalName", "user.name@domain.local")
@@ -243,7 +243,7 @@ namespace MultiFactor.Radius.Adapter.Tests
             var client = new ClientConfiguration("custom", "shared_secret", AuthenticationSource.None, "key", "secret")
                 .SetActiveDirectoryDomain("domain.local")
                 .AddActiveDirectory2FaBypassGroup("2FA Bypass Group");
-            var attrs = new LdapAttributes();
+            var attrs = new LdapAttributes("CN=User Name,CN=Users,DC=domain,DC=local");
             attrs.Add("displayName", "User Name")
                 .Add("mail", "username@post.org")
                 .Add("userPrincipalName", "user.name@domain.local")
@@ -274,7 +274,7 @@ namespace MultiFactor.Radius.Adapter.Tests
                 .AddActiveDirectoryGroup("Security Group")
                 .AddActiveDirectory2FaGroup("2FA Group")
                 .AddActiveDirectory2FaBypassGroup("2FA Bypass Group");
-            var attrs = new LdapAttributes();
+            var attrs = new LdapAttributes("CN=User Name,CN=Users,DC=domain,DC=local");
             attrs.Add("displayName", "User Name")
                 .Add("mail", "username@post.org")
                 .Add("userPrincipalName", "user.name@domain.local")
@@ -292,7 +292,7 @@ namespace MultiFactor.Radius.Adapter.Tests
 
         private static LdapProfile GetProfile()
         {
-            var attrs = new LdapAttributes()
+            var attrs = new LdapAttributes("CN=User Name,CN=Users,DC=domain,DC=local")
                 .Add("displayName", "User Name")
                 .Add("mail", "username@post.org")
                 .Add("userPrincipalName", "user.name@domain.local")

@@ -60,7 +60,7 @@ public class ProfileLoaderTests
             });
         });
 
-        var attrs = new LdapAttributes();
+        var attrs = new LdapAttributes("CN=User Name,CN=Users,DC=domain,DC=local");
         var baseDn = LdapIdentity.BaseDn("CN=User Name,CN=Users,DC=domain,DC=local");
         var expectedProfile = new LdapProfile(baseDn, attrs, Array.Empty<string>(), null);
         attrs.Add("displayName", "User Name")

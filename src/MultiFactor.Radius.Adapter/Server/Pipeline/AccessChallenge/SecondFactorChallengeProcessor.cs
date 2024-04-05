@@ -106,7 +106,7 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.AccessChallenge
                 case AuthenticationCode.Accept:
                     if (challengeContext != null)
                     {
-                        context.UpdateFromChallengeRequest(challengeContext);
+                        context.Update(challengeContext);
                     }
 
                     RemoveChallengeContext(identifier);

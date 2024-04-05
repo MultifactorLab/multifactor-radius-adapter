@@ -8,22 +8,42 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.Profile;
 
 internal class LdapAttributes : ILdapAttributes
 {
-    private readonly string[] _zeroOrSingleValueAttrs = new[]
-    {
-        "distinguishedName"
-    };
-
     private readonly Dictionary<string, List<string>> _attrs;
 
+    public string DistinguishedName { get; }
     public ReadOnlyCollection<string> Keys => new ReadOnlyCollection<string>(_attrs.Keys.ToList());
 
-    public LdapAttributes()
+    /// <summary>
+    /// Creates new instance of LdapAttributes with the specified entry distinguished name.
+    /// </summary>
+    /// <param name="dn">Entry distinguished name.</param>
+    /// <exception cref="ArgumentException"></exception>
+    public LdapAttributes(string dn)
     {
+        if (string.IsNullOrWhiteSpace(dn))
+        {
+            throw new ArgumentException($"'{nameof(dn)}' cannot be null or whitespace.", nameof(dn));
+        }
+
+        DistinguishedName = dn;
+
         _attrs = new Dictionary<string, List<string>>();
     }
 
-    public LdapAttributes(ILdapAttributes source)
+    /// <summary>
+    /// Creates new instance of LdapAttributes with the specified entry distinguished name and copies content from the <paramref name="source"/> ldap attributes.
+    /// </summary>
+    /// <param name="dn">Entry distinguished name.</param>
+    /// <param name="source">Source ldap attributes.</param>
+    public LdapAttributes(string dn, ILdapAttributes source)
     {
+        if (string.IsNullOrWhiteSpace(dn))
+        {
+            throw new ArgumentException($"'{nameof(dn)}' cannot be null or whitespace.", nameof(dn));
+        }
+
+        DistinguishedName = dn;
+
         if (source is null)
         {
             throw new ArgumentNullException(nameof(source));
@@ -41,9 +61,23 @@ internal class LdapAttributes : ILdapAttributes
             _attrs[attr] = new List<string>(source.GetValues(attr));
         }
     }
-    
-    public LdapAttributes(IDictionary<string, string[]> source)
+
+    /// <summary>
+    /// Creates new instance of LdapAttributes with the specified entry distinguished name and copies content from the <paramref name="source"/> ldap attributes.
+    /// </summary>
+    /// <param name="dn">Entry distinguished name.</param>
+    /// <param name="source">Source ldap attributes.</param>
+    /// <exception cref="ArgumentException"></exception>
+    /// <exception cref="ArgumentNullException"></exception>
+    public LdapAttributes(string dn, IDictionary<string, string[]> source)
     {
+        if (string.IsNullOrWhiteSpace(dn))
+        {
+            throw new ArgumentException($"'{nameof(dn)}' cannot be null or whitespace.", nameof(dn));
+        }
+
+        DistinguishedName = dn;
+
         if (source is null)
         {
             throw new ArgumentNullException(nameof(source));
@@ -120,14 +154,11 @@ internal class LdapAttributes : ILdapAttributes
         _attrs[attr].AddRange(value);
         _attrs[attr] = _attrs[attr].Where(x => x is not null).Distinct().ToList();
 
-        Validate(attr, _attrs[attr]);
         return this;
     }
     
-    public LdapAttributes Add(string attribute, string value)
-    {
-        return Add(attribute, new[] { value });
-    }
+    public LdapAttributes Add(string attribute, string value) => Add(attribute, new[] { value });
+    
 
     public LdapAttributes Remove(string attribute)
     {
@@ -155,15 +186,6 @@ internal class LdapAttributes : ILdapAttributes
         var attr = attribute.ToLower(CultureInfo.InvariantCulture);
         _attrs[attr] = new List<string>(value);
 
-        Validate(attr, _attrs[attr]);
         return this;
-    }
-
-    private void Validate(string attribute, IReadOnlyList<string> value)
-    {
-        if (_zeroOrSingleValueAttrs.Contains(attribute, StringComparer.OrdinalIgnoreCase) && value.Count > 1)
-        {
-            throw new InvalidOperationException($"Attribute '{attribute}' can only have one value");
-        }
     }
 }

@@ -42,14 +42,20 @@ namespace MultiFactor.Radius.Adapter.Framework.Context
         public IPEndPoint RemoteEndpoint { get; set; }
         public IPEndPoint ProxyEndpoint { get; set; }
 
+        /// <summary>
+        /// Current request packet.
+        /// </summary>
         public IRadiusPacket RequestPacket { get; }
-        public RadiusPacketHeader Header => RequestPacket.Header;
-        public IRadiusPacket ResponsePacket { get; set; }
-
-        public RadiusContextFlags Flags { get; }
-
         public DateTime ReceivedAt { get; }
+        public RadiusPacketHeader Header => RequestPacket.Header;
+
+        public IRadiusPacket ResponsePacket { get; set; }
         public PacketCode ResponseCode => Authentication.ToPacketCode();
+
+        /// <summary>
+        /// Context flags. Used for in-action configuring the pipeline behavior.
+        /// </summary>
+        public RadiusContextFlags Flags { get; }
 
         /// <summary>
         /// Challenge state.
@@ -58,6 +64,9 @@ namespace MultiFactor.Radius.Adapter.Framework.Context
 
         public string ReplyMessage { get; private set; }
 
+        /// <summary>
+        /// User-Name RADIUS attribute value.
+        /// </summary>
         public string UserName => RequestPacket.UserName;
 
         public UserPassphrase Passphrase { get; private set; }
@@ -66,27 +75,52 @@ namespace MultiFactor.Radius.Adapter.Framework.Context
         /// Should use for 2FA request to MFA API.
         /// </summary>
         public string SecondFactorIdentity => Configuration.UseIdentityAttribute ? Profile.SecondFactorIdentity : UserName;
+
+        /// <summary>
+        /// memberof LDAP attribute value.
+        /// </summary>
         public ReadOnlyCollection<string> UserGroups => Profile.MemberOf;
 
         public IServiceProvider RequestServices { get; }
         public IUdpClient UdpClient { get; }
+
+        /// <summary>
+        /// Client configuration.
+        /// </summary>
         public IClientConfiguration Configuration { get; }
 
         public AuthenticationSource FirstFactorAuthenticationSource => Configuration.FirstFactorAuthenticationSource;
         public PreAuthMode PreAuthMode => Configuration.PreAuthnMode.Mode;
 
-
+        /// <inheritdoc cref="AuthenticationState"/>
         public AuthenticationState Authentication { get; private set; }
+
+        /// <inheritdoc cref="AuthenticationState.SetFirstFactor(AuthenticationCode)"/>
         public void SetFirstFactorAuth(AuthenticationCode code) => Authentication.SetFirstFactor(code);
+
+        /// <inheritdoc cref="AuthenticationState.SetSecondFactor(AuthenticationCode)"/>
         public void SetSecondFactorAuth(AuthenticationCode code) => Authentication.SetSecondFactor(code);
 
+        /// <summary>
+        /// Current user LDAP profile.
+        /// </summary>
         public LdapProfile Profile { get; private set; }
 
+        /// <summary>
+        /// Replaces the current user's LDAP profile.
+        /// </summary>
+        /// <param name="profile">New profile</param>
+        /// <exception cref="ArgumentNullException"></exception>
         public void UpdateProfile(LdapProfile profile)
         {
             Profile = profile ?? throw new ArgumentNullException(nameof(profile));
         }
 
+        /// <summary>
+        /// Replaces the RADIUS attribute value.
+        /// </summary>
+        /// <param name="attribute">RADIUS attribute.</param>
+        /// <param name="newValue">New value.</param>
         public void TransformRadiusRequestAttribute(string attribute, string newValue) => RequestPacket.AddTransformation(attribute, newValue);
 
         public void SetMessageState(string state)
@@ -99,7 +133,12 @@ namespace MultiFactor.Radius.Adapter.Framework.Context
             ReplyMessage = msg;
         }
 
-        public void UpdateFromChallengeRequest(RadiusContext context)
+        /// <summary>
+        /// Replaces some context data from the other context.
+        /// </summary>
+        /// <param name="context"></param>
+        /// <exception cref="ArgumentNullException"></exception>
+        public void Update(RadiusContext context)
         {
             if (context is null)
             {

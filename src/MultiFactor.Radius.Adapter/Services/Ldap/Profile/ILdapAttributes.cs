@@ -2,8 +2,16 @@
 
 namespace MultiFactor.Radius.Adapter.Services.Ldap.Profile;
 
+/// <summary>
+/// Ldap entry attributes.
+/// </summary>
 public interface ILdapAttributes
 {
+    /// <summary>
+    /// Entry distinguished Namen
+    /// </summary>
+    string DistinguishedName { get; }
+
     /// <summary>
     /// Returns all existed attributes names.
     /// </summary>

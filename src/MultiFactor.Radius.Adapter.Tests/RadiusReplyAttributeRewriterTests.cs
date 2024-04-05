@@ -239,7 +239,9 @@ namespace MultiFactor.Radius.Adapter.Tests
             {
                 x.ResponsePacket = RadiusPacketFactory.AccessRequest();
             });
-            var attrs = new LdapAttributes().Add("givenName", "Given Name").Add("displayName", "Display Name");
+            var attrs = new LdapAttributes("CN=User Name,CN=Users,DC=domain,DC=local")
+                .Add("givenName", "Given Name")
+                .Add("displayName", "Display Name");
             context.Profile.UpdateAttributes(attrs);
 
             var srv = host.Service<RadiusReplyAttributeEnricher>();

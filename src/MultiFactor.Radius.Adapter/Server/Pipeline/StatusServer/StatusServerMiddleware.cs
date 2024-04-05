@@ -2,6 +2,7 @@
 //Please see licence at 
 //https://github.com/MultifactorLab/multifactor-radius-adapter/blob/main/LICENSE.md
 
+using MultiFactor.Radius.Adapter.Core;
 using MultiFactor.Radius.Adapter.Core.Radius;
 using MultiFactor.Radius.Adapter.Framework.Context;
 using MultiFactor.Radius.Adapter.Framework.Pipeline;
@@ -12,13 +13,11 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.StatusServer;
 
 public class StatusServerMiddleware : IRadiusMiddleware
 {
-    private readonly IServerInfo _serverInfo;
-    private readonly IRadiusRequestPostProcessor _requestPostProcessor;
+    private readonly ApplicationVariables _variables;
 
-    public StatusServerMiddleware(IServerInfo serverInfo, IRadiusRequestPostProcessor requestPostProcessor)
+    public StatusServerMiddleware(ApplicationVariables variables)
     {
-        _serverInfo = serverInfo ?? throw new ArgumentNullException(nameof(serverInfo));
-        _requestPostProcessor = requestPostProcessor ?? throw new ArgumentNullException(nameof(requestPostProcessor));
+        _variables = variables;
     }
 
     public async Task InvokeAsync(RadiusContext context, RadiusRequestDelegate next)
@@ -29,9 +28,8 @@ public class StatusServerMiddleware : IRadiusMiddleware
             return;
         }
 
-        var uptime = _serverInfo.GetUptime();
-        var version = _serverInfo.GetVersion();
-        context.SetReplyMessage($"Server up {uptime.Days} days {uptime.ToString("hh\\:mm\\:ss")}, ver.: {version}");
+        var uptime = _variables.UpTime;
+        context.SetReplyMessage($"Server up {uptime.Days} days {uptime.ToString("hh\\:mm\\:ss")}, ver.: {_variables.AppVersion}");
         context.Authentication.Accept();
     }
 }

@@ -168,14 +168,14 @@ namespace MultiFactor.Radius.Adapter.Tests
             };
             context.SetMessageState(reqId);
 
-            var memberof = new LdapAttributes(new Dictionary<string, string[]>
+            var memberof = new LdapAttributes("dn", new Dictionary<string, string[]>
             {
                 { "memberOf", new [] { "User Group 1", "User Group 2" } }
             });
             context.Profile.UpdateAttributes(memberof);
 
             var testDn = "CN=User Name,CN=Users,DC=domain,DC=local";
-            var attrs = new LdapAttributes().Add("sAmaccountName", "user name");
+            var attrs = new LdapAttributes(testDn).Add("sAmaccountName", "user name");
             context.UpdateProfile(new LdapProfile(LdapIdentity.BaseDn(testDn), attrs, Array.Empty<string>(), null).SetIdentityAttribute("multifactor"));
             processor.AddChallengeContext(context);
             var newPacket = RadiusPacketFactory.AccessChallenge();

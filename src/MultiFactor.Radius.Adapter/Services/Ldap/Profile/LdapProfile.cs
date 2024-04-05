@@ -13,11 +13,26 @@ public class LdapProfile
     private readonly string[] _phoneAttrs;
     private string _secondFactorIdentityAttr;
 
-    public LdapIdentity BaseDn { get; set; }
-    public string DistinguishedName => Attributes.GetValue("distinguishedName");
+    /// <summary>
+    /// Domain base distinguished name (with DC components only).
+    /// </summary>
+    public LdapIdentity BaseDn { get; }
+
+    /// <summary>
+    /// Distinguished name.
+    /// </summary>
+    public string DistinguishedName => Attributes.DistinguishedName;
+
+    /// <summary>
+    /// Distinguished name with escaped special symbols.
+    /// </summary>
     public string DistinguishedNameEscaped => EscapeDn(DistinguishedName);
 
+    /// <summary>
+    /// User-Principal-Name.
+    /// </summary>
     public string Upn => Attributes.GetValue("userprincipalname");
+
     public string SecondFactorIdentity => string.IsNullOrWhiteSpace(_secondFactorIdentityAttr) ? null : Attributes.GetValue(_secondFactorIdentityAttr);
     public string DisplayName => Attributes.GetValue("displayname");
     public string Email => Attributes.GetValue("mail");
@@ -55,7 +70,7 @@ public class LdapProfile
     private LdapProfile()
     {
         BaseDn = null;
-        Attributes = new LdapAttributes();
+        Attributes = new LdapAttributes("dc=localhost");
         _phoneAttrs = Array.Empty<string>();
     }
 

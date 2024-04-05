@@ -6,7 +6,7 @@
     <RunAnalyzersDuringBuild>true</RunAnalyzersDuringBuild>
     <RunAnalyzersDuringLiveAnalysis>false</RunAnalyzersDuringLiveAnalysis>
     <AssemblyName>multifactor-radius-adapter</AssemblyName>
-    <Authors>MultlFactor</Authors>
+    <Authors>Multifactor</Authors>
     <Description>Multifactor Radus Adapter</Description>
 	<Version>2.0.0</Version>
   </PropertyGroup>

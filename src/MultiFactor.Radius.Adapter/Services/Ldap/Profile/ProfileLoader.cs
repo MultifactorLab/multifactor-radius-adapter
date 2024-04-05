@@ -44,7 +44,7 @@ public class ProfileLoader
         }
 
         //base profile
-        var profileAttributes = new LdapAttributes();
+        var profileAttributes = new LdapAttributes(entry.Dn);
         var profile = new LdapProfile(LdapIdentity.BaseDn(entry.Dn), profileAttributes, clientConfig.PhoneAttributes, clientConfig.TwoFAIdentityAttribute);
 
         var attrs = entry.DirectoryAttributes;
@@ -95,9 +95,8 @@ public class ProfileLoader
         return queryAttributes.Distinct().ToArray();
     }
 
-    public async Task<Dictionary<string, string[]>> LoadAttributesAsync(IClientConfiguration clientConfig, ILdapConnectionAdapter adapter, LdapIdentity user, params string[] attrs)
+    public async Task<ILdapAttributes> LoadAttributesAsync(IClientConfiguration clientConfig, ILdapConnectionAdapter adapter, LdapIdentity user, params string[] attrs)
     {
-
         var names = LdapNamesFactory.CreateLdapNames(clientConfig.FirstFactorAuthenticationSource);
         var searchFilter = $"(&(objectClass={names.UserClass})({names.Identity(user)}={user.Name}))";
 
@@ -106,15 +105,18 @@ public class ProfileLoader
 
         var response = await adapter.SearchQueryAsync(domain.Name, searchFilter, LdapSearchScope.LDAP_SCOPE_SUB, attrs.Distinct().ToArray());
         var entry = response.SingleOrDefault();
-        if (entry == null) throw new LdapUserNotFoundException(user.Name, domain.Name);
+        if (entry == null)
+        {
+            throw new LdapUserNotFoundException(user.Name, domain.Name);
+        }
 
         var dirAttrs = entry.DirectoryAttributes;
-        var attributes = new Dictionary<string, string[]>();
+        var attributes = new LdapAttributes(entry.Dn);
         foreach (var a in attrs)
         {
             if (dirAttrs.TryGetValue(a, out var reqAttr))
             {
-                attributes[a] = reqAttr.GetValues<string>().ToArray();
+                attributes.Add(a, reqAttr.GetValues<string>());
             }
         }
 

@@ -3,9 +3,7 @@
 //https://github.com/MultifactorLab/multifactor-radius-adapter/blob/main/LICENSE.md
 
 //MIT License
-
 //Copyright(c) 2017 Verner Fortelius
-
 //Permission is hereby granted, free of charge, to any person obtaining a copy
 //of this software and associated documentation files (the "Software"), to deal
 //in the Software without restriction, including without limitation the rights
@@ -24,36 +22,36 @@
 //OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 //SOFTWARE.
 
+using System;
+using System.Net;
 using System.Threading.Tasks;
+using System.Net.Sockets;
+using MultiFactor.Radius.Adapter.Configuration.Core;
+using System.Runtime.CompilerServices;
 
-namespace MultiFactor.Radius.Adapter.Core.Radius.Attributes
+namespace MultiFactor.Radius.Adapter.Server
 {
-    public interface IRadiusDictionary
+    internal class RealUdpClient : IUdpClient
     {
-        string GetInfo();
+        private readonly UdpClient _udpClient;
 
-        void Read();
+        public RealUdpClient(IPEndPoint endpoint)
+        {
+            if (endpoint is null)
+            {
+                throw new ArgumentNullException(nameof(endpoint));
+            }
 
-        /// <summary>
-        /// Get a vendor specific attribute by vendorId and vendorCode
-        /// </summary>
-        /// <param name="vendorId"></param>
-        /// <param name="vendorCode"></param>
-        /// <returns></returns>
-        DictionaryVendorAttribute GetVendorAttribute(uint vendorId, byte vendorCode);
+            _udpClient = new UdpClient(endpoint);
+        }
 
-        /// <summary>
-        /// Get an RFC attribute by code
-        /// </summary>
-        /// <param name="code"></param>
-        /// <returns></returns>
-        DictionaryAttribute GetAttribute(byte code);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Close() => _udpClient.Close();
 
-        /// <summary>
-        /// Get an attribute or vendor attribute by name
-        /// </summary>
-        /// <param name="name"></param>
-        /// <returns></returns>
-        DictionaryAttribute GetAttribute(string name);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public Task<UdpReceiveResult> ReceiveAsync() => _udpClient.ReceiveAsync();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public int Send(byte[] dgram, int bytes, IPEndPoint endPoint) => _udpClient.Send(dgram, bytes, endPoint);
     }
 }

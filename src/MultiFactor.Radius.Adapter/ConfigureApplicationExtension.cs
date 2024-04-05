@@ -63,8 +63,6 @@ internal static class ConfigureApplicationExtension
 
         builder.Services.AddSingleton<IAuthenticatedClientCache, AuthenticatedClientCache>();
 
-        builder.Services.AddSingleton<IServerInfo, ServerInfo>();
-
         builder.Services.AddHttpServices();
 
         configureServices?.Invoke(builder.Services);

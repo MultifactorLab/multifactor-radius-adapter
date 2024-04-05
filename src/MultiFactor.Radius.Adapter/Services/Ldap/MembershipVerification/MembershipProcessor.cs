@@ -38,7 +38,10 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.MembershipVerification
         /// </summary>
         public async Task<IMembershipProcessingResult> ProcessMembershipAsync(RadiusContext context)
         {
-            if (context is null) throw new ArgumentNullException(nameof(context));
+            if (context is null)
+            {
+                throw new ArgumentNullException(nameof(context));
+            }
 
             var result = new MembershipProcessingResult();
 
@@ -68,7 +71,10 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.MembershipVerification
                         var res = _membershipVerifier.VerifyMembership(context.Configuration, profile, domain, user);
                         result.AddDomainResult(res);
 
-                        if (res.IsSuccess) break;
+                        if (res.IsSuccess)
+                        {
+                            break;
+                        }
                     }
                 }
                 catch (Exception ex)
@@ -87,37 +93,38 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.MembershipVerification
         /// <summary>
         /// Load required attribute and set it in user profile
         /// </summary>
-        public async Task<LdapProfile> LoadProfileWithRequiredAttributeAsync(RadiusContext context, IClientConfiguration clientConfig, string attr)
+        public async Task<LdapProfile> LoadProfileWithRequiredAttributeAsync(RadiusContext context, string attr)
         {
+            if (context is null)
+            {
+                throw new ArgumentNullException(nameof(context));
+            }
+
             if (string.IsNullOrEmpty(context.UserName))
             {
                 throw new Exception($"Can't find User-Name in message id={context.RequestPacket.Header.Identifier} from {context.RemoteEndpoint.Address}:{context.RemoteEndpoint.Port}");
             }
             var user = LdapIdentity.ParseUser(context.UserName);
-            var attributes = new Dictionary<string, string[]>();
 
+            var clientConfig = context.Configuration;
             foreach (var domain in clientConfig.SplittedActiveDirectoryDomains)
             {
-                if (attributes.Any())
-                {
-                    break;
-                }
-
                 var domainIdentity = LdapIdentity.FqdnToDn(domain);
 
                 try
                 {
                     using (var connAdapter = await _connectionAdapterFactory.CreateAdapterAsTechnicalAccAsync(domain, clientConfig))
                     {
-                        attributes = await _profileLoader.LoadAttributesAsync(clientConfig, connAdapter, user, new[] { attr });
-                        if (!attributes.Any())
+                        var attributes = await _profileLoader.LoadAttributesAsync(clientConfig, connAdapter, user, new[] { attr });
+                        if (attributes.Keys.Count == 0)
                         {
                             continue;
                         }
 
-                        var attrs = new LdapAttributes(attributes);
-                        var profile = new LdapProfile(domainIdentity, attrs, clientConfig.PhoneAttributes, clientConfig.TwoFAIdentityAttribute);
-                        profile.SetIdentityAttribute(attributes[attr].FirstOrDefault());
+                        var profile = new LdapProfile(domainIdentity, 
+                            attributes, 
+                            clientConfig.PhoneAttributes, 
+                            clientConfig.TwoFAIdentityAttribute);
                         return profile;
                     }
                 }

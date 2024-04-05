@@ -28,7 +28,6 @@ using System.Net;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Net.Sockets;
 using MultiFactor.Radius.Adapter.Services;
 using System.Globalization;
 using System.Collections.Generic;
@@ -41,36 +40,13 @@ using MultiFactor.Radius.Adapter.Configuration.Core;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using System.Runtime.CompilerServices;
 using MultiFactor.Radius.Adapter.Framework.Pipeline;
 using MultiFactor.Radius.Adapter.Framework.Context;
+using MultiFactor.Radius.Adapter.Core;
+using System.Collections;
 
 namespace MultiFactor.Radius.Adapter.Server
 {
-    internal class RealUdpClient : IUdpClient
-    {
-        private readonly UdpClient _udpClient;
-
-        public RealUdpClient(IPEndPoint endpoint)
-        {
-            if (endpoint is null)
-            {
-                throw new ArgumentNullException(nameof(endpoint));
-            }
-
-            _udpClient = new UdpClient(endpoint);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Close() => _udpClient.Close();
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Task<UdpReceiveResult> ReceiveAsync() => _udpClient.ReceiveAsync();
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public int Send(byte[] dgram, int bytes, IPEndPoint endPoint) => _udpClient.Send(dgram, bytes, endPoint);
-    }
-
     public sealed class RadiusServer : IDisposable
     {
         private IUdpClient _udpClient;
@@ -82,6 +58,7 @@ namespace MultiFactor.Radius.Adapter.Server
         private readonly RadiusPipeline _pipeline;
         private readonly RadiusContextFactory _radiusContextFactory;
         private readonly Func<IPEndPoint, IUdpClient> _createUdpClient;
+        private readonly ApplicationVariables _variables;
         private IServiceConfiguration _serviceConfiguration;
 
         private CacheService _cacheService;
@@ -102,8 +79,9 @@ namespace MultiFactor.Radius.Adapter.Server
             ILogger<RadiusServer> logger,
             RadiusPipeline pipeline,
             RadiusContextFactory radiusContextFactory,
-            // need for tests only
-            Func<IPEndPoint, IUdpClient> createUdpClient)
+            // needed for tests only
+            Func<IPEndPoint, IUdpClient> createUdpClient,
+            ApplicationVariables variables)
         {
             _serviceConfiguration = serviceConfiguration ?? throw new ArgumentNullException(nameof(serviceConfiguration));
             _dictionary = dictionary ?? throw new ArgumentNullException(nameof(dictionary));
@@ -113,6 +91,7 @@ namespace MultiFactor.Radius.Adapter.Server
             _pipeline = pipeline ?? throw new ArgumentNullException(nameof(pipeline));
             _radiusContextFactory = radiusContextFactory ?? throw new ArgumentNullException(nameof(radiusContextFactory));
             _createUdpClient = createUdpClient;
+            _variables = variables;
             _localEndpoint = serviceConfiguration.ServiceServerEndpoint;
         }
 
@@ -123,17 +102,21 @@ namespace MultiFactor.Radius.Adapter.Server
         {
             if (Running)
             {
-                _logger.LogWarning("Server already started");
+                _logger.LogWarning("Radius server already started");
                 return;
             }
-                   
+
+            _logger.LogInformation("Multifactor (c) RADIUS Adapter, v. {Version:l}", _variables.AppVersion);
             _logger.LogInformation("Starting Radius server on {host:l}:{port}", _localEndpoint.Address, _localEndpoint.Port);
+
+            _dictionary.Read();
+            _logger.LogInformation(_dictionary.GetInfo());
 
             _udpClient = _createUdpClient(_localEndpoint);
             Running = true;
             var receiveTask = Receive();
 
-            _logger.LogInformation("Server started");           
+            _logger.LogInformation("Radius server started");           
         }
 
         /// <summary>
@@ -143,14 +126,14 @@ namespace MultiFactor.Radius.Adapter.Server
         {
             if (!Running)
             {
-                _logger.LogWarning("Server already stopped");
+                _logger.LogWarning("Radius server already stopped");
                 return;
             }
                      
-            _logger.LogInformation("Stopping server");
+            _logger.LogInformation("Stopping radius server");
             Running = false;
             _udpClient?.Close();
-            _logger.LogInformation("Stopped");          
+            _logger.LogInformation("Radius server stopped");          
         }
 
         /// <summary>
@@ -317,27 +300,27 @@ namespace MultiFactor.Radius.Adapter.Server
             {
                 return false;
             }
-             
+
             var proxySig = Encoding.ASCII.GetString(request.Take(5).ToArray());
 
-            if (proxySig == "PROXY")
+            if (proxySig != "PROXY")
             {
-                var lf = Array.IndexOf(request, (byte)'\n');
-                var headerBytes = request.Take(lf + 1).ToArray();
-                var header = Encoding.ASCII.GetString(headerBytes);
-
-                var parts = header.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-
-                var sourceIp = parts[2];
-                var sourcePort = int.Parse(parts[4]);
-
-                sourceEndpoint = new IPEndPoint(IPAddress.Parse(sourceIp), sourcePort);
-                requestWithoutProxyHeader = request.Skip(lf + 1).ToArray();
-
-                return true;
+                return false;
             }
 
-            return false;
+            var lf = Array.IndexOf(request, (byte)'\n');
+            var headerBytes = request.Take(lf + 1).ToArray();
+            var header = Encoding.ASCII.GetString(headerBytes);
+
+            var parts = header.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+            var sourceIp = parts[2];
+            var sourcePort = int.Parse(parts[4]);
+
+            sourceEndpoint = new IPEndPoint(IPAddress.Parse(sourceIp), sourcePort);
+            requestWithoutProxyHeader = request.Skip(lf + 1).ToArray();
+
+            return true;
         }
 
         /// <summary>
