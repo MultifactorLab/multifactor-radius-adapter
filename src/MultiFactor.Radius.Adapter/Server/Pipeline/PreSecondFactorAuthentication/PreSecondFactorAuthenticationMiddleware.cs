@@ -105,6 +105,7 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.PreSecondFactorAuthenticati
                             context.UserName,
                             context.RemoteEndpoint.Address,
                             context.RemoteEndpoint.Port);
+                        return;
                     }
 
                     break;

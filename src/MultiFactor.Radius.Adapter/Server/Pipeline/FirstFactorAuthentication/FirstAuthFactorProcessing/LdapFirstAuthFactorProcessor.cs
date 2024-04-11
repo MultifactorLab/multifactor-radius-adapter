@@ -45,7 +45,7 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.FirstFactorAuthentication.F
                 return PacketCode.AccessReject;
             }
 
-            var password = context.RequestPacket.TryGetUserPassword();
+            var password = context.Passphrase.Password;
 
             if (string.IsNullOrEmpty(password))
             {
