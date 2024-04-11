@@ -12,7 +12,13 @@ namespace MultiFactor.Radius.Adapter.Configuration
 
             foreach (var client in serviceConfiguration.Clients)
             {
-                if (!sources.Contains(client.FirstFactorAuthenticationSource) || !client.CheckMembership)
+                var requireTechUser = client.FirstFactorAuthenticationSource == AuthenticationSource.ActiveDirectory
+                    ||
+                    client.FirstFactorAuthenticationSource == AuthenticationSource.Ldap
+                    ||
+                    client.CheckMembership;
+
+                if (!requireTechUser)
                 {
                     continue;
                 }

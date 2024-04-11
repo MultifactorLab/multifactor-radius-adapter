@@ -20,13 +20,7 @@ internal class LdapAttributes : ILdapAttributes
     /// <exception cref="ArgumentException"></exception>
     public LdapAttributes(string dn)
     {
-        if (string.IsNullOrWhiteSpace(dn))
-        {
-            throw new ArgumentException($"'{nameof(dn)}' cannot be null or whitespace.", nameof(dn));
-        }
-
-        DistinguishedName = dn;
-
+        DistinguishedName = dn ?? throw new ArgumentNullException(nameof(dn));
         _attrs = new Dictionary<string, List<string>>();
     }
 
