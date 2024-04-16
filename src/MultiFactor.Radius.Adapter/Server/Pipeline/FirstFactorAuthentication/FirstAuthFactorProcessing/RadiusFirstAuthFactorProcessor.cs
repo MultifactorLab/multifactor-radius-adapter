@@ -72,7 +72,7 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.FirstFactorAuthentication.F
                 //sending request as is to Remote Radius Server
                 using (var client = new RadiusClient(context.Configuration.ServiceClientEndpoint, _logger))
                 {
-                    _logger.LogDebug($"Sending AccessRequest message with id={{id}} to Remote Radius Server {context.Configuration.NpsServerEndpoint}", context.RequestPacket.Header.Identifier);
+                    _logger.LogDebug("Sending AccessRequest message with id={id} to Remote Radius Server {endpoint:l}", context.RequestPacket.Header.Identifier, context.Configuration.NpsServerEndpoint);
 
                     var requestBytes = _packetParser.GetBytes(context.RequestPacket);
                     var response = await client.SendPacketAsync(context.RequestPacket.Header.Identifier, requestBytes, context.Configuration.NpsServerEndpoint, TimeSpan.FromSeconds(5));
@@ -85,7 +85,7 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.FirstFactorAuthentication.F
                         if (responsePacket.Header.Code == PacketCode.AccessAccept)
                         {
                             var userName = context.UserName;
-                            _logger.LogInformation($"User '{{user:l}}' credential and status verified successfully at {context.Configuration.NpsServerEndpoint}", userName);
+                            _logger.LogInformation("User '{user:l}' credential and status verified successfully at {endpoint:l}", userName, context.Configuration.NpsServerEndpoint);
                         }
 
                         context.ResponsePacket = responsePacket;

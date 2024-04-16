@@ -19,12 +19,11 @@ internal static class TestEnvironment
 
     public static string GetAssetPath(TestAssetLocation location)
     {
-        switch (location)
+        return location switch
         {
-            case TestAssetLocation.ClientsDirectory: return $"{_assetsFolder}{Path.DirectorySeparatorChar}clients";
-            case TestAssetLocation.RootDirectory:
-            default: return _assetsFolder;
-        }
+            TestAssetLocation.ClientsDirectory => $"{_assetsFolder}{Path.DirectorySeparatorChar}clients",
+            _ => _assetsFolder,
+        };
     }
 
     public static string GetAssetPath(TestAssetLocation location, string fileName)

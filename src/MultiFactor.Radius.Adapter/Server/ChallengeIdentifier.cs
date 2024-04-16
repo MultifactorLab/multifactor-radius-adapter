@@ -2,7 +2,6 @@
 //Please see licence at 
 //https://github.com/MultifactorLab/multifactor-radius-adapter/blob/main/LICENSE.md
 
-using MultiFactor.Radius.Adapter.Configuration.Core;
 using System;
 
 namespace MultiFactor.Radius.Adapter.Server;
@@ -13,7 +12,7 @@ public class ChallengeIdentifier
 
     public string RequestId { get; }
 
-    public static ChallengeIdentifier Empty => new ChallengeIdentifier();
+    public static ChallengeIdentifier Empty => new();
 
     private ChallengeIdentifier()
     {

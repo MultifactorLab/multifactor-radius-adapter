@@ -5,9 +5,7 @@
 using LdapForNet;
 using Microsoft.Extensions.Logging;
 using MultiFactor.Radius.Adapter.Configuration;
-using MultiFactor.Radius.Adapter.Configuration.Core;
 using MultiFactor.Radius.Adapter.Core.Exceptions;
-using MultiFactor.Radius.Adapter.Core.Ldap;
 using MultiFactor.Radius.Adapter.Core.Services.Ldap;
 using MultiFactor.Radius.Adapter.Framework.Context;
 using MultiFactor.Radius.Adapter.Services.BindIdentityFormatting;
@@ -16,7 +14,6 @@ using MultiFactor.Radius.Adapter.Services.Ldap.Profile;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using static LdapForNet.Native.Native;

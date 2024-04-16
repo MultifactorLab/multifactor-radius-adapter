@@ -33,12 +33,12 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap
                 return new LdapUser(FormatOriginal(prefix, lwrName), IdentityType.Uid, lwrName, prefix);
             }
 
-            if (lwrName.Contains("="))
+            if (lwrName.Contains('='))
             {
                 return new LdapUser(lwrName, IdentityType.DistinguishedName, lwrName, prefix);
             }
 
-            if (lwrName.Contains("@"))
+            if (lwrName.Contains('@'))
             {
                 return new LdapUser(lwrName, IdentityType.UserPrincipalName, lwrName, prefix);
             }

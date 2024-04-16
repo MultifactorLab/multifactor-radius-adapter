@@ -7,8 +7,6 @@ using MultiFactor.Radius.Adapter.Configuration;
 using MultiFactor.Radius.Adapter.Configuration.Core;
 using MultiFactor.Radius.Adapter.Core.Radius;
 using MultiFactor.Radius.Adapter.Framework.Context;
-using MultiFactor.Radius.Adapter.Server.Pipeline.FirstFactorAuthentication;
-using MultiFactor.Radius.Adapter.Services;
 using MultiFactor.Radius.Adapter.Services.Ldap;
 using System;
 using System.Threading.Tasks;

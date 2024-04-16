@@ -22,28 +22,21 @@
 //OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 //SOFTWARE.
 
+using Microsoft.Extensions.Logging;
+using MultiFactor.Radius.Adapter.Configuration.Core;
+using MultiFactor.Radius.Adapter.Core;
+using MultiFactor.Radius.Adapter.Core.Radius;
+using MultiFactor.Radius.Adapter.Core.Radius.Attributes;
+using MultiFactor.Radius.Adapter.Framework.Context;
+using MultiFactor.Radius.Adapter.Framework.Pipeline;
+using MultiFactor.Radius.Adapter.Logging;
+using MultiFactor.Radius.Adapter.Services;
 using System;
 using System.Linq;
 using System.Net;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using MultiFactor.Radius.Adapter.Services;
-using System.Globalization;
-using System.Collections.Generic;
-using MultiFactor.Radius.Adapter.Configuration;
-using MultiFactor.Radius.Adapter.Logging.Enrichers;
-using MultiFactor.Radius.Adapter.Logging;
-using MultiFactor.Radius.Adapter.Core.Radius;
-using MultiFactor.Radius.Adapter.Core.Radius.Attributes;
-using MultiFactor.Radius.Adapter.Configuration.Core;
-using Microsoft.Extensions.Options;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using MultiFactor.Radius.Adapter.Framework.Pipeline;
-using MultiFactor.Radius.Adapter.Framework.Context;
-using MultiFactor.Radius.Adapter.Core;
-using System.Collections;
 
 namespace MultiFactor.Radius.Adapter.Server
 {

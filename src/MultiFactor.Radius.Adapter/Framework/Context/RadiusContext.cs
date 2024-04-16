@@ -2,19 +2,15 @@
 //Please see licence at 
 //https://github.com/MultifactorLab/multifactor-radius-adapter/blob/main/LICENSE.md
 
-using Elastic.CommonSchema;
 using MultiFactor.Radius.Adapter.Configuration;
 using MultiFactor.Radius.Adapter.Configuration.Core;
 using MultiFactor.Radius.Adapter.Configuration.Features.PreAuthModeFeature;
-using MultiFactor.Radius.Adapter.Core.Ldap;
 using MultiFactor.Radius.Adapter.Core.Radius;
 using MultiFactor.Radius.Adapter.Server;
 using MultiFactor.Radius.Adapter.Services.Ldap.Profile;
 using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Net;
-using System.Net.Sockets;
 
 namespace MultiFactor.Radius.Adapter.Framework.Context
 {

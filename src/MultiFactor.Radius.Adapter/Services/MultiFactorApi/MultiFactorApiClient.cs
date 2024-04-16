@@ -3,20 +3,12 @@
 //https://github.com/MultifactorLab/multifactor-radius-adapter/blob/main/LICENSE.md
 
 
-using LdapForNet.Adsddl;
 using Microsoft.Extensions.Logging;
-using MultiFactor.Radius.Adapter.Core;
 using MultiFactor.Radius.Adapter.Core.Http;
-using MultiFactor.Radius.Adapter.Core.Serialization;
 using MultiFactor.Radius.Adapter.Services.MultiFactorApi.Dto;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Text.Json;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using System.Net.Http.Headers;
 
 namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi
 {

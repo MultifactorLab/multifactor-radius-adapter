@@ -1,5 +1,4 @@
 ﻿using MultiFactor.Radius.Adapter.Configuration;
-using MultiFactor.Radius.Adapter.Server.Pipeline.FirstFactorAuthentication;
 using System;
 using System.Collections.Generic;
 using System.Linq;
