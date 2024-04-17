@@ -1,7 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using MultiFactor.Radius.Adapter.Configuration;
 using MultiFactor.Radius.Adapter.Configuration.Features.PreAuthModeFeature;
-using MultiFactor.Radius.Adapter.Core.Radius;
 using MultiFactor.Radius.Adapter.Framework.Context;
 using MultiFactor.Radius.Adapter.Framework.Pipeline;
 using MultiFactor.Radius.Adapter.Server.Pipeline.AccessChallenge;
@@ -17,7 +16,8 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.PreSecondFactorAuthenticati
         private readonly IMultifactorApiAdapter _apiAdapter;
         private readonly ILogger<PreSecondFactorAuthenticationMiddleware> _logger;
 
-        public PreSecondFactorAuthenticationMiddleware(ISecondFactorChallengeProcessor challengeProcessor,
+        public PreSecondFactorAuthenticationMiddleware(
+            ISecondFactorChallengeProcessor challengeProcessor,
             IMultifactorApiAdapter apiAdapter,
             ILogger<PreSecondFactorAuthenticationMiddleware> logger)
         {

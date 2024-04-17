@@ -9,7 +9,7 @@ namespace MultiFactor.Radius.Adapter.Services
     /// </summary>
     internal class RandomWaiter
     {
-        private readonly Random _random = new Random();
+        private readonly Random _random = new();
         private readonly RandomWaiterConfig _config;
 
         public RandomWaiter(RandomWaiterConfig config)

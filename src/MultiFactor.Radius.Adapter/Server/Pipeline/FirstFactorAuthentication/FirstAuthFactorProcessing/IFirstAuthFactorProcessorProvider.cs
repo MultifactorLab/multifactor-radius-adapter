@@ -1,8 +1,8 @@
 ﻿using MultiFactor.Radius.Adapter.Configuration;
-using MultiFactor.Radius.Adapter.Server.Pipeline.FirstFactorAuthentication;
 
 namespace MultiFactor.Radius.Adapter.Server.Pipeline.FirstFactorAuthentication.FirstAuthFactorProcessing
 {
+    // for tests
     public interface IFirstAuthFactorProcessorProvider
     {
         IFirstAuthFactorProcessor GetProcessor(AuthenticationSource authSource);

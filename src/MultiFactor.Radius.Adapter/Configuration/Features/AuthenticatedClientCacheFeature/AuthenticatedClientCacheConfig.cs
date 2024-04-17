@@ -8,7 +8,7 @@ public class AuthenticatedClientCacheConfig
     public bool MinimalMatching { get; }
     public bool Enabled => Lifetime != TimeSpan.Zero;
 
-    public static AuthenticatedClientCacheConfig Default => new AuthenticatedClientCacheConfig(TimeSpan.Zero, false);
+    public static AuthenticatedClientCacheConfig Default => new(TimeSpan.Zero, false);
 
     public AuthenticatedClientCacheConfig(TimeSpan lifetime, bool minimalMatching)
     {

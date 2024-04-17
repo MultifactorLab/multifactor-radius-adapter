@@ -1,11 +1,12 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Logging;
 using MultiFactor.Radius.Adapter.Configuration.Core;
-using MultiFactor.Radius.Adapter.Core.Http;
+using MultiFactor.Radius.Adapter.Core;
 using MultiFactor.Radius.Adapter.Core.Ldap;
 using MultiFactor.Radius.Adapter.Framework;
+using MultiFactor.Radius.Adapter.Logging;
 using MultiFactor.Radius.Adapter.Server.Pipeline.AccessChallenge;
-using MultiFactor.Radius.Adapter.Server.Pipeline.FirstFactorAuthentication;
-using MultiFactor.Radius.Adapter.Server.Pipeline.FirstFactorAuthentication.FirstAuthFactorProcessing;
 using MultiFactor.Radius.Adapter.Services;
 using MultiFactor.Radius.Adapter.Services.BindIdentityFormatting;
 using MultiFactor.Radius.Adapter.Services.Ldap;
@@ -14,11 +15,11 @@ using MultiFactor.Radius.Adapter.Services.Ldap.MembershipVerification;
 using MultiFactor.Radius.Adapter.Services.Ldap.Profile;
 using MultiFactor.Radius.Adapter.Services.Ldap.UserGroupsReading;
 using MultiFactor.Radius.Adapter.Services.MultiFactorApi;
+using Serilog;
 using System;
-using System.Net.Http;
-using System.Security.Authentication;
+using System.Linq;
 
-namespace MultiFactor.Radius.Adapter;
+namespace MultiFactor.Radius.Adapter.Extensions;
 
 internal static class ConfigureApplicationExtension
 {
@@ -56,46 +57,29 @@ internal static class ConfigureApplicationExtension
         return builder;
     }
 
-    private static void AddFirstAuthFactorProcessing(this IServiceCollection services)
+    public static RadiusHostApplicationBuilder AddLogging(this RadiusHostApplicationBuilder builder)
     {
-        services.AddSingleton<IFirstAuthFactorProcessor, LdapFirstAuthFactorProcessor>();
-        services.AddSingleton<IFirstAuthFactorProcessor, RadiusFirstAuthFactorProcessor>();
-        services.AddSingleton<IFirstAuthFactorProcessorProvider, FirstAuthFactorProcessorProvider>();
-    }
+        // temporary service provider.
+        var services = new ServiceCollection();
 
-    private static void AddHttpServices(this IServiceCollection services)
-    {
-        services.AddSingleton<IHttpClientAdapter, HttpClientAdapter>();
-        services.AddHttpContextAccessor();
-        services.AddTransient<MfTraceIdHeaderSetter>();
+        var appVarDescriptor = builder.InternalHostApplicationBuilder.Services.FirstOrDefault(x => x.ServiceType == typeof(ApplicationVariables))
+            ?? throw new System.Exception($"Service type '{typeof(ApplicationVariables)}' was not found in the RadiusHostApplicationBuilder services");
+        services.Add(appVarDescriptor);
 
-        services.AddHttpClient(nameof(HttpClientAdapter), (prov, client) =>
-        {
-            var config = prov.GetRequiredService<IServiceConfiguration>();
-            client.BaseAddress = new Uri(config.ApiUrl);
-            client.Timeout = config.ApiTimeout;
-        }).ConfigurePrimaryHttpMessageHandler(prov =>
-        {
-            var config = prov.GetRequiredService<IServiceConfiguration>();
-            var handler = new HttpClientHandler();
+        var rootConfigProvDescriptor = builder.InternalHostApplicationBuilder.Services.FirstOrDefault(x => x.ServiceType == typeof(IRootConfigurationProvider))
+            ?? throw new System.Exception($"Service type '{typeof(IRootConfigurationProvider)}' was not found in the RadiusHostApplicationBuilder services");
+        services.Add(rootConfigProvDescriptor);
 
-            handler.MaxConnectionsPerServer = 100;
-            handler.SslProtocols = SslProtocols.Tls13 | SslProtocols.Tls12;
+        services.AddSingleton<SerilogLoggerFactory>();
 
-            if (string.IsNullOrWhiteSpace(config.ApiProxy))
-            {
-                return handler;
-            }
+        var prov = services.BuildServiceProvider();
+        var logger = prov.GetRequiredService<SerilogLoggerFactory>().CreateLogger();
 
-            if (!WebProxyFactory.TryCreateWebProxy(config.ApiProxy, out var webProxy))
-            {
-                throw new Exception("Unable to initialize WebProxy. Please, check whether multifactor-api-proxy URI is valid.");
-            }
-            handler.Proxy = webProxy;
+        Log.Logger = logger;
+        builder.InternalHostApplicationBuilder.Logging.ClearProviders();
+        builder.InternalHostApplicationBuilder.Logging.AddSerilog(logger);
 
-            return handler;
-        })
-        .AddHttpMessageHandler<MfTraceIdHeaderSetter>();
+        return builder;
     }
 
 }

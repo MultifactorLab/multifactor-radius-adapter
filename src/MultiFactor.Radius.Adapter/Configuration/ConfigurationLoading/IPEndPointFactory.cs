@@ -11,10 +11,9 @@ namespace MultiFactor.Radius.Adapter.Configuration.ConfigurationLoading
     {
         public static bool TryParse(string text, out IPEndPoint ipEndPoint)
         {
-            Uri uri;
             ipEndPoint = null;
 
-            if (Uri.TryCreate(string.Concat("tcp://", text), UriKind.Absolute, out uri))
+            if (Uri.TryCreate(string.Concat("tcp://", text), UriKind.Absolute, out Uri uri))
             {
                 if (!IPAddress.TryParse(uri.Host, out var parsed)) return false;
 

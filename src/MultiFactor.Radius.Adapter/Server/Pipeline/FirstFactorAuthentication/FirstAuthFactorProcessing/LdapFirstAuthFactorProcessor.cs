@@ -4,7 +4,6 @@
 
 using Microsoft.Extensions.Logging;
 using MultiFactor.Radius.Adapter.Configuration;
-using MultiFactor.Radius.Adapter.Configuration.Core;
 using MultiFactor.Radius.Adapter.Core.Radius;
 using MultiFactor.Radius.Adapter.Framework.Context;
 using MultiFactor.Radius.Adapter.Services.Ldap;
@@ -18,15 +17,13 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.FirstFactorAuthentication.F
     /// </summary>
     public class LdapFirstAuthFactorProcessor : IFirstAuthFactorProcessor
     {
-        private readonly IServiceConfiguration _serviceConfiguration;
         private readonly LdapService _ldapService;
         private readonly ILogger<LdapFirstAuthFactorProcessor> _logger;
 
-        public LdapFirstAuthFactorProcessor(IServiceConfiguration serviceConfiguration,
+        public LdapFirstAuthFactorProcessor(
             LdapService ldapService,
             ILogger<LdapFirstAuthFactorProcessor> logger)
         {
-            _serviceConfiguration = serviceConfiguration ?? throw new ArgumentNullException(nameof(serviceConfiguration));
             _ldapService = ldapService ?? throw new ArgumentNullException(nameof(ldapService));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }

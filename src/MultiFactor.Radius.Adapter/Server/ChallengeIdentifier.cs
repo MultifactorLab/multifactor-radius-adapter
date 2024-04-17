@@ -46,8 +46,7 @@ public class ChallengeIdentifier
         if (obj is null) return false;
         if (obj == this) return true;
 
-        var other = obj as ChallengeIdentifier;
-        if (other == null) return false;
+        if (obj is not ChallengeIdentifier other) return false;
 
         return _identifier != null && _identifier == other._identifier;
     }

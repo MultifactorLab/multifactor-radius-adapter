@@ -82,7 +82,7 @@ namespace MultiFactor.Radius.Adapter.Tests
                     };
                 });
             });
-
+            
             var config = host.Service<IServiceConfiguration>();
             var cli = config.Clients[0];
 

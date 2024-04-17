@@ -1,6 +1,4 @@
-﻿using MultiFactor.Radius.Adapter.Services.MultiFactorApi;
-using System.Collections.Generic;
-using System.Net.Http;
+﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace MultiFactor.Radius.Adapter.Core.Http

@@ -5,9 +5,7 @@
 using MultiFactor.Radius.Adapter.Configuration;
 using MultiFactor.Radius.Adapter.Configuration.Core;
 using MultiFactor.Radius.Adapter.Core.Ldap;
-using MultiFactor.Radius.Adapter.Services.Ldap.Connection;
 using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace MultiFactor.Radius.Adapter.Services.Ldap.UserGroupsReading
@@ -16,9 +14,9 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.UserGroupsReading
     {
         public AuthenticationSource AuthenticationSource => AuthenticationSource.Ldap | AuthenticationSource.Radius;
 
-        public Task<string[]> GetAllUserGroupsAsync(IClientConfiguration clientConfig, ILdapConnectionAdapter adapter, string userDn)
+        public Task<string[]> GetAllUserGroupsAsync(ILdapConnectionAdapter adapter, string userDn, bool loadNestedGroup)
         {
-            return Task.FromResult<string[]>(Array.Empty<string>());
+            return Task.FromResult(Array.Empty<string>());
         }
     }
 }

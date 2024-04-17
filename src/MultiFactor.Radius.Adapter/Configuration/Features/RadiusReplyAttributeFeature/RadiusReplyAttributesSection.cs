@@ -11,8 +11,5 @@ namespace MultiFactor.Radius.Adapter;
 public class RadiusReplyAttributesSection : ConfigurationSection
 {
     [ConfigurationProperty("Attributes")]
-    public RadiusReplyAttributesCollection Members
-    {
-        get { return (RadiusReplyAttributesCollection)this["Attributes"]; }
-    }
+    public RadiusReplyAttributesCollection Members => (RadiusReplyAttributesCollection)this["Attributes"];
 }

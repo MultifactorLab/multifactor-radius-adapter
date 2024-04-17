@@ -5,7 +5,6 @@
 
 using Microsoft.Extensions.Logging;
 using MultiFactor.Radius.Adapter.Configuration;
-using MultiFactor.Radius.Adapter.Configuration.Core;
 using MultiFactor.Radius.Adapter.Configuration.Features.PreAuthModeFeature;
 using MultiFactor.Radius.Adapter.Configuration.Features.PrivacyModeFeature;
 using MultiFactor.Radius.Adapter.Core.Http;
@@ -22,17 +21,15 @@ namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi
     internal class MultifactorApiAdapter : IMultifactorApiAdapter
     {
         private readonly IMultifactorApiClient _api;
-        private readonly IServiceConfiguration _serviceConfiguration;
         private readonly IAuthenticatedClientCache _authenticatedClientCache;
         private readonly ILogger<MultifactorApiAdapter> _logger;
 
-        public MultifactorApiAdapter(IMultifactorApiClient api,
-            IServiceConfiguration serviceConfiguration,
+        public MultifactorApiAdapter(
+            IMultifactorApiClient api,
             IAuthenticatedClientCache authenticatedClientCache,
             ILogger<MultifactorApiAdapter> logger)
         {
             _api = api;
-            _serviceConfiguration = serviceConfiguration;
             _authenticatedClientCache = authenticatedClientCache;
             _logger = logger;
         }
@@ -314,7 +311,7 @@ namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi
                     return AuthenticationCode.Awaiting;
 
                 default:
-                    _logger.LogWarning($"Got unexpected status from API: {multifactorAccessRequest.Status}");
+                    _logger.LogWarning("Got unexpected status from API: {status:l}", multifactorAccessRequest.Status);
                     return AuthenticationCode.Reject;
             }
         }

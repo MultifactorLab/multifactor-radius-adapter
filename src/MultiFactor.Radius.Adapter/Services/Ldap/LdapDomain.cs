@@ -52,7 +52,7 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap
             if (index == -1) return (string.Empty, identity);
             if (index == 0) throw new ArgumentException("Incorrect identity");
 
-            return (identity.Substring(0, index), identity.Substring(index + 1));
+            return (identity[..index], identity[(index + 1)..]);
         }
 
         private static string FormatOriginal(string prefix, string name)

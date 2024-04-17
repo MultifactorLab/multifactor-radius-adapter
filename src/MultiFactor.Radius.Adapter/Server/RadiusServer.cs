@@ -52,9 +52,9 @@ namespace MultiFactor.Radius.Adapter.Server
         private readonly RadiusContextFactory _radiusContextFactory;
         private readonly Func<IPEndPoint, IUdpClient> _createUdpClient;
         private readonly ApplicationVariables _variables;
-        private IServiceConfiguration _serviceConfiguration;
+        private readonly IServiceConfiguration _serviceConfiguration;
 
-        private CacheService _cacheService;
+        private readonly CacheService _cacheService;
 
         public bool Running
         {
@@ -145,7 +145,7 @@ namespace MultiFactor.Radius.Adapter.Server
                 catch (ObjectDisposedException) { } // This is thrown when udpclient is disposed, can be safely ignored
                 catch (Exception ex)
                 {
-                    _logger.LogError($"Something went wrong transmitting packet: {ex.Message}");
+                    _logger.LogError("Something went wrong transmitting packet: {message:l}", ex.Message);
                 }
             }
         }
@@ -194,10 +194,7 @@ namespace MultiFactor.Radius.Adapter.Server
             {
                 clientConfiguration = _serviceConfiguration.GetClient(nasIdentifier);
             }
-            if (clientConfiguration == null)
-            {
-                clientConfiguration = _serviceConfiguration.GetClient(remoteEndpoint.Address);
-            }
+            clientConfiguration ??= _serviceConfiguration.GetClient(remoteEndpoint.Address);
 
             if (clientConfiguration == null)
             {

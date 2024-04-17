@@ -3,7 +3,6 @@
 //https://github.com/MultifactorLab/multifactor-radius-adapter/blob/main/LICENSE.md
 
 using MultiFactor.Radius.Adapter.Configuration.Features.PreAuthModeFeature;
-using MultiFactor.Radius.Adapter.Core.Radius;
 using System;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -92,7 +91,7 @@ namespace MultiFactor.Radius.Adapter.Framework.Context
                         return passwordAndOtp;
                     }
 
-                    var sub = passwordAndOtp.Substring(0, passwordAndOtp.Length - length);
+                    var sub = passwordAndOtp[..^length];
                     return sub;
 
                 case PreAuthMode.None:
@@ -111,7 +110,7 @@ namespace MultiFactor.Radius.Adapter.Framework.Context
                 return false;
             }
 
-            code = passwordAndOtp.Substring(passwordAndOtp.Length - length);
+            code = passwordAndOtp[^length..];
             if (!Regex.IsMatch(code, preAuthnMode.Settings.OtpCodeRegex))
             {
                 code = null;

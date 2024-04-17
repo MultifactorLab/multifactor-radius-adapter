@@ -38,7 +38,7 @@ internal class RadiusHostApplicationBuilder
     public RadiusHostApplicationBuilder UseMiddleware<TMiddleware>() where TMiddleware : IRadiusMiddleware
     {
         Services.AddTransient(typeof(TMiddleware));
-        Func<RadiusRequestDelegate, RadiusRequestDelegate> middleware = next =>
+        RadiusRequestDelegate middleware(RadiusRequestDelegate next)
         {
             return async context =>
             {
@@ -60,7 +60,7 @@ internal class RadiusHostApplicationBuilder
 
                 await middleware.InvokeAsync(context, next);
             };
-        };
+        }
 
         _components.Add(middleware);
         return this;

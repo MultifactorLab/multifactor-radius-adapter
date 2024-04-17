@@ -22,12 +22,12 @@
 //OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 //SOFTWARE.
 
+using MultiFactor.Radius.Adapter.Configuration.Core;
 using System;
 using System.Net;
-using System.Threading.Tasks;
 using System.Net.Sockets;
-using MultiFactor.Radius.Adapter.Configuration.Core;
 using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 
 namespace MultiFactor.Radius.Adapter.Server
 {

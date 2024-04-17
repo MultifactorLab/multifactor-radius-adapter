@@ -7,16 +7,13 @@ internal static class LdapNamesFactory
 {
     public static LdapNames CreateLdapNames(AuthenticationSource source)
     {
-        switch (source)
+        return source switch
         {
-            case AuthenticationSource.ActiveDirectory:
-            case AuthenticationSource.Radius:
-            case AuthenticationSource.None:
-                return new LdapNames(LdapServerType.ActiveDirectory);
-            case AuthenticationSource.Ldap:
-                return new LdapNames(LdapServerType.Generic);
-            default:
-                throw new NotImplementedException(source.ToString());
-        }
+            AuthenticationSource.ActiveDirectory 
+                or AuthenticationSource.Radius 
+                or AuthenticationSource.None => new LdapNames(LdapServerType.ActiveDirectory),
+            AuthenticationSource.Ldap => new LdapNames(LdapServerType.Generic),
+            _ => throw new NotImplementedException(source.ToString()),
+        };
     }
 }

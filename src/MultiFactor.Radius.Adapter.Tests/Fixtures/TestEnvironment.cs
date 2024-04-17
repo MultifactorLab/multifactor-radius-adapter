@@ -9,7 +9,7 @@ internal enum TestAssetLocation
 internal static class TestEnvironment
 {
     private static readonly string _appFolder = $"{Path.GetDirectoryName(AppDomain.CurrentDomain.BaseDirectory)}{Path.DirectorySeparatorChar}";
-    private static readonly string _assetsFolder = $"{_appFolder}{Path.DirectorySeparatorChar}Assets";
+    private static readonly string _assetsFolder = $"{_appFolder}Assets";
 
     public static string GetAssetPath(string fileName)
     {

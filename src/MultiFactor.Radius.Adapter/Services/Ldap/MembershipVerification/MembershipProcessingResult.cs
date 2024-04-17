@@ -12,7 +12,7 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.MembershipVerification
     /// </summary>
     public class MembershipProcessingResult : IMembershipProcessingResult
     {
-        private readonly List<MembershipVerificationResult> _list = new List<MembershipVerificationResult>();
+        private readonly List<MembershipVerificationResult> _list = new();
         public IReadOnlyList<MembershipVerificationResult> Results => _list.AsReadOnly();
 
         /// <summary>

@@ -5,7 +5,6 @@
 using LdapForNet;
 using MultiFactor.Radius.Adapter.Services.Ldap;
 using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 using static LdapForNet.Native.Native;
 

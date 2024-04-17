@@ -29,7 +29,7 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.FirstFactorAuthentication.F
 
             return _processors
                 .FirstOrDefault(x => x.AuthenticationSource.HasFlag(authSource))
-                ?? throw new NotImplementedException($"Unexpected authentication source '{authSource}'.");
+                    ?? throw new NotImplementedException($"Unexpected authentication source '{authSource}'.");
         }
     }
 }

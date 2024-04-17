@@ -10,9 +10,6 @@ namespace MultiFactor.Radius.Adapter
     public class UserNameTransformRulesSection : ConfigurationSection
     {
         [ConfigurationProperty("", IsDefaultCollection = true)]
-        public UserNameTransformRulesCollection Members
-        {
-            get { return (UserNameTransformRulesCollection)base[""]; }
-        }
+        public UserNameTransformRulesCollection Members => (UserNameTransformRulesCollection)base[""];
     }
 }

@@ -1,12 +1,11 @@
-﻿using System.Collections.Generic;
-using System.Net.Http;
-using System.Net;
-using System.Threading.Tasks;
-using System;
+﻿using Microsoft.Extensions.Logging;
 using MultiFactor.Radius.Adapter.Core.Serialization;
-using System.Text.Json;
+using System;
+using System.Collections.Generic;
+using System.Net.Http;
 using System.Text;
-using Microsoft.Extensions.Logging;
+using System.Text.Json;
+using System.Threading.Tasks;
 
 namespace MultiFactor.Radius.Adapter.Core.Http
 {

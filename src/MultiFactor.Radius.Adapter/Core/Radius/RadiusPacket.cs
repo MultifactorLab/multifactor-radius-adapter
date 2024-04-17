@@ -28,7 +28,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
-using System.Security.Cryptography;
 using System.Text;
 
 namespace MultiFactor.Radius.Adapter.Core.Radius
@@ -40,7 +39,7 @@ namespace MultiFactor.Radius.Adapter.Core.Radius
     {
         private readonly Dictionary<string, string> _transformMap = new();
 
-        private readonly RadiusPacketOptions _options = new RadiusPacketOptions();
+        private readonly RadiusPacketOptions _options = new();
 
         private string UserPassword => GetString("User-Password");
 
@@ -48,43 +47,29 @@ namespace MultiFactor.Radius.Adapter.Core.Radius
         public RadiusAuthenticator Authenticator { get; }
 
         public IDictionary<string, List<object>> Attributes { get; set; } = new Dictionary<string, List<object>>();
-        public SharedSecret SharedSecret { get; } 
+        public SharedSecret SharedSecret { get; }
 
         public byte[] RequestAuthenticator
         {
             get;
             internal set;
         }
+
         /// <summary>
         /// EAP session challenge in progress (ie. wpa2-ent)
         /// </summary>
-        public bool IsEapMessageChallenge
-        {
-            get
-            {
-                return Header.Code == PacketCode.AccessChallenge && AuthenticationType == AuthenticationType.EAP;
-            }
-        }
+        public bool IsEapMessageChallenge => Header.Code == PacketCode.AccessChallenge && AuthenticationType == AuthenticationType.EAP;
+
         /// <summary>
         /// ACL and other rules transfer
         /// </summary>
-        public bool IsVendorAclRequest
-        {
-            get
-            {
-                return UserName?.StartsWith("#ACSACL#-IP") == true;
-            }
-        }
+        public bool IsVendorAclRequest => UserName?.StartsWith("#ACSACL#-IP") == true;
+
         /// <summary>
         /// Is our WinLogon
         /// </summary>
-        public bool IsWinLogon
-        {
-            get
-            {
-                return GetString("mfa-client-name") == "WinLogon";
-            }
-        }
+        public bool IsWinLogon => GetString("mfa-client-name") == "WinLogon";
+
         /// <summary>
         /// OpenVPN with static-challenge sends pwd and otp in base64 with SCRV1 prefix
         /// https://openvpn.net/community-resources/management-interface/
@@ -111,18 +96,12 @@ namespace MultiFactor.Radius.Adapter.Core.Radius
                 return AuthenticationType.Unknown;
             }
         }
-        public string UserName => _transformMap.ContainsKey("User-Name") 
-            ? _transformMap["User-Name"] 
+        public string UserName => _transformMap.ContainsKey("User-Name")
+            ? _transformMap["User-Name"]
             : GetString("User-Name");
 
-        public string RemoteHostName
-        {
-            get
-            {
-                //MS RDGW and RRAS
-                return GetString("MS-Client-Machine-Account-Name") ?? GetString("MS-RAS-Client-Name");
-            }
-        }
+        //MS RDGW and RRAS
+        public string RemoteHostName => GetString("MS-Client-Machine-Account-Name") ?? GetString("MS-RAS-Client-Name");
         public string CallingStationId => GetCallingStationId();
         public string CalledStationId => IsWinLogon ? GetString("Called-Station-Id") : null;
         public string NasIdentifier => GetString("NAS-Identifier");
@@ -225,7 +204,7 @@ namespace MultiFactor.Radius.Adapter.Core.Radius
                 return null;
             }
 
-            object value = null;
+            object value;
             try
             {
                 value = Attributes[name].Single();
@@ -237,17 +216,12 @@ namespace MultiFactor.Radius.Adapter.Core.Radius
 
             if (value != null)
             {
-                switch (value)
+                return value switch
                 {
-                    case byte[] _value:
-                        return Encoding.UTF8.GetString(_value);
-
-                    case string _value:
-                        return _value;
-
-                    default:
-                        return value.ToString();
-                }
+                    byte[] _value => Encoding.UTF8.GetString(_value),
+                    string _value => _value,
+                    _ => value.ToString(),
+                };
             }
 
             return null;
@@ -306,7 +280,7 @@ namespace MultiFactor.Radius.Adapter.Core.Radius
         public string CreateUniqueKey(IPEndPoint remoteEndpoint)
         {
             var base64Authenticator = Authenticator.Value.Base64();
-            return $"{Header.Code.ToString("d")}:{Header.Identifier}:{remoteEndpoint}:{UserName}:{base64Authenticator}";
+            return $"{Header.Code:d}:{Header.Identifier}:{remoteEndpoint}:{UserName}:{base64Authenticator}";
         }
 
         private string GetCallingStationId()

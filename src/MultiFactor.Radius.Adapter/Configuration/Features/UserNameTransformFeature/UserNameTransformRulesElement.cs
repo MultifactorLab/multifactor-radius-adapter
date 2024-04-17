@@ -9,21 +9,12 @@ namespace MultiFactor.Radius.Adapter.Configuration.Features.UserNameTransformFea
     public class UserNameTransformRulesElement : ConfigurationElement
     {
         [ConfigurationProperty("match", IsKey = false, IsRequired = true)]
-        public string Match
-        {
-            get { return (string)this["match"]; }
-        }
+        public string Match => (string)this["match"];
 
         [ConfigurationProperty("replace", IsKey = false, IsRequired = true)]
-        public string Replace
-        {
-            get { return (string)this["replace"]; }
-        }
+        public string Replace => (string)this["replace"];
 
         [ConfigurationProperty("count", IsKey = false, IsRequired = false)]
-        public int? Count
-        {
-            get { return (int?)this["count"]; }
-        }
+        public int? Count => (int?)this["count"];
     }
 }

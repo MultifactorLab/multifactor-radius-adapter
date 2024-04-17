@@ -17,13 +17,11 @@ namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi
     /// </summary>
     internal class MultifactorApiClient : IMultifactorApiClient
     {
-        private readonly IAuthenticatedClientCache _authenticatedClientCache;
-        private ILogger<MultifactorApiClient> _logger;
+        private readonly ILogger<MultifactorApiClient> _logger;
         private readonly IHttpClientAdapter _httpClientAdapter;
 
-        public MultifactorApiClient(IAuthenticatedClientCache authenticatedClientCache, ILogger<MultifactorApiClient> logger, IHttpClientAdapter httpClientAdapter)
+        public MultifactorApiClient(ILogger<MultifactorApiClient> logger, IHttpClientAdapter httpClientAdapter)
         {
-            _authenticatedClientCache = authenticatedClientCache ?? throw new ArgumentNullException(nameof(authenticatedClientCache));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _httpClientAdapter = httpClientAdapter ?? throw new ArgumentNullException(nameof(httpClientAdapter));
         }

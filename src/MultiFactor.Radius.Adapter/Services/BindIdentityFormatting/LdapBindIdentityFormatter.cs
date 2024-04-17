@@ -2,8 +2,6 @@
 //Please see licence at 
 //https://github.com/MultifactorLab/multifactor-radius-adapter/blob/main/LICENSE.md
 
-using MultiFactor.Radius.Adapter.Configuration;
-using MultiFactor.Radius.Adapter.Configuration.Core;
 using MultiFactor.Radius.Adapter.Core.Ldap;
 using MultiFactor.Radius.Adapter.Core.Services.Ldap;
 using MultiFactor.Radius.Adapter.Services.Ldap;
@@ -13,11 +11,11 @@ namespace MultiFactor.Radius.Adapter.Services.BindIdentityFormatting
 {
     public class LdapBindIdentityFormatter : IBindIdentityFormatter
     {
-        private readonly IClientConfiguration _clientConfig;
+        private readonly string _ldapBindDn;
 
-        public LdapBindIdentityFormatter(IClientConfiguration clientConfig)
+        public LdapBindIdentityFormatter(string ldapBindDn)
         {
-            _clientConfig = clientConfig ?? throw new ArgumentNullException(nameof(clientConfig));
+            _ldapBindDn = ldapBindDn ?? throw new ArgumentNullException(nameof(ldapBindDn));
         }
 
         public string FormatIdentity(LdapIdentity user, string ldapUri)
@@ -28,9 +26,9 @@ namespace MultiFactor.Radius.Adapter.Services.BindIdentityFormatting
             }
 
             var bindDn = $"uid={user.Name}";
-            if (!string.IsNullOrEmpty(_clientConfig.LdapBindDn))
+            if (!string.IsNullOrEmpty(_ldapBindDn))
             {
-                bindDn += "," + _clientConfig.LdapBindDn;
+                bindDn += "," + _ldapBindDn;
             }
 
             return bindDn;

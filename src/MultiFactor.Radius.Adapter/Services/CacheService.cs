@@ -1,16 +1,13 @@
 ﻿using Microsoft.Extensions.Caching.Memory;
 using MultiFactor.Radius.Adapter.Core.Radius;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net;
-using System.Threading.Tasks;
 
 namespace MultiFactor.Radius.Adapter.Services
 {
     public class CacheService
     {
-        private IMemoryCache _cache;
+        private readonly IMemoryCache _cache;
 
         public CacheService(IMemoryCache cache)
         {
