@@ -22,28 +22,21 @@
 //OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 //SOFTWARE.
 
+using Microsoft.Extensions.Logging;
+using MultiFactor.Radius.Adapter.Configuration.Core;
+using MultiFactor.Radius.Adapter.Core;
+using MultiFactor.Radius.Adapter.Core.Radius;
+using MultiFactor.Radius.Adapter.Core.Radius.Attributes;
+using MultiFactor.Radius.Adapter.Framework.Context;
+using MultiFactor.Radius.Adapter.Framework.Pipeline;
+using MultiFactor.Radius.Adapter.Logging;
+using MultiFactor.Radius.Adapter.Services;
 using System;
 using System.Linq;
 using System.Net;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using MultiFactor.Radius.Adapter.Services;
-using System.Globalization;
-using System.Collections.Generic;
-using MultiFactor.Radius.Adapter.Configuration;
-using MultiFactor.Radius.Adapter.Logging.Enrichers;
-using MultiFactor.Radius.Adapter.Logging;
-using MultiFactor.Radius.Adapter.Core.Radius;
-using MultiFactor.Radius.Adapter.Core.Radius.Attributes;
-using MultiFactor.Radius.Adapter.Configuration.Core;
-using Microsoft.Extensions.Options;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using MultiFactor.Radius.Adapter.Framework.Pipeline;
-using MultiFactor.Radius.Adapter.Framework.Context;
-using MultiFactor.Radius.Adapter.Core;
-using System.Collections;
 
 namespace MultiFactor.Radius.Adapter.Server
 {
@@ -59,9 +52,9 @@ namespace MultiFactor.Radius.Adapter.Server
         private readonly RadiusContextFactory _radiusContextFactory;
         private readonly Func<IPEndPoint, IUdpClient> _createUdpClient;
         private readonly ApplicationVariables _variables;
-        private IServiceConfiguration _serviceConfiguration;
+        private readonly IServiceConfiguration _serviceConfiguration;
 
-        private CacheService _cacheService;
+        private readonly CacheService _cacheService;
 
         public bool Running
         {
@@ -152,7 +145,7 @@ namespace MultiFactor.Radius.Adapter.Server
                 catch (ObjectDisposedException) { } // This is thrown when udpclient is disposed, can be safely ignored
                 catch (Exception ex)
                 {
-                    _logger.LogError($"Something went wrong transmitting packet: {ex.Message}");
+                    _logger.LogError("Something went wrong transmitting packet: {message:l}", ex.Message);
                 }
             }
         }
@@ -201,10 +194,7 @@ namespace MultiFactor.Radius.Adapter.Server
             {
                 clientConfiguration = _serviceConfiguration.GetClient(nasIdentifier);
             }
-            if (clientConfiguration == null)
-            {
-                clientConfiguration = _serviceConfiguration.GetClient(remoteEndpoint.Address);
-            }
+            clientConfiguration ??= _serviceConfiguration.GetClient(remoteEndpoint.Address);
 
             if (clientConfiguration == null)
             {

@@ -2,21 +2,14 @@
 //Please see licence at 
 //https://github.com/MultifactorLab/multifactor-radius-adapter/blob/main/LICENSE.md
 
-using Microsoft.AspNetCore.Mvc.Formatters;
 using MultiFactor.Radius.Adapter.Configuration.Core;
 using MultiFactor.Radius.Adapter.Configuration.Features.RandomWaiterFeature;
-using MultiFactor.Radius.Adapter.Core;
 using MultiFactor.Radius.Adapter.Framework.Context;
-using NetTools;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Configuration;
-using System.IO;
-using System.Linq;
 using System.Net;
-using System.Text.RegularExpressions;
 
 namespace MultiFactor.Radius.Adapter.Configuration
 {
@@ -71,7 +64,7 @@ namespace MultiFactor.Radius.Adapter.Configuration
         {
             if (request == null)
             {
-                throw new ArgumentNullException("request");
+                throw new ArgumentNullException(nameof(request));
             }
             if (SingleClientMode)
             {

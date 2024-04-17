@@ -40,7 +40,7 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap
             var portIndex = name.IndexOf(":");
             if (portIndex > 0)
             {
-                name = name.Substring(0, portIndex);
+                name = name[..portIndex];
             }
 
             var domains = name.Split(new[] { '.' }, StringSplitOptions.RemoveEmptyEntries);
@@ -69,16 +69,16 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap
             var index = identity.IndexOf("\\");
             if (index > 0)
             {
-                identity = identity.Substring(index + 1);
+                identity = identity[(index + 1)..];
             }
 
             var type = isUser ? IdentityType.Uid : IdentityType.Cn;
 
-            if (identity.Contains("="))
+            if (identity.Contains('='))
             {
                 type = IdentityType.DistinguishedName;
             }
-            else if (identity.Contains("@"))
+            else if (identity.Contains('@'))
             {
                 type = IdentityType.UserPrincipalName;
             }
@@ -131,8 +131,7 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap
         {
             if (obj is null) return false;
 
-            var other = obj as LdapIdentity;
-            if (other == null) return false;
+            if (obj is not LdapIdentity other) return false;
             if (other == this) return true;
 
             return other.Name == Name && other.Type == Type;

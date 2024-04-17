@@ -3,14 +3,10 @@
 //https://github.com/MultifactorLab/MultiFactor.Radius.Adapter/blob/master/LICENSE.md
 
 using Microsoft.Extensions.Logging;
-using MultiFactor.Radius.Adapter.Configuration.Core;
-using MultiFactor.Radius.Adapter.Core.Ldap;
 using MultiFactor.Radius.Adapter.Framework.Context;
 using MultiFactor.Radius.Adapter.Services.Ldap.Connection;
 using MultiFactor.Radius.Adapter.Services.Ldap.Profile;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace MultiFactor.Radius.Adapter.Services.Ldap.MembershipVerification
@@ -61,20 +57,15 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.MembershipVerification
                     var user = LdapIdentity.ParseUser(userName);
 
                     _logger.LogDebug("Verifying user '{user:l}' membership at '{domain:l}'", user.Name, domain);
-                    using (var connAdapter = await _connectionAdapterFactory.CreateAdapterAsTechnicalAccAsync(domain, context.Configuration))
+                    using var connAdapter = await _connectionAdapterFactory.CreateAdapterAsTechnicalAccAsync(domain, context.Configuration);
+                    profile ??= await _profileLoader.LoadAsync(context.Configuration, connAdapter, user);
+
+                    var res = _membershipVerifier.VerifyMembership(context.Configuration, profile, domain, user);
+                    result.AddDomainResult(res);
+
+                    if (res.IsSuccess)
                     {
-                        if (profile == null)
-                        {
-                            profile = await _profileLoader.LoadAsync(context.Configuration, connAdapter, user);
-                        }
-
-                        var res = _membershipVerifier.VerifyMembership(context.Configuration, profile, domain, user);
-                        result.AddDomainResult(res);
-
-                        if (res.IsSuccess)
-                        {
-                            break;
-                        }
+                        break;
                     }
                 }
                 catch (Exception ex)
@@ -113,24 +104,22 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.MembershipVerification
 
                 try
                 {
-                    using (var connAdapter = await _connectionAdapterFactory.CreateAdapterAsTechnicalAccAsync(domain, clientConfig))
+                    using var connAdapter = await _connectionAdapterFactory.CreateAdapterAsTechnicalAccAsync(domain, clientConfig);
+                    var attributes = await _profileLoader.LoadAttributesAsync(clientConfig, connAdapter, user, new[] { attr });
+                    if (attributes.Keys.Count == 0)
                     {
-                        var attributes = await _profileLoader.LoadAttributesAsync(clientConfig, connAdapter, user, new[] { attr });
-                        if (attributes.Keys.Count == 0)
-                        {
-                            continue;
-                        }
-
-                        var profile = new LdapProfile(domainIdentity, 
-                            attributes, 
-                            clientConfig.PhoneAttributes, 
-                            clientConfig.TwoFAIdentityAttribute);
-                        return profile;
+                        continue;
                     }
+
+                    var profile = new LdapProfile(domainIdentity,
+                        attributes,
+                        clientConfig.PhoneAttributes,
+                        clientConfig.TwoFAIdentityAttribute);
+                    return profile;
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, $"Loading attributes of user '{{user:l}}' at {domainIdentity} failed", context.UserName);
+                    _logger.LogError(ex, "Loading attributes of user '{user:l}' at {domainIdentity} failed", context.UserName, domainIdentity);
                     _logger.LogInformation("Run MultiFactor.Raduis.Adapter as user with domain read permissions (basically any domain user)");
                     continue;
                 }

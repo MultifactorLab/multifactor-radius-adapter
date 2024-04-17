@@ -1,6 +1,5 @@
-﻿using System.Linq;
+﻿using MultiFactor.Radius.Adapter.Configuration.Core;
 using System.Text;
-using MultiFactor.Radius.Adapter.Configuration.Core;
 
 namespace MultiFactor.Radius.Adapter.Configuration
 {
@@ -8,8 +7,6 @@ namespace MultiFactor.Radius.Adapter.Configuration
     {
         public static void Validate(this IServiceConfiguration serviceConfiguration)
         {
-            var sources = new[] { AuthenticationSource.Radius, AuthenticationSource.None };
-
             foreach (var client in serviceConfiguration.Clients)
             {
                 var requireTechUser = client.FirstFactorAuthenticationSource == AuthenticationSource.ActiveDirectory

@@ -14,12 +14,10 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.FirstFactorAuthentication
     public class FirstFactorAuthenticationMiddleware : IRadiusMiddleware
     {
         private readonly IFirstAuthFactorProcessorProvider _firstAuthFactorProcessorProvider;
-        private readonly IRadiusRequestPostProcessor _requestPostProcessor;
 
-        public FirstFactorAuthenticationMiddleware(IFirstAuthFactorProcessorProvider firstAuthFactorProcessorProvider, IRadiusRequestPostProcessor requestPostProcessor)
+        public FirstFactorAuthenticationMiddleware(IFirstAuthFactorProcessorProvider firstAuthFactorProcessorProvider)
         {
             _firstAuthFactorProcessorProvider = firstAuthFactorProcessorProvider ?? throw new ArgumentNullException(nameof(firstAuthFactorProcessorProvider));
-            _requestPostProcessor = requestPostProcessor ?? throw new ArgumentNullException(nameof(requestPostProcessor));
         }
 
         public async Task InvokeAsync(RadiusContext context, RadiusRequestDelegate next)

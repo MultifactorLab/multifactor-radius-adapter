@@ -93,12 +93,8 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.AccessChallenge
             }
 
             // copy initial request profile to challenge request context
-            var challengeContext = GetChallengeContext(identifier);
-            if (challengeContext == null)
-            {
-                throw new InvalidOperationException($"Challenge context with identifier '{identifier}' was not found");
-            }
-
+            var challengeContext = GetChallengeContext(identifier)
+                ?? throw new InvalidOperationException($"Challenge context with identifier '{identifier}' was not found");
             var response = await _apiAdapter.ChallengeAsync(challengeContext, userAnswer, identifier);
             context.SetReplyMessage(response.ReplyMessage);
             switch (response.Code)
@@ -165,7 +161,7 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.AccessChallenge
                 return request;
             }
 
-            _logger.LogError($"Unable to get cached request with state={identifier}");
+            _logger.LogError("Unable to get cached request with state={identifier:l}", identifier);
             return null;
         }
 

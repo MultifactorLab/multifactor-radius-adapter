@@ -1,10 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Runtime.InteropServices;
-using LdapForNet;
-using MultiFactor.Radius.Adapter.Core.Ldap;
 
 namespace MultiFactor.Radius.Adapter.Services.Ldap.Profile;
 
@@ -65,7 +62,7 @@ public class LdapProfile
 
     public ILdapAttributes Attributes { get; private set; }
 
-    public static LdapProfile Empty => new LdapProfile();
+    public static LdapProfile Empty => new();
 
     private LdapProfile()
     {

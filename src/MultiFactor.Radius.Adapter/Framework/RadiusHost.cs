@@ -1,22 +1,18 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using MultiFactor.Radius.Adapter.HostedServices;
-using MultiFactor.Radius.Adapter.Server;
-using MultiFactor.Radius.Adapter.Core.Radius;
-using MultiFactor.Radius.Adapter.Services;
+using MultiFactor.Radius.Adapter.Configuration;
 using MultiFactor.Radius.Adapter.Configuration.ConfigurationLoading;
 using MultiFactor.Radius.Adapter.Configuration.Core;
-using MultiFactor.Radius.Adapter.Configuration;
+using MultiFactor.Radius.Adapter.Core;
+using MultiFactor.Radius.Adapter.Core.Radius;
 using MultiFactor.Radius.Adapter.Core.Radius.Attributes;
-using Microsoft.AspNetCore.Http;
-using System.Linq.Expressions;
-using Microsoft.Extensions.Logging;
-using Serilog;
+using MultiFactor.Radius.Adapter.Framework.Pipeline;
+using MultiFactor.Radius.Adapter.HostedServices;
+using MultiFactor.Radius.Adapter.Server;
+using MultiFactor.Radius.Adapter.Server.Pipeline.PostProcessing;
+using MultiFactor.Radius.Adapter.Services;
 using System;
 using System.Net;
-using MultiFactor.Radius.Adapter.Core;
-using MultiFactor.Radius.Adapter.Framework.Pipeline;
-using MultiFactor.Radius.Adapter.Server.Pipeline.PostProcessing;
 
 namespace MultiFactor.Radius.Adapter.Framework;
 

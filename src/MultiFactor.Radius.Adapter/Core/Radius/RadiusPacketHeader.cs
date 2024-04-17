@@ -30,8 +30,6 @@ using MultiFactor.Radius.Adapter.Core.Radius.Metadata;
 
 namespace MultiFactor.Radius.Adapter.Core.Radius
 {
-
-
     public class RadiusPacketHeader
     {
         public PacketCode Code { get; }
@@ -67,10 +65,8 @@ namespace MultiFactor.Radius.Adapter.Core.Radius
             // Generate random authenticator for access request packets
             if (code == PacketCode.AccessRequest || code == PacketCode.StatusServer)
             {
-                using (var csp = RandomNumberGenerator.Create())
-                {
-                    csp.GetNonZeroBytes(auth);
-                }
+                using var csp = RandomNumberGenerator.Create();
+                csp.GetNonZeroBytes(auth);
             }
 
             return new RadiusPacketHeader(code, identifier, auth);

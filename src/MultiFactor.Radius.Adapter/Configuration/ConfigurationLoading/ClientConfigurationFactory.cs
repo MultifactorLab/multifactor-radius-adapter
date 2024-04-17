@@ -17,12 +17,9 @@ using MultiFactor.Radius.Adapter.Server;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
-using System.IO;
 using System.Linq;
 using System.Net;
-using System.Reflection;
 using System.Text.RegularExpressions;
-using static MultiFactor.Radius.Adapter.Core.Literals;
 using Config = System.Configuration.Configuration;
 
 namespace MultiFactor.Radius.Adapter.Configuration.ConfigurationLoading;
@@ -336,7 +333,7 @@ public class ClientConfigurationFactory
 
     private static void ReadAuthenticationCacheSettings(AppSettingsSection appSettings, ClientConfiguration builder)
     {
-        bool minimalMatching = false;
+        bool minimalMatching;
         try
         {
             minimalMatching = bool.Parse(appSettings.Settings[Literals.Configuration.AuthenticationCacheMinimalMatching]?.Value ?? bool.FalseString);
@@ -366,12 +363,8 @@ public class ClientConfigurationFactory
             foreach (var member in radiusReplyAttributesSection.Members)
             {
                 var attribute = member as RadiusReplyAttributeElement;
-                var radiusAttribute = dictionary.GetAttribute(attribute.Name);
-                if (radiusAttribute == null)
-                {
-                    throw new InvalidConfigurationException($"Unknown attribute '{attribute.Name}' in RadiusReply configuration element, please see dictionary");
-                }
-
+                var radiusAttribute = dictionary.GetAttribute(attribute.Name)
+                    ?? throw new InvalidConfigurationException($"Unknown attribute '{attribute.Name}' in RadiusReply configuration element, please see dictionary");
                 if (!replyAttributes.ContainsKey(attribute.Name))
                 {
                     replyAttributes.Add(attribute.Name, new List<RadiusReplyAttributeValue>());
@@ -410,20 +403,13 @@ public class ClientConfigurationFactory
             throw new Exception("Value must be specified");
         }
 
-        switch (attribute.Type)
+        return attribute.Type switch
         {
-            case DictionaryAttribute.TYPE_STRING:
-            case DictionaryAttribute.TYPE_TAGGED_STRING:
-                return value;
-            case DictionaryAttribute.TYPE_INTEGER:
-            case DictionaryAttribute.TYPE_TAGGED_INTEGER:
-                return uint.Parse(value);
-            case DictionaryAttribute.TYPE_IPADDR:
-                return IPAddress.Parse(value);
-            case DictionaryAttribute.TYPE_OCTET:
-                return Utils.StringToByteArray(value);
-            default:
-                throw new Exception($"Unknown type {attribute.Type}");
-        }
+            DictionaryAttribute.TYPE_STRING or DictionaryAttribute.TYPE_TAGGED_STRING => value,
+            DictionaryAttribute.TYPE_INTEGER or DictionaryAttribute.TYPE_TAGGED_INTEGER => uint.Parse(value),
+            DictionaryAttribute.TYPE_IPADDR => IPAddress.Parse(value),
+            DictionaryAttribute.TYPE_OCTET => Utils.StringToByteArray(value),
+            _ => throw new Exception($"Unknown type {attribute.Type}"),
+        };
     }
 }

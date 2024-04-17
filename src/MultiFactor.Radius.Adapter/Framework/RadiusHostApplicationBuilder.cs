@@ -1,10 +1,9 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using System;
-using System.Threading.Tasks;
-using System.Collections.Generic;
 using MultiFactor.Radius.Adapter.Framework.Pipeline;
-using Microsoft.AspNetCore.Http;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace MultiFactor.Radius.Adapter.Framework;
 
@@ -39,7 +38,7 @@ internal class RadiusHostApplicationBuilder
     public RadiusHostApplicationBuilder UseMiddleware<TMiddleware>() where TMiddleware : IRadiusMiddleware
     {
         Services.AddTransient(typeof(TMiddleware));
-        Func<RadiusRequestDelegate, RadiusRequestDelegate> middleware = next =>
+        RadiusRequestDelegate middleware(RadiusRequestDelegate next)
         {
             return async context =>
             {
@@ -61,7 +60,7 @@ internal class RadiusHostApplicationBuilder
 
                 await middleware.InvokeAsync(context, next);
             };
-        };
+        }
 
         _components.Add(middleware);
         return this;

@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using MultiFactor.Radius.Adapter;
+using MultiFactor.Radius.Adapter.Extensions;
 using MultiFactor.Radius.Adapter.Framework;
 using MultiFactor.Radius.Adapter.Server.Pipeline.AccessChallenge;
 using MultiFactor.Radius.Adapter.Server.Pipeline.AccessRequestFilter;

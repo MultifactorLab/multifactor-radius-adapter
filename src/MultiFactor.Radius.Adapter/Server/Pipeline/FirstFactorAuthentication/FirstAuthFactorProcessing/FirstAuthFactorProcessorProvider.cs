@@ -1,5 +1,4 @@
 ﻿using MultiFactor.Radius.Adapter.Configuration;
-using MultiFactor.Radius.Adapter.Server.Pipeline.FirstFactorAuthentication;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -30,7 +29,7 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.FirstFactorAuthentication.F
 
             return _processors
                 .FirstOrDefault(x => x.AuthenticationSource.HasFlag(authSource))
-                ?? throw new NotImplementedException($"Unexpected authentication source '{authSource}'.");
+                    ?? throw new NotImplementedException($"Unexpected authentication source '{authSource}'.");
         }
     }
 }

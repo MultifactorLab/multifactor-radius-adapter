@@ -2,13 +2,13 @@
 //Please see licence at 
 //https://github.com/MultifactorLab/multifactor-radius-adapter/blob/main/LICENSE.md
 
+using Microsoft.Extensions.Logging;
+using MultiFactor.Radius.Adapter.Core.Radius.Attributes;
+using MultiFactor.Radius.Adapter.Framework.Context;
 using System;
 using System.Collections.Generic;
-using System.Net;
 using System.Globalization;
-using MultiFactor.Radius.Adapter.Core.Radius.Attributes;
-using Microsoft.Extensions.Logging;
-using MultiFactor.Radius.Adapter.Framework.Context;
+using System.Net;
 
 namespace MultiFactor.Radius.Adapter.Server.Pipeline.PostProcessing;
 
@@ -60,9 +60,8 @@ public class RadiusReplyAttributeEnricher
 
     private object ConvertType(string attrName, object value)
     {
-        if (value is string)
+        if (value is string stringValue)
         {
-            var stringValue = (string)value;
             var attribute = _dictionary.GetAttribute(attrName);
             switch (attribute.Type)
             {

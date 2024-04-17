@@ -14,6 +14,7 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.UserGroupsReading
     {
         private readonly IEnumerable<IUserGroupsGetter> _getters;
         private readonly IUserGroupsGetter _defaultUserGroupsGetter;
+
         public UserGroupsGetterProvider(IEnumerable<IUserGroupsGetter> getters)
         {
             _getters = getters ?? throw new ArgumentNullException(nameof(getters));

@@ -3,20 +3,12 @@
 //https://github.com/MultifactorLab/multifactor-radius-adapter/blob/main/LICENSE.md
 
 
-using LdapForNet.Adsddl;
 using Microsoft.Extensions.Logging;
-using MultiFactor.Radius.Adapter.Core;
 using MultiFactor.Radius.Adapter.Core.Http;
-using MultiFactor.Radius.Adapter.Core.Serialization;
 using MultiFactor.Radius.Adapter.Services.MultiFactorApi.Dto;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Text.Json;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using System.Net.Http.Headers;
 
 namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi
 {
@@ -25,13 +17,11 @@ namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi
     /// </summary>
     internal class MultifactorApiClient : IMultifactorApiClient
     {
-        private readonly IAuthenticatedClientCache _authenticatedClientCache;
-        private ILogger<MultifactorApiClient> _logger;
+        private readonly ILogger<MultifactorApiClient> _logger;
         private readonly IHttpClientAdapter _httpClientAdapter;
 
-        public MultifactorApiClient(IAuthenticatedClientCache authenticatedClientCache, ILogger<MultifactorApiClient> logger, IHttpClientAdapter httpClientAdapter)
+        public MultifactorApiClient(ILogger<MultifactorApiClient> logger, IHttpClientAdapter httpClientAdapter)
         {
-            _authenticatedClientCache = authenticatedClientCache ?? throw new ArgumentNullException(nameof(authenticatedClientCache));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _httpClientAdapter = httpClientAdapter ?? throw new ArgumentNullException(nameof(httpClientAdapter));
         }

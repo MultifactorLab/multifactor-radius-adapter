@@ -2,19 +2,12 @@
 //Please see licence at 
 //https://github.com/MultifactorLab/multifactor-radius-adapter/blob/main/LICENSE.md
 
-using LdapForNet;
 using MultiFactor.Radius.Adapter.Configuration;
 using MultiFactor.Radius.Adapter.Configuration.Core;
 using MultiFactor.Radius.Adapter.Core.Ldap;
-using MultiFactor.Radius.Adapter.Core.Services.Ldap;
-using MultiFactor.Radius.Adapter.Server;
-using MultiFactor.Radius.Adapter.Services.BindIdentityFormatting;
-using MultiFactor.Radius.Adapter.Services.Ldap.Connection;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using static LdapForNet.Native.Native;
 
@@ -24,9 +17,9 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.UserGroupsReading
     {
         public AuthenticationSource AuthenticationSource => AuthenticationSource.ActiveDirectory | AuthenticationSource.None;
 
-        public async Task<string[]> GetAllUserGroupsAsync(IClientConfiguration clientConfig, ILdapConnectionAdapter adapter, string userDn)
+        public async Task<string[]> GetAllUserGroupsAsync(ILdapConnectionAdapter adapter, string userDn, bool loadNestedGroup)
         {
-            if (!clientConfig.LoadActiveDirectoryNestedGroups)
+            if (!loadNestedGroup)
             {
                 return Array.Empty<string>();
             }

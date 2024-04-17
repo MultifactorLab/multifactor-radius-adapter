@@ -4,7 +4,6 @@
 
 using Microsoft.Extensions.Logging;
 using MultiFactor.Radius.Adapter.Configuration.Core;
-using MultiFactor.Radius.Adapter.Core.Ldap;
 using MultiFactor.Radius.Adapter.Services.Ldap.Profile;
 using System;
 using System.Linq;

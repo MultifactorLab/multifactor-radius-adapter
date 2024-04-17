@@ -1,16 +1,13 @@
-﻿using MultiFactor.Radius.Adapter.Configuration;
+﻿using Microsoft.Extensions.Logging;
+using MultiFactor.Radius.Adapter.Configuration.Core;
 using System;
 using System.Collections.Concurrent;
-using static System.Collections.Specialized.BitVector32;
-using System.Dynamic;
-using MultiFactor.Radius.Adapter.Configuration.Core;
-using Microsoft.Extensions.Logging;
 
 namespace MultiFactor.Radius.Adapter.Services
 {
     public class AuthenticatedClientCache : IAuthenticatedClientCache
     {
-        private static readonly ConcurrentDictionary<string, AuthenticatedClient> _authenticatedClients = new ConcurrentDictionary<string, AuthenticatedClient>();
+        private static readonly ConcurrentDictionary<string, AuthenticatedClient> _authenticatedClients = new();
         private readonly ILogger _logger;
 
         public AuthenticatedClientCache(ILogger<AuthenticatedClientCache> logger)
@@ -24,7 +21,7 @@ namespace MultiFactor.Radius.Adapter.Services
 
             if (!clientConfiguration.AuthenticationCacheLifetime.MinimalMatching && string.IsNullOrEmpty(callingStationId))
             {
-                _logger.LogWarning($"Remote host parameter miss for user {userName}");
+                _logger.LogWarning("Remote host parameter miss for user {userName:l}", userName);
                 return false;
             }
 
@@ -34,7 +31,7 @@ namespace MultiFactor.Radius.Adapter.Services
                 return false;
             }
 
-            _logger.LogDebug($"User {userName} with calling-station-id {callingStationId} authenticated {authenticatedClient.Elapsed.ToString("hh\\:mm\\:ss")} ago. Authentication session period: {clientConfiguration.AuthenticationCacheLifetime.Lifetime}");
+            _logger.LogDebug($"User {userName} with calling-station-id {callingStationId} authenticated {authenticatedClient.Elapsed:hh\\:mm\\:ss} ago. Authentication session period: {clientConfiguration.AuthenticationCacheLifetime.Lifetime}");
 
             if (authenticatedClient.Elapsed <= clientConfiguration.AuthenticationCacheLifetime.Lifetime)
             {

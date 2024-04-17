@@ -2,16 +2,16 @@
 //Please see licence at 
 //https://github.com/MultifactorLab/multifactor-radius-adapter/blob/main/LICENSE.md
 
+using MultiFactor.Radius.Adapter.Configuration.Core;
 using System;
 using System.Configuration;
-using MultiFactor.Radius.Adapter.Configuration.Core;
 using Config = System.Configuration.Configuration;
 
 namespace MultiFactor.Radius.Adapter.Configuration.ConfigurationLoading;
 
 public class DefaultRootConfigurationProvider : IRootConfigurationProvider
 {
-    private Lazy<Config> _rootConfig = new Lazy<Config>(() =>
+    private readonly Lazy<Config> _rootConfig = new(() =>
     {
         return ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
     });

@@ -5,7 +5,6 @@
 using MultiFactor.Radius.Adapter.Configuration.Features.RandomWaiterFeature;
 using MultiFactor.Radius.Adapter.Framework.Context;
 using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Net;
 

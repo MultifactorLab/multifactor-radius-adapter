@@ -17,5 +17,5 @@ public class PreAuthModeSettings
         OtpCodeRegex = $"^[0-9]{{{otpCodeLength}}}$";
     }
 
-    public static PreAuthModeSettings Default => new PreAuthModeSettings(6);
+    public static PreAuthModeSettings Default => new(6);
 }

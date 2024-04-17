@@ -4,15 +4,11 @@
 
 using Microsoft.Extensions.Logging;
 using MultiFactor.Radius.Adapter.Configuration.Core;
-using MultiFactor.Radius.Adapter.Configuration.Features.RadiusReplyAttributeFeature;
 using MultiFactor.Radius.Adapter.Configuration.Features.RandomWaiterFeature;
-using MultiFactor.Radius.Adapter.Configuration.Features.UserNameTransformFeature;
 using MultiFactor.Radius.Adapter.Core;
 using MultiFactor.Radius.Adapter.Core.Exceptions;
-using MultiFactor.Radius.Adapter.Core.Radius.Attributes;
 using NetTools;
 using System;
-using System.Collections;
 using System.Configuration;
 using System.IO;
 using System.Net;
@@ -24,19 +20,16 @@ public class ServiceConfigurationFactory
 {
     private readonly IRootConfigurationProvider _appConfigurationProvider;
     private readonly IClientConfigurationsProvider _clientConfigurationsProvider;
-    private readonly IRadiusDictionary _dictionary;
     private readonly ClientConfigurationFactory _clientConfigFactory;
     private readonly ILogger<ServiceConfigurationFactory> _logger;
 
     public ServiceConfigurationFactory(IRootConfigurationProvider appConfigurationProvider, 
         IClientConfigurationsProvider clientConfigurationsProvider,
-        IRadiusDictionary dictionary, 
         ClientConfigurationFactory clientConfigFactory, 
         ILogger<ServiceConfigurationFactory> logger)
     {
         _appConfigurationProvider = appConfigurationProvider ?? throw new ArgumentNullException(nameof(appConfigurationProvider));
         _clientConfigurationsProvider = clientConfigurationsProvider ?? throw new ArgumentNullException(nameof(clientConfigurationsProvider));
-        _dictionary = dictionary ?? throw new ArgumentNullException(nameof(dictionary));
         _clientConfigFactory = clientConfigFactory ?? throw new ArgumentNullException(nameof(clientConfigFactory));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
@@ -63,7 +56,7 @@ public class ServiceConfigurationFactory
         {
             throw new InvalidConfigurationException($"'{Literals.Configuration.MultifactorApiUrl}' element not found");
         }
-        TimeSpan apiTimeout = ParseHttpTimeout(apiProxySetting);
+        TimeSpan apiTimeout = ParseHttpTimeout(apiTimeoutSetting);
 
         var builder = new ServiceConfiguration()
             .SetServiceServerEndpoint(serviceServerEndpoint)
@@ -81,12 +74,8 @@ public class ServiceConfigurationFactory
         if (clientConfigs.Length == 0)
         {
             // check if we have anything
-            var ffas = appsettings[Literals.Configuration.FirstFactorAuthSource]?.Value;
-            if (ffas == null)
-            {
-                throw new InvalidConfigurationException("No clients' config files found. Use one of the *.template files in the /clients folder to customize settings. Then save this file as *.config.");
-            }
-
+            _ = (appsettings[Literals.Configuration.FirstFactorAuthSource]?.Value)
+                ?? throw new InvalidConfigurationException("No clients' config files found. Use one of the *.template files in the /clients folder to customize settings. Then save this file as *.config.");
             var client = _clientConfigFactory.CreateConfig("General", rootConfig, builder);
             builder.AddClient(IPAddress.Any, client).IsSingleClientMode(true);
 
@@ -138,7 +127,7 @@ public class ServiceConfigurationFactory
         }
     }
 
-    private TimeSpan ParseHttpTimeout(string mfTimeoutSetting)
+    private static TimeSpan ParseHttpTimeout(string mfTimeoutSetting)
     {
         TimeSpan _minimalApiTimeout = TimeSpan.FromSeconds(65);
 

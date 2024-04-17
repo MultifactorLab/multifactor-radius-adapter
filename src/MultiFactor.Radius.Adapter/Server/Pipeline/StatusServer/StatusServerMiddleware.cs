@@ -6,7 +6,6 @@ using MultiFactor.Radius.Adapter.Core;
 using MultiFactor.Radius.Adapter.Core.Radius;
 using MultiFactor.Radius.Adapter.Framework.Context;
 using MultiFactor.Radius.Adapter.Framework.Pipeline;
-using System;
 using System.Threading.Tasks;
 
 namespace MultiFactor.Radius.Adapter.Server.Pipeline.StatusServer;
@@ -29,7 +28,7 @@ public class StatusServerMiddleware : IRadiusMiddleware
         }
 
         var uptime = _variables.UpTime;
-        context.SetReplyMessage($"Server up {uptime.Days} days {uptime.ToString("hh\\:mm\\:ss")}, ver.: {_variables.AppVersion}");
+        context.SetReplyMessage($"Server up {uptime.Days} days {uptime:hh\\:mm\\:ss}, ver.: {_variables.AppVersion}");
         context.Authentication.Accept();
     }
 }

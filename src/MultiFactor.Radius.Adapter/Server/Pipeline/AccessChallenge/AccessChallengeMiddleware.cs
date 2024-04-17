@@ -12,12 +12,10 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.AccessChallenge
     public class AccessChallengeMiddleware : IRadiusMiddleware
     {
         private readonly ISecondFactorChallengeProcessor _challengeProcessor;
-        private readonly IRadiusRequestPostProcessor _requestPostProcessor;
 
-        public AccessChallengeMiddleware(ISecondFactorChallengeProcessor challengeProcessor, IRadiusRequestPostProcessor requestPostProcessor)
+        public AccessChallengeMiddleware(ISecondFactorChallengeProcessor challengeProcessor)
         {
             _challengeProcessor = challengeProcessor ?? throw new ArgumentNullException(nameof(challengeProcessor));
-            _requestPostProcessor = requestPostProcessor ?? throw new ArgumentNullException(nameof(requestPostProcessor));
         }
 
         public async Task InvokeAsync(RadiusContext context, RadiusRequestDelegate next)

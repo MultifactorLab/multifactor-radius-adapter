@@ -7,7 +7,7 @@ public class PreAuthModeDescriptor
     public PreAuthMode Mode { get; }
     public PreAuthModeSettings Settings { get; }
 
-    public static PreAuthModeDescriptor Default => new PreAuthModeDescriptor(PreAuthMode.None, PreAuthModeSettings.Default);
+    public static PreAuthModeDescriptor Default => new(PreAuthMode.None, PreAuthModeSettings.Default);
 
     private PreAuthModeDescriptor(PreAuthMode mode, PreAuthModeSettings settings)
     {

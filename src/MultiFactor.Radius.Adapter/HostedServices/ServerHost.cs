@@ -10,10 +10,10 @@ namespace MultiFactor.Radius.Adapter.HostedServices
     public class ServerHost : IHostedService
     {
         private Task _executingTask;
-        private readonly CancellationTokenSource _stoppingCts = new CancellationTokenSource();
+        private readonly CancellationTokenSource _stoppingCts = new();
 
-        private ILogger _logger;
-        private RadiusServer _radiusServer;
+        private readonly ILogger _logger;
+        private readonly RadiusServer _radiusServer;
 
         public ServerHost(ILogger<ServerHost> logger, RadiusServer radiusServer)
         {

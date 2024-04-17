@@ -2,19 +2,15 @@
 //Please see licence at 
 //https://github.com/MultifactorLab/multifactor-radius-adapter/blob/main/LICENSE.md
 
+using Microsoft.Extensions.Logging;
 using MultiFactor.Radius.Adapter.Configuration.Core;
 using MultiFactor.Radius.Adapter.Core.Radius;
+using MultiFactor.Radius.Adapter.Framework.Context;
+using MultiFactor.Radius.Adapter.Framework.Pipeline;
 using MultiFactor.Radius.Adapter.Services;
 using System;
 using System.Linq;
-using System.Net.Sockets;
 using System.Threading.Tasks;
-using System.Collections;
-using MultiFactor.Radius.Adapter.Core.Radius.Attributes;
-using Microsoft.Extensions.Logging;
-using MultiFactor.Radius.Adapter.Configuration;
-using MultiFactor.Radius.Adapter.Framework.Pipeline;
-using MultiFactor.Radius.Adapter.Framework.Context;
 
 namespace MultiFactor.Radius.Adapter.Server.Pipeline.PostProcessing;
 

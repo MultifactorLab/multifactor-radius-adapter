@@ -3,7 +3,6 @@ using MultiFactor.Radius.Adapter.Configuration.Features.PreAuthModeFeature;
 using MultiFactor.Radius.Adapter.Core.Radius;
 using MultiFactor.Radius.Adapter.Framework.Context;
 using MultiFactor.Radius.Adapter.Framework.Pipeline;
-using MultiFactor.Radius.Adapter.Server.Pipeline.FirstFactorAuthentication.FirstAuthFactorProcessing;
 using MultiFactor.Radius.Adapter.Services.ActiveDirectory.MembershipVerification;
 using MultiFactor.Radius.Adapter.Services.Ldap.MembershipVerification;
 using System.Threading.Tasks;

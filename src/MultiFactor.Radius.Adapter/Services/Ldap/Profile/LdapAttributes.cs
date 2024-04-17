@@ -11,7 +11,7 @@ internal class LdapAttributes : ILdapAttributes
     private readonly Dictionary<string, List<string>> _attrs;
 
     public string DistinguishedName { get; }
-    public ReadOnlyCollection<string> Keys => new ReadOnlyCollection<string>(_attrs.Keys.ToList());
+    public ReadOnlyCollection<string> Keys => new(_attrs.Keys.ToList());
 
     /// <summary>
     /// Creates new instance of LdapAttributes with the specified entry distinguished name.

@@ -1,9 +1,8 @@
-﻿using System.Threading.Tasks;
-using System;
-using MultiFactor.Radius.Adapter.Core.Exceptions;
+﻿using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Hosting;
 using MultiFactor.Radius.Adapter.Framework.Context;
+using System;
+using System.Threading.Tasks;
 
 namespace MultiFactor.Radius.Adapter.Framework.Pipeline;
 

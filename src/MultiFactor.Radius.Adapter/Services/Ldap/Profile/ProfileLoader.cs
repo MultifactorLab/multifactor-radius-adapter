@@ -1,11 +1,7 @@
-﻿using LdapForNet;
-using Microsoft.Extensions.Logging;
-using MultiFactor.Radius.Adapter.Configuration;
+﻿using Microsoft.Extensions.Logging;
 using MultiFactor.Radius.Adapter.Configuration.Core;
 using MultiFactor.Radius.Adapter.Core.Exceptions;
 using MultiFactor.Radius.Adapter.Core.Ldap;
-using MultiFactor.Radius.Adapter.Core.Services.Ldap;
-using MultiFactor.Radius.Adapter.Services.Ldap.Connection;
 using MultiFactor.Radius.Adapter.Services.Ldap.UserGroupsReading;
 using System;
 using System.Collections.Generic;
@@ -34,14 +30,10 @@ public class ProfileLoader
         var searchFilter = $"(&(objectClass={names.UserClass})({names.Identity(user)}={user.Name}))";
 
         var domain = await adapter.WhereAmIAsync();
-        _logger.LogDebug($"Querying user '{{user:l}}' in {domain.Name}", user.Name);
+        _logger.LogDebug("Querying user '{user:l}' in {domainName:l}", user.Name, domain.Name);
 
         var response = await adapter.SearchQueryAsync(domain.Name, searchFilter, LdapSearchScope.LDAP_SCOPE_SUB, queryAttributes);
-        var entry = response.SingleOrDefault();
-        if (entry == null)
-        {
-            throw new LdapUserNotFoundException(user.Name, domain.Name);
-        }
+        var entry = response.SingleOrDefault() ?? throw new LdapUserNotFoundException(user.Name, domain.Name);
 
         //base profile
         var profileAttributes = new LdapAttributes(entry.Dn);
@@ -101,15 +93,10 @@ public class ProfileLoader
         var searchFilter = $"(&(objectClass={names.UserClass})({names.Identity(user)}={user.Name}))";
 
         var domain = await adapter.WhereAmIAsync();
-        _logger.LogDebug($"Querying user '{{user:l}}' in {domain.Name}", user.Name);
+        _logger.LogDebug("Querying user '{user:l}' in {domainName}", user.Name, domain.Name);
 
         var response = await adapter.SearchQueryAsync(domain.Name, searchFilter, LdapSearchScope.LDAP_SCOPE_SUB, attrs.Distinct().ToArray());
-        var entry = response.SingleOrDefault();
-        if (entry == null)
-        {
-            throw new LdapUserNotFoundException(user.Name, domain.Name);
-        }
-
+        var entry = response.SingleOrDefault() ?? throw new LdapUserNotFoundException(user.Name, domain.Name);
         var dirAttrs = entry.DirectoryAttributes;
         var attributes = new LdapAttributes(entry.Dn);
         foreach (var a in attrs)
