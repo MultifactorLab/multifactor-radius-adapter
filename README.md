@@ -76,7 +76,7 @@ Additional features:
 
 ### Dependencies Installation
 
-The component uses the ASP.NET Core runtime environment version 3.1, which is free, open-source, developed by Microsoft and the open-source community. The runtime environment does not impose any restrictions on its use.
+The component uses the .NET 6 runtime environment, which is free, open-source, developed by Microsoft and the open-source community. The runtime environment does not impose any restrictions on its use.
 
 To install, run the commands:
 
