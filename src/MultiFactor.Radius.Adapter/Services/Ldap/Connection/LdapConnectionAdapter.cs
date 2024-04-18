@@ -4,7 +4,10 @@
 
 using LdapForNet;
 using Microsoft.Extensions.Logging;
+using MultiFactor.Radius.Adapter.Configuration.Core;
 using MultiFactor.Radius.Adapter.Core.Ldap;
+using MultiFactor.Radius.Adapter.Services.BindIdentityFormatting;
+using MultiFactor.Radius.Adapter.Services.Ldap.Connection.Exceptions;
 using System;
 using System.Diagnostics;
 using System.Linq;
@@ -18,8 +21,7 @@ public class LdapConnectionAdapter : ILdapConnectionAdapter
 {
     private readonly LdapConnection _connection;
     public string Uri { get; }
-    private readonly LdapConnectionAdapterConfig _config;
-
+    private readonly ILogger<LdapConnectionAdapter> _logger;
     private LdapDomain _whereAmI;
 
     /// <summary>
@@ -27,12 +29,12 @@ public class LdapConnectionAdapter : ILdapConnectionAdapter
     /// </summary>
     public LdapIdentity BindedUser { get; }
 
-    private LdapConnectionAdapter(string uri, LdapIdentity user, LdapConnectionAdapterConfig config)
+    private LdapConnectionAdapter(string uri, LdapIdentity user, ILogger<LdapConnectionAdapter> logger)
     {
         _connection = new LdapConnection();
         Uri = uri;
         BindedUser = user;
-        _config = config;
+        _logger = logger;
     }
 
     public async Task<LdapDomain> WhereAmIAsync()
@@ -56,22 +58,44 @@ public class LdapConnectionAdapter : ILdapConnectionAdapter
 
         if (sw.Elapsed.TotalSeconds > 2)
         {
-            _config.Logger?.LogWarning("Slow response while querying {baseDn:l}. Time elapsed {elapsed}", baseDn, sw.Elapsed);
+            _logger?.LogWarning("Slow response while querying {baseDn:l}. Time elapsed {elapsed}", baseDn, sw.Elapsed);
         }
 
         return searchResult.ToArray();
     }
 
-    public static async Task<ILdapConnectionAdapter> CreateAsync(string uri, LdapIdentity user, string password,
-        Action<LdapConnectionAdapterConfigBuilder> configure = null)
+    public static async Task<ILdapConnectionAdapter> CreateAsync(string uri, 
+        LdapIdentity user, 
+        string password,
+        BindIdentityFormatter formatter,
+        ILogger<LdapConnectionAdapter> logger)
     {
-        if (uri is null) throw new ArgumentNullException(nameof(uri));
-        if (user is null) throw new ArgumentNullException(nameof(user));
-        if (password is null) throw new ArgumentNullException(nameof(password));
+        if (uri is null)
+        {
+            throw new ArgumentNullException(nameof(uri));
+        }
 
-        var config = new LdapConnectionAdapterConfig();
-        configure?.Invoke(new LdapConnectionAdapterConfigBuilder(config));
-        var instance = new LdapConnectionAdapter(uri, user, config);
+        if (user is null)
+        {
+            throw new ArgumentNullException(nameof(user));
+        }
+
+        if (password is null)
+        {
+            throw new ArgumentNullException(nameof(password));
+        }
+
+        if (formatter is null)
+        {
+            throw new ArgumentNullException(nameof(formatter));
+        }
+
+        if (logger is null)
+        {
+            throw new ArgumentNullException(nameof(logger));
+        }
+
+        var instance = new LdapConnectionAdapter(uri, user, logger);
 
         if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
@@ -91,13 +115,32 @@ public class LdapConnectionAdapter : ILdapConnectionAdapter
         instance._connection.SetOption(LdapOption.LDAP_OPT_PROTOCOL_VERSION, (int)LdapVersion.LDAP_VERSION3);
         instance._connection.SetOption(LdapOption.LDAP_OPT_REFERRALS, IntPtr.Zero);
 
-        var bindDn = config.BindIdentityFormatter.FormatIdentity(user, uri);
+        var bindDn = formatter.FormatIdentity(user, uri);
         await instance._connection.BindAsync(LdapAuthType.Simple, new LdapCredential
         {
             UserName = bindDn,
             Password = password
         });
         return instance;
+    }
+
+    public static async Task<ILdapConnectionAdapter> CreateAsTechnicalAccAsync(string domain, 
+        IClientConfiguration clientConfig,
+        ILogger<LdapConnectionAdapter> logger)
+    {
+        try
+        {
+            var user = LdapIdentity.ParseUser(clientConfig.ServiceAccountUser);
+            return await CreateAsync(domain,
+                user,
+                clientConfig.ServiceAccountPassword,
+                new BindIdentityFormatter(clientConfig),
+                logger);
+        }
+        catch (Exception ex)
+        {
+            throw new TechnicalAccountErrorException(clientConfig.ServiceAccountUser, domain, ex);
+        }
     }
 
     public void Dispose()

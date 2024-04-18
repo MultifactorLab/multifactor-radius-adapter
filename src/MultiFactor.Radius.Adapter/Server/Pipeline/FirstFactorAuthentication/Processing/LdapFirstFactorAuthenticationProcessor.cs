@@ -10,19 +10,19 @@ using MultiFactor.Radius.Adapter.Services.Ldap;
 using System;
 using System.Threading.Tasks;
 
-namespace MultiFactor.Radius.Adapter.Server.Pipeline.FirstFactorAuthentication.FirstAuthFactorProcessing
+namespace MultiFactor.Radius.Adapter.Server.Pipeline.FirstFactorAuthentication.Processing
 {
     /// <summary>
     /// Authenticate request at LDAP/Active Directory Domain with user-name and password
     /// </summary>
-    public class LdapFirstAuthFactorProcessor : IFirstAuthFactorProcessor
+    public class LdapFirstFactorAuthenticationProcessor : IFirstFactorAuthenticationProcessor
     {
         private readonly LdapService _ldapService;
-        private readonly ILogger<LdapFirstAuthFactorProcessor> _logger;
+        private readonly ILogger<LdapFirstFactorAuthenticationProcessor> _logger;
 
-        public LdapFirstAuthFactorProcessor(
+        public LdapFirstFactorAuthenticationProcessor(
             LdapService ldapService,
-            ILogger<LdapFirstAuthFactorProcessor> logger)
+            ILogger<LdapFirstFactorAuthenticationProcessor> logger)
         {
             _ldapService = ldapService ?? throw new ArgumentNullException(nameof(ldapService));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));

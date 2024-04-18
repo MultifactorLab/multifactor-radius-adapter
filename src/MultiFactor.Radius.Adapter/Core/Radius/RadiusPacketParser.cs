@@ -36,7 +36,7 @@ using System.Text;
 
 namespace MultiFactor.Radius.Adapter.Core.Radius
 {
-    public class RadiusPacketParser : IRadiusPacketParser
+    public class RadiusPacketParser
     {
         private readonly ILogger _logger;
         private readonly IRadiusDictionary _radiusDictionary;

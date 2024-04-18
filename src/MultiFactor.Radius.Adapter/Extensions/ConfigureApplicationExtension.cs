@@ -8,7 +8,6 @@ using MultiFactor.Radius.Adapter.Framework;
 using MultiFactor.Radius.Adapter.Logging;
 using MultiFactor.Radius.Adapter.Server.Pipeline.AccessChallenge;
 using MultiFactor.Radius.Adapter.Services;
-using MultiFactor.Radius.Adapter.Services.BindIdentityFormatting;
 using MultiFactor.Radius.Adapter.Services.Ldap;
 using MultiFactor.Radius.Adapter.Services.Ldap.Connection;
 using MultiFactor.Radius.Adapter.Services.Ldap.MembershipVerification;
@@ -42,8 +41,6 @@ internal static class ConfigureApplicationExtension
         builder.Services.AddSingleton<IUserGroupsGetter, ActiveDirectoryUserGroupsGetter>();
         builder.Services.AddSingleton<IUserGroupsGetter, DefaultUserGroupsGetter>();
 
-        builder.Services.AddSingleton<BindIdentityFormatterFactory>();
-        builder.Services.AddSingleton<LdapConnectionAdapterFactory>();
         builder.Services.AddSingleton<ProfileLoader>();
         builder.Services.AddSingleton<LdapService>();
         builder.Services.AddSingleton<MembershipVerifier>();

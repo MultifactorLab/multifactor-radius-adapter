@@ -5,7 +5,7 @@
 using MultiFactor.Radius.Adapter.Core.Radius;
 using MultiFactor.Radius.Adapter.Framework.Context;
 using MultiFactor.Radius.Adapter.Framework.Pipeline;
-using MultiFactor.Radius.Adapter.Server.Pipeline.FirstFactorAuthentication.FirstAuthFactorProcessing;
+using MultiFactor.Radius.Adapter.Server.Pipeline.FirstFactorAuthentication.Processing;
 using System;
 using System.Threading.Tasks;
 
@@ -13,11 +13,13 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.FirstFactorAuthentication
 {
     public class FirstFactorAuthenticationMiddleware : IRadiusMiddleware
     {
-        private readonly IFirstAuthFactorProcessorProvider _firstAuthFactorProcessorProvider;
+        private readonly IFirstFactorAuthenticationProcessorProvider _firstAuthFactorProcessorProvider;
+        private readonly IRadiusRequestPostProcessor _requestPostProcessor;
 
-        public FirstFactorAuthenticationMiddleware(IFirstAuthFactorProcessorProvider firstAuthFactorProcessorProvider)
+        public FirstFactorAuthenticationMiddleware(IFirstFactorAuthenticationProcessorProvider firstAuthFactorProcessorProvider, IRadiusRequestPostProcessor requestPostProcessor)
         {
             _firstAuthFactorProcessorProvider = firstAuthFactorProcessorProvider ?? throw new ArgumentNullException(nameof(firstAuthFactorProcessorProvider));
+            _requestPostProcessor = requestPostProcessor ?? throw new ArgumentNullException(nameof(requestPostProcessor));
         }
 
         public async Task InvokeAsync(RadiusContext context, RadiusRequestDelegate next)

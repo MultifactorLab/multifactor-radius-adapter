@@ -6,7 +6,6 @@ using MultiFactor.Radius.Adapter.Tests.Fixtures.ConfigLoading;
 using MultiFactor.Radius.Adapter.Framework.Pipeline;
 using MultiFactor.Radius.Adapter.Server.Pipeline.PostProcessing;
 using MultiFactor.Radius.Adapter.Server;
-using MultiFactor.Radius.Adapter.Configuration.Core;
 using MultiFactor.Radius.Adapter.Core.Radius;
 using System.Net;
 
@@ -29,9 +28,7 @@ namespace MultiFactor.Radius.Adapter.Tests
                 builder.Services.AddSingleton<IRadiusRequestPostProcessor>(prov => prov.GetRequiredService<RadiusRequestPostProcessor>());
 
                 var sender = new Mock<IRadiusResponseSender>();
-                var factory = new Mock<IRadiusResponseSenderFactory>();
-                factory.Setup(x => x.CreateSender(It.IsAny<IUdpClient>())).Returns(sender.Object);
-                builder.Services.ReplaceService(factory.Object);
+                builder.Services.ReplaceService(sender.Object);
             });
 
             var context = host.CreateContext(RadiusPacketFactory.AccessChallenge());
@@ -39,7 +36,7 @@ namespace MultiFactor.Radius.Adapter.Tests
             context.SetMessageState("My State");
 
             IRadiusPacket? sentPacket = null;
-            var fakeSender = Mock.Get(host.Service<IRadiusResponseSenderFactory>().CreateSender(null));
+            var fakeSender = Mock.Get(host.Service<IRadiusResponseSender>());
             fakeSender
                 .Setup(x => x.Send(It.IsAny<IRadiusPacket>(), It.IsAny<string>(), It.IsAny<IPEndPoint>(), It.IsAny<IPEndPoint>(), It.IsAny<bool>()))
                 .Callback((IRadiusPacket rp, string u, IPEndPoint re, IPEndPoint pe, bool dl) =>
@@ -73,9 +70,8 @@ namespace MultiFactor.Radius.Adapter.Tests
                 builder.Services.AddSingleton<RadiusRequestPostProcessor>();
                 builder.Services.AddSingleton<IRadiusRequestPostProcessor>(prov => prov.GetRequiredService<RadiusRequestPostProcessor>());
 
-                var factory = new Mock<IRadiusResponseSenderFactory>();
-                factory.Setup(x => x.CreateSender(It.IsAny<IUdpClient>())).Returns(new Mock<IRadiusResponseSender>().Object); 
-                builder.Services.ReplaceService(factory.Object);
+                var sender = new Mock<IRadiusResponseSender>();
+                builder.Services.ReplaceService(sender.Object);
             });
 
             var context = host.CreateContext(RadiusPacketFactory.AccessRequest());
@@ -83,7 +79,7 @@ namespace MultiFactor.Radius.Adapter.Tests
             context.RequestPacket.AddAttribute("Proxy-State", "VAL");
 
             IRadiusPacket? sentPacket = null;
-            var fakeSender = Mock.Get(host.Service<IRadiusResponseSenderFactory>().CreateSender(null));
+            var fakeSender = Mock.Get(host.Service<IRadiusResponseSender>());
             fakeSender
                 .Setup(x => x.Send(It.IsAny<IRadiusPacket>(), It.IsAny<string>(), It.IsAny<IPEndPoint>(), It.IsAny<IPEndPoint>(), It.IsAny<bool>()))
                 .Callback((IRadiusPacket rp, string u, IPEndPoint re, IPEndPoint pe, bool dl) =>

@@ -33,14 +33,14 @@ namespace MultiFactor.Radius.Adapter.Server
     public class RadiusResponseSender : IRadiusResponseSender
     {
         private readonly IUdpClient _udpClient;
-        private readonly IRadiusPacketParser _radiusPacketParser;
+        private readonly RadiusPacketParser _radiusPacketParser;
         private readonly ILogger _logger;
 
-        public RadiusResponseSender(IUdpClient udpClient, IRadiusPacketParser radiusPacketParser, ILogger<RadiusResponseSender> logger)
+        public RadiusResponseSender(IUdpClient udpClient, RadiusPacketParser radiusPacketParser, ILogger<RadiusResponseSender> logger)
         {
-            _udpClient = udpClient ?? throw new ArgumentNullException(nameof(udpClient));
-            _radiusPacketParser = radiusPacketParser ?? throw new ArgumentNullException(nameof(radiusPacketParser));
-            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _udpClient = udpClient;
+            _radiusPacketParser = radiusPacketParser;
+            _logger = logger;
         }
 
         public void Send(IRadiusPacket responsePacket, string user, IPEndPoint remoteEndpoint, IPEndPoint proxyEndpoint, bool debugLog)

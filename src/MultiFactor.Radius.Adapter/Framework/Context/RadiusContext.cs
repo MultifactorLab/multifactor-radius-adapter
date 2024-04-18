@@ -21,13 +21,11 @@ namespace MultiFactor.Radius.Adapter.Framework.Context
     {
         public RadiusContext(IRadiusPacket request,
             IClientConfiguration clientConfiguration,
-            IUdpClient udpClient,
             IServiceProvider provider)
         {
             RequestPacket = request ?? throw new ArgumentNullException(nameof(request));
             ReceivedAt = DateTime.Now;
             Configuration = clientConfiguration ?? throw new ArgumentNullException(nameof(clientConfiguration));
-            UdpClient = udpClient ?? throw new ArgumentNullException(nameof(udpClient));
             RequestServices = provider ?? throw new ArgumentNullException(nameof(provider));
             Authentication = new();
             Flags = new();
@@ -78,7 +76,6 @@ namespace MultiFactor.Radius.Adapter.Framework.Context
         public ReadOnlyCollection<string> UserGroups => Profile.MemberOf;
 
         public IServiceProvider RequestServices { get; }
-        public IUdpClient UdpClient { get; }
 
         /// <summary>
         /// Client configuration.

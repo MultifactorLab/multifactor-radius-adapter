@@ -28,7 +28,7 @@ namespace MultiFactor.Radius.Adapter.Tests
             var processor = new SecondFactorChallengeProcessor(adapter.Object, logger.Object);
 
             var client = new ClientConfiguration("cli_config", "rds", AuthenticationSource.None, "key", "secret");
-            var context = new RadiusContext(RadiusPacketFactory.AccessRequest(), client, new Mock<IUdpClient>().Object, new Mock<IServiceProvider>().Object)
+            var context = new RadiusContext(RadiusPacketFactory.AccessRequest(), client, new Mock<IServiceProvider>().Object)
             {
                 RemoteEndpoint = new IPEndPoint(IPAddress.Any, 636)
             };
@@ -50,7 +50,7 @@ namespace MultiFactor.Radius.Adapter.Tests
 
             var client = new ClientConfiguration("cli_config", "rds", AuthenticationSource.None, "key", "secret");
             var identifier = new ChallengeIdentifier(client.Name, reqId);
-            var context = new RadiusContext(RadiusPacketFactory.AccessChallenge(), client, new Mock<IUdpClient>().Object, new Mock<IServiceProvider>().Object)
+            var context = new RadiusContext(RadiusPacketFactory.AccessChallenge(), client, new Mock<IServiceProvider>().Object)
             {
                 RemoteEndpoint = new IPEndPoint(IPAddress.Any, 636)
             };
@@ -77,7 +77,7 @@ namespace MultiFactor.Radius.Adapter.Tests
             var packet = RadiusPacketFactory.AccessChallenge();
             packet.AddAttribute("User-Password", string.Empty);
             packet.AddAttribute("User-Name", "UserName");
-            var context = new RadiusContext(packet, client, new Mock<IUdpClient>().Object, new Mock<IServiceProvider>().Object)
+            var context = new RadiusContext(packet, client, new Mock<IServiceProvider>().Object)
             {
 
                 RemoteEndpoint = new IPEndPoint(IPAddress.Any, 636)
@@ -105,7 +105,7 @@ namespace MultiFactor.Radius.Adapter.Tests
             var packet = RadiusPacketFactory.AccessChallenge();
             packet.AddAttribute("MS-CHAP2-Response", (string?)null);
             packet.AddAttribute("User-Name", "UserName");
-            var context = new RadiusContext(packet, client, new Mock<IUdpClient>().Object, new Mock<IServiceProvider>().Object)
+            var context = new RadiusContext(packet, client, new Mock<IServiceProvider>().Object)
             {
                 RemoteEndpoint = new IPEndPoint(IPAddress.Any, 636)
             };
@@ -135,7 +135,7 @@ namespace MultiFactor.Radius.Adapter.Tests
             var packet = RadiusPacketFactory.AccessChallenge();
             packet.AddAttribute(attr, "value");
             packet.AddAttribute("User-Name", "UserName");
-            var context = new RadiusContext(packet, client, new Mock<IUdpClient>().Object, new Mock<IServiceProvider>().Object)
+            var context = new RadiusContext(packet, client, new Mock<IServiceProvider>().Object)
             {
                 RemoteEndpoint = new IPEndPoint(IPAddress.Any, 636)
             };
@@ -162,7 +162,7 @@ namespace MultiFactor.Radius.Adapter.Tests
             var packet = RadiusPacketFactory.AccessChallenge();
             packet.AddAttribute("User-Password", "pass");
             packet.AddAttribute("User-Name", "UserName");
-            var context = new RadiusContext(packet, client, new Mock<IUdpClient>().Object, new Mock<IServiceProvider>().Object)
+            var context = new RadiusContext(packet, client, new Mock<IServiceProvider>().Object)
             {
                 RemoteEndpoint = new IPEndPoint(IPAddress.Any, 636)
             };
@@ -181,7 +181,7 @@ namespace MultiFactor.Radius.Adapter.Tests
             var newPacket = RadiusPacketFactory.AccessChallenge();
             newPacket.AddAttribute("User-Password", "pass");
             newPacket.AddAttribute("User-Name", "UserName");
-            var newContext = new RadiusContext(newPacket, client, new Mock<IUdpClient>().Object, new Mock<IServiceProvider>().Object)
+            var newContext = new RadiusContext(newPacket, client, new Mock<IServiceProvider>().Object)
             {
                 RemoteEndpoint = new IPEndPoint(IPAddress.Any, 636)
             };

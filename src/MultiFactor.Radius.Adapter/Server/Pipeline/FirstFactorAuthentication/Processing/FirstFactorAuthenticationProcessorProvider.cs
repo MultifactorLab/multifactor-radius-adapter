@@ -3,23 +3,23 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace MultiFactor.Radius.Adapter.Server.Pipeline.FirstFactorAuthentication.FirstAuthFactorProcessing
+namespace MultiFactor.Radius.Adapter.Server.Pipeline.FirstFactorAuthentication.Processing
 {
-    public class FirstAuthFactorProcessorProvider : IFirstAuthFactorProcessorProvider
+    public class FirstFactorAuthenticationProcessorProvider : IFirstFactorAuthenticationProcessorProvider
     {
-        private readonly IEnumerable<IFirstAuthFactorProcessor> _processors;
+        private readonly IEnumerable<IFirstFactorAuthenticationProcessor> _processors;
 
-        public FirstAuthFactorProcessorProvider(IEnumerable<IFirstAuthFactorProcessor> processors)
+        public FirstFactorAuthenticationProcessorProvider(IEnumerable<IFirstFactorAuthenticationProcessor> processors)
         {
             _processors = processors ?? throw new ArgumentNullException(nameof(processors));
         }
 
         /// <summary>
-        /// Returns implementation of <see cref="IFirstAuthFactorProcessor"/> for the specified authentication source.
+        /// Returns implementation of <see cref="IFirstFactorAuthenticationProcessor"/> for the specified authentication source.
         /// </summary>
         /// <param name="authSource">Authentication source.</param>
         /// <exception cref="NotImplementedException"></exception>
-        public IFirstAuthFactorProcessor GetProcessor(AuthenticationSource authSource)
+        public IFirstFactorAuthenticationProcessor GetProcessor(AuthenticationSource authSource)
         {
             if (authSource == AuthenticationSource.None)
             {

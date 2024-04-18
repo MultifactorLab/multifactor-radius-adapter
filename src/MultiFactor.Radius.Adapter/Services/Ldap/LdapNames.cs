@@ -1,4 +1,5 @@
-﻿using MultiFactor.Radius.Adapter.Core.Services.Ldap;
+﻿using MultiFactor.Radius.Adapter.Configuration;
+using MultiFactor.Radius.Adapter.Core.Services.Ldap;
 using System;
 
 namespace MultiFactor.Radius.Adapter.Services.Ldap
@@ -89,6 +90,18 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap
                 IdentityType.UserPrincipalName => "userPrincipalName",
                 IdentityType.Cn => Cn,
                 _ => throw new NotImplementedException(identity.Type.ToString()),
+            };
+        }
+
+        public static LdapNames Create(AuthenticationSource source)
+        {
+            return source switch
+            {
+                AuthenticationSource.ActiveDirectory
+                    or AuthenticationSource.Radius
+                    or AuthenticationSource.None => new LdapNames(LdapServerType.ActiveDirectory),
+                AuthenticationSource.Ldap => new LdapNames(LdapServerType.Generic),
+                _ => throw new NotImplementedException(source.ToString()),
             };
         }
     }

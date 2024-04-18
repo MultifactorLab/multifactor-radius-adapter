@@ -12,9 +12,9 @@ namespace MultiFactor.Radius.Adapter.Services.ActiveDirectory.MembershipVerifica
 {
     public class MembershipProcessingResultHandler
     {
-        private readonly IMembershipProcessingResult _processingResult;
+        private readonly MembershipProcessingResult _processingResult;
 
-        public MembershipProcessingResultHandler(IMembershipProcessingResult processingResult)
+        public MembershipProcessingResultHandler(MembershipProcessingResult processingResult)
         {
             _processingResult = processingResult ?? throw new ArgumentNullException(nameof(processingResult));
         }

@@ -39,7 +39,7 @@ public class RadiusContextFactory
         _serviceProvider = serviceProvider;
     }
 
-    public RadiusContext CreateContext(IClientConfiguration client, IRadiusPacket packet, IUdpClient udpClient, IPEndPoint remote, IPEndPoint proxy)
+    public RadiusContext CreateContext(IClientConfiguration client, IRadiusPacket packet, IPEndPoint remote, IPEndPoint proxy)
     {
         if (client is null)
         {
@@ -51,12 +51,7 @@ public class RadiusContextFactory
             throw new ArgumentNullException(nameof(packet));
         }
 
-        if (udpClient is null)
-        {
-            throw new ArgumentNullException(nameof(udpClient));
-        }
-
-        return new RadiusContext(packet, client, udpClient, _serviceProvider)
+        return new RadiusContext(packet, client, _serviceProvider)
         {
             RemoteEndpoint = remote,
             ProxyEndpoint = proxy

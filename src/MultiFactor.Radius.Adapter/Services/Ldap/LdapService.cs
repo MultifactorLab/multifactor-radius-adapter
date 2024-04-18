@@ -24,18 +24,19 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap;
 /// </summary>
 public class LdapService
 {
-    private readonly BindIdentityFormatterFactory _bindIdentityFormatterFactory;
     private readonly ProfileLoader _profileLoader;
-    private readonly ILogger _logger;
+    private readonly ILogger<LdapService> _logger;
+    private readonly ILoggerFactory _loggerFactory;
+
     protected virtual LdapNames Names => new(LdapServerType.Generic);
 
-    public LdapService(BindIdentityFormatterFactory bindIdentityFormatterFactory,
-        ProfileLoader profileLoader,
-        ILogger<LdapService> logger)
+    public LdapService(ProfileLoader profileLoader, 
+        ILogger<LdapService> logger,
+        ILoggerFactory loggerFactory)
     {
-        _bindIdentityFormatterFactory = bindIdentityFormatterFactory ?? throw new ArgumentNullException(nameof(bindIdentityFormatterFactory));
-        _profileLoader = profileLoader ?? throw new ArgumentNullException(nameof(profileLoader));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _profileLoader = profileLoader;
+        _logger = logger;
+        _loggerFactory = loggerFactory;
     }
 
     /// <summary>
@@ -59,7 +60,7 @@ public class LdapService
 
         var user = LdapIdentity.ParseUser(userName);
 
-        var formatter = _bindIdentityFormatterFactory.CreateFormatter(context.Configuration);
+        var formatter = new BindIdentityFormatter(context.Configuration);
         var bindDn = formatter.FormatIdentity(user, ldapUri);
 
         _logger.LogDebug("Verifying user '{user:l}' credential and status at '{ldapUri:l}'", 
@@ -67,9 +68,11 @@ public class LdapService
 
         try
         {
-            using var connection = await LdapConnectionAdapter.CreateAsync(ldapUri, user, password,
-                config => config.SetBindIdentityFormatter(_bindIdentityFormatterFactory.CreateFormatter(context.Configuration))
-            );
+            using var connection = await LdapConnectionAdapter.CreateAsync(ldapUri, 
+                user, 
+                password, 
+                formatter,
+                _loggerFactory.CreateLogger<LdapConnectionAdapter>());
             var domain = await connection.WhereAmIAsync();
 
             _logger.LogInformation("User '{user:l}' credential and status verified successfully in '{domain:l}'",

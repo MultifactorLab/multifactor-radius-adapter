@@ -38,12 +38,11 @@ internal class TestHost
         }
 
         var factory = Service<RadiusContextFactory>();
-        var createUdpClient = Service<Func<IPEndPoint, IUdpClient>>();
         var localEndpoint = new IPEndPoint(IPAddress.Parse("127.0.0.1"), 1812);
         var remote = new IPEndPoint(IPAddress.Loopback, 1812);
         var config = clientConfig ?? Service<IServiceConfiguration>().Clients[0];
 
-        var ctx = factory.CreateContext(config, requestPacket, createUdpClient(localEndpoint), remote, null);
+        var ctx = factory.CreateContext(config, requestPacket, remote, null);
         setupContext?.Invoke(ctx);
 
         return ctx;

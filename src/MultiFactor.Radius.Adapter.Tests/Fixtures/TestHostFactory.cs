@@ -1,4 +1,5 @@
-﻿using Moq;
+﻿using Microsoft.Extensions.Hosting;
+using Moq;
 using MultiFactor.Radius.Adapter.Configuration.Core;
 using MultiFactor.Radius.Adapter.Extensions;
 using MultiFactor.Radius.Adapter.Framework;
@@ -28,6 +29,9 @@ internal static class TestHostFactory
         builder.ConfigureApplication();
 
         configure?.Invoke(builder);
-        return new TestHost(builder.Build());
+        var host = builder.Build();
+        //host.Run();
+        var testHost = new TestHost(host);
+        return testHost;
     }
 }

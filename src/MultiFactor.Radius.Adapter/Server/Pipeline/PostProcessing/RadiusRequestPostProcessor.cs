@@ -18,17 +18,17 @@ public class RadiusRequestPostProcessor : IRadiusRequestPostProcessor
 {
     private readonly IServiceConfiguration _serviceConfiguration;
     private readonly RadiusReplyAttributeEnricher _attributeEnricher;
-    private readonly IRadiusResponseSenderFactory _senderFactory;
+    private readonly IRadiusResponseSender _sender;
     private readonly ILogger _logger;
 
     public RadiusRequestPostProcessor(IServiceConfiguration serviceConfiguration,
         RadiusReplyAttributeEnricher attributeRewriter,
-        IRadiusResponseSenderFactory senderFactory,
+        IRadiusResponseSender sender,
         ILogger<RadiusRequestPostProcessor> logger)
     {
         _serviceConfiguration = serviceConfiguration;
         _attributeEnricher = attributeRewriter;
-        _senderFactory = senderFactory;
+        _sender = sender;
         _logger = logger;
     }
 
@@ -43,8 +43,7 @@ public class RadiusRequestPostProcessor : IRadiusRequestPostProcessor
         {
             //EAP authentication in process, just proxy response
             _logger.LogDebug("Proxying EAP-Message Challenge to {host:l}:{port} id={id}", context.RemoteEndpoint.Address, context.RemoteEndpoint.Port, context.RequestPacket.Header.Identifier);
-            var responseSender = _senderFactory.CreateSender(context.UdpClient);
-            responseSender.Send(context.ResponsePacket, context.RequestPacket?.UserName, context.RemoteEndpoint, context.ProxyEndpoint, true);
+            _sender.Send(context.ResponsePacket, context.RequestPacket?.UserName, context.RemoteEndpoint, context.ProxyEndpoint, true);
 
             return; //stop processing
         }
@@ -53,8 +52,7 @@ public class RadiusRequestPostProcessor : IRadiusRequestPostProcessor
         {
             //ACL and other rules transfer, just proxy response
             _logger.LogDebug("Proxying #ACSACL# to {host:l}:{port} id={id}", context.RemoteEndpoint.Address, context.RemoteEndpoint.Port, context.RequestPacket.Header.Identifier);
-            var responseSender = _senderFactory.CreateSender(context.UdpClient);
-            responseSender.Send(context.ResponsePacket, context.RequestPacket?.UserName, context.RemoteEndpoint, context.ProxyEndpoint, true);
+            _sender.Send(context.ResponsePacket, context.RequestPacket?.UserName, context.RemoteEndpoint, context.ProxyEndpoint, true);
 
             return; //stop processing
         }
@@ -116,7 +114,6 @@ public class RadiusRequestPostProcessor : IRadiusRequestPostProcessor
         }
 
         var debugLog = context.RequestPacket.Header.Code == PacketCode.StatusServer;
-        var sender = _senderFactory.CreateSender(context.UdpClient);
-        sender.Send(responsePacket, context.RequestPacket?.UserName, context.RemoteEndpoint, context.ProxyEndpoint, debugLog);
+        _sender.Send(responsePacket, context.RequestPacket?.UserName, context.RemoteEndpoint, context.ProxyEndpoint, debugLog);
     }
 }

@@ -42,38 +42,31 @@ namespace MultiFactor.Radius.Adapter.Server
 {
     public sealed class RadiusServer : IDisposable
     {
-        private IUdpClient _udpClient;
-        private readonly IPEndPoint _localEndpoint;
-        private readonly IRadiusPacketParser _radiusPacketParser;
+        private readonly IUdpClient _udpClient;
+        private readonly RadiusPacketParser _radiusPacketParser;
         private readonly IRadiusDictionary _dictionary;
         private int _concurrentHandlerCount = 0;
         private readonly ILogger _logger;
         private readonly RadiusPipeline _pipeline;
         private readonly RadiusContextFactory _radiusContextFactory;
-        private readonly Func<IPEndPoint, IUdpClient> _createUdpClient;
         private readonly ApplicationVariables _variables;
         private readonly IServiceConfiguration _serviceConfiguration;
 
         private readonly CacheService _cacheService;
 
-        public bool Running
-        {
-            get;
-            private set;
-        }
+        private bool _running;
 
         /// <summary>
         /// Create a new server on endpoint with packet handler repository
         /// </summary>
         public RadiusServer(IServiceConfiguration serviceConfiguration, 
+            IUdpClient udpClient,
             IRadiusDictionary dictionary, 
-            IRadiusPacketParser radiusPacketParser, 
+            RadiusPacketParser radiusPacketParser, 
             CacheService cacheService, 
             ILogger<RadiusServer> logger,
             RadiusPipeline pipeline,
             RadiusContextFactory radiusContextFactory,
-            // needed for tests only
-            Func<IPEndPoint, IUdpClient> createUdpClient,
             ApplicationVariables variables)
         {
             _serviceConfiguration = serviceConfiguration ?? throw new ArgumentNullException(nameof(serviceConfiguration));
@@ -83,9 +76,8 @@ namespace MultiFactor.Radius.Adapter.Server
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _pipeline = pipeline ?? throw new ArgumentNullException(nameof(pipeline));
             _radiusContextFactory = radiusContextFactory ?? throw new ArgumentNullException(nameof(radiusContextFactory));
-            _createUdpClient = createUdpClient;
+            _udpClient = udpClient;
             _variables = variables;
-            _localEndpoint = serviceConfiguration.ServiceServerEndpoint;
         }
 
         /// <summary>
@@ -93,20 +85,20 @@ namespace MultiFactor.Radius.Adapter.Server
         /// </summary>
         public void Start()
         {
-            if (Running)
+            if (_running)
             {
                 _logger.LogWarning("Radius server already started");
                 return;
             }
 
             _logger.LogInformation("Multifactor (c) RADIUS Adapter, v. {Version:l}", _variables.AppVersion);
-            _logger.LogInformation("Starting Radius server on {host:l}:{port}", _localEndpoint.Address, _localEndpoint.Port);
+            _logger.LogInformation("Starting Radius server on {host:l}:{port}", 
+                _serviceConfiguration.ServiceServerEndpoint.Address,
+                _serviceConfiguration.ServiceServerEndpoint.Port);
 
-            _dictionary.Read();
             _logger.LogInformation(_dictionary.GetInfo());
 
-            _udpClient = _createUdpClient(_localEndpoint);
-            Running = true;
+            _running = true;
             var receiveTask = Receive();
 
             _logger.LogInformation("Radius server started");           
@@ -117,14 +109,14 @@ namespace MultiFactor.Radius.Adapter.Server
         /// </summary>
         public void Stop()
         {
-            if (!Running)
+            if (!_running)
             {
                 _logger.LogWarning("Radius server already stopped");
                 return;
             }
                      
             _logger.LogInformation("Stopping radius server");
-            Running = false;
+            _running = false;
             _udpClient?.Close();
             _logger.LogInformation("Radius server stopped");          
         }
@@ -135,7 +127,7 @@ namespace MultiFactor.Radius.Adapter.Server
         /// <returns></returns>
         private async Task Receive()
         {
-            while (Running)
+            while (_running)
             {
                 try
                 {
@@ -206,7 +198,7 @@ namespace MultiFactor.Radius.Adapter.Server
             var requestPacket = _radiusPacketParser.Parse(packetBytes, secret,
               configure: x => x.CallingStationIdAttribute = clientConfiguration.CallingStationIdVendorAttribute);
 
-            var context = _radiusContextFactory.CreateContext(clientConfiguration, requestPacket, _udpClient, remoteEndpoint, proxyEndpoint);
+            var context = _radiusContextFactory.CreateContext(clientConfiguration, requestPacket, remoteEndpoint, proxyEndpoint);
             LoggerScope.Wrap(context => HandleRequest(context), context);          
         }
 

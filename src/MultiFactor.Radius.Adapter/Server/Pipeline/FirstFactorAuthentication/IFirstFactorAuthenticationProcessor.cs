@@ -12,7 +12,7 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.FirstFactorAuthentication
     /// <summary>
     /// First authentication factor processor.
     /// </summary>
-    public interface IFirstAuthFactorProcessor
+    public interface IFirstFactorAuthenticationProcessor
     {
         /// <summary>
         /// Returns auth sources supported by the current processor implementation.

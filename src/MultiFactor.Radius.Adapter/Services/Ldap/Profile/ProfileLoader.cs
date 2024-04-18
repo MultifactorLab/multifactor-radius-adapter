@@ -26,7 +26,7 @@ public class ProfileLoader
     {
         var queryAttributes = GetQueryAttributes(clientConfig);
 
-        var names = LdapNamesFactory.CreateLdapNames(clientConfig.FirstFactorAuthenticationSource);
+        var names = LdapNames.Create(clientConfig.FirstFactorAuthenticationSource);
         var searchFilter = $"(&(objectClass={names.UserClass})({names.Identity(user)}={user.Name}))";
 
         var domain = await adapter.WhereAmIAsync();
@@ -89,7 +89,7 @@ public class ProfileLoader
 
     public async Task<ILdapAttributes> LoadAttributesAsync(IClientConfiguration clientConfig, ILdapConnectionAdapter adapter, LdapIdentity user, params string[] attrs)
     {
-        var names = LdapNamesFactory.CreateLdapNames(clientConfig.FirstFactorAuthenticationSource);
+        var names = LdapNames.Create(clientConfig.FirstFactorAuthenticationSource);
         var searchFilter = $"(&(objectClass={names.UserClass})({names.Identity(user)}={user.Name}))";
 
         var domain = await adapter.WhereAmIAsync();

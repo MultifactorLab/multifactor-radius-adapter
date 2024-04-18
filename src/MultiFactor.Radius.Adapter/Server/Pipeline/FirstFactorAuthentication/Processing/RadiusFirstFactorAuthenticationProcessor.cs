@@ -11,20 +11,20 @@ using MultiFactor.Radius.Adapter.Services.Ldap.MembershipVerification;
 using System;
 using System.Threading.Tasks;
 
-namespace MultiFactor.Radius.Adapter.Server.Pipeline.FirstFactorAuthentication.FirstAuthFactorProcessing
+namespace MultiFactor.Radius.Adapter.Server.Pipeline.FirstFactorAuthentication.Processing
 {
     /// <summary>
     /// Authenticate request at Remote Radius Server with user-name and password
     /// </summary>
-    public class RadiusFirstAuthFactorProcessor : IFirstAuthFactorProcessor
+    public class RadiusFirstFactorAuthenticationProcessor : IFirstFactorAuthenticationProcessor
     {
         private readonly MembershipProcessor _membershipProcessor;
-        private readonly IRadiusPacketParser _packetParser;
-        private readonly ILogger<RadiusFirstAuthFactorProcessor> _logger;
+        private readonly RadiusPacketParser _packetParser;
+        private readonly ILogger<RadiusFirstFactorAuthenticationProcessor> _logger;
 
-        public RadiusFirstAuthFactorProcessor(MembershipProcessor membershipProcessor,
-            IRadiusPacketParser packetParser,
-            ILogger<RadiusFirstAuthFactorProcessor> logger)
+        public RadiusFirstFactorAuthenticationProcessor(MembershipProcessor membershipProcessor,
+            RadiusPacketParser packetParser,
+            ILogger<RadiusFirstFactorAuthenticationProcessor> logger)
         {
             _membershipProcessor = membershipProcessor ?? throw new ArgumentNullException(nameof(membershipProcessor));
             _packetParser = packetParser ?? throw new ArgumentNullException(nameof(packetParser));

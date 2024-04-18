@@ -12,7 +12,8 @@ using MultiFactor.Radius.Adapter.Server;
 using MultiFactor.Radius.Adapter.Server.Pipeline.PostProcessing;
 using MultiFactor.Radius.Adapter.Services;
 using System;
-using System.Net;
+using System.IO;
+using System.Reflection;
 
 namespace MultiFactor.Radius.Adapter.Framework;
 
@@ -27,23 +28,42 @@ internal static class RadiusHost
     {
         var builder = Host.CreateApplicationBuilder(args);
 
-        builder.Services.AddSingleton(prov => ApplicationVariablesFactory.Create());
+        builder.Services.AddSingleton(prov =>
+        {
+            return new ApplicationVariables
+            {
+                AppPath = Path.GetDirectoryName(AppDomain.CurrentDomain.BaseDirectory),
+                AppVersion = Assembly.GetExecutingAssembly().GetName().Version.ToString(),
+                StartedAt = DateTime.Now
+            };
+        });
         builder.Services.AddConfiguration();
 
         builder.Services.AddHostedService<ServerHost>();
 
         builder.Services.AddSingleton<RadiusServer>();
+        builder.Services.AddSingleton<IUdpClient>(prov =>
+        {
+            var conf = prov.GetRequiredService<IServiceConfiguration>();
+            var udp = new RealUdpClient(conf.ServiceServerEndpoint);
+            return udp;
+        });
         builder.Services.AddSingleton<RadiusContextFactory>();
 
         builder.Services.AddSingleton<IRadiusRequestPostProcessor, RadiusRequestPostProcessor>();
-        builder.Services.AddTransient<Func<IPEndPoint, IUdpClient>>(prov => endpoint => new RealUdpClient(endpoint));
-        builder.Services.AddSingleton<IRadiusResponseSenderFactory, RadiusResponseSenderFactory>();
+        builder.Services.AddSingleton<IRadiusResponseSender, RadiusResponseSender>();
         builder.Services.AddSingleton<RadiusReplyAttributeEnricher>();
 
         builder.Services.AddMemoryCache();
 
-        builder.Services.AddSingleton<IRadiusDictionary, RadiusDictionary>();
-        builder.Services.AddSingleton<IRadiusPacketParser, RadiusPacketParser>();
+        builder.Services.AddSingleton<RadiusDictionary>();
+        builder.Services.AddSingleton<IRadiusDictionary>(prov =>
+        {
+            var dict = prov.GetRequiredService<RadiusDictionary>();
+            dict.Read();
+            return dict;
+        });
+        builder.Services.AddSingleton<RadiusPacketParser>();
         builder.Services.AddSingleton<CacheService>();
 
         return new RadiusHostApplicationBuilder(builder);

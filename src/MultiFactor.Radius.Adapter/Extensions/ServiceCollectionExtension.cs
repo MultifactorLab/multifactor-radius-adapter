@@ -2,7 +2,7 @@
 using MultiFactor.Radius.Adapter.Configuration.Core;
 using MultiFactor.Radius.Adapter.Core.Http;
 using MultiFactor.Radius.Adapter.Server.Pipeline.FirstFactorAuthentication;
-using MultiFactor.Radius.Adapter.Server.Pipeline.FirstFactorAuthentication.FirstAuthFactorProcessing;
+using MultiFactor.Radius.Adapter.Server.Pipeline.FirstFactorAuthentication.Processing;
 using MultiFactor.Radius.Adapter.Services.MultiFactorApi;
 using System;
 using System.Net.Http;
@@ -14,9 +14,9 @@ public static class ServiceCollectionExtension
 {
     public static void AddFirstAuthFactorProcessing(this IServiceCollection services)
     {
-        services.AddSingleton<IFirstAuthFactorProcessor, LdapFirstAuthFactorProcessor>();
-        services.AddSingleton<IFirstAuthFactorProcessor, RadiusFirstAuthFactorProcessor>();
-        services.AddSingleton<IFirstAuthFactorProcessorProvider, FirstAuthFactorProcessorProvider>();
+        services.AddSingleton<IFirstFactorAuthenticationProcessor, LdapFirstFactorAuthenticationProcessor>();
+        services.AddSingleton<IFirstFactorAuthenticationProcessor, RadiusFirstFactorAuthenticationProcessor>();
+        services.AddSingleton<IFirstFactorAuthenticationProcessorProvider, FirstFactorAuthenticationProcessorProvider>();
     }
 
     public static void AddHttpServices(this IServiceCollection services)

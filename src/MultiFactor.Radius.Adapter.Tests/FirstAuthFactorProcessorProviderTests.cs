@@ -1,7 +1,7 @@
 ﻿using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using MultiFactor.Radius.Adapter.Configuration;
-using MultiFactor.Radius.Adapter.Server.Pipeline.FirstFactorAuthentication.FirstAuthFactorProcessing;
+using MultiFactor.Radius.Adapter.Server.Pipeline.FirstFactorAuthentication.Processing;
 using MultiFactor.Radius.Adapter.Tests.Fixtures;
 using MultiFactor.Radius.Adapter.Tests.Fixtures.ConfigLoading;
 
@@ -22,10 +22,10 @@ namespace MultiFactor.Radius.Adapter.Tests
                 });
             });
 
-            var prov = host.Service<IFirstAuthFactorProcessorProvider>();
+            var prov = host.Service<IFirstFactorAuthenticationProcessorProvider>();
             var getter = prov.GetProcessor(source);
 
-            getter.Should().NotBeNull().And.BeOfType<LdapFirstAuthFactorProcessor>();
+            getter.Should().NotBeNull().And.BeOfType<LdapFirstFactorAuthenticationProcessor>();
         }
         
         [Fact]
@@ -39,10 +39,10 @@ namespace MultiFactor.Radius.Adapter.Tests
                 });
             });
 
-            var prov = host.Service<IFirstAuthFactorProcessorProvider>();
+            var prov = host.Service<IFirstFactorAuthenticationProcessorProvider>();
             var getter = prov.GetProcessor(AuthenticationSource.Radius);
 
-            getter.Should().NotBeNull().And.BeOfType<RadiusFirstAuthFactorProcessor>();
+            getter.Should().NotBeNull().And.BeOfType<RadiusFirstFactorAuthenticationProcessor>();
         }
     }
 }
