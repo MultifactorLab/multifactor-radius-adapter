@@ -4,6 +4,7 @@
 
 using System;
 using System.Linq;
+using MultiFactor.Radius.Adapter.Framework.Context;
 
 namespace MultiFactor.Radius.Adapter.Server
 {
@@ -89,7 +90,7 @@ namespace MultiFactor.Radius.Adapter.Server
                 }
 
                 //just attribute
-                return context.LdapAttrs?[LdapAttributeName] != null;
+                return context.Profile.Attributes.Has(LdapAttributeName);
             }
 
             //if matched user name condition
@@ -127,7 +128,7 @@ namespace MultiFactor.Radius.Adapter.Server
 
             if (FromLdap)
             {
-                return new object[] { context.LdapAttrs[LdapAttributeName] };
+                return new object[] { context.Profile.Attributes.GetValue(LdapAttributeName) };
             }
 
             return new object[] { Value };

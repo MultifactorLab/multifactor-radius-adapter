@@ -1,4 +1,4 @@
-﻿using MultiFactor.Radius.Adapter.Server;
+﻿using MultiFactor.Radius.Adapter.Framework.Context;
 using Serilog.Core;
 using Serilog.Events;
 using System;

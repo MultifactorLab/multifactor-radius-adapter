@@ -33,12 +33,12 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap
                 return new LdapUser(FormatOriginal(prefix, lwrName), IdentityType.Uid, lwrName, prefix);
             }
 
-            if (lwrName.Contains("="))
+            if (lwrName.Contains('='))
             {
                 return new LdapUser(lwrName, IdentityType.DistinguishedName, lwrName, prefix);
             }
 
-            if (lwrName.Contains("@"))
+            if (lwrName.Contains('@'))
             {
                 return new LdapUser(lwrName, IdentityType.UserPrincipalName, lwrName, prefix);
             }
@@ -52,7 +52,7 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap
             if (index == -1) return (string.Empty, identity);
             if (index == 0) throw new ArgumentException("Incorrect identity");
 
-            return (identity.Substring(0, index), identity.Substring(index + 1));
+            return (identity[..index], identity[(index + 1)..]);
         }
 
         private static string FormatOriginal(string prefix, string name)
@@ -81,10 +81,7 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap
                 throw new ArgumentException($"'{nameof(defaultNamingContext)}' cannot be null or whitespace.", nameof(defaultNamingContext));
             }
 
-            return new LdapDomain(new LdapIdentity 
-            { 
-                Name = defaultNamingContext, Type = IdentityType.DistinguishedName 
-            });
+            return new LdapDomain(new LdapIdentity(defaultNamingContext, IdentityType.DistinguishedName));
         }
     }
 }

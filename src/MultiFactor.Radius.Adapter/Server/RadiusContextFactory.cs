@@ -22,26 +22,24 @@
 //OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 //SOFTWARE.
 
+using MultiFactor.Radius.Adapter.Configuration.Core;
+using MultiFactor.Radius.Adapter.Core.Radius;
+using MultiFactor.Radius.Adapter.Framework.Context;
 using System;
 using System.Net;
-using System.Net.Sockets;
-using MultiFactor.Radius.Adapter.Core.Radius;
-using MultiFactor.Radius.Adapter.Configuration.Core;
 
 namespace MultiFactor.Radius.Adapter.Server;
 
 public class RadiusContextFactory
 {
     private readonly IServiceProvider _serviceProvider;
-    private readonly RadiusResponseSenderFactory _radiusResponseSenderFactory;
 
-    public RadiusContextFactory(IServiceProvider serviceProvider, RadiusResponseSenderFactory radiusResponseSenderFactory)
+    public RadiusContextFactory(IServiceProvider serviceProvider)
     {
-        _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
-        _radiusResponseSenderFactory = radiusResponseSenderFactory ?? throw new ArgumentNullException(nameof(radiusResponseSenderFactory));
+        _serviceProvider = serviceProvider;
     }
 
-    public RadiusContext CreateContext(IClientConfiguration client, IRadiusPacket packet, UdpClient udpClient, IPEndPoint remote, IPEndPoint proxy)
+    public RadiusContext CreateContext(IClientConfiguration client, IRadiusPacket packet, IPEndPoint remote, IPEndPoint proxy)
     {
         if (client is null)
         {
@@ -53,17 +51,10 @@ public class RadiusContextFactory
             throw new ArgumentNullException(nameof(packet));
         }
 
-        if (udpClient is null)
-        {
-            throw new ArgumentNullException(nameof(udpClient));
-        }
-
-        return new RadiusContext(client, _radiusResponseSenderFactory.CreateSender(udpClient), _serviceProvider)
+        return new RadiusContext(packet, client, _serviceProvider)
         {
             RemoteEndpoint = remote,
-            ProxyEndpoint = proxy,
-            RequestPacket = packet,
-            UserName = packet.UserName
+            ProxyEndpoint = proxy
         };
     }
 }

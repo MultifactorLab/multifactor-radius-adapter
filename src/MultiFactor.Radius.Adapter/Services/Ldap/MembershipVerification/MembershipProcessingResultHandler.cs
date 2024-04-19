@@ -3,7 +3,7 @@
 //https://github.com/MultifactorLab/MultiFactor.Radius.Adapter/blob/master/LICENSE.md
 
 using MultiFactor.Radius.Adapter.Core.Radius;
-using MultiFactor.Radius.Adapter.Server;
+using MultiFactor.Radius.Adapter.Framework.Context;
 using MultiFactor.Radius.Adapter.Services.Ldap.MembershipVerification;
 using System;
 using System.Linq;
@@ -12,9 +12,9 @@ namespace MultiFactor.Radius.Adapter.Services.ActiveDirectory.MembershipVerifica
 {
     public class MembershipProcessingResultHandler
     {
-        private readonly IMembershipProcessingResult _processingResult;
+        private readonly MembershipProcessingResult _processingResult;
 
-        public MembershipProcessingResultHandler(IMembershipProcessingResult processingResult)
+        public MembershipProcessingResultHandler(MembershipProcessingResult processingResult)
         {
             _processingResult = processingResult ?? throw new ArgumentNullException(nameof(processingResult));
         }
@@ -34,28 +34,40 @@ namespace MultiFactor.Radius.Adapter.Services.ActiveDirectory.MembershipVerifica
         /// Sets some request's property values.
         /// </summary>
         /// <param name="context">Pending request.</param>
-        public void EnrichRequest(RadiusContext context)
+        public void EnrichContext(RadiusContext context)
         {
             var profile = _processingResult.Succeeded.Select(x => x.Profile).FirstOrDefault(x => x != null);
-            if (profile == null) return;
+            if (profile == null) 
+            { 
+                return; 
+            }
 
-            context.SetProfile(profile);
-            context.Bypass2Fa = IsBypassed();
-            context.LdapAttrs = profile.LdapAttrs.ToDictionary(k => k.Key, v => v.Value);
+            context.UpdateProfile(profile);
 
-            if (profile.MemberOf != null)
+            var bypassed = IsBypassed();
+            if (bypassed)
             {
-                context.UserGroups = profile.MemberOf;
+                context.SetSecondFactorAuth(AuthenticationCode.Bypass);
             }
         }
 
         private bool IsBypassed()
         {
             var succeeded = _processingResult.Succeeded.ToList();
+            if (!succeeded.Any())
+            {
+                return false;
+            }
 
-            if (!succeeded.Any()) return false;
-            if (succeeded.Any(x => x.IsMemberOf2FaBypassGroup)) return true;
-            if (succeeded.Any(x => x.Are2FaGroupsSpecified && !x.IsMemberOf2FaGroups)) return true;
+            if (succeeded.Any(x => x.IsMemberOf2FaBypassGroup))
+            {
+                return true;
+            }
+
+            if (succeeded.Any(x => x.Are2FaGroupsSpecified && !x.IsMemberOf2FaGroups))
+            {
+                return true;
+            }
 
             return false;
         }

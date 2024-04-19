@@ -26,7 +26,7 @@ using System;
 using Serilog.Context;
 using MultiFactor.Radius.Adapter.Logging.Enrichers;
 using Serilog.Core;
-using MultiFactor.Radius.Adapter.Server;
+using MultiFactor.Radius.Adapter.Framework.Context;
 
 namespace MultiFactor.Radius.Adapter.Logging
 {
@@ -36,7 +36,7 @@ namespace MultiFactor.Radius.Adapter.Logging
         {
             var enrichers = new ILogEventEnricher[]
             {
-                CorrelationIdLogEventEnricher.Create(context.ClientConfiguration),
+                CorrelationIdLogEventEnricher.Create(context.Configuration),
                 RadiusPacketLogEventEnricher.Create(context)
             };
             using (LogContext.Push(enrichers))

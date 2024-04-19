@@ -2,16 +2,20 @@
 using Microsoft.Extensions.Logging;
 using Moq;
 using MultiFactor.Radius.Adapter.Configuration;
-using MultiFactor.Radius.Adapter.Core.Radius;
+using MultiFactor.Radius.Adapter.Configuration.Core;
+using MultiFactor.Radius.Adapter.Framework.Context;
 using MultiFactor.Radius.Adapter.Server;
+using MultiFactor.Radius.Adapter.Server.Pipeline.AccessChallenge;
 using MultiFactor.Radius.Adapter.Services.Ldap;
-using MultiFactor.Radius.Adapter.Services.Ldap.ProfileLoading;
+using MultiFactor.Radius.Adapter.Services.Ldap.Profile;
 using MultiFactor.Radius.Adapter.Services.MultiFactorApi;
+using MultiFactor.Radius.Adapter.Services.MultiFactorApi.Models;
 using MultiFactor.Radius.Adapter.Tests.Fixtures.Radius;
 using System.Net;
 
 namespace MultiFactor.Radius.Adapter.Tests
 {
+    [Trait("Category", "Challenge")]
     public class ChallengeProcessorTests
     {
         [Fact]
@@ -19,21 +23,20 @@ namespace MultiFactor.Radius.Adapter.Tests
         {
             const string reqId = "RequestId";
 
-            var api = new Mock<IMultiFactorApiClient>();
-            var logger = new Mock<ILogger<ChallengeProcessor>>();
-            var processor = new ChallengeProcessor(api.Object, logger.Object);
+            var adapter = new Mock<IMultifactorApiAdapter>();
+            var logger = new Mock<ILogger<SecondFactorChallengeProcessor>>();
+            var processor = new SecondFactorChallengeProcessor(adapter.Object, logger.Object);
 
-            var client = ClientConfiguration.CreateBuilder("cli_config", "rds", AuthenticationSource.None, "key", "secret").Build();
-            var identifier = new ChallengeRequestIdentifier(client, reqId);
-            var responseSender = new Mock<IRadiusResponseSender>();
-            var context = new RadiusContext(client, responseSender.Object, new Mock<IServiceProvider>().Object)
+            var client = new ClientConfiguration("cli_config", "rds", AuthenticationSource.None, "key", "secret");
+            var context = new RadiusContext(RadiusPacketFactory.AccessRequest(), client, new Mock<IServiceProvider>().Object)
             {
-                RemoteEndpoint = new IPEndPoint(IPAddress.Any, 636),
+                RemoteEndpoint = new IPEndPoint(IPAddress.Any, 636)
             };
+            context.SetMessageState(reqId);
 
-            processor.AddState(identifier, context);
+            processor.AddChallengeContext(context);
 
-            processor.HasState(new ChallengeRequestIdentifier(client, reqId)).Should().BeTrue();
+            processor.HasChallengeContext(new ChallengeIdentifier(client.Name, reqId)).Should().BeTrue();
         }
 
         [Fact]
@@ -41,23 +44,23 @@ namespace MultiFactor.Radius.Adapter.Tests
         {
             const string reqId = "RequestId";
 
-            var api = new Mock<IMultiFactorApiClient>();
-            var logger = new Mock<ILogger<ChallengeProcessor>>();
-            var processor = new ChallengeProcessor(api.Object, logger.Object);
+            var adapter = new Mock<IMultifactorApiAdapter>();
+            var logger = new Mock<ILogger<SecondFactorChallengeProcessor>>();
+            var processor = new SecondFactorChallengeProcessor(adapter.Object, logger.Object);
 
-            var client = ClientConfiguration.CreateBuilder("cli_config", "rds", AuthenticationSource.None, "key", "secret").Build();
-            var identifier = new ChallengeRequestIdentifier(client, reqId);
-            var responseSender = new Mock<IRadiusResponseSender>();
-            var context = new RadiusContext(client, responseSender.Object, new Mock<IServiceProvider>().Object)
+            var client = new ClientConfiguration("cli_config", "rds", AuthenticationSource.None, "key", "secret");
+            var identifier = new ChallengeIdentifier(client.Name, reqId);
+            var context = new RadiusContext(RadiusPacketFactory.AccessChallenge(), client, new Mock<IServiceProvider>().Object)
             {
-                RequestPacket = RadiusPacketFactory.AccessChallenge(),
                 RemoteEndpoint = new IPEndPoint(IPAddress.Any, 636)
             };
-            processor.AddState(identifier, context);
+            context.SetMessageState(reqId);
+
+            processor.AddChallengeContext(context);
 
             var result = await processor.ProcessChallengeAsync(identifier, context);
 
-            result.Should().Be(PacketCode.AccessReject);
+            Assert.Equal(ChallengeCode.Reject, result);
         }
         
         [Fact]
@@ -65,27 +68,27 @@ namespace MultiFactor.Radius.Adapter.Tests
         {
             const string reqId = "RequestId";
 
-            var api = new Mock<IMultiFactorApiClient>();
-            var logger = new Mock<ILogger<ChallengeProcessor>>();
-            var processor = new ChallengeProcessor(api.Object, logger.Object);
+            var adapter = new Mock<IMultifactorApiAdapter>();
+            var logger = new Mock<ILogger<SecondFactorChallengeProcessor>>();
+            var processor = new SecondFactorChallengeProcessor(adapter.Object, logger.Object);
 
-            var client = ClientConfiguration.CreateBuilder("cli_config", "rds", AuthenticationSource.None, "key", "secret").Build();
-            var identifier = new ChallengeRequestIdentifier(client, reqId);
-            var responseSender = new Mock<IRadiusResponseSender>();
-            var context = new RadiusContext(client, responseSender.Object, new Mock<IServiceProvider>().Object)
+            var client = new ClientConfiguration("cli_config", "rds", AuthenticationSource.None, "key", "secret");
+            var identifier = new ChallengeIdentifier(client.Name, reqId);
+            var packet = RadiusPacketFactory.AccessChallenge();
+            packet.AddAttribute("User-Password", string.Empty);
+            packet.AddAttribute("User-Name", "UserName");
+            var context = new RadiusContext(packet, client, new Mock<IServiceProvider>().Object)
             {
-                RequestPacket = RadiusPacketFactory.AccessChallenge(x =>
-                {
-                    x.AddAttribute("User-Password", string.Empty);
-                }),
-                RemoteEndpoint = new IPEndPoint(IPAddress.Any, 636),
-                UserName = "UserName"
+
+                RemoteEndpoint = new IPEndPoint(IPAddress.Any, 636)
             };
-            processor.AddState(identifier, context);
+            context.SetMessageState(reqId);
+
+            processor.AddChallengeContext(context);
 
             var result = await processor.ProcessChallengeAsync(identifier, context);
 
-            result.Should().Be(PacketCode.AccessReject);
+            Assert.Equal(ChallengeCode.Reject, result);
         }
         
         [Fact]
@@ -93,27 +96,26 @@ namespace MultiFactor.Radius.Adapter.Tests
         {
             const string reqId = "RequestId";
 
-            var api = new Mock<IMultiFactorApiClient>();
-            var logger = new Mock<ILogger<ChallengeProcessor>>();
-            var processor = new ChallengeProcessor(api.Object, logger.Object);
+            var adapter = new Mock<IMultifactorApiAdapter>();
+            var logger = new Mock<ILogger<SecondFactorChallengeProcessor>>();
+            var processor = new SecondFactorChallengeProcessor(adapter.Object, logger.Object);
 
-            var client = ClientConfiguration.CreateBuilder("cli_config", "rds", AuthenticationSource.None, "key", "secret").Build();
-            var identifier = new ChallengeRequestIdentifier(client, reqId);
-            var responseSender = new Mock<IRadiusResponseSender>();
-            var context = new RadiusContext(client, responseSender.Object, new Mock<IServiceProvider>().Object)
+            var client = new ClientConfiguration("cli_config", "rds", AuthenticationSource.None, "key", "secret");
+            var identifier = new ChallengeIdentifier(client.Name, reqId);
+            var packet = RadiusPacketFactory.AccessChallenge();
+            packet.AddAttribute("MS-CHAP2-Response", (string?)null);
+            packet.AddAttribute("User-Name", "UserName");
+            var context = new RadiusContext(packet, client, new Mock<IServiceProvider>().Object)
             {
-                RequestPacket = RadiusPacketFactory.AccessChallenge(x =>
-                {
-                    x.AddAttribute("MS-CHAP2-Response", (string?)null);
-                }),
-                RemoteEndpoint = new IPEndPoint(IPAddress.Any, 636),
-                UserName = "UserName"
+                RemoteEndpoint = new IPEndPoint(IPAddress.Any, 636)
             };
-            processor.AddState(identifier, context);
+            context.SetMessageState(reqId);
+
+            processor.AddChallengeContext(context);
 
             var result = await processor.ProcessChallengeAsync(identifier, context);
 
-            result.Should().Be(PacketCode.AccessReject);
+            Assert.Equal(ChallengeCode.Reject, result);
         }
         
         [Theory]
@@ -124,27 +126,25 @@ namespace MultiFactor.Radius.Adapter.Tests
         {
             const string reqId = "RequestId";
 
-            var api = new Mock<IMultiFactorApiClient>();
-            var logger = new Mock<ILogger<ChallengeProcessor>>();
-            var processor = new ChallengeProcessor(api.Object, logger.Object);
+            var adapter = new Mock<IMultifactorApiAdapter>();
+            var logger = new Mock<ILogger<SecondFactorChallengeProcessor>>();
+            var processor = new SecondFactorChallengeProcessor(adapter.Object, logger.Object);
 
-            var client = ClientConfiguration.CreateBuilder("cli_config", "rds", AuthenticationSource.None, "key", "secret").Build();
-            var identifier = new ChallengeRequestIdentifier(client, reqId);
-            var responseSender = new Mock<IRadiusResponseSender>();
-            var context = new RadiusContext(client, responseSender.Object, new Mock<IServiceProvider>().Object)
+            var client = new ClientConfiguration("cli_config", "rds", AuthenticationSource.None, "key", "secret");
+            var identifier = new ChallengeIdentifier(client.Name, reqId);
+            var packet = RadiusPacketFactory.AccessChallenge();
+            packet.AddAttribute(attr, "value");
+            packet.AddAttribute("User-Name", "UserName");
+            var context = new RadiusContext(packet, client, new Mock<IServiceProvider>().Object)
             {
-                RequestPacket = RadiusPacketFactory.AccessChallenge(x =>
-                {
-                    x.AddAttribute(attr, "value");
-                }),
-                RemoteEndpoint = new IPEndPoint(IPAddress.Any, 636),
-                UserName = "UserName"
+                RemoteEndpoint = new IPEndPoint(IPAddress.Any, 636)
             };
-            processor.AddState(identifier, context);
+            context.SetMessageState(reqId);
+            processor.AddChallengeContext(context);
 
             var result = await processor.ProcessChallengeAsync(identifier, context);
 
-            result.Should().Be(PacketCode.AccessReject);
+            Assert.Equal(ChallengeCode.Reject, result);
         }
 
         [Fact]
@@ -152,52 +152,46 @@ namespace MultiFactor.Radius.Adapter.Tests
         {
             const string reqId = "RequestId";
 
-            var api = new Mock<IMultiFactorApiClient>();
-            api.Setup(x => x.Challenge(It.IsAny<RadiusContext>(), It.IsAny<string>(), It.IsAny<ChallengeRequestIdentifier>()))
-                .ReturnsAsync(PacketCode.AccessAccept);
-            var logger = new Mock<ILogger<ChallengeProcessor>>();
-            var processor = new ChallengeProcessor(api.Object, logger.Object);
+            var adapter = new Mock<IMultifactorApiAdapter>();
+            adapter.Setup(x => x.ChallengeAsync(It.IsAny<RadiusContext>(), It.IsAny<string>(), It.IsAny<ChallengeIdentifier>()))
+                .ReturnsAsync(new ChallengeResponse(AuthenticationCode.Accept));
+            var logger = new Mock<ILogger<SecondFactorChallengeProcessor>>();
+            var processor = new SecondFactorChallengeProcessor(adapter.Object, logger.Object);
 
-            var client = ClientConfiguration.CreateBuilder("cli_config", "rds", AuthenticationSource.None, "key", "secret").Build();
-            var responseSender = new Mock<IRadiusResponseSender>();
-            var context = new RadiusContext(client, responseSender.Object, new Mock<IServiceProvider>().Object)
+            var client = new ClientConfiguration("cli_config", "rds", AuthenticationSource.None, "key", "secret");
+            var packet = RadiusPacketFactory.AccessChallenge();
+            packet.AddAttribute("User-Password", "pass");
+            packet.AddAttribute("User-Name", "UserName");
+            var context = new RadiusContext(packet, client, new Mock<IServiceProvider>().Object)
             {
-                RequestPacket = RadiusPacketFactory.AccessChallenge(x =>
-                {
-                    x.AddAttribute("User-Password", "pass");
-                }),
-                RemoteEndpoint = new IPEndPoint(IPAddress.Any, 636),
-                UserName = "UserName",
-                UserGroups = new List<string>
-                {
-                    "User Group 1",
-                    "User Group 2"
-                },
-                LdapAttrs = new Dictionary<string, object>
-                {
-                    { "sAmaccountName", "user name" }
-                }
+                RemoteEndpoint = new IPEndPoint(IPAddress.Any, 636)
             };
+            context.SetMessageState(reqId);
+
+            var memberof = new LdapAttributes("dn", new Dictionary<string, string[]>
+            {
+                { "memberOf", new [] { "User Group 1", "User Group 2" } }
+            });
+            context.Profile.UpdateAttributes(memberof);
+
             var testDn = "CN=User Name,CN=Users,DC=domain,DC=local";
-            context.SetProfile(LdapProfile.CreateBuilder(LdapIdentity.BaseDn(testDn), testDn).SetIdentityAttribute("multifactor").Build());
-            processor.AddState(new ChallengeRequestIdentifier(client, reqId), context);
-
-            var newContext = new RadiusContext(client, responseSender.Object, new Mock<IServiceProvider>().Object)
+            var attrs = new LdapAttributes(testDn).Add("sAmaccountName", "user name");
+            context.UpdateProfile(new LdapProfile(LdapIdentity.BaseDn(testDn), attrs, Array.Empty<string>(), null).SetIdentityAttribute("multifactor"));
+            processor.AddChallengeContext(context);
+            var newPacket = RadiusPacketFactory.AccessChallenge();
+            newPacket.AddAttribute("User-Password", "pass");
+            newPacket.AddAttribute("User-Name", "UserName");
+            var newContext = new RadiusContext(newPacket, client, new Mock<IServiceProvider>().Object)
             {
-                RequestPacket = RadiusPacketFactory.AccessChallenge(x =>
-                {
-                    x.AddAttribute("User-Password", "pass");
-                }),
-                RemoteEndpoint = new IPEndPoint(IPAddress.Any, 636),
-                UserName = "UserName"
+                RemoteEndpoint = new IPEndPoint(IPAddress.Any, 636)
             };
 
-            var result = await processor.ProcessChallengeAsync(new ChallengeRequestIdentifier(client, reqId), newContext);
+            var result = await processor.ProcessChallengeAsync(new ChallengeIdentifier(client.Name, reqId), newContext);
 
-            result.Should().Be(PacketCode.AccessAccept);
+            Assert.Equal(ChallengeCode.Accept, result);
 
             newContext.UserGroups.Should().BeEquivalentTo(context.UserGroups);
-            newContext.LdapAttrs.Should().BeEquivalentTo(context.LdapAttrs);
+            newContext.Profile.Attributes.Should().BeEquivalentTo(context.Profile.Attributes);
         }
     }
 }

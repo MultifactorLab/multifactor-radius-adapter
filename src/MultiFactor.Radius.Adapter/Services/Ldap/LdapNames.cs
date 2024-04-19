@@ -1,8 +1,6 @@
-﻿using MultiFactor.Radius.Adapter.Core.Services.Ldap;
+﻿using MultiFactor.Radius.Adapter.Configuration;
+using MultiFactor.Radius.Adapter.Core.Services.Ldap;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace MultiFactor.Radius.Adapter.Services.Ldap
 {
@@ -11,21 +9,18 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap
     /// </summary>
     public class LdapNames
     {
-        private LdapServerType _serverType;
+        private readonly LdapServerType _serverType;
 
         public string Uid
         {
             get
             {
-                switch (_serverType)
+                return _serverType switch
                 {
-                    case LdapServerType.Generic:
-                        return "uid";
-                    case LdapServerType.ActiveDirectory:
-                        return "sAMAccountName";
-                    default:
-                        throw new NotImplementedException(_serverType.ToString());
-                }
+                    LdapServerType.Generic => "uid",
+                    LdapServerType.ActiveDirectory => "sAMAccountName",
+                    _ => throw new NotImplementedException(_serverType.ToString()),
+                };
             }
         }
 
@@ -33,15 +28,12 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap
         {
             get
             {
-                switch (_serverType)
+                return _serverType switch
                 {
-                    case LdapServerType.Generic:
-                        return "cn";
-                    case LdapServerType.ActiveDirectory:
-                        return "name";
-                    default:
-                        throw new NotImplementedException(_serverType.ToString());
-                }
+                    LdapServerType.Generic => "cn",
+                    LdapServerType.ActiveDirectory => "name",
+                    _ => throw new NotImplementedException(_serverType.ToString()),
+                };
             }
         }
 
@@ -49,15 +41,12 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap
         {
             get
             {
-                switch (_serverType)
+                return _serverType switch
                 {
-                    case LdapServerType.Generic:
-                        return "person";
-                    case LdapServerType.ActiveDirectory:
-                        return "user";
-                    default:
-                        throw new NotImplementedException(_serverType.ToString());
-                }
+                    LdapServerType.Generic => "person",
+                    LdapServerType.ActiveDirectory => "user",
+                    _ => throw new NotImplementedException(_serverType.ToString()),
+                };
             }
         }
 
@@ -65,15 +54,12 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap
         {
             get
             {
-                switch (_serverType)
+                return _serverType switch
                 {
-                    case LdapServerType.Generic:
-                        return "nestedgroup";
-                    case LdapServerType.ActiveDirectory:
-                        return "group";
-                    default:
-                        throw new NotImplementedException(_serverType.ToString());
-                }
+                    LdapServerType.Generic => "nestedgroup",
+                    LdapServerType.ActiveDirectory => "group",
+                    _ => throw new NotImplementedException(_serverType.ToString()),
+                };
             }
         }
 
@@ -81,15 +67,12 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap
         {
             get
             {
-                switch (_serverType)
+                return _serverType switch
                 {
-                    case LdapServerType.Generic:
-                        return "objectClass";
-                    case LdapServerType.ActiveDirectory:
-                        return "objectCategory";
-                    default:
-                        throw new NotImplementedException(_serverType.ToString());
-                }
+                    LdapServerType.Generic => "objectClass",
+                    LdapServerType.ActiveDirectory => "objectCategory",
+                    _ => throw new NotImplementedException(_serverType.ToString()),
+                };
             }
         }
         
@@ -100,19 +83,26 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap
 
         public string Identity(LdapIdentity identity)
         {
-            switch (identity.Type)
+            return identity.Type switch
             {
-                case IdentityType.DistinguishedName:
-                    return "distinguishedName";
-                case IdentityType.Uid:
-                    return Uid;
-                case IdentityType.UserPrincipalName:
-                    return "userPrincipalName";
-                case IdentityType.Cn:
-                    return Cn;
-                default:
-                    throw new NotImplementedException(identity.Type.ToString());
-            }
+                IdentityType.DistinguishedName => "distinguishedName",
+                IdentityType.Uid => Uid,
+                IdentityType.UserPrincipalName => "userPrincipalName",
+                IdentityType.Cn => Cn,
+                _ => throw new NotImplementedException(identity.Type.ToString()),
+            };
+        }
+
+        public static LdapNames Create(AuthenticationSource source)
+        {
+            return source switch
+            {
+                AuthenticationSource.ActiveDirectory
+                    or AuthenticationSource.Radius
+                    or AuthenticationSource.None => new LdapNames(LdapServerType.ActiveDirectory),
+                AuthenticationSource.Ldap => new LdapNames(LdapServerType.Generic),
+                _ => throw new NotImplementedException(source.ToString()),
+            };
         }
     }
 }

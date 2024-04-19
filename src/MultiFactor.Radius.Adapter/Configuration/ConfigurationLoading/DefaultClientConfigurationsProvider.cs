@@ -27,16 +27,18 @@ public class DefaultClientConfigurationsProvider : IClientConfigurationsProvider
     public Config[] GetClientConfigurations()
     {
         var clientConfigFilesPath = $"{_variables.AppPath}{Path.DirectorySeparatorChar}clients";
-        var clientConfigFiles = Directory.Exists(clientConfigFilesPath) ? Directory.GetFiles(clientConfigFilesPath, "*.config") : new string[0];
-        if (clientConfigFiles.Length == 0) return new Config[0];
+        var clientConfigFiles = Directory.Exists(clientConfigFilesPath) ? Directory.GetFiles(clientConfigFilesPath, "*.config") : Array.Empty<string>();
+        if (clientConfigFiles.Length == 0) return Array.Empty<Config>();
 
         var list = new List<Config>();
         foreach (var file in clientConfigFiles)
         {
-            _logger.LogInformation($"Loading client configuration from {Path.GetFileName(file)}");
+            _logger.LogInformation("Loading client configuration from {path}", Path.GetFileName(file));
 
-            var customConfigFileMap = new ExeConfigurationFileMap();
-            customConfigFileMap.ExeConfigFilename = file;
+            var customConfigFileMap = new ExeConfigurationFileMap
+            {
+                ExeConfigFilename = file
+            };
             list.Add(ConfigurationManager.OpenMappedExeConfiguration(customConfigFileMap, ConfigurationUserLevel.None));
         }
 

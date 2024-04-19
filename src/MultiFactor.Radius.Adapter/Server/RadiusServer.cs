@@ -22,62 +22,52 @@
 //OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 //SOFTWARE.
 
+using Microsoft.Extensions.Logging;
+using MultiFactor.Radius.Adapter.Configuration.Core;
+using MultiFactor.Radius.Adapter.Core;
+using MultiFactor.Radius.Adapter.Core.Radius;
+using MultiFactor.Radius.Adapter.Core.Radius.Attributes;
+using MultiFactor.Radius.Adapter.Framework.Context;
+using MultiFactor.Radius.Adapter.Framework.Pipeline;
+using MultiFactor.Radius.Adapter.Logging;
+using MultiFactor.Radius.Adapter.Services;
 using System;
 using System.Linq;
 using System.Net;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Net.Sockets;
-using MultiFactor.Radius.Adapter.Services;
-using System.Globalization;
-using System.Collections.Generic;
-using MultiFactor.Radius.Adapter.Configuration;
-using MultiFactor.Radius.Adapter.Logging.Enrichers;
-using MultiFactor.Radius.Adapter.Logging;
-using MultiFactor.Radius.Adapter.Core.Radius;
-using MultiFactor.Radius.Adapter.Core.Radius.Attributes;
-using MultiFactor.Radius.Adapter.Configuration.Core;
-using Microsoft.Extensions.Options;
-using Microsoft.Extensions.DependencyInjection;
-using MultiFactor.Radius.Adapter.Core.Pipeline;
-using static System.Formats.Asn1.AsnWriter;
-using Microsoft.Extensions.Logging;
 
 namespace MultiFactor.Radius.Adapter.Server
 {
     public sealed class RadiusServer : IDisposable
     {
-        private UdpClient _udpClient;
-        private readonly IPEndPoint _localEndpoint;
-        private readonly IRadiusPacketParser _radiusPacketParser;
+        private readonly IUdpClient _udpClient;
+        private readonly RadiusPacketParser _radiusPacketParser;
         private readonly IRadiusDictionary _dictionary;
         private int _concurrentHandlerCount = 0;
         private readonly ILogger _logger;
-        private readonly IRadiusPipeline _pipeline;
+        private readonly RadiusPipeline _pipeline;
         private readonly RadiusContextFactory _radiusContextFactory;
-        private readonly RandomWaiter _waiter;
-        private IServiceConfiguration _serviceConfiguration;
+        private readonly ApplicationVariables _variables;
+        private readonly IServiceConfiguration _serviceConfiguration;
 
-        private CacheService _cacheService;
+        private readonly CacheService _cacheService;
 
-        public bool Running
-        {
-            get;
-            private set;
-        }
+        private bool _running;
 
         /// <summary>
         /// Create a new server on endpoint with packet handler repository
         /// </summary>
-        public RadiusServer(IServiceConfiguration serviceConfiguration, 
-            IRadiusDictionary dictionary, 
-            IRadiusPacketParser radiusPacketParser, 
-            CacheService cacheService, 
-            RandomWaiter waiter,
+        public RadiusServer(IServiceConfiguration serviceConfiguration,
+            IUdpClient udpClient,
+            IRadiusDictionary dictionary,
+            RadiusPacketParser radiusPacketParser,
+            CacheService cacheService,
             ILogger<RadiusServer> logger,
-            IRadiusPipeline pipeline,
-            RadiusContextFactory radiusContextFactory)
+            RadiusPipeline pipeline,
+            RadiusContextFactory radiusContextFactory,
+            ApplicationVariables variables)
         {
             _serviceConfiguration = serviceConfiguration ?? throw new ArgumentNullException(nameof(serviceConfiguration));
             _dictionary = dictionary ?? throw new ArgumentNullException(nameof(dictionary));
@@ -86,8 +76,8 @@ namespace MultiFactor.Radius.Adapter.Server
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _pipeline = pipeline ?? throw new ArgumentNullException(nameof(pipeline));
             _radiusContextFactory = radiusContextFactory ?? throw new ArgumentNullException(nameof(radiusContextFactory));
-            _localEndpoint = serviceConfiguration.ServiceServerEndpoint;
-            _waiter = waiter ?? throw new ArgumentNullException(nameof(waiter));
+            _udpClient = udpClient;
+            _variables = variables;
         }
 
         /// <summary>
@@ -95,19 +85,23 @@ namespace MultiFactor.Radius.Adapter.Server
         /// </summary>
         public void Start()
         {
-            if (Running)
+            if (_running)
             {
-                _logger.LogWarning("Server already started");
+                _logger.LogWarning("Radius server already started");
                 return;
             }
-                   
-            _logger.LogInformation("Starting Radius server on {host:l}:{port}", _localEndpoint.Address, _localEndpoint.Port);
 
-            _udpClient = new UdpClient(_localEndpoint);
-            Running = true;
+            _logger.LogInformation("Multifactor (c) RADIUS Adapter, v. {Version:l}", _variables.AppVersion);
+            _logger.LogInformation("Starting Radius server on {host:l}:{port}",
+                _serviceConfiguration.ServiceServerEndpoint.Address,
+                _serviceConfiguration.ServiceServerEndpoint.Port);
+
+            _logger.LogInformation(_dictionary.GetInfo());
+
+            _running = true;
             var receiveTask = Receive();
 
-            _logger.LogInformation("Server started");           
+            _logger.LogInformation("Radius server started");
         }
 
         /// <summary>
@@ -115,16 +109,16 @@ namespace MultiFactor.Radius.Adapter.Server
         /// </summary>
         public void Stop()
         {
-            if (!Running)
+            if (!_running)
             {
-                _logger.LogWarning("Server already stopped");
+                _logger.LogWarning("Radius server already stopped");
                 return;
             }
-                     
-            _logger.LogInformation("Stopping server");
-            Running = false;
+
+            _logger.LogInformation("Stopping radius server");
+            _running = false;
             _udpClient?.Close();
-            _logger.LogInformation("Stopped");          
+            _logger.LogInformation("Radius server stopped");
         }
 
         /// <summary>
@@ -133,7 +127,7 @@ namespace MultiFactor.Radius.Adapter.Server
         /// <returns></returns>
         private async Task Receive()
         {
-            while (Running)
+            while (_running)
             {
                 try
                 {
@@ -143,7 +137,7 @@ namespace MultiFactor.Radius.Adapter.Server
                 catch (ObjectDisposedException) { } // This is thrown when udpclient is disposed, can be safely ignored
                 catch (Exception ex)
                 {
-                    _logger.LogError($"Something went wrong transmitting packet: {ex.Message}");
+                    _logger.LogError("Something went wrong transmitting packet: {message:l}", ex.Message);
                 }
             }
         }
@@ -192,10 +186,7 @@ namespace MultiFactor.Radius.Adapter.Server
             {
                 clientConfiguration = _serviceConfiguration.GetClient(nasIdentifier);
             }
-            if (clientConfiguration == null)
-            {
-                clientConfiguration = _serviceConfiguration.GetClient(remoteEndpoint.Address);
-            }
+            clientConfiguration ??= _serviceConfiguration.GetClient(remoteEndpoint.Address);
 
             if (clientConfiguration == null)
             {
@@ -203,11 +194,12 @@ namespace MultiFactor.Radius.Adapter.Server
                 return;
             }
 
-            var requestPacket = _radiusPacketParser.Parse(packetBytes, Encoding.UTF8.GetBytes(clientConfiguration.RadiusSharedSecret),
+            var secret = new SharedSecret(clientConfiguration.RadiusSharedSecret);
+            var requestPacket = _radiusPacketParser.Parse(packetBytes, secret,
               configure: x => x.CallingStationIdAttribute = clientConfiguration.CallingStationIdVendorAttribute);
 
-            var context = _radiusContextFactory.CreateContext(clientConfiguration, requestPacket, _udpClient, remoteEndpoint, proxyEndpoint);
-            LoggerScope.Wrap(context => HandleRequest(context), context);          
+            var context = _radiusContextFactory.CreateContext(clientConfiguration, requestPacket, remoteEndpoint, proxyEndpoint);
+            LoggerScope.Wrap(context => HandleRequest(context), context);
         }
 
         private void HandleRequest(RadiusContext context)
@@ -219,57 +211,57 @@ namespace MultiFactor.Radius.Adapter.Server
                 _logger.LogDebug("Retransmissed request from {host:l}:{port} id={id} client '{client:l}', ignoring",
                     context.RemoteEndpoint.Address,
                     context.RemoteEndpoint.Port,
-                    packet.Identifier,
-                    context.ClientConfiguration.Name);
+                    packet.Header.Identifier,
+                    context.Configuration.Name);
                 return;
             }
 
             if (context.ProxyEndpoint != null)
             {
-                if (packet.Code == PacketCode.StatusServer)
+                if (packet.Header.Code == PacketCode.StatusServer)
                 {
-                    _logger.LogInformation("Received {code:l} from {host:l}:{port} proxied by {proxyhost:l}:{proxyport} id={id} client '{client:l}'", 
-                    packet.Code.ToString(),
+                    _logger.LogInformation("Received {code:l} from {host:l}:{port} proxied by {proxyhost:l}:{proxyport} id={id} client '{client:l}'",
+                    packet.Header.Code.ToString(),
                     context.RemoteEndpoint.Address,
                     context.RemoteEndpoint.Port,
                     context.ProxyEndpoint.Address,
                     context.ProxyEndpoint.Port,
-                    packet.Identifier,
-                    context.ClientConfiguration.Name);
+                    packet.Header.Identifier,
+                    context.Configuration.Name);
                 }
                 else
                 {
-                    _logger.LogInformation("Received {code:l} from {host:l}:{port} proxied by {proxyhost:l}:{proxyport} id={id} user='{user:l}' client '{client:l}'", 
-                        packet.Code.ToString(),
+                    _logger.LogInformation("Received {code:l} from {host:l}:{port} proxied by {proxyhost:l}:{proxyport} id={id} user='{user:l}' client '{client:l}'",
+                        packet.Header.Code.ToString(),
                         context.RemoteEndpoint.Address,
                         context.RemoteEndpoint.Port,
                         context.ProxyEndpoint.Address,
                         context.ProxyEndpoint.Port,
-                        packet.Identifier,
+                        packet.Header.Identifier,
                         packet.UserName,
-                        context.ClientConfiguration.Name);
+                        context.Configuration.Name);
                 }
             }
             else
             {
-                if (packet.Code == PacketCode.StatusServer)
+                if (packet.Header.Code == PacketCode.StatusServer)
                 {
                     _logger.LogDebug("Received {code:l} from {host:l}:{port} id={id} client '{client:l}'",
-                        packet.Code.ToString(), 
-                        context.RemoteEndpoint.Address, 
+                        packet.Header.Code.ToString(),
+                        context.RemoteEndpoint.Address,
                         context.RemoteEndpoint.Port,
-                        packet.Identifier,
-                        context.ClientConfiguration.Name);
+                        packet.Header.Identifier,
+                        context.Configuration.Name);
                 }
                 else
                 {
                     _logger.LogInformation("Received {code:l} from {host:l}:{port} id={id} user='{user:l}' client '{client:l}'",
-                        packet.Code.ToString(), 
-                        context.RemoteEndpoint.Address, 
+                        packet.Header.Code.ToString(),
+                        context.RemoteEndpoint.Address,
                         context.RemoteEndpoint.Port,
-                        packet.Identifier,
-                        packet.UserName, 
-                        context.ClientConfiguration.Name);
+                        packet.Header.Identifier,
+                        packet.UserName,
+                        context.Configuration.Name);
                 }
             }
 
@@ -290,27 +282,27 @@ namespace MultiFactor.Radius.Adapter.Server
             {
                 return false;
             }
-             
+
             var proxySig = Encoding.ASCII.GetString(request.Take(5).ToArray());
 
-            if (proxySig == "PROXY")
+            if (proxySig != "PROXY")
             {
-                var lf = Array.IndexOf(request, (byte)'\n');
-                var headerBytes = request.Take(lf + 1).ToArray();
-                var header = Encoding.ASCII.GetString(headerBytes);
-
-                var parts = header.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-
-                var sourceIp = parts[2];
-                var sourcePort = int.Parse(parts[4]);
-
-                sourceEndpoint = new IPEndPoint(IPAddress.Parse(sourceIp), sourcePort);
-                requestWithoutProxyHeader = request.Skip(lf + 1).ToArray();
-
-                return true;
+                return false;
             }
 
-            return false;
+            var lf = Array.IndexOf(request, (byte)'\n');
+            var headerBytes = request.Take(lf + 1).ToArray();
+            var header = Encoding.ASCII.GetString(headerBytes);
+
+            var parts = header.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+            var sourceIp = parts[2];
+            var sourcePort = int.Parse(parts[4]);
+
+            sourceEndpoint = new IPEndPoint(IPAddress.Parse(sourceIp), sourcePort);
+            requestWithoutProxyHeader = request.Skip(lf + 1).ToArray();
+
+            return true;
         }
 
         /// <summary>

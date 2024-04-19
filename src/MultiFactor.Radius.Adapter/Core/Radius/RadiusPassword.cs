@@ -56,16 +56,14 @@ namespace MultiFactor.Radius.Adapter.Core.Radius
         /// <param name="sharedSecret"></param>
         /// <param name="Stuff"></param>
         /// <returns></returns>
-        private static byte[] CreateKey(byte[] sharedSecret, byte[] authenticator)
+        private static byte[] CreateKey(SharedSecret sharedSecret, RadiusAuthenticator authenticator)
         {
-            var key = new byte[16 + sharedSecret.Length];
-            Buffer.BlockCopy(sharedSecret, 0, key, 0, sharedSecret.Length);
-            Buffer.BlockCopy(authenticator, 0, key, sharedSecret.Length, authenticator.Length);
+            var key = new byte[16 + sharedSecret.Bytes.Length];
+            Buffer.BlockCopy(sharedSecret.Bytes, 0, key, 0, sharedSecret.Bytes.Length);
+            Buffer.BlockCopy(authenticator.Value, 0, key, sharedSecret.Bytes.Length, authenticator.Value.Length);
 
-            using (var md5 = MD5.Create())
-            {
-                return md5.ComputeHash(key);
-            }
+            using var md5 = MD5.Create();
+            return md5.ComputeHash(key);
         }
 
 
@@ -76,7 +74,7 @@ namespace MultiFactor.Radius.Adapter.Core.Radius
         /// <param name="authenticator"></param>
         /// <param name="passwordBytes"></param>
         /// <returns></returns>
-        public static string Decrypt(byte[] sharedSecret, byte[] authenticator, byte[] passwordBytes)
+        public static string Decrypt(SharedSecret sharedSecret, RadiusAuthenticator authenticator, byte[] passwordBytes)
         {
             var key = CreateKey(sharedSecret, authenticator);
             var bytes = new List<byte>();
@@ -89,7 +87,7 @@ namespace MultiFactor.Radius.Adapter.Core.Radius
                 var block = EncryptDecrypt(temp, key);
                 bytes.AddRange(block);
 
-                key = CreateKey(sharedSecret, temp);
+                key = CreateKey(sharedSecret, new RadiusAuthenticator(temp));
             }
 
             var ret = Encoding.UTF8.GetString(bytes.ToArray());
@@ -104,7 +102,7 @@ namespace MultiFactor.Radius.Adapter.Core.Radius
         /// <param name="authenticator"></param>
         /// <param name="passwordBytes"></param>
         /// <returns></returns>
-        public static byte[] Encrypt(byte[] sharedSecret, byte[] authenticator, byte[] passwordBytes)
+        public static byte[] Encrypt(SharedSecret sharedSecret, RadiusAuthenticator authenticator, byte[] passwordBytes)
         {
             Array.Resize(ref passwordBytes, passwordBytes.Length + (16 - passwordBytes.Length % 16));
 
@@ -116,7 +114,7 @@ namespace MultiFactor.Radius.Adapter.Core.Radius
                 Buffer.BlockCopy(passwordBytes, (n - 1) * 16, temp, 0, 16);
                 var xor = EncryptDecrypt(temp, key);
                 bytes.AddRange(xor);
-                key = CreateKey(sharedSecret, xor);
+                key = CreateKey(sharedSecret, new RadiusAuthenticator(xor));
             }
 
             return bytes.ToArray();

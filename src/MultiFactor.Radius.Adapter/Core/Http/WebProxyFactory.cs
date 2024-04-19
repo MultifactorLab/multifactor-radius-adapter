@@ -36,8 +36,8 @@ namespace MultiFactor.Radius.Adapter.Core.Http
                 return false;
             }
 
-            var leftPart = apiUri.Substring(0, uriSeparatorIdx).Replace("@", "%40");
-            var rightPart = apiUri.Substring(uriSeparatorIdx + 1);
+            var leftPart = apiUri[..uriSeparatorIdx].Replace("@", "%40");
+            var rightPart = apiUri[(uriSeparatorIdx + 1)..];
             var escapedUri = $"{leftPart}@{rightPart}";
             uri = new Uri(escapedUri);
             return true;

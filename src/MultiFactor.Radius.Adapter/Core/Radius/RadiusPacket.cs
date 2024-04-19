@@ -28,7 +28,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
-using System.Security.Cryptography;
 using System.Text;
 
 namespace MultiFactor.Radius.Adapter.Core.Radius
@@ -38,60 +37,39 @@ namespace MultiFactor.Radius.Adapter.Core.Radius
     /// </summary>
     public class RadiusPacket : IRadiusPacket
     {
-        private readonly RadiusPacketOptions _options = new RadiusPacketOptions();
+        private readonly Dictionary<string, string> _transformMap = new();
 
-        public PacketCode Code
-        {
-            get;
-            internal set;
-        }
-        public byte Identifier
-        {
-            get;
-            set;
-        }
-        public byte[] Authenticator { get; set; } = new byte[16];
+        private readonly RadiusPacketOptions _options = new();
+
+        private string UserPassword => GetString("User-Password");
+
+        public RadiusPacketHeader Header { get; }
+        public RadiusAuthenticator Authenticator { get; }
+
         public IDictionary<string, List<object>> Attributes { get; set; } = new Dictionary<string, List<object>>();
-        public byte[] SharedSecret
-        {
-            get;
-            internal set;
-        }
+        public SharedSecret SharedSecret { get; }
+
         public byte[] RequestAuthenticator
         {
             get;
             internal set;
         }
+
         /// <summary>
         /// EAP session challenge in progress (ie. wpa2-ent)
         /// </summary>
-        public bool IsEapMessageChallenge
-        {
-            get
-            {
-                return Code == PacketCode.AccessChallenge && AuthenticationType == AuthenticationType.EAP;
-            }
-        }
+        public bool IsEapMessageChallenge => Header.Code == PacketCode.AccessChallenge && AuthenticationType == AuthenticationType.EAP;
+
         /// <summary>
         /// ACL and other rules transfer
         /// </summary>
-        public bool IsVendorAclRequest
-        {
-            get
-            {
-                return UserName?.StartsWith("#ACSACL#-IP") == true;
-            }
-        }
+        public bool IsVendorAclRequest => UserName?.StartsWith("#ACSACL#-IP") == true;
+
         /// <summary>
         /// Is our WinLogon
         /// </summary>
-        public bool IsWinLogon
-        {
-            get
-            {
-                return GetString("mfa-client-name") == "WinLogon";
-            }
-        }
+        public bool IsWinLogon => GetString("mfa-client-name") == "WinLogon";
+
         /// <summary>
         /// OpenVPN with static-challenge sends pwd and otp in base64 with SCRV1 prefix
         /// https://openvpn.net/community-resources/management-interface/
@@ -118,16 +96,12 @@ namespace MultiFactor.Radius.Adapter.Core.Radius
                 return AuthenticationType.Unknown;
             }
         }
-        public string UserName => GetString("User-Name");
-        internal string UserPassword => GetString("User-Password");
-        public string RemoteHostName
-        {
-            get
-            {
-                //MS RDGW and RRAS
-                return GetString("MS-Client-Machine-Account-Name") ?? GetString("MS-RAS-Client-Name");
-            }
-        }
+        public string UserName => _transformMap.ContainsKey("User-Name")
+            ? _transformMap["User-Name"]
+            : GetString("User-Name");
+
+        //MS RDGW and RRAS
+        public string RemoteHostName => GetString("MS-Client-Machine-Account-Name") ?? GetString("MS-RAS-Client-Name");
         public string CallingStationId => GetCallingStationId();
         public string CalledStationId => IsWinLogon ? GetString("Called-Station-Id") : null;
         public string NasIdentifier => GetString("NAS-Identifier");
@@ -171,40 +145,12 @@ namespace MultiFactor.Radius.Adapter.Core.Radius
             return null;
         }
 
-        internal RadiusPacket()
+        public RadiusPacket(RadiusPacketHeader header, RadiusAuthenticator authenticator, SharedSecret sharedSecret)
         {
+            Header = header ?? throw new ArgumentNullException(nameof(header));
+            Authenticator = authenticator ?? throw new ArgumentNullException(nameof(authenticator));
+            SharedSecret = sharedSecret ?? throw new ArgumentNullException(nameof(sharedSecret));
         }
-
-
-        /// <summary>
-        /// Create a new packet with a random authenticator
-        /// </summary>
-        /// <param name="code"></param>
-        /// <param name="identifier"></param>
-        /// <param name="secret"></param>
-        /// <param name="authenticator">Set authenticator for testing</param>
-        public RadiusPacket(PacketCode code, byte identifier, string secret)
-        {
-            Code = code;
-            Identifier = identifier;
-            SharedSecret = Encoding.UTF8.GetBytes(secret);
-
-            // Generate random authenticator for access request packets
-            if (Code == PacketCode.AccessRequest || Code == PacketCode.StatusServer)
-            {
-                using (var csp = RandomNumberGenerator.Create())
-                {
-                    csp.GetNonZeroBytes(Authenticator);
-                }
-            }
-
-            // A Message authenticator is required in status server packets, calculated last
-            if (Code == PacketCode.StatusServer)
-            {
-                AddAttribute("Message-Authenticator", new byte[16]);
-            }
-        }
-
 
         /// <summary>
         /// Creates a response packet with code, authenticator, identifier and secret from the request packet.
@@ -213,13 +159,19 @@ namespace MultiFactor.Radius.Adapter.Core.Radius
         /// <returns></returns>
         public IRadiusPacket CreateResponsePacket(PacketCode responseCode)
         {
-            return new RadiusPacket
+            var header = RadiusPacketHeader.Create(responseCode, Header.Identifier);
+            var packet = new RadiusPacket(header, Authenticator, SharedSecret)
             {
-                Code = responseCode,
-                SharedSecret = SharedSecret,
-                Identifier = Identifier,
-                RequestAuthenticator = Authenticator
+                RequestAuthenticator = Authenticator.Value
             };
+
+            // A Message authenticator is required in status server and access packets, calculated last
+            if (Header.Code == PacketCode.AccessRequest || Header.Code == PacketCode.StatusServer)
+            {
+                packet.AddAttribute("Message-Authenticator", new byte[16]);
+            }
+
+            return packet;
         }
 
         public void Configure(Action<RadiusPacketOptions> configure)
@@ -247,27 +199,33 @@ namespace MultiFactor.Radius.Adapter.Core.Radius
         /// </summary>
         public string GetString(string name)
         {
-            if (Attributes.ContainsKey(name))
+            if (!Attributes.ContainsKey(name))
             {
-                var value = Attributes[name].Single();
+                return null;
+            }
 
-                if (value != null)
+            object value;
+            try
+            {
+                value = Attributes[name].Single();
+            }
+            catch (InvalidOperationException ex)
+            {
+                throw new Exception("Multiple attributes with the same name are found", ex);
+            }
+
+            if (value != null)
+            {
+                return value switch
                 {
-                    switch (value)
-                    {
-                        case byte[] _value:
-                            return Encoding.UTF8.GetString(_value);
-                        case string _value:
-                            return _value;
-                        default:
-                            return value.ToString();
-                    }
-                }
+                    byte[] _value => Encoding.UTF8.GetString(_value),
+                    string _value => _value,
+                    _ => value.ToString(),
+                };
             }
 
             return null;
         }
-
 
         /// <summary>
         /// Gets multiple attribute values with the same name cast to type
@@ -290,19 +248,21 @@ namespace MultiFactor.Radius.Adapter.Core.Radius
             packet.Attributes.Remove("Proxy-State"); //should be newer
         }
 
-
         public void AddAttribute(string name, string value)
         {
             AddAttributeObject(name, value);
         }
+
         public void AddAttribute(string name, uint value)
         {
             AddAttributeObject(name, value);
         }
+
         public void AddAttribute(string name, IPAddress value)
         {
             AddAttributeObject(name, value);
         }
+
         public void AddAttribute(string name, byte[] value)
         {
             AddAttributeObject(name, value);
@@ -319,8 +279,8 @@ namespace MultiFactor.Radius.Adapter.Core.Radius
 
         public string CreateUniqueKey(IPEndPoint remoteEndpoint)
         {
-            var base64Authenticator = Authenticator.Base64();
-            return $"{Code.ToString("d")}:{Identifier}:{remoteEndpoint}:{UserName}:{base64Authenticator}";
+            var base64Authenticator = Authenticator.Value.Base64();
+            return $"{Header.Code:d}:{Header.Identifier}:{remoteEndpoint}:{UserName}:{base64Authenticator}";
         }
 
         private string GetCallingStationId()
@@ -332,6 +292,21 @@ namespace MultiFactor.Radius.Adapter.Core.Radius
                     ?? RemoteHostName;
             }
             return GetString("Calling-Station-Id") ?? RemoteHostName;
+        }
+
+        public void AddTransformation(string attribute, string transformedValue)
+        {
+            if (string.IsNullOrWhiteSpace(attribute))
+            {
+                throw new ArgumentException($"'{nameof(attribute)}' cannot be null or whitespace.", nameof(attribute));
+            }
+
+            if (transformedValue is null)
+            {
+                throw new ArgumentNullException(nameof(transformedValue));
+            }
+
+            _transformMap[attribute] = transformedValue;
         }
     }
 }

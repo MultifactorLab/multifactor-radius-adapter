@@ -4,15 +4,16 @@ using MultiFactor.Radius.Adapter.Server;
 
 namespace MultiFactor.Radius.Adapter.Tests
 {
+    [Trait("Category", "Challenge")]
     public class ChallengeRequestIdentifierTests
     {
         [Fact]
         public void Create_ShouldEqualToTheSame()
         {
-            var cli = ClientConfiguration.CreateBuilder("cli_config", "rds", AuthenticationSource.None, "key", "secret").Build();
+            var cli = new ClientConfiguration("cli_config", "rds", AuthenticationSource.None, "key", "secret");
 
-            var first = new ChallengeRequestIdentifier(cli, "Qwerty123");
-            var second = new ChallengeRequestIdentifier(cli, "Qwerty123");
+            var first = new ChallengeIdentifier(cli.Name, "Qwerty123");
+            var second = new ChallengeIdentifier(cli.Name, "Qwerty123");
 
             first.Should().Be(second);
         }
@@ -20,10 +21,10 @@ namespace MultiFactor.Radius.Adapter.Tests
         [Fact]
         public void Create_ShouldNotEqual()
         {
-            var cli = ClientConfiguration.CreateBuilder("cli_config", "rds", AuthenticationSource.None, "key", "secret").Build();
+            var cli = new ClientConfiguration("cli_config", "rds", AuthenticationSource.None, "key", "secret");
 
-            var first = new ChallengeRequestIdentifier(cli, "Qwerty123");
-            var second = new ChallengeRequestIdentifier(cli, "Qwerty12345");
+            var first = new ChallengeIdentifier(cli.Name, "Qwerty123");
+            var second = new ChallengeIdentifier(cli.Name, "Qwerty12345");
 
             first.Should().NotBe(second);
         }
@@ -31,9 +32,9 @@ namespace MultiFactor.Radius.Adapter.Tests
         [Fact]
         public void Create_ShouldHasRequestId()
         {
-            var cli = ClientConfiguration.CreateBuilder("cli_config", "rds", AuthenticationSource.None, "key", "secret").Build();
+            var cli = new ClientConfiguration("cli_config", "rds", AuthenticationSource.None, "key", "secret");
 
-            var identifier = new ChallengeRequestIdentifier(cli, "Qwerty123");
+            var identifier = new ChallengeIdentifier(cli.Name, "Qwerty123");
 
             identifier.RequestId.Should().Be("Qwerty123");
         }

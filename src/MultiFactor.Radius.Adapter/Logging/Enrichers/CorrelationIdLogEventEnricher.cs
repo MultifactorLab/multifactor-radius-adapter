@@ -1,5 +1,4 @@
-﻿using MultiFactor.Radius.Adapter.Configuration;
-using MultiFactor.Radius.Adapter.Configuration.Core;
+﻿using MultiFactor.Radius.Adapter.Configuration.Core;
 using Serilog.Core;
 using Serilog.Events;
 using System;
@@ -11,7 +10,7 @@ namespace MultiFactor.Radius.Adapter.Logging.Enrichers
     /// </summary>
     public class CorrelationIdLogEventEnricher : ILogEventEnricher
     {
-        private static readonly object Locker = new object();
+        private static readonly object Locker = new();
         private static DateTime ResetPoint;
         private static long RequestChainCounter;
 

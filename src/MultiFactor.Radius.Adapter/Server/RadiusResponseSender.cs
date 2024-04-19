@@ -22,25 +22,25 @@
 //OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 //SOFTWARE.
 
+using Microsoft.Extensions.Logging;
+using MultiFactor.Radius.Adapter.Configuration.Core;
+using MultiFactor.Radius.Adapter.Core.Radius;
 using System;
 using System.Net;
-using System.Net.Sockets;
-using Microsoft.Extensions.Logging;
-using MultiFactor.Radius.Adapter.Core.Radius;
 
 namespace MultiFactor.Radius.Adapter.Server
 {
     public class RadiusResponseSender : IRadiusResponseSender
     {
-        private readonly UdpClient _udpClient;
-        private readonly IRadiusPacketParser _radiusPacketParser;
+        private readonly IUdpClient _udpClient;
+        private readonly RadiusPacketParser _radiusPacketParser;
         private readonly ILogger _logger;
 
-        public RadiusResponseSender(UdpClient udpClient, IRadiusPacketParser radiusPacketParser, ILogger<RadiusResponseSender> logger)
+        public RadiusResponseSender(IUdpClient udpClient, RadiusPacketParser radiusPacketParser, ILogger<RadiusResponseSender> logger)
         {
-            _udpClient = udpClient ?? throw new ArgumentNullException(nameof(udpClient));
-            _radiusPacketParser = radiusPacketParser ?? throw new ArgumentNullException(nameof(radiusPacketParser));
-            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _udpClient = udpClient;
+            _radiusPacketParser = radiusPacketParser;
+            _logger = logger;
         }
 
         public void Send(IRadiusPacket responsePacket, string user, IPEndPoint remoteEndpoint, IPEndPoint proxyEndpoint, bool debugLog)
@@ -52,22 +52,22 @@ namespace MultiFactor.Radius.Adapter.Server
             {
                 if (debugLog)
                 {
-                    _logger.LogDebug("{code:l} sent to {host:l}:{port} via {proxyhost:l}:{proxyport} id={id}", responsePacket.Code.ToString(), remoteEndpoint.Address, remoteEndpoint.Port, proxyEndpoint.Address, proxyEndpoint.Port, responsePacket.Identifier);
+                    _logger.LogDebug("{code:l} sent to {host:l}:{port} via {proxyhost:l}:{proxyport} id={id}", responsePacket.Header.Code.ToString(), remoteEndpoint.Address, remoteEndpoint.Port, proxyEndpoint.Address, proxyEndpoint.Port, responsePacket.Header.Identifier);
                 }
                 else
                 {
-                    _logger.LogInformation("{code:l} sent to {host:l}:{port} via {proxyhost:l}:{proxyport} id={id} user='{user:l}'", responsePacket.Code.ToString(), remoteEndpoint.Address, remoteEndpoint.Port, proxyEndpoint.Address, proxyEndpoint.Port, responsePacket.Identifier, user);
+                    _logger.LogInformation("{code:l} sent to {host:l}:{port} via {proxyhost:l}:{proxyport} id={id} user='{user:l}'", responsePacket.Header.Code.ToString(), remoteEndpoint.Address, remoteEndpoint.Port, proxyEndpoint.Address, proxyEndpoint.Port, responsePacket.Header.Identifier, user);
                 }
             }
             else
             {
                 if (debugLog)
                 {
-                    _logger.LogDebug("{code:l} sent to {host:l}:{port} id={id}", responsePacket.Code.ToString(), remoteEndpoint.Address, remoteEndpoint.Port, responsePacket.Identifier);
+                    _logger.LogDebug("{code:l} sent to {host:l}:{port} id={id}", responsePacket.Header.Code.ToString(), remoteEndpoint.Address, remoteEndpoint.Port, responsePacket.Header.Identifier);
                 }
                 else
                 {
-                    _logger.LogInformation("{code:l} sent to {host:l}:{port} id={id} user='{user:l}'", responsePacket.Code.ToString(), remoteEndpoint.Address, remoteEndpoint.Port, responsePacket.Identifier, user);
+                    _logger.LogInformation("{code:l} sent to {host:l}:{port} id={id} user='{user:l}'", responsePacket.Header.Code.ToString(), remoteEndpoint.Address, remoteEndpoint.Port, responsePacket.Header.Identifier, user);
                 }
             }
         }

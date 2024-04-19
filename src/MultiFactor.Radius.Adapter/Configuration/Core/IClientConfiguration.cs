@@ -1,5 +1,7 @@
 ﻿using MultiFactor.Radius.Adapter.Configuration.Features.AuthenticatedClientCacheFeature;
+using MultiFactor.Radius.Adapter.Configuration.Features.PreAuthModeFeature;
 using MultiFactor.Radius.Adapter.Configuration.Features.PrivacyModeFeature;
+using MultiFactor.Radius.Adapter.Configuration.Features.RandomWaiterFeature;
 using MultiFactor.Radius.Adapter.Configuration.Features.UserNameTransformFeature;
 using MultiFactor.Radius.Adapter.Core;
 using MultiFactor.Radius.Adapter.Server;
@@ -21,7 +23,7 @@ namespace MultiFactor.Radius.Adapter.Configuration.Core
         AuthenticationSource FirstFactorAuthenticationSource { get; }
         string LdapBindDn { get; }
         bool LoadActiveDirectoryNestedGroups { get; }
-        MultifactorApiCredential ApiCredential { get; }
+        ApiCredential ApiCredential { get; }
         string Name { get; }
         IPEndPoint NpsServerEndpoint { get; }
         string[] PhoneAttributes { get; }
@@ -34,8 +36,10 @@ namespace MultiFactor.Radius.Adapter.Configuration.Core
         string SignUpGroups { get; }
         string[] SplittedActiveDirectoryDomains { get; }
         UserNameTransformRulesElement[] UserNameTransformRules { get; }
-        public string TwoFAIdentityAttribyte { get; }
-        public bool UseIdentityAttribyte => !string.IsNullOrEmpty(TwoFAIdentityAttribyte);
+        public string TwoFAIdentityAttribute { get; }
+        public bool UseIdentityAttribute => !string.IsNullOrEmpty(TwoFAIdentityAttribute);
         bool ShouldLoadUserGroups();
+        RandomWaiterConfig InvalidCredentialDelay { get; }
+        PreAuthModeDescriptor PreAuthnMode { get; }
     }
 }

@@ -31,10 +31,9 @@ namespace MultiFactor.Radius.Adapter.Core.Radius
 {
     public interface IRadiusPacket
     {
-        byte Identifier { get; set; }
-        byte[] Authenticator { get; set; }
-        byte[] SharedSecret { get; }
-        PacketCode Code { get; }
+        RadiusPacketHeader Header { get; }
+        SharedSecret SharedSecret { get; }
+        RadiusAuthenticator Authenticator { get; }
         byte[] RequestAuthenticator { get; }
         bool IsEapMessageChallenge { get; }
         bool IsVendorAclRequest { get; }
@@ -43,6 +42,9 @@ namespace MultiFactor.Radius.Adapter.Core.Radius
 
         AuthenticationType AuthenticationType { get; }
 
+        /// <summary>
+        /// Returns the User-Name attribute value.
+        /// </summary>
         string UserName { get; }
         string TryGetUserPassword();
         string TryGetChallenge();
@@ -66,5 +68,12 @@ namespace MultiFactor.Radius.Adapter.Core.Radius
         IDictionary<string, List<object>> Attributes { get; set; }
 
         string CreateUniqueKey(IPEndPoint remoteEndpoint);
+
+        /// <summary>
+        /// Adds new value for the attribute that will be returned instead of original value. The original value will not be deleted.
+        /// </summary>
+        /// <param name="attribute"></param>
+        /// <param name="transformedValue"></param>
+        void AddTransformation(string attribute, string transformedValue);
     }
 }

@@ -34,11 +34,11 @@ using System.Threading.Tasks;
 
 namespace MultiFactor.Radius.Adapter.Server
 {
-    public class RadiusClient : IDisposable
+    public sealed class RadiusClient : IDisposable
     {
         private readonly IPEndPoint _localEndpoint;
         private readonly UdpClient _udpClient;
-        private readonly ConcurrentDictionary<Tuple<byte, IPEndPoint>, TaskCompletionSource<UdpReceiveResult>> _pendingRequests = new ConcurrentDictionary<Tuple<byte, IPEndPoint>, TaskCompletionSource<UdpReceiveResult>>();
+        private readonly ConcurrentDictionary<Tuple<byte, IPEndPoint>, TaskCompletionSource<UdpReceiveResult>> _pendingRequests = new();
         private readonly CancellationTokenSource _cancellationTokenSource;
         private readonly ILogger _logger;
 
@@ -74,7 +74,7 @@ namespace MultiFactor.Radius.Adapter.Server
                 }
 
                 //timeout
-                _logger.LogDebug($"Server {remoteEndpoint.ToString()} did not respond within {timeout}");
+                _logger.LogDebug("Server {remoteEndpoint:l} did not respond within {timeout:l}", remoteEndpoint, timeout);
                 return null; 
             }
 
@@ -91,7 +91,7 @@ namespace MultiFactor.Radius.Adapter.Server
             {
                 try
                 {
-                    var response = await _udpClient.ReceiveAsync();
+                    var response = await _udpClient.ReceiveAsync(cancellationToken);
 
                     if (_pendingRequests.TryRemove(new Tuple<byte, IPEndPoint>(response.Buffer[1], response.RemoteEndPoint), out var taskCS))
                     {
@@ -103,7 +103,7 @@ namespace MultiFactor.Radius.Adapter.Server
                     // This is thrown when udpclient is disposed, can be safely ignored
                 }
 
-                await Task.Delay(TimeSpan.FromMilliseconds(5));
+                await Task.Delay(TimeSpan.FromMilliseconds(5), cancellationToken);
             }
         }
 

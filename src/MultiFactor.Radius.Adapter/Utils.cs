@@ -69,13 +69,13 @@ namespace MultiFactor.Radius.Adapter
             var index = identity.IndexOf("\\");
             if (index > 0)
             {
-                identity = identity.Substring(index + 1);
+                identity = identity[(index + 1)..];
             }
 
             index = identity.IndexOf("@");
             if (index > 0)
             {
-                identity = identity.Substring(0, index);
+                identity = identity[..index];
             }
 
             return identity;

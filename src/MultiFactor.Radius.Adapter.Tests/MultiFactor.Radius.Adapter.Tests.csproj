@@ -18,9 +18,13 @@
     <None Remove="Assets\root-ffa-is-ad-and-empty-domain.config" />
     <None Remove="Assets\root-first-factor-authentication-source-is-digit.config" />
     <None Remove="Assets\root-first-factor-authentication-source-is-invalid.config" />
+    <None Remove="Assets\root-minimal-multi-credential-delay-1-2.config" />
+    <None Remove="Assets\root-minimal-multi-credential-delay-2-3.config" />
     <None Remove="Assets\root-minimal-multi.config" />
     <None Remove="Assets\root-minimal-single.config" />
     <None Remove="Assets\root-single-ffa-ad.config" />
+    <None Remove="Assets\root-valid-credential-delay-0.config" />
+    <None Remove="Assets\root-valid-credential-delay-1-2.config" />
     <None Remove="Assets\root-wrong-adapter-server-endpoint.config" />
     <None Remove="Assets\root-wrong-invalid-credential-delay.config" />
     <None Remove="Assets\root-wrong-load-active-directory-nested-groups.config" />
@@ -53,7 +57,27 @@
       <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
     </Content>
+    <Content Include="Assets\root-minimal-multi-credential-delay-2-3.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <Content Include="Assets\root-minimal-multi-credential-delay-1-2.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
     <Content Include="Assets\root-single-ffa-ad.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <Content Include="Assets\root-valid-credential-delay-1-2.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <Content Include="Assets\root-valid-credential-delay-0.config">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
@@ -131,7 +155,31 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="Assets\clients\pre-auth-method\client-pre-auth-method-otp-with-no-cred-delay.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Assets\clients\pre-auth-method\client-pre-auth-method-push.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Assets\clients\pre-auth-method\client-pre-auth-method-telegram.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Assets\clients\pre-auth-method\client-pre-auth-method-otp.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Assets\clients\pre-auth-method\client-pre-auth-method-none.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Assets\clients\client-cred-delay-3.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Assets\clients\client-cred-delay-1-2.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="Assets\clients\client-empty-identifier-and-ip.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Assets\clients\client-cred-delay-0.config">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="Assets\clients\radius-reply-with-attribute.config">

@@ -28,6 +28,10 @@ namespace MultiFactor.Radius.Adapter.Core.Radius.Attributes
 {
     public interface IRadiusDictionary
     {
+        string GetInfo();
+
+        void Read();
+
         /// <summary>
         /// Get a vendor specific attribute by vendorId and vendorCode
         /// </summary>
@@ -36,14 +40,12 @@ namespace MultiFactor.Radius.Adapter.Core.Radius.Attributes
         /// <returns></returns>
         DictionaryVendorAttribute GetVendorAttribute(uint vendorId, byte vendorCode);
 
-
         /// <summary>
         /// Get an RFC attribute by code
         /// </summary>
         /// <param name="code"></param>
         /// <returns></returns>
         DictionaryAttribute GetAttribute(byte code);
-
 
         /// <summary>
         /// Get an attribute or vendor attribute by name

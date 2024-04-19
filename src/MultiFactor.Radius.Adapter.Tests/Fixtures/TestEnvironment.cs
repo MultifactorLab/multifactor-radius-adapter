@@ -9,7 +9,7 @@ internal enum TestAssetLocation
 internal static class TestEnvironment
 {
     private static readonly string _appFolder = $"{Path.GetDirectoryName(AppDomain.CurrentDomain.BaseDirectory)}{Path.DirectorySeparatorChar}";
-    private static readonly string _assetsFolder = $"{_appFolder}{Path.DirectorySeparatorChar}Assets";
+    private static readonly string _assetsFolder = $"{_appFolder}Assets";
 
     public static string GetAssetPath(string fileName)
     {
@@ -19,17 +19,17 @@ internal static class TestEnvironment
 
     public static string GetAssetPath(TestAssetLocation location)
     {
-        switch (location)
+        return location switch
         {
-            case TestAssetLocation.ClientsDirectory: return $"{_assetsFolder}{Path.DirectorySeparatorChar}clients";
-            case TestAssetLocation.RootDirectory:
-            default: return _assetsFolder;
-        }
+            TestAssetLocation.ClientsDirectory => $"{_assetsFolder}{Path.DirectorySeparatorChar}clients",
+            _ => _assetsFolder,
+        };
     }
 
     public static string GetAssetPath(TestAssetLocation location, string fileName)
     {
         if (string.IsNullOrWhiteSpace(fileName)) return GetAssetPath(location);
-        return $"{GetAssetPath(location)}{Path.DirectorySeparatorChar}{fileName}";
+        var s = $"{GetAssetPath(location)}{Path.DirectorySeparatorChar}{Path.Combine(fileName.Split('/', '\\'))}";
+        return s;
     }
 }

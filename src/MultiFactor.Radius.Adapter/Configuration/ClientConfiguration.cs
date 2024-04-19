@@ -1,6 +1,8 @@
 ﻿using MultiFactor.Radius.Adapter.Configuration.Core;
 using MultiFactor.Radius.Adapter.Configuration.Features.AuthenticatedClientCacheFeature;
+using MultiFactor.Radius.Adapter.Configuration.Features.PreAuthModeFeature;
 using MultiFactor.Radius.Adapter.Configuration.Features.PrivacyModeFeature;
+using MultiFactor.Radius.Adapter.Configuration.Features.RandomWaiterFeature;
 using MultiFactor.Radius.Adapter.Configuration.Features.UserNameTransformFeature;
 using MultiFactor.Radius.Adapter.Core;
 using MultiFactor.Radius.Adapter.Server;
@@ -11,9 +13,9 @@ using System.Net;
 
 namespace MultiFactor.Radius.Adapter.Configuration
 {
-    public class ClientConfiguration : IClientConfiguration, IClientConfigurationBuilder
+    public class ClientConfiguration : IClientConfiguration
     {
-        private ClientConfiguration(string name, string rdsSharedSecret, AuthenticationSource firstFactorAuthSource,
+        public ClientConfiguration(string name, string rdsSharedSecret, AuthenticationSource firstFactorAuthSource,
             string apiKey, string apiSecret)
         {
             if (string.IsNullOrWhiteSpace(name))
@@ -34,13 +36,7 @@ namespace MultiFactor.Radius.Adapter.Configuration
             Name = name;
             RadiusSharedSecret = rdsSharedSecret;
             FirstFactorAuthenticationSource = firstFactorAuthSource;
-            ApiCredential = new MultifactorApiCredential(apiKey, apiSecret);
-        }
-
-        public static IClientConfigurationBuilder CreateBuilder(string name, string rdsSharedSecret, AuthenticationSource firstFactorAuthSource, 
-            string apiKey, string apiSecret)
-        {
-            return new ClientConfiguration(name, rdsSharedSecret, firstFactorAuthSource, apiKey, apiSecret);
+            ApiCredential = new ApiCredential(apiKey, apiSecret);
         }
 
         /// <summary>
@@ -58,7 +54,7 @@ namespace MultiFactor.Radius.Adapter.Configuration
         /// </summary>
         public AuthenticationSource FirstFactorAuthenticationSource { get; }
 
-        public MultifactorApiCredential ApiCredential { get; }
+        public ApiCredential ApiCredential { get; }
 
         /// <summary>
         /// Load user profile from AD and check group membership and 
@@ -89,7 +85,7 @@ namespace MultiFactor.Radius.Adapter.Configuration
         /// </summary>
         public bool BypassSecondFactorWhenApiUnreachable { get; private set; }
 
-        public PrivacyModeDescriptor PrivacyMode { get; private set; }
+        public PrivacyModeDescriptor PrivacyMode { get; private set; } = PrivacyModeDescriptor.Default;
 
         /// <summary>
         /// Active Directory Domain
@@ -134,7 +130,7 @@ namespace MultiFactor.Radius.Adapter.Configuration
         /// <summary>
         /// Name of the attribute that will be used as an identifier in MFA request
         /// </summary>
-        public string TwoFAIdentityAttribyte { get; private set; }
+        public string TwoFAIdentityAttribute { get; private set; }
 
         /// <summary>
         /// This service RADIUS UDP Client endpoint
@@ -158,7 +154,7 @@ namespace MultiFactor.Radius.Adapter.Configuration
         /// </summary>
         public string SignUpGroups { get; private set; }
 
-        public AuthenticatedClientCacheConfig AuthenticationCacheLifetime { get; private set; }
+        public AuthenticatedClientCacheConfig AuthenticationCacheLifetime { get; private set; } = AuthenticatedClientCacheConfig.Default;
 
         private readonly Dictionary<string, RadiusReplyAttributeValue[]> _radiusReplyAttributes = new();
 
@@ -187,19 +183,22 @@ namespace MultiFactor.Radius.Adapter.Configuration
                     .Any(attr => attr.IsMemberOf || attr.UserGroupCondition != null);
         }
 
-        public IClientConfigurationBuilder SetBypassSecondFactorWhenApiUnreachable(bool val)
+        public RandomWaiterConfig InvalidCredentialDelay { get; private set; }
+        public PreAuthModeDescriptor PreAuthnMode { get; private set; } = PreAuthModeDescriptor.Default;
+
+        public ClientConfiguration SetBypassSecondFactorWhenApiUnreachable(bool val)
         {
             BypassSecondFactorWhenApiUnreachable = val;
             return this;
         }
 
-        public IClientConfigurationBuilder SetPrivacyMode(PrivacyModeDescriptor val)
+        public ClientConfiguration SetPrivacyMode(PrivacyModeDescriptor val)
         {
             PrivacyMode = val;
             return this;
         }
 
-        public IClientConfigurationBuilder SetActiveDirectoryDomain(string val)
+        public ClientConfiguration SetActiveDirectoryDomain(string val)
         {
             if (string.IsNullOrWhiteSpace(val))
             {
@@ -210,7 +209,7 @@ namespace MultiFactor.Radius.Adapter.Configuration
             return this;
         }
 
-        public IClientConfigurationBuilder SetLdapBindDn(string val)
+        public ClientConfiguration SetLdapBindDn(string val)
         {
             if (string.IsNullOrWhiteSpace(val))
             {
@@ -221,7 +220,7 @@ namespace MultiFactor.Radius.Adapter.Configuration
             return this;
         }
 
-        public IClientConfigurationBuilder AddActiveDirectoryGroup(string val)
+        public ClientConfiguration AddActiveDirectoryGroup(string val)
         {
             if (string.IsNullOrWhiteSpace(val))
             {
@@ -232,7 +231,7 @@ namespace MultiFactor.Radius.Adapter.Configuration
             return this;
         }
         
-        public IClientConfigurationBuilder AddActiveDirectoryGroups(IEnumerable<string> values)
+        public ClientConfiguration AddActiveDirectoryGroups(IEnumerable<string> values)
         {
             if (values is null)
             {
@@ -243,7 +242,7 @@ namespace MultiFactor.Radius.Adapter.Configuration
             return this;
         }
 
-        public IClientConfigurationBuilder AddActiveDirectory2FaGroup(string val)
+        public ClientConfiguration AddActiveDirectory2FaGroup(string val)
         {
             if (string.IsNullOrWhiteSpace(val))
             {
@@ -254,7 +253,7 @@ namespace MultiFactor.Radius.Adapter.Configuration
             return this;
         }
 
-        public IClientConfigurationBuilder AddActiveDirectory2FaGroups(IEnumerable<string> values)
+        public ClientConfiguration AddActiveDirectory2FaGroups(IEnumerable<string> values)
         {
             if (values is null)
             {
@@ -265,7 +264,7 @@ namespace MultiFactor.Radius.Adapter.Configuration
             return this;
         }
 
-        public IClientConfigurationBuilder AddActiveDirectory2FaBypassGroup(string val)
+        public ClientConfiguration AddActiveDirectory2FaBypassGroup(string val)
         {
             if (string.IsNullOrWhiteSpace(val))
             {
@@ -276,7 +275,7 @@ namespace MultiFactor.Radius.Adapter.Configuration
             return this;
         }
         
-        public IClientConfigurationBuilder AddActiveDirectory2FaBypassGroups(IEnumerable<string> values)
+        public ClientConfiguration AddActiveDirectory2FaBypassGroups(IEnumerable<string> values)
         {
             if (values is null)
             {
@@ -287,7 +286,7 @@ namespace MultiFactor.Radius.Adapter.Configuration
             return this;
         }
 
-        public IClientConfigurationBuilder AddPhoneAttribute(string phoneAttr)
+        public ClientConfiguration AddPhoneAttribute(string phoneAttr)
         {
             if (string.IsNullOrWhiteSpace(phoneAttr))
             {
@@ -298,7 +297,7 @@ namespace MultiFactor.Radius.Adapter.Configuration
             return this;
         }
         
-        public IClientConfigurationBuilder AddPhoneAttributes(IEnumerable<string> attributes)
+        public ClientConfiguration AddPhoneAttributes(IEnumerable<string> attributes)
         {
             if (attributes is null)
             {
@@ -309,49 +308,49 @@ namespace MultiFactor.Radius.Adapter.Configuration
             return this;
         }
 
-        public IClientConfigurationBuilder SetLoadActiveDirectoryNestedGroups(bool val)
+        public ClientConfiguration SetLoadActiveDirectoryNestedGroups(bool val)
         {
             LoadActiveDirectoryNestedGroups = val;
             return this;
         }
 
-        public IClientConfigurationBuilder SetServiceClientEndpoint(IPEndPoint val)
+        public ClientConfiguration SetServiceClientEndpoint(IPEndPoint val)
         {
             ServiceClientEndpoint = val;
             return this;
         }
 
-        public IClientConfigurationBuilder SetNpsServerEndpoint(IPEndPoint val)
+        public ClientConfiguration SetNpsServerEndpoint(IPEndPoint val)
         {
             NpsServerEndpoint = val;
             return this;
         }
 
-        public IClientConfigurationBuilder SetServiceAccountUser(string val)
+        public ClientConfiguration SetServiceAccountUser(string val)
         {
             ServiceAccountUser = val;
             return this;
         }
 
-        public IClientConfigurationBuilder SetServiceAccountPassword(string val)
+        public ClientConfiguration SetServiceAccountPassword(string val)
         {
             ServiceAccountPassword = val;
             return this;
         }
 
-        public IClientConfigurationBuilder SetSignUpGroups(string val)
+        public ClientConfiguration SetSignUpGroups(string val)
         {
             SignUpGroups = val;
             return this;
         }
 
-        public IClientConfigurationBuilder SetAuthenticationCacheLifetime(AuthenticatedClientCacheConfig val)
+        public ClientConfiguration SetAuthenticationCacheLifetime(AuthenticatedClientCacheConfig val)
         {
             AuthenticationCacheLifetime = val;
             return this;
         }
 
-        public IClientConfigurationBuilder AddRadiusReplyAttribute(string attr, IEnumerable<RadiusReplyAttributeValue> values)
+        public ClientConfiguration AddRadiusReplyAttribute(string attr, IEnumerable<RadiusReplyAttributeValue> values)
         {
             if (string.IsNullOrWhiteSpace(attr))
             {
@@ -367,7 +366,7 @@ namespace MultiFactor.Radius.Adapter.Configuration
             return this;
         }
 
-        public IClientConfigurationBuilder AddUserNameTransformRule(UserNameTransformRulesElement rule)
+        public ClientConfiguration AddUserNameTransformRule(UserNameTransformRulesElement rule)
         {
             if (rule is null)
             {
@@ -378,7 +377,7 @@ namespace MultiFactor.Radius.Adapter.Configuration
             return this;
         }
 
-        public IClientConfigurationBuilder SetCallingStationIdVendorAttribute(string val)
+        public ClientConfiguration SetCallingStationIdVendorAttribute(string val)
         {
             if (string.IsNullOrWhiteSpace(val))
             {
@@ -389,12 +388,22 @@ namespace MultiFactor.Radius.Adapter.Configuration
             return this;
         }
 
-        public IClientConfigurationBuilder SetUseAttributeAsIdentity(string val)
+        public ClientConfiguration SetUseAttributeAsIdentity(string val)
         {
-            TwoFAIdentityAttribyte = val;
+            TwoFAIdentityAttribute = val;
             return this;
         }
         
-        public IClientConfiguration Build() => this;
+        public ClientConfiguration SetInvalidCredentialDelay(RandomWaiterConfig val)
+        {
+            InvalidCredentialDelay = val ?? throw new ArgumentNullException(nameof(val));
+            return this;
+        }
+        
+        public ClientConfiguration SetPreAuthMode(PreAuthModeDescriptor val)
+        {
+            PreAuthnMode = val ?? throw new ArgumentNullException(nameof(val));
+            return this;
+        }   
     }
 }

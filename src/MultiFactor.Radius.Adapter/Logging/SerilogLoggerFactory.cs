@@ -1,26 +1,21 @@
-﻿using System;
-using System.IO;
-using Microsoft.Extensions.DependencyInjection;
-using MultiFactor.Radius.Adapter.Configuration;
+﻿using Elastic.CommonSchema.Serilog;
+using MultiFactor.Radius.Adapter.Configuration.Core;
+using MultiFactor.Radius.Adapter.Core;
+using MultiFactor.Radius.Adapter.Core.Exceptions;
+using MultiFactor.Radius.Adapter.Core.Serialization;
 using Serilog;
 using Serilog.Core;
 using Serilog.Events;
-using Serilog.Formatting.Compact;
 using Serilog.Formatting;
-using MultiFactor.Radius.Adapter.Core;
-using MultiFactor.Radius.Adapter.Core.Exceptions;
-using MultiFactor.Radius.Adapter.Configuration.Core;
-using Serilog.Formatting.Json;
-using MultiFactor.Radius.Adapter.Core.Serialization;
-using Elastic.CommonSchema.Serilog;
+using Serilog.Formatting.Compact;
+using System;
+using System.IO;
 using static MultiFactor.Radius.Adapter.Core.Literals.Configuration;
 
 namespace MultiFactor.Radius.Adapter.Logging
 {
     public class SerilogLoggerFactory
     {
-        private readonly Lazy<System.Configuration.Configuration> _rootConfig;
-
         private readonly ApplicationVariables _variables;
         private readonly IRootConfigurationProvider _rootConfigurationProvider;
 
@@ -32,7 +27,6 @@ namespace MultiFactor.Radius.Adapter.Logging
             }
             _variables = variables;
             _rootConfigurationProvider = rootConfigurationProvider ?? throw new ArgumentNullException(nameof(rootConfigurationProvider));
-            _rootConfig = new Lazy<System.Configuration.Configuration>(() => _rootConfigurationProvider.GetRootConfiguration());
         }
 
         public ILogger CreateLogger()
@@ -134,18 +128,13 @@ namespace MultiFactor.Radius.Adapter.Logging
             var parseResult = Enum.TryParse<SerilogJsonFormatterTypes>(format, true, out var formatterType);
             if (!parseResult) return null;
 
-            switch (formatterType)
+            return formatterType switch
             {
-                case SerilogJsonFormatterTypes.Json:
-                case SerilogJsonFormatterTypes.JsonUtc:
-                    return new RenderedCompactJsonFormatter();
-                case SerilogJsonFormatterTypes.JsonTz:
-                    return new CustomCompactJsonFormatter("yyyy-MM-dd HH:mm:ss.fff zzz");
-                case SerilogJsonFormatterTypes.ElasticCommonSchema:
-                    return new EcsTextFormatter();
-                default:
-                    return null;
-            }
+                SerilogJsonFormatterTypes.Json or SerilogJsonFormatterTypes.JsonUtc => new RenderedCompactJsonFormatter(),
+                SerilogJsonFormatterTypes.JsonTz => new CustomCompactJsonFormatter("yyyy-MM-dd HH:mm:ss.fff zzz"),
+                SerilogJsonFormatterTypes.ElasticCommonSchema => new EcsTextFormatter(),
+                _ => null,
+            };
         }
 
         private string GetStringSettingOrNull(string key)

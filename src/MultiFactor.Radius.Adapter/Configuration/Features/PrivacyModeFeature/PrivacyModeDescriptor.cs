@@ -12,7 +12,7 @@ public class PrivacyModeDescriptor
     private readonly string[] _fields;
     public PrivacyMode Mode { get; }
 
-    public static PrivacyModeDescriptor None => new PrivacyModeDescriptor(PrivacyMode.None);
+    public static PrivacyModeDescriptor Default => new(PrivacyMode.None);
 
     public bool HasField(string field)
     {
@@ -50,7 +50,7 @@ public class PrivacyModeDescriptor
             return parsed1;
         }
 
-        var sub = value.Substring(0, index);
+        var sub = value[..index];
         if (!Enum.TryParse<PrivacyMode>(sub, true, out var parsed2)) throw new Exception("Unexpected privacy-mode value");
 
         return parsed2;
@@ -64,7 +64,7 @@ public class PrivacyModeDescriptor
             return Array.Empty<string>();
         }
 
-        var sub = value.Substring(index + 1);
+        var sub = value[(index + 1)..];
         return sub.Split(',', StringSplitOptions.RemoveEmptyEntries).Distinct().ToArray();
     }
 }

@@ -3,9 +3,9 @@
 //https://github.com/MultifactorLab/multifactor-radius-adapter/blob/main/LICENSE.md
 
 using MultiFactor.Radius.Adapter.Configuration.Features.RandomWaiterFeature;
-using MultiFactor.Radius.Adapter.Server;
+using MultiFactor.Radius.Adapter.Framework.Context;
 using System;
-using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Net;
 
 namespace MultiFactor.Radius.Adapter.Configuration.Core
@@ -15,7 +15,7 @@ namespace MultiFactor.Radius.Adapter.Configuration.Core
         string ApiProxy { get; }
         string ApiUrl { get; }
         TimeSpan ApiTimeout{ get; }
-        IReadOnlyList<IClientConfiguration> Clients { get; }
+        ReadOnlyCollection<IClientConfiguration> Clients { get; }
         RandomWaiterConfig InvalidCredentialDelay { get; }
         IPEndPoint ServiceServerEndpoint { get; }
         bool SingleClientMode { get; }

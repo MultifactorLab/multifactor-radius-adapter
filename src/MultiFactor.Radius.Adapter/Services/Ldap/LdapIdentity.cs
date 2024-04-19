@@ -6,8 +6,19 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap
 {
     public class LdapIdentity
     {
-        public string Name { get; set; }
-        public IdentityType Type { get; set; }
+        public string Name { get; private set; }
+        public IdentityType Type { get; private set; }
+
+        public LdapIdentity (string name, IdentityType type)
+        {
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                throw new ArgumentException($"'{nameof(name)}' cannot be null or whitespace.", nameof(name));
+            }
+
+            Name = name;
+            Type = type;
+        }
 
         public static LdapIdentity ParseUser(string name)
         {
@@ -29,17 +40,13 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap
             var portIndex = name.IndexOf(":");
             if (portIndex > 0)
             {
-                name = name.Substring(0, portIndex);
+                name = name[..portIndex];
             }
 
             var domains = name.Split(new[] { '.' }, StringSplitOptions.RemoveEmptyEntries);
             var dn = domains.Select(p => $"DC={p}").ToArray();
 
-            return new LdapIdentity
-            {
-                Name = string.Join(",", dn),
-                Type = IdentityType.DistinguishedName
-            };
+            return new LdapIdentity(string.Join(",", dn), IdentityType.DistinguishedName);
         }
         
         /// <summary>
@@ -49,11 +56,7 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap
         {
             var ncs = dn.Split(new[] { ',' } , StringSplitOptions.RemoveEmptyEntries);
             var baseDn = ncs.Where(nc => nc.ToLower().StartsWith("dc="));
-            return new LdapIdentity
-            {
-                Type = IdentityType.DistinguishedName,
-                Name = string.Join(",", baseDn)
-            };
+            return new LdapIdentity(string.Join(",", baseDn), IdentityType.DistinguishedName);
         }
 
         private static LdapIdentity Parse(string name, bool isUser)
@@ -66,25 +69,21 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap
             var index = identity.IndexOf("\\");
             if (index > 0)
             {
-                identity = identity.Substring(index + 1);
+                identity = identity[(index + 1)..];
             }
 
             var type = isUser ? IdentityType.Uid : IdentityType.Cn;
 
-            if (identity.Contains("="))
+            if (identity.Contains('='))
             {
                 type = IdentityType.DistinguishedName;
             }
-            else if (identity.Contains("@"))
+            else if (identity.Contains('@'))
             {
                 type = IdentityType.UserPrincipalName;
             }
 
-            return new LdapIdentity
-            {
-                Name = identity,
-                Type = type
-            };
+            return new LdapIdentity(identity, type);
         }
 
         /// <summary>
@@ -132,8 +131,7 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap
         {
             if (obj is null) return false;
 
-            var other = obj as LdapIdentity;
-            if (other == null) return false;
+            if (obj is not LdapIdentity other) return false;
             if (other == this) return true;
 
             return other.Name == Name && other.Type == Type;

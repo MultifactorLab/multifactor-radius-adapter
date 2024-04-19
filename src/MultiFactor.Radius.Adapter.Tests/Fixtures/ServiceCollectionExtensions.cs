@@ -11,26 +11,68 @@ internal static class ServiceCollectionExtensions
         return services;
     }
 
-    public static IServiceCollection ReplaceSingletoneImpl<TService, TImplementation>(this IServiceCollection services, TImplementation implementation)
-         where TService : class where TImplementation : class, TService
+    public static bool HasDescriptor<TService>(this IServiceCollection services) where TService : class
     {
-        var oldImpl = services.FirstOrDefault(x => x.ServiceType == typeof(TService));
-        if (oldImpl != null)
-        {
-            services.Remove(oldImpl);
-        }
-
-        return services.AddSingleton<TService>(implementation);
+        return services.FirstOrDefault(x => x.ServiceType == typeof(TService)) != null;
     }
 
-    public static IServiceCollection ReplaceSingletoneImpl<TService, TImplementation>(this IServiceCollection services)
-         where TService : class where TImplementation : class, TService
+    /// <summary>
+    /// Replaces <typeparamref name="TService"/> implementation to <typeparamref name="TImplementation"/> if the service collection contains <typeparamref name="TService"/> descriptor.
+    /// </summary>
+    /// <typeparam name="TService">Abstraction type.</typeparam>
+    /// <typeparam name="TImplementation">Implementation type.</typeparam>
+    /// <param name="services">Service Collection</param>
+    /// <returns><see cref="IServiceCollection"/> for chaining.</returns>
+    public static IServiceCollection ReplaceService<TService, TImplementation>(this IServiceCollection services)
+        where TService : class where TImplementation : class, TService
     {
-        var oldImpl = services.FirstOrDefault(x => x.ServiceType == typeof(TService));
-        if (oldImpl != null)
-        {
-            services.Remove(oldImpl);
-        }
-        return services.AddSingleton<TService, TImplementation>();
+        var descriptor = services.SingleOrDefault(x => x.ServiceType == typeof(TService));
+        if (descriptor == null) return services;
+
+        var newDescriptor = new ServiceDescriptor(typeof(TService), typeof(TImplementation), descriptor.Lifetime);
+        services.Remove(descriptor);
+        services.Add(newDescriptor);
+
+        return services;
+    }
+
+    /// <summary>
+    /// Replaces <typeparamref name="TService"/> implementation to the concrete instance of <typeparamref name="TService"/> if the service collection contains <typeparamref name="TService"/> descriptor.
+    /// </summary>
+    /// <typeparam name="TService">Abstraction type.</typeparam>
+    /// <param name="services">Service Collection.</param>
+    /// <param name="instance">Implementation instanbce.</param>
+    /// <returns><see cref="IServiceCollection"/> for chaining.</returns>
+    public static IServiceCollection ReplaceService<TService>(this IServiceCollection services, TService instance)
+        where TService : class
+    {
+        var descriptor = services.SingleOrDefault(x => x.ServiceType == typeof(TService));
+        if (descriptor == null) return services;
+
+        var newDescriptor = new ServiceDescriptor(typeof(TService), instance);
+        services.Remove(descriptor);
+        services.Add(newDescriptor);
+
+        return services;
+    }
+
+    /// <summary>
+    /// Replaces <typeparamref name="TService"/> implementation to the concrete instance of <typeparamref name="TService"/> created by the specified factory if the service collection contains <typeparamref name="TService"/> descriptor.
+    /// </summary>
+    /// <typeparam name="TService">Abstraction type</typeparam>
+    /// <param name="services">Service Collection.</param>
+    /// <param name="factory">Implementation instance factory.</param>
+    /// <returns><see cref="IServiceCollection"/> for chaining.</returns>
+    public static IServiceCollection ReplaceService<TService>(this IServiceCollection services, Func<IServiceProvider, TService> factory)
+        where TService : class
+    {
+        var descriptor = services.SingleOrDefault(x => x.ServiceType == typeof(TService));
+        if (descriptor == null) return services;
+
+        var newDescriptor = new ServiceDescriptor(typeof(TService), factory, descriptor.Lifetime);
+        services.Remove(descriptor);
+        services.Add(newDescriptor);
+
+        return services;
     }
 }
