@@ -350,19 +350,6 @@ sudo systemctl enable multifactor-radius
    }
    ```
 
-### Дополнительные RADIUS атрибуты
-
-```xml
-<RadiusReply>
-    <Attributes>
-        <!--Это пример, можно использовать любые атрибуты-->
-        <add name="Class" value="Super" />
-        <add name="Fortinet-Group-Name" value="Users" when="UserGroup=VPN Users"/>
-        <add name="Fortinet-Group-Name" value="Admins" when="UserGroup=VPN Admins"/>
-    </Attributes>
-</RadiusReply>
-```
-
 ## Запуск компонента
 
 После настройки конфигурации запустите компонент:

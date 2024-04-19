@@ -60,11 +60,11 @@ internal static class ConfigureApplicationExtension
         var services = new ServiceCollection();
 
         var appVarDescriptor = builder.InternalHostApplicationBuilder.Services.FirstOrDefault(x => x.ServiceType == typeof(ApplicationVariables))
-            ?? throw new System.Exception($"Service type '{typeof(ApplicationVariables)}' was not found in the RadiusHostApplicationBuilder services");
+            ?? throw new Exception($"Service type '{typeof(ApplicationVariables)}' was not found in the RadiusHostApplicationBuilder services");
         services.Add(appVarDescriptor);
 
         var rootConfigProvDescriptor = builder.InternalHostApplicationBuilder.Services.FirstOrDefault(x => x.ServiceType == typeof(IRootConfigurationProvider))
-            ?? throw new System.Exception($"Service type '{typeof(IRootConfigurationProvider)}' was not found in the RadiusHostApplicationBuilder services");
+            ?? throw new Exception($"Service type '{typeof(IRootConfigurationProvider)}' was not found in the RadiusHostApplicationBuilder services");
         services.Add(rootConfigProvDescriptor);
 
         services.AddSingleton<SerilogLoggerFactory>();

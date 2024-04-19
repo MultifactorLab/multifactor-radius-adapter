@@ -19,12 +19,12 @@ namespace MultiFactor.Radius.Adapter.Framework.Context
     /// </summary>
     public class RadiusContext
     {
-        public RadiusContext(IRadiusPacket request,
+        public RadiusContext(
+            IRadiusPacket request,
             IClientConfiguration clientConfiguration,
             IServiceProvider provider)
         {
             RequestPacket = request ?? throw new ArgumentNullException(nameof(request));
-            ReceivedAt = DateTime.Now;
             Configuration = clientConfiguration ?? throw new ArgumentNullException(nameof(clientConfiguration));
             RequestServices = provider ?? throw new ArgumentNullException(nameof(provider));
             Authentication = new();
@@ -40,10 +40,11 @@ namespace MultiFactor.Radius.Adapter.Framework.Context
         /// Current request packet.
         /// </summary>
         public IRadiusPacket RequestPacket { get; }
-        public DateTime ReceivedAt { get; }
+
         public RadiusPacketHeader Header => RequestPacket.Header;
 
         public IRadiusPacket ResponsePacket { get; set; }
+
         public PacketCode ResponseCode => Authentication.ToPacketCode();
 
         /// <summary>
@@ -55,7 +56,6 @@ namespace MultiFactor.Radius.Adapter.Framework.Context
         /// Challenge state.
         /// </summary>
         public string State { get; private set; }
-
         public string ReplyMessage { get; private set; }
 
         /// <summary>

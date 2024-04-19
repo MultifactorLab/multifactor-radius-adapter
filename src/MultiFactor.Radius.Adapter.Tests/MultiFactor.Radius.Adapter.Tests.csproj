@@ -155,6 +155,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Reference Include="LdapForNet">
+      <HintPath>..\libs\LdapForNet.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
     <None Update="Assets\clients\pre-auth-method\client-pre-auth-method-otp-with-no-cred-delay.config">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
