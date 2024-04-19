@@ -59,11 +59,11 @@ namespace MultiFactor.Radius.Adapter.Server
         /// <summary>
         /// Create a new server on endpoint with packet handler repository
         /// </summary>
-        public RadiusServer(IServiceConfiguration serviceConfiguration, 
+        public RadiusServer(IServiceConfiguration serviceConfiguration,
             IUdpClient udpClient,
-            IRadiusDictionary dictionary, 
-            RadiusPacketParser radiusPacketParser, 
-            CacheService cacheService, 
+            IRadiusDictionary dictionary,
+            RadiusPacketParser radiusPacketParser,
+            CacheService cacheService,
             ILogger<RadiusServer> logger,
             RadiusPipeline pipeline,
             RadiusContextFactory radiusContextFactory,
@@ -92,7 +92,7 @@ namespace MultiFactor.Radius.Adapter.Server
             }
 
             _logger.LogInformation("Multifactor (c) RADIUS Adapter, v. {Version:l}", _variables.AppVersion);
-            _logger.LogInformation("Starting Radius server on {host:l}:{port}", 
+            _logger.LogInformation("Starting Radius server on {host:l}:{port}",
                 _serviceConfiguration.ServiceServerEndpoint.Address,
                 _serviceConfiguration.ServiceServerEndpoint.Port);
 
@@ -101,7 +101,7 @@ namespace MultiFactor.Radius.Adapter.Server
             _running = true;
             var receiveTask = Receive();
 
-            _logger.LogInformation("Radius server started");           
+            _logger.LogInformation("Radius server started");
         }
 
         /// <summary>
@@ -114,11 +114,11 @@ namespace MultiFactor.Radius.Adapter.Server
                 _logger.LogWarning("Radius server already stopped");
                 return;
             }
-                     
+
             _logger.LogInformation("Stopping radius server");
             _running = false;
             _udpClient?.Close();
-            _logger.LogInformation("Radius server stopped");          
+            _logger.LogInformation("Radius server stopped");
         }
 
         /// <summary>
@@ -199,7 +199,7 @@ namespace MultiFactor.Radius.Adapter.Server
               configure: x => x.CallingStationIdAttribute = clientConfiguration.CallingStationIdVendorAttribute);
 
             var context = _radiusContextFactory.CreateContext(clientConfiguration, requestPacket, remoteEndpoint, proxyEndpoint);
-            LoggerScope.Wrap(context => HandleRequest(context), context);          
+            LoggerScope.Wrap(context => HandleRequest(context), context);
         }
 
         private void HandleRequest(RadiusContext context)
@@ -220,7 +220,7 @@ namespace MultiFactor.Radius.Adapter.Server
             {
                 if (packet.Header.Code == PacketCode.StatusServer)
                 {
-                    _logger.LogInformation("Received {code:l} from {host:l}:{port} proxied by {proxyhost:l}:{proxyport} id={id} client '{client:l}'", 
+                    _logger.LogInformation("Received {code:l} from {host:l}:{port} proxied by {proxyhost:l}:{proxyport} id={id} client '{client:l}'",
                     packet.Header.Code.ToString(),
                     context.RemoteEndpoint.Address,
                     context.RemoteEndpoint.Port,
@@ -231,7 +231,7 @@ namespace MultiFactor.Radius.Adapter.Server
                 }
                 else
                 {
-                    _logger.LogInformation("Received {code:l} from {host:l}:{port} proxied by {proxyhost:l}:{proxyport} id={id} user='{user:l}' client '{client:l}'", 
+                    _logger.LogInformation("Received {code:l} from {host:l}:{port} proxied by {proxyhost:l}:{proxyport} id={id} user='{user:l}' client '{client:l}'",
                         packet.Header.Code.ToString(),
                         context.RemoteEndpoint.Address,
                         context.RemoteEndpoint.Port,
@@ -247,8 +247,8 @@ namespace MultiFactor.Radius.Adapter.Server
                 if (packet.Header.Code == PacketCode.StatusServer)
                 {
                     _logger.LogDebug("Received {code:l} from {host:l}:{port} id={id} client '{client:l}'",
-                        packet.Header.Code.ToString(), 
-                        context.RemoteEndpoint.Address, 
+                        packet.Header.Code.ToString(),
+                        context.RemoteEndpoint.Address,
                         context.RemoteEndpoint.Port,
                         packet.Header.Identifier,
                         context.Configuration.Name);
@@ -256,11 +256,11 @@ namespace MultiFactor.Radius.Adapter.Server
                 else
                 {
                     _logger.LogInformation("Received {code:l} from {host:l}:{port} id={id} user='{user:l}' client '{client:l}'",
-                        packet.Header.Code.ToString(), 
-                        context.RemoteEndpoint.Address, 
+                        packet.Header.Code.ToString(),
+                        context.RemoteEndpoint.Address,
                         context.RemoteEndpoint.Port,
                         packet.Header.Identifier,
-                        packet.UserName, 
+                        packet.UserName,
                         context.Configuration.Name);
                 }
             }

@@ -31,22 +31,20 @@ using System.Threading.Tasks;
 
 namespace MultiFactor.Radius.Adapter.Server
 {
-    internal class RealUdpClient : IUdpClient
+    internal sealed class RealUdpClient : IUdpClient, IDisposable
     {
         private readonly UdpClient _udpClient;
 
-        public RealUdpClient(IPEndPoint endpoint)
+        public RealUdpClient(IServiceConfiguration configuration)
         {
-            if (endpoint is null)
-            {
-                throw new ArgumentNullException(nameof(endpoint));
-            }
-
-            _udpClient = new UdpClient(endpoint);
+            _udpClient = new UdpClient(configuration.ServiceServerEndpoint);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Close() => _udpClient.Close();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Dispose() => _udpClient.Dispose();  
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Task<UdpReceiveResult> ReceiveAsync() => _udpClient.ReceiveAsync();

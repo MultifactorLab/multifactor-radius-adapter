@@ -42,12 +42,7 @@ internal static class RadiusHost
         builder.Services.AddHostedService<ServerHost>();
 
         builder.Services.AddSingleton<RadiusServer>();
-        builder.Services.AddSingleton<IUdpClient>(prov =>
-        {
-            var conf = prov.GetRequiredService<IServiceConfiguration>();
-            var udp = new RealUdpClient(conf.ServiceServerEndpoint);
-            return udp;
-        });
+        builder.Services.AddSingleton<IUdpClient, RealUdpClient>();
         builder.Services.AddSingleton<RadiusContextFactory>();
 
         builder.Services.AddSingleton<IRadiusRequestPostProcessor, RadiusRequestPostProcessor>();
