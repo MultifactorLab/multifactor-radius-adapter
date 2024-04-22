@@ -10,8 +10,11 @@
     },
     "Docker": {
       "commandName": "Docker",
-      "launchBrowser": false,
       "launchUrl": "{Scheme}://{ServiceHost}:{ServicePort}",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "localhost",
+        "LD_DEBUG": "libs"
+      },
       "publishAllPorts": true,
       "useSSL": false
     }

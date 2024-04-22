@@ -5,7 +5,7 @@
 		<AssemblyName>multifactor-radius-adapter</AssemblyName>
 		<Authors>Multifactor</Authors>
 		<Description>Multifactor Radus Adapter</Description>
-		<Version>2.0.0</Version>
+		<Version>2.1.0</Version>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
@@ -18,13 +18,15 @@
 
 	<PropertyGroup>
 		<ServerGarbageCollection>true</ServerGarbageCollection>
+		<UserSecretsId>f07ad043-43df-44e3-965d-beb88a9eac86</UserSecretsId>
+		<DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
 	</PropertyGroup>
 
 	<ItemGroup>
 		<PackageReference Include="Elastic.CommonSchema.Serilog" Version="8.6.1" />
 		<PackageReference Include="IPAddressRange" Version="6.0.0" />
-		<PackageReference Include="LdapForNet" Version="2.7.11" />
 		<PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.0" />
+		<PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.19.6" />
 		<PackageReference Include="Serilog" Version="3.1.1" />
 		<PackageReference Include="Serilog.Extensions.Logging" Version="8.0.0" />
 		<PackageReference Include="Serilog.Formatting.Compact" Version="2.0.0" />
@@ -52,6 +54,9 @@
 		<None Update="content\radius.dictionary">
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</None>
+		<None Update="libs\LdapForNet.dll">
+		  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
 	</ItemGroup>
 
 	<ItemGroup>
@@ -60,6 +65,12 @@
 
 	<ItemGroup>
 		<InternalsVisibleTo Include="MultiFactor.Radius.Adapter.Tests" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Reference Include="LdapForNet">
+	    <HintPath>..\libs\LdapForNet.dll</HintPath>
+	  </Reference>
 	</ItemGroup>
 
 </Project>

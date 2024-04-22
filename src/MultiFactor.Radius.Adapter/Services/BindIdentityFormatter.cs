@@ -33,7 +33,7 @@ namespace MultiFactor.Radius.Adapter.Services.BindIdentityFormatting
             return _clientConfiguration.FirstFactorAuthenticationSource switch
             {
                 Configuration.AuthenticationSource.None or Configuration.AuthenticationSource.ActiveDirectory => FormatIdentityAD(user, ldapUri),
-                Configuration.AuthenticationSource.Ldap => FormatIdentityLdap(user, ldapUri),
+                Configuration.AuthenticationSource.Ldap => FormatIdentityLdap(user),
                 _ => user.Name,
             };
         }
@@ -59,7 +59,7 @@ namespace MultiFactor.Radius.Adapter.Services.BindIdentityFormatting
             return user.Name;
         }
 
-        private string FormatIdentityLdap(LdapIdentity user, string ldapUri)
+        private string FormatIdentityLdap(LdapIdentity user)
         {
             if (user.Type == IdentityType.UserPrincipalName)
             {

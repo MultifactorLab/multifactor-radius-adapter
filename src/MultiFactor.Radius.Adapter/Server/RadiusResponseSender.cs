@@ -25,7 +25,6 @@
 using Microsoft.Extensions.Logging;
 using MultiFactor.Radius.Adapter.Configuration.Core;
 using MultiFactor.Radius.Adapter.Core.Radius;
-using System;
 using System.Net;
 
 namespace MultiFactor.Radius.Adapter.Server
