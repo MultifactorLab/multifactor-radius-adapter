@@ -40,6 +40,7 @@ internal static class RadiusHost
         });
         builder.Services.AddConfiguration();
 
+        builder.Services.AddSingleton<XmlClientConfigurationsProvider>();
         builder.Services.AddHostedService<ServerHost>();
 
         builder.Services.AddSingleton<RadiusServer>();

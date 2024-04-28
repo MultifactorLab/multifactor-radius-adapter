@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using MultiFactor.Radius.Adapter.Configuration.ConfigurationLoading;
 using MultiFactor.Radius.Adapter.Server;
 using System;
 using System.Threading;
@@ -7,23 +8,26 @@ using System.Threading.Tasks;
 
 namespace MultiFactor.Radius.Adapter.HostedServices
 {
-    public class ServerHost : IHostedService
+    internal class ServerHost : IHostedService
     {
         private Task _executingTask;
         private readonly CancellationTokenSource _stoppingCts = new();
 
         private readonly ILogger _logger;
         private readonly RadiusServer _radiusServer;
+        private readonly XmlClientConfigurationsProvider _xml;
 
-        public ServerHost(ILogger<ServerHost> logger, RadiusServer radiusServer)
+        public ServerHost(ILogger<ServerHost> logger, RadiusServer radiusServer, XmlClientConfigurationsProvider xml)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _radiusServer = radiusServer ?? throw new ArgumentNullException(nameof(radiusServer));
+            _xml = xml;
         }
 
 
         public Task StartAsync(CancellationToken cancellationToken)
         {
+            var conf = _xml.GetClientConfigurations();
             _radiusServer.Start();
 
             // Store the task we're executing
