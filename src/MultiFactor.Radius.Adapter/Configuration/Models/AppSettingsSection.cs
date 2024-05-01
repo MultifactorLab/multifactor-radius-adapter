@@ -2,51 +2,65 @@
 //Please see licence at 
 //https://github.com/MultifactorLab/multifactor-radius-adapter/blob/main/LICENSE.md
 
-using Microsoft.Extensions.Configuration;
-using System.ComponentModel;
-using System;
 using FluentValidation;
-using System.Collections.Generic;
-using System.Reflection;
-using System.Linq;
-
 namespace MultiFactor.Radius.Adapter.Configuration.Models;
 
-[Description("appSettings")]
-internal class AppSettingsSection
+public class AppSettingsSection
 {
-    [ConfigurationKeyName("add")]
-    public SettingEntry[] Entries { get; set; } = Array.Empty<SettingEntry>();
+    public string MultifactorApiUrl { get; set; }
+    public string MultifactorApiProxy { get; set; }
+    public string MultifactorApiTimeout { get; set; }
+    public string MultifactorNasIdentifier { get; set; }
+    public string MultifactorSharedSecret { get; set; }
+    public string SignUpGroups { get; set; }
+    public bool BypassSecondFactorWhenApiUnreachable { get; set; }
+
+
+    public AuthenticationSource FirstFactorAuthenticationSource { get; set; }
+
+
+    public string ActiveDirectoryDomain { get; set; }
+    public string ActiveDirectory2faBypassGroup { get; set; }
+    public string ActiveDirectory2faGroup { get; set; }
+    public string ActiveDirectoryGroup { get; set; }
+    public string LdapBindDn { get; set; }
+    public bool LoadActiveDirectoryNestedGroups { get; set; }
+    public bool UseActiveDirectoryMobileUserPhone { get; set; }
+    public bool UseActiveDirectoryUserPhone { get; set; }
+    public bool UseUpnAsIdentity { get; set; }
+    public string UseAttributeAsIdentity { get; set; }
+    public string PhoneAttribute { get; set; }
+    public string ServiceAccountPassword { get; set; }
+    public string ServiceAccountUser { get; set; }
+
+
+    public string AdapterClientEndpoint { get; set; }
+    public string AdapterServerEndpoint { get; set; }
+    public string NpsServerEndpoint { get; set; }
+    public string RadiusClientIp { get; set; }
+    public string RadiusClientNasIdentifier { get; set; }
+    public string RadiusSharedSecret { get; set; }
+
+
+    public string PrivacyMode { get; set; }
+    public string PreAuthenticationMethod { get; set; }
+    public string AuthenticationCacheLifetime { get; set; }
+    public bool AuthenticationCacheMinimalMatching { get; set; }
+    public string InvalidCredentialDelay { get; set; }
+
+
+    public string LoggingFormat { get; set; }
+    public string LoggingLevel { get; set; }
+    public string CallingStationIdAttribute { get; set; }
+    public string ConsoleLogOutputTemplate { get; set; }
+    public string FileLogOutputTemplate { get; set; }
 }
 
 internal class AppSettingsSectionValidator : AbstractValidator<AppSettingsSection>
 {
     public AppSettingsSectionValidator()
     {
-        RuleFor(x => x.Entries).NotNull();
-        RuleForEach(x => x.Entries).SetValidator(new SettingEntryValidator());
-        RuleFor(x => x.Entries).Must(x =>
-        {
-            var duplicate = FirstDuplicateOrNull(x.Select(e => e.Key));
-            return duplicate == null;
-        }).WithMessage((root, current) =>
-        {
-            var duplicate = FirstDuplicateOrNull(current.Select(e => e.Key));
-            var sectionName = GetDescriptionOrNull(root) ?? root.GetType().Name;
-            return $"Duplicate key '{duplicate}' found in <{sectionName}> section";
-        });
-    }
-
-    private static T FirstDuplicateOrNull<T>(IEnumerable<T> arr)
-    {
-        var hashset = new HashSet<T>();
-        return arr.FirstOrDefault(x => !hashset.Add(x));
-    }
-
-    private static string GetDescriptionOrNull(object target)
-    {
-        return target?.GetType()
-            .GetCustomAttribute<DescriptionAttribute>()
-            ?.Description;
+        RuleFor(x => x.MultifactorApiUrl).NotNull();
+        RuleFor(x => x.LoggingLevel).NotNull();
     }
 }

@@ -1,5 +1,4 @@
-﻿using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using MultiFactor.Radius.Adapter.Configuration;
 using MultiFactor.Radius.Adapter.Configuration.ConfigurationLoading;
@@ -40,7 +39,6 @@ internal static class RadiusHost
         });
         builder.Services.AddConfiguration();
 
-        builder.Services.AddSingleton<XmlClientConfigurationsProvider>();
         builder.Services.AddHostedService<ServerHost>();
 
         builder.Services.AddSingleton<RadiusServer>();
