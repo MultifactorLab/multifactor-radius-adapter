@@ -11,6 +11,14 @@ namespace MultiFactor.Radius.Adapter.Configuration.ConfigurationLoading;
 
 internal static class XmlAssert
 {
+    /// <summary>
+    /// Explodes if the collection contains duplicates.
+    /// </summary>
+    /// <typeparam name="TKey">Selector key type.</typeparam>
+    /// <param name="elements">Source collection.</param>
+    /// <param name="keySelector">Grouping selector.</param>
+    /// <exception cref="ArgumentNullException"></exception>
+    /// <exception cref="Exception"></exception>
     public static void HasUniqueElements<TKey>(IEnumerable<XElement> elements, Func<XElement, TKey> keySelector)
     {
         if (elements is null)
@@ -36,6 +44,15 @@ internal static class XmlAssert
         }
     }
 
+    /// <summary>
+    /// Returns attribute value or throws if the attribute does not exist.
+    /// </summary>
+    /// <param name="element">Target element.</param>
+    /// <param name="attribute">Attribute to get value from.</param>
+    /// <returns></returns>
+    /// <exception cref="ArgumentNullException"></exception>
+    /// <exception cref="ArgumentException"></exception>
+    /// <exception cref="Exception"></exception>
     public static string HasAttribute(XElement element, string attribute)
     {
         if (element is null)

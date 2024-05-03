@@ -7,9 +7,9 @@ using System.Linq;
 
 namespace MultiFactor.Radius.Adapter.Core.Extensions;
 
-internal static class PascalCaseFromDashCaseExtension
+internal static class ToPascalCaseExtension
 {
-    public static string ToPascalCaseFromDashCase(this string dashCase)
+    public static string ToPascalCase(this string dashCase)
     {
         if (string.IsNullOrWhiteSpace(dashCase))
         {

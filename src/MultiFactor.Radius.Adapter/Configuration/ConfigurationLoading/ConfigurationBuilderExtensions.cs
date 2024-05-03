@@ -7,8 +7,10 @@ using System;
 
 namespace MultiFactor.Radius.Adapter.Configuration.ConfigurationLoading;
 
-internal static class AddRadiusConfigurationFileExtension
+internal static class ConfigurationBuilderExtensions
 {
+    private const string _prefix = "RAD_";
+
     public static IConfigurationBuilder AddRadiusConfigurationFile(this IConfigurationBuilder configurationBuilder, RadiusConfigurationFile file)
     {
         if (file is null)
@@ -16,14 +18,9 @@ internal static class AddRadiusConfigurationFileExtension
             throw new ArgumentNullException(nameof(file));
         }
 
-        configurationBuilder.Add(new AppConfigConfigurationSource(file));
+        configurationBuilder.Add(new XmlAppConfigurationSource(file));
         return configurationBuilder;
     }
-}
-
-internal static class AddRadiusEnvironmentVariablesExtension
-{
-    private const string _prefix = "RADPTR_";
 
     public static IConfigurationBuilder AddRadiusEnvironmentVariables(this IConfigurationBuilder configurationBuilder, string configName = null)
     {

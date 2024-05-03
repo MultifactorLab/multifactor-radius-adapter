@@ -8,7 +8,15 @@ namespace MultiFactor.Radius.Adapter.Configuration.ConfigurationLoading;
 
 internal record RadiusConfigurationFile
 {
+    /// <summary>
+    /// File path.
+    /// </summary>
     public string Path { get; }
+
+    /// <summary>
+    /// File name without extension.
+    /// </summary>
+    public string Name { get; }
 
     public RadiusConfigurationFile(string path)
     {
@@ -29,6 +37,7 @@ internal record RadiusConfigurationFile
         }
 
         Path = path;
+        Name = System.IO.Path.GetFileNameWithoutExtension(path);
     }
 
     public static implicit operator string(RadiusConfigurationFile path)

@@ -24,4 +24,9 @@ namespace MultiFactor.Radius.Adapter.Configuration.Core
         IClientConfiguration GetClient(RadiusContext request);
         IClientConfiguration GetClient(string nasIdentifier);
     }
+
+    public interface IRadiusAdapterConfigurations
+    {
+
+    }
 }

@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using MultiFactor.Radius.Adapter.Core.Extensions;
 
 namespace MultiFactor.Radius.Adapter.Tests
 {
@@ -13,15 +9,16 @@ namespace MultiFactor.Radius.Adapter.Tests
         [InlineData("")]
         public void Fail(string source)
         {
-            throw new NotImplementedException();
+            Assert.Throws<ArgumentException>(() => source.ToPascalCase());
         }
         
         [Theory]
-        [InlineData("myName")]
-        [InlineData("my-name")]
-        public void Success(string source)
+        [InlineData("myName", "MyName")]
+        [InlineData("my-name", "MyName")]
+        public void Success(string source, string result)
         {
-            throw new NotImplementedException();
+            var s = source.ToPascalCase();
+            Assert.Equal(result, s);
         }
     }
 }

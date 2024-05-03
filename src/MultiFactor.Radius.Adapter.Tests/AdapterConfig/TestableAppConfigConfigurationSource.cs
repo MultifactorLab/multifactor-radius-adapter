@@ -2,7 +2,7 @@
 
 namespace MultiFactor.Radius.Adapter.Tests.AdapterConfig;
 
-internal class TestableAppConfigConfigurationSource : AppConfigConfigurationSource
+internal class TestableAppConfigConfigurationSource : XmlAppConfigurationSource
 {
     public TestableAppConfigConfigurationSource(RadiusConfigurationFile path) : base(path)
     {

@@ -5,18 +5,19 @@
 using Microsoft.Extensions.Configuration;
 using MultiFactor.Radius.Adapter.Core.Extensions;
 using System;
+using System.IO;
 using System.Linq;
 using System.Xml.Linq;
 
 namespace MultiFactor.Radius.Adapter.Configuration.ConfigurationLoading;
 
-internal class AppConfigConfigurationSource : ConfigurationProvider, IConfigurationSource
+internal class XmlAppConfigurationSource : ConfigurationProvider, IConfigurationSource
 {
     private const string _appSettingsElement = "appSettings";
 
     private readonly RadiusConfigurationFile _path;
 
-    public AppConfigConfigurationSource(RadiusConfigurationFile path)
+    public XmlAppConfigurationSource(RadiusConfigurationFile path)
     {
         _path = path ?? throw new ArgumentNullException(nameof(path));
     }
@@ -26,7 +27,7 @@ internal class AppConfigConfigurationSource : ConfigurationProvider, IConfigurat
     public override void Load()
     {
         var xml = XDocument.Load(_path);
-        var root = xml.Root!;
+        var root = xml.Root;
 
         var appSettings = root.Element(_appSettingsElement);
         if (appSettings is null)
@@ -46,7 +47,15 @@ internal class AppConfigConfigurationSource : ConfigurationProvider, IConfigurat
 
         foreach (var section in sections)
         {
-            FillSection(section);
+            try
+            {
+                FillSection(section);
+            }
+            // убрать срань
+            catch (StackOverflowException ex)
+            {
+                throw new Exception($"Section '{section.Name}' has too many levels of nested nodes", ex);
+            }
         }
     }
 
@@ -57,7 +66,7 @@ internal class AppConfigConfigurationSource : ConfigurationProvider, IConfigurat
             var key = XmlAssert.HasAttribute(appSettingsElements[i], "key");
             var value = XmlAssert.HasAttribute(appSettingsElements[i], "value");
 
-            var newKey = $"{_appSettingsElement}:{key.ToPascalCaseFromDashCase()}";
+            var newKey = $"{_appSettingsElement}:{key.ToPascalCase()}";
             Data.Add(newKey, value);
         }
     }
