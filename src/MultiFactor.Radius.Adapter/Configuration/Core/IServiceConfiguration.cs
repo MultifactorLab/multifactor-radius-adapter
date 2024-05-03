@@ -5,7 +5,7 @@
 using MultiFactor.Radius.Adapter.Configuration.Features.RandomWaiterFeature;
 using MultiFactor.Radius.Adapter.Framework.Context;
 using System;
-using System.Collections.ObjectModel;
+using System.Collections.ObjectModel; 
 using System.Net;
 
 namespace MultiFactor.Radius.Adapter.Configuration.Core
@@ -23,10 +23,5 @@ namespace MultiFactor.Radius.Adapter.Configuration.Core
         IClientConfiguration GetClient(IPAddress ip);
         IClientConfiguration GetClient(RadiusContext request);
         IClientConfiguration GetClient(string nasIdentifier);
-    }
-
-    public interface IRadiusAdapterConfigurations
-    {
-
     }
 }
