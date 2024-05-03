@@ -3,6 +3,7 @@
 //https://github.com/MultifactorLab/multifactor-radius-adapter/blob/main/LICENSE.md
 
 using FluentValidation;
+using MultiFactor.Radius.Adapter.Configuration.Features.PreAuthModeFeature;
 namespace MultiFactor.Radius.Adapter.Configuration.Models;
 
 public class AppSettingsSection
@@ -43,7 +44,7 @@ public class AppSettingsSection
 
 
     public string PrivacyMode { get; set; }
-    public string PreAuthenticationMethod { get; set; }
+    public PreAuthMode PreAuthenticationMethod { get; set; }
     public string AuthenticationCacheLifetime { get; set; }
     public bool AuthenticationCacheMinimalMatching { get; set; }
     public string InvalidCredentialDelay { get; set; }
@@ -54,13 +55,4 @@ public class AppSettingsSection
     public string CallingStationIdAttribute { get; set; }
     public string ConsoleLogOutputTemplate { get; set; }
     public string FileLogOutputTemplate { get; set; }
-}
-
-internal class AppSettingsSectionValidator : AbstractValidator<AppSettingsSection>
-{
-    public AppSettingsSectionValidator()
-    {
-        RuleFor(x => x.MultifactorApiUrl).NotNull();
-        RuleFor(x => x.LoggingLevel).NotNull();
-    }
 }

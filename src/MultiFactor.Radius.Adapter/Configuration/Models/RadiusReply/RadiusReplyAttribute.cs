@@ -17,7 +17,7 @@ internal class RadiusReplyAttribute
 
 internal class RadiusReplyAttributeValidator : AbstractValidator<RadiusReplyAttribute>
 {
-    private const string _err = "Failed to parse radius reply attribute element: Invalid value of '{PropertyName}' tag";
+    private const string _err = "Failed to parse radius reply attribute element: Invalid value of '{PropertyName}' attribute";
 
     public RadiusReplyAttributeValidator()
     {

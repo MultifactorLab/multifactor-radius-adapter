@@ -20,7 +20,6 @@ internal class RadiusAdapterConfigurationValidator : AbstractValidator<RadiusAda
     public RadiusAdapterConfigurationValidator()
     {
         RuleFor(x => x.AppSettings).NotNull();
-        RuleFor(x => x.AppSettings).SetValidator(new AppSettingsSectionValidator());
 
         RuleFor(x => x.RadiusReply).NotNull();
         RuleFor(x => x.RadiusReply).SetValidator(new RadiusReplySectionValidator());
