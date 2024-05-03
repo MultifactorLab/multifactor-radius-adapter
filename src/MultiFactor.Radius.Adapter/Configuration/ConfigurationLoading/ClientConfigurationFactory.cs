@@ -281,7 +281,10 @@ public class ClientConfigurationFactory
                 throw new InvalidConfigurationException($"Using settings '{Literals.Configuration.UseUpnAsIdentity}' and '{Literals.Configuration.UseAttributeAsIdentity}' together is unacceptable. Prefer using '{Literals.Configuration.UseAttributeAsIdentity}'.");
 
             _logger.LogWarning($"The setting '{Literals.Configuration.UseUpnAsIdentity}' is deprecated, use '{Literals.Configuration.UseAttributeAsIdentity}' instead");
-            builder.SetUseAttributeAsIdentity("userPrincipalName");
+            if (useUpnAsIdentity)
+            {
+                builder.SetUseAttributeAsIdentity("userPrincipalName");
+            }
         }
     }
 

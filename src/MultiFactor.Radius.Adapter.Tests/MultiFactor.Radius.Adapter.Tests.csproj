@@ -161,6 +161,21 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="Assets\clients\client-use-upn-as-identity-only-true.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Assets\clients\client-use-upn-as-identity-only-false.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Assets\clients\client-identity-attr-without-use-upn-as-identity.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Assets\clients\client-identity-attr-with-use-upn-as-identity-false.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Assets\clients\client-identity-attr-with-use-upn-as-identity-true.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="Assets\clients\pre-auth-method\client-pre-auth-method-otp-with-no-cred-delay.config">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

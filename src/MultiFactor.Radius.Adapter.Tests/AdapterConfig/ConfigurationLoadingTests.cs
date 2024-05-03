@@ -2,6 +2,7 @@ using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using MultiFactor.Radius.Adapter.Configuration.Core;
 using MultiFactor.Radius.Adapter.Configuration.Features.PreAuthModeFeature;
+using MultiFactor.Radius.Adapter.Core;
 using MultiFactor.Radius.Adapter.Core.Exceptions;
 using MultiFactor.Radius.Adapter.Extensions;
 using MultiFactor.Radius.Adapter.Framework;
@@ -352,5 +353,74 @@ public partial class ConfigurationLoadingTests
         var cli = conf.Clients.First();
 
         Assert.Equal(PreAuthMode.Otp, cli.PreAuthnMode.Mode);
+    }
+    
+    [Theory]
+    [Trait("Category", "Use Attribute As Identity")]
+    [InlineData("client-identity-attr-with-use-upn-as-identity-true.config")]
+    [InlineData("client-identity-attr-with-use-upn-as-identity-false.config")]
+    public void Multi_BothUseUpnAsIdentityAndIdentityAttrSpecified_ShouldFail(string cliConf)
+    {
+        var host = TestHostFactory.CreateHost(builder =>
+        {
+            builder.Services.Configure<TestConfigProviderOptions>(x =>
+            {
+                x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-multi.config");
+                x.ClientConfigFilePaths = new[]
+                {
+                    TestEnvironment.GetAssetPath(TestAssetLocation.ClientsDirectory, cliConf)
+                };
+            });
+        });
+
+        var act = () => host.Service<IServiceConfiguration>();
+
+        act.Should().Throw<InvalidConfigurationException>().WithMessage($"Configuration error: Using settings '{Literals.Configuration.UseUpnAsIdentity}' and '{Literals.Configuration.UseAttributeAsIdentity}' together is unacceptable. Prefer using '{Literals.Configuration.UseAttributeAsIdentity}'.");
+    }
+    
+    [Fact]
+    [Trait("Category", "Use Attribute As Identity")]
+    public void Multi_IdentityAttrSpecifiedOnly_ShouldSuccess()
+    {
+        var host = TestHostFactory.CreateHost(builder =>
+        {
+            builder.Services.Configure<TestConfigProviderOptions>(x =>
+            {
+                x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-multi.config");
+                x.ClientConfigFilePaths = new[]
+                {
+                    TestEnvironment.GetAssetPath(TestAssetLocation.ClientsDirectory, "client-identity-attr-without-use-upn-as-identity.config")
+                };
+            });
+        });
+
+        var conf = host.Service<IServiceConfiguration>();
+        var cli = conf.Clients.First();
+
+        Assert.Equal("attr", cli.TwoFAIdentityAttribute);
+    }
+    
+    [Theory]
+    [Trait("Category", "Use Upn As Identity")]
+    [InlineData("client-use-upn-as-identity-only-true.config", "userPrincipalName")]
+    [InlineData("client-use-upn-as-identity-only-false.config", null)]
+    public void Multi_UeUpnAsIdentitySpecifiedOnly_ShouldSuccess(string cliConf, string attr)
+    {
+        var host = TestHostFactory.CreateHost(builder =>
+        {
+            builder.Services.Configure<TestConfigProviderOptions>(x =>
+            {
+                x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-multi.config");
+                x.ClientConfigFilePaths = new[]
+                {
+                    TestEnvironment.GetAssetPath(TestAssetLocation.ClientsDirectory, cliConf)
+                };
+            });
+        });
+
+        var conf = host.Service<IServiceConfiguration>();
+        var cli = conf.Clients.First();
+
+        Assert.Equal(attr, cli.TwoFAIdentityAttribute);
     }
 }
