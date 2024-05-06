@@ -14,6 +14,7 @@ namespace MultiFactor.Radius.Adapter.Tests
     public class RadiusRequestPostProcessorTests
     {
         [Fact]
+        [Trait("Category", "Challenge")]
         public async Task AccessChallenge_ShouldSetAttrs()
         {
             var host = TestHostFactory.CreateHost(builder =>

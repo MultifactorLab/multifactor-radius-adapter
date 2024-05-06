@@ -7,7 +7,8 @@ using MultiFactor.Radius.Adapter.Tests.Fixtures.ConfigLoading;
 
 namespace MultiFactor.Radius.Adapter.Tests;
 
-[Trait("Category", "Profile")]
+[Trait("Category", "Ldap")]
+[Trait("Category", "Ldap Profile")]
 public class UserGroupsGetterProviderTests
 {
     [Theory]

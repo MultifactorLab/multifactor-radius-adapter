@@ -4,6 +4,7 @@ using MultiFactor.Radius.Adapter.Tests.Fixtures;
 
 namespace MultiFactor.Radius.Adapter.Tests.AdapterConfig
 {
+    [Trait("Category", "Adapter Configuration")]
     public class ConfigurationBuilderExtensionsTests
     {
         [Fact]

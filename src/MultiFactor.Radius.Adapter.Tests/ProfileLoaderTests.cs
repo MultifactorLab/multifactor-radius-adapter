@@ -16,7 +16,8 @@ using LdapAttributes = MultiFactor.Radius.Adapter.Services.Ldap.Profile.LdapAttr
 
 namespace MultiFactor.Radius.Adapter.Tests;
 
-[Trait("Category", "Profile")]
+[Trait("Category", "Ldap")]
+[Trait("Category", "Ldap Profile")]
 public class ProfileLoaderTests
 {
     [Fact]

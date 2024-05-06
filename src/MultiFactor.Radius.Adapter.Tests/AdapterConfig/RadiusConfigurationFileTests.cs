@@ -2,6 +2,7 @@
 
 namespace MultiFactor.Radius.Adapter.Tests.AdapterConfig;
 
+[Trait("Category", "App config Reading")]
 public class RadiusConfigurationFileTests
 {
     [Theory]

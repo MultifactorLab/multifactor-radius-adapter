@@ -15,7 +15,7 @@ namespace MultiFactor.Radius.Adapter.Tests.AdapterConfig;
 public partial class ConfigurationLoadingTests
 {
     [Fact]
-    [Trait("Category", "Base Config Loading")]
+    [Trait("Category", "Multi Config Loading")]
     public void ShouldReturnMultiConfig()
     {
         var host = TestHostFactory.CreateHost(builder =>
@@ -38,7 +38,7 @@ public partial class ConfigurationLoadingTests
     }
 
     [Fact]
-    [Trait("Category", "Base Config Loading")]
+    [Trait("Category", "Single Config Loading")]
     public void ShouldReturnSingleConfig()
     {
         var host = TestHostFactory.CreateHost(builder =>
@@ -56,6 +56,13 @@ public partial class ConfigurationLoadingTests
     }
 
     [Theory]
+    [Trait("Category", "adapter-server-endpoint")]
+    [Trait("Category", "multifactor-api-url")]
+    [Trait("Category", "multifactor-nas-identifier")]
+    [Trait("Category", "multifactor-shared-secret")]
+    [Trait("Category", "invalid-credential-delay")]
+    [Trait("Category", "first-factor-authentication-source")]
+    [Trait("Category", "privacy-mode")]
     [InlineData("root-empty-adapter-server-endpoint.config", "Configuration error: 'adapter-server-endpoint' element not found")]
     [InlineData("root-wrong-adapter-server-endpoint.config", "Configuration error: Can't parse 'adapter-server-endpoint' value")]
     [InlineData("root-empty-multifactor-api-url.config", "Configuration error: 'multifactor-api-url' element not found")]
@@ -82,6 +89,7 @@ public partial class ConfigurationLoadingTests
     }
 
     [Theory]
+    [Trait("Category", "logging-level")]
     [InlineData("root-empty-logging-level.config", "Configuration error: 'logging-level' element not found")]
     public void CreateHost_InvalidLoggingSettings_ShouldThrow(string asset, string msg)
     {
@@ -101,6 +109,7 @@ public partial class ConfigurationLoadingTests
     }
 
     [Theory]
+    [Trait("Category", "active-directory-domain")]
     [InlineData("root-ffa-is-ad-and-empty-domain.config", "Configuration error: 'active-directory-domain' element not found")]
     [InlineData("root-wrong-load-active-directory-nested-groups.config", "Configuration error: Can't parse 'load-active-directory-nested-groups' value")]
     public void SingleModeAndWrongADSettings_ShouldThrow(string asset, string msg)
@@ -119,6 +128,7 @@ public partial class ConfigurationLoadingTests
     }
 
     [Theory]
+    [Trait("Category", "radius-client-nas-identifier")]
     [InlineData("client-empty-identifier-and-ip.config", "Configuration error: Either 'radius-client-nas-identifier' or 'radius-client-ip' must be configured")]
     public void MultiModeAndInvalidSettings_ShouldThrow(string asset, string msg)
     {
@@ -140,7 +150,7 @@ public partial class ConfigurationLoadingTests
     }
 
     [Fact]
-    [Trait("Category", "Invalid Credential Delay")]
+    [Trait("Category", "invalid-credential-delay")]
     public void SingleModeAndZeroCredDelay_ShouldReturnZeroConfig()
     {
         var host = TestHostFactory.CreateHost(builder =>
@@ -161,7 +171,7 @@ public partial class ConfigurationLoadingTests
     }
 
     [Fact]
-    [Trait("Category", "Invalid Credential Delay")]
+    [Trait("Category", "invalid-credential-delay")]
     public void SingleModeAndRangeCredDelay_ShouldReturnConfig()
     {
         var host = TestHostFactory.CreateHost(builder =>
@@ -182,7 +192,7 @@ public partial class ConfigurationLoadingTests
     }
 
     [Fact]
-    [Trait("Category", "Invalid Credential Delay")]
+    [Trait("Category", "invalid-credential-delay")]
     public void MultiModeAndZeroCredDelay_ShouldReturnZeroConfig()
     {
         var host = TestHostFactory.CreateHost(builder =>
@@ -209,7 +219,7 @@ public partial class ConfigurationLoadingTests
     }
 
     [Fact]
-    [Trait("Category", "Invalid Credential Delay")]
+    [Trait("Category", "invalid-credential-delay")]
     public void MultiModeAndRangeCredDelay_ShouldReturnConfig()
     {
         var host = TestHostFactory.CreateHost(builder =>
@@ -236,7 +246,7 @@ public partial class ConfigurationLoadingTests
     }
     
     [Fact]
-    [Trait("Category", "Invalid Credential Delay")]
+    [Trait("Category", "invalid-credential-delay")]
     public void MultiModeAndRangeCredDelay_ShouldOverrideRootConfig()
     {
         var host = TestHostFactory.CreateHost(builder =>
@@ -264,7 +274,7 @@ public partial class ConfigurationLoadingTests
     }
     
     [Fact]
-    [Trait("Category", "Pre Authentication Method")]
+    [Trait("Category", "pre-authentication-method")]
     public void MultiPreAuthMethodAndNoCredentialDelay_ShouldFail()
     {
         var host = TestHostFactory.CreateHost(builder =>
@@ -285,7 +295,7 @@ public partial class ConfigurationLoadingTests
     }
     
     [Fact]
-    [Trait("Category", "Pre Authentication Method")]
+    [Trait("Category", "pre-authentication-method")]
     public void MultiPreAuthMethodNoneAndNoCredentialDelay_ShouldSuccess()
     {
         var host = TestHostFactory.CreateHost(builder =>
@@ -309,7 +319,7 @@ public partial class ConfigurationLoadingTests
     }
     
     [Theory]
-    [Trait("Category", "Pre Authentication Method")]
+    [Trait("Category", "pre-authentication-method")]
     [InlineData("pre-auth-method/client-pre-auth-method-otp.config", PreAuthMode.Otp)]
     [InlineData("pre-auth-method/client-pre-auth-method-push.config", PreAuthMode.Push)]
     [InlineData("pre-auth-method/client-pre-auth-method-telegram.config", PreAuthMode.Telegram)]
@@ -334,7 +344,7 @@ public partial class ConfigurationLoadingTests
     }
     
     [Fact]
-    [Trait("Category", "Pre Authentication Method")]
+    [Trait("Category", "pre-authentication-method")]
     public void MultiAnyPreAuthMethodWithRootCredDelay_ShouldSuccess()
     {
         var host = TestHostFactory.CreateHost(builder =>
@@ -356,7 +366,8 @@ public partial class ConfigurationLoadingTests
     }
     
     [Theory]
-    [Trait("Category", "Use Attribute As Identity")]
+    [Trait("Category", "use-upn-as-identity")]
+    [Trait("Category", "use-attribute-as-identity")]
     [InlineData("client-identity-attr-with-use-upn-as-identity-true.config")]
     [InlineData("client-identity-attr-with-use-upn-as-identity-false.config")]
     public void Multi_BothUseUpnAsIdentityAndIdentityAttrSpecified_ShouldFail(string cliConf)
@@ -379,7 +390,7 @@ public partial class ConfigurationLoadingTests
     }
     
     [Fact]
-    [Trait("Category", "Use Attribute As Identity")]
+    [Trait("Category", "use-attribute-as-identity")]
     public void Multi_IdentityAttrSpecifiedOnly_ShouldSuccess()
     {
         var host = TestHostFactory.CreateHost(builder =>
@@ -401,7 +412,7 @@ public partial class ConfigurationLoadingTests
     }
     
     [Theory]
-    [Trait("Category", "Use Upn As Identity")]
+    [Trait("Category", "use-upn-as-identity")]
     [InlineData("client-use-upn-as-identity-only-true.config", "userPrincipalName")]
     [InlineData("client-use-upn-as-identity-only-false.config", null)]
     public void Multi_UeUpnAsIdentitySpecifiedOnly_ShouldSuccess(string cliConf, string attr)

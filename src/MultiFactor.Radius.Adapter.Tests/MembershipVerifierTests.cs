@@ -9,6 +9,8 @@ using MultiFactor.Radius.Adapter.Tests.Fixtures.ConfigLoading;
 
 namespace MultiFactor.Radius.Adapter.Tests
 {
+    [Trait("Category", "Ldap")]
+    [Trait("Category", "Verify Membership")]
     public class MembershipVerifierTests
     {
         [Fact]
