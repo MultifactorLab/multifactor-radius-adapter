@@ -1,6 +1,7 @@
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using MultiFactor.Radius.Adapter.Configuration.Core;
+using MultiFactor.Radius.Adapter.Configuration.Features.AuthenticatedClientCacheFeature;
 using MultiFactor.Radius.Adapter.Configuration.Features.PreAuthModeFeature;
 using MultiFactor.Radius.Adapter.Core;
 using MultiFactor.Radius.Adapter.Core.Exceptions;
@@ -8,6 +9,7 @@ using MultiFactor.Radius.Adapter.Extensions;
 using MultiFactor.Radius.Adapter.Framework;
 using MultiFactor.Radius.Adapter.Tests.Fixtures;
 using MultiFactor.Radius.Adapter.Tests.Fixtures.ConfigLoading;
+using System.Net;
 
 namespace MultiFactor.Radius.Adapter.Tests.AdapterConfig;
 
@@ -433,5 +435,438 @@ public partial class ConfigurationLoadingTests
         var cli = conf.Clients.First();
 
         Assert.Equal(attr, cli.TwoFAIdentityAttribute);
+    }
+
+    [Fact]
+    [Trait("Category", "multifactor-api-timeout")]
+    public void Single_ApiTimeout_ShouldSuccess()
+    {
+        var host = TestHostFactory.CreateHost(builder =>
+        {
+            builder.Services.Configure<TestConfigProviderOptions>(x =>
+            {
+                x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-single-multifactor-api-timeout-valid.config");
+            });
+        });
+
+        var conf = host.Service<IServiceConfiguration>();
+
+        Assert.Equal(TimeSpan.FromSeconds(125), conf.ApiTimeout);
+    }
+    
+    [Fact]
+    [Trait("Category", "multifactor-api-timeout")]
+    public void Single_ApiTimeoutInvalid_ShouldSetDefault()
+    {
+        var host = TestHostFactory.CreateHost(builder =>
+        {
+            builder.Services.Configure<TestConfigProviderOptions>(x =>
+            {
+                x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-single-multifactor-api-timeout-invalid.config");
+            });
+        });
+
+        var conf = host.Service<IServiceConfiguration>();
+
+        Assert.Equal(TimeSpan.FromSeconds(65), conf.ApiTimeout);
+    }
+    
+    [Fact]
+    [Trait("Category", "multifactor-api-timeout")]
+    public void Single_ApiTimeoutIsNotSpecified_ShouldSetDefault()
+    {
+        var host = TestHostFactory.CreateHost(builder =>
+        {
+            builder.Services.Configure<TestConfigProviderOptions>(x =>
+            {
+                x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-single.config");
+            });
+        });
+
+        var conf = host.Service<IServiceConfiguration>();
+
+        Assert.Equal(TimeSpan.FromSeconds(65), conf.ApiTimeout);
+    }
+    
+    [Fact]
+    [Trait("Category", "multifactor-api-timeout")]
+    public void Single_ApiTimeoutLessThanMinimal_ShouldSetDefault()
+    {
+        var host = TestHostFactory.CreateHost(builder =>
+        {
+            builder.Services.Configure<TestConfigProviderOptions>(x =>
+            {
+                x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-single-multifactor-api-timeout-less-than-min.config");
+            });
+        });
+
+        var conf = host.Service<IServiceConfiguration>();
+
+        Assert.Equal(TimeSpan.FromSeconds(65), conf.ApiTimeout);
+    }
+    
+    [Fact]
+    [Trait("Category", "multifactor-api-timeout")]
+    public void Single_ApiTimeoutZero_ShouldSetInfinity()
+    {
+        var host = TestHostFactory.CreateHost(builder =>
+        {
+            builder.Services.Configure<TestConfigProviderOptions>(x =>
+            {
+                x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-single-multifactor-api-timeout-zero.config");
+            });
+        });
+
+        var conf = host.Service<IServiceConfiguration>();
+
+        Assert.Equal(Timeout.InfiniteTimeSpan, conf.ApiTimeout);
+    }
+    
+    [Fact]
+    [Trait("Category", "authentication-cache-lifetime")]
+    public void Multi_AuthCacheLifetime_ShouldSuccess()
+    {
+        var host = TestHostFactory.CreateHost(builder =>
+        {
+            builder.Services.Configure<TestConfigProviderOptions>(x =>
+            {
+                x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-multi.config");
+                x.ClientConfigFilePaths = new[]
+                {
+                    TestEnvironment.GetAssetPath(TestAssetLocation.ClientsDirectory, "authentication-cache-lifetime.config")
+                };
+            });
+        });
+
+        var conf = host.Service<IServiceConfiguration>();
+        var cacheConfig = conf.Clients.First().AuthenticationCacheLifetime;
+
+        Assert.Equal(TimeSpan.FromSeconds(12), cacheConfig.Lifetime);
+        Assert.True(cacheConfig.Enabled);
+    }
+    
+    [Fact]
+    [Trait("Category", "authentication-cache-lifetime")]
+    public void Multi_AuthCacheLifetimeInvalid_ShouldThrow()
+    {
+        var host = TestHostFactory.CreateHost(builder =>
+        {
+            builder.Services.Configure<TestConfigProviderOptions>(x =>
+            {
+                x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-multi.config");
+                x.ClientConfigFilePaths = new[]
+                {
+                    TestEnvironment.GetAssetPath(TestAssetLocation.ClientsDirectory, "authentication-cache-lifetime-invalid.config")
+                };
+            });
+        });
+
+        var action = () => host.Service<IServiceConfiguration>();
+
+        var ex = Assert.Throws<InvalidConfigurationException>(action);
+        Assert.Equal($"Configuration error: Can't parse '{Literals.Configuration.AuthenticationCacheLifetime}' value", ex.Message);
+    }
+
+    [Fact]
+    [Trait("Category", "authentication-cache-lifetime")]
+    public void Multi_AuthCacheLifetimeZero_ShouldSetZero()
+    {
+        var host = TestHostFactory.CreateHost(builder =>
+        {
+            builder.Services.Configure<TestConfigProviderOptions>(x =>
+            {
+                x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-multi.config");
+                x.ClientConfigFilePaths = new[]
+                {
+                    TestEnvironment.GetAssetPath(TestAssetLocation.ClientsDirectory, "authentication-cache-lifetime-zero.config")
+                };
+            });
+        });
+
+        var conf = host.Service<IServiceConfiguration>();
+        var cacheConfig = conf.Clients.First().AuthenticationCacheLifetime;
+
+        Assert.Equal(TimeSpan.Zero, cacheConfig.Lifetime);
+        Assert.False(cacheConfig.Enabled);
+    }
+    
+    [Fact]
+    [Trait("Category", "authentication-cache-lifetime")]
+    public void Multi_AuthCacheLifetimeNotSpecified_ShouldSetDefault()
+    {
+        var host = TestHostFactory.CreateHost(builder =>
+        {
+            builder.Services.Configure<TestConfigProviderOptions>(x =>
+            {
+                x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-multi.config");
+                x.ClientConfigFilePaths = new[]
+                {
+                    TestEnvironment.GetAssetPath(TestAssetLocation.ClientsDirectory, "client-minimal.config")
+                };
+            });
+        });
+
+        var conf = host.Service<IServiceConfiguration>();
+        var cacheConfig = conf.Clients.First().AuthenticationCacheLifetime;
+
+        Assert.Equal(AuthenticatedClientCacheConfig.Default, cacheConfig);
+    }
+
+    [Fact]
+    [Trait("Category", "authentication-cache-minimal-matching")]
+    public void Multi_AuthCacheLifetimeMinimalMatchingInvalid_ShouldThrow()
+    {
+        var host = TestHostFactory.CreateHost(builder =>
+        {
+            builder.Services.Configure<TestConfigProviderOptions>(x =>
+            {
+                x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-multi.config");
+                x.ClientConfigFilePaths = new[]
+                {
+                    TestEnvironment.GetAssetPath(TestAssetLocation.ClientsDirectory, "authentication-cache-minimal-matching-invalid.config")
+                };
+            });
+        });
+
+        var action = () => host.Service<IServiceConfiguration>();
+
+        var ex = Assert.Throws<InvalidConfigurationException>(action);
+        Assert.Equal($"Configuration error: Can't parse '{Literals.Configuration.AuthenticationCacheMinimalMatching}' value", ex.Message);
+    }
+    
+    [Fact]
+    [Trait("Category", "authentication-cache-minimal-matching")]
+    public void Multi_AuthCacheLifetimeMinimalMatchingNotSpecified_ShouldSetFalse()
+    {
+        var host = TestHostFactory.CreateHost(builder =>
+        {
+            builder.Services.Configure<TestConfigProviderOptions>(x =>
+            {
+                x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-multi.config");
+                x.ClientConfigFilePaths = new[]
+                {
+                    TestEnvironment.GetAssetPath(TestAssetLocation.ClientsDirectory, "authentication-cache-lifetime.config")
+                };
+            });
+        });
+
+        var conf = host.Service<IServiceConfiguration>();
+        var cacheConfig = conf.Clients.First().AuthenticationCacheLifetime;
+
+        Assert.False(cacheConfig.MinimalMatching);
+    }
+    
+    [Fact]
+    [Trait("Category", "authentication-cache-minimal-matching")]
+    public void Multi_AuthCacheLifetimeMinimalMatchingFalse_ShouldSetFalse()
+    {
+        var host = TestHostFactory.CreateHost(builder =>
+        {
+            builder.Services.Configure<TestConfigProviderOptions>(x =>
+            {
+                x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-multi.config");
+                x.ClientConfigFilePaths = new[]
+                {
+                    TestEnvironment.GetAssetPath(TestAssetLocation.ClientsDirectory, "authentication-cache-minimal-matching-false.config")
+                };
+            });
+        });
+
+        var conf = host.Service<IServiceConfiguration>();
+        var cacheConfig = conf.Clients.First().AuthenticationCacheLifetime;
+
+        Assert.False(cacheConfig.MinimalMatching);
+    }
+    
+    [Fact]
+    [Trait("Category", "authentication-cache-minimal-matching")]
+    public void Multi_AuthCacheLifetimeMinimalMatchingTrue_ShouldSetFalse()
+    {
+        var host = TestHostFactory.CreateHost(builder =>
+        {
+            builder.Services.Configure<TestConfigProviderOptions>(x =>
+            {
+                x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-multi.config");
+                x.ClientConfigFilePaths = new[]
+                {
+                    TestEnvironment.GetAssetPath(TestAssetLocation.ClientsDirectory, "authentication-cache-minimal-matching-true.config")
+                };
+            });
+        });
+
+        var conf = host.Service<IServiceConfiguration>();
+        var cacheConfig = conf.Clients.First().AuthenticationCacheLifetime;
+
+        Assert.True(cacheConfig.MinimalMatching);
+    }
+    
+    [Fact]
+    [Trait("Category", "ldap-bind-dn")]
+    public void Multi_LdapBindDn_ShouldSet()
+    {
+        var host = TestHostFactory.CreateHost(builder =>
+        {
+            builder.Services.Configure<TestConfigProviderOptions>(x =>
+            {
+                x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-multi.config");
+                x.ClientConfigFilePaths = new[]
+                {
+                    TestEnvironment.GetAssetPath(TestAssetLocation.ClientsDirectory, "other-settings.config")
+                };
+            });
+        });
+
+        var conf = host.Service<IServiceConfiguration>();
+        Assert.Equal("cn=cn,dc=dc", conf.Clients.First().LdapBindDn);
+    }
+    
+    [Fact]
+    [Trait("Category", "service-account-user")]
+    public void Multi_ServiceAccountUser_ShouldSet()
+    {
+        var host = TestHostFactory.CreateHost(builder =>
+        {
+            builder.Services.Configure<TestConfigProviderOptions>(x =>
+            {
+                x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-multi.config");
+                x.ClientConfigFilePaths = new[]
+                {
+                    TestEnvironment.GetAssetPath(TestAssetLocation.ClientsDirectory, "other-settings.config")
+                };
+            });
+        });
+
+        var conf = host.Service<IServiceConfiguration>();
+        Assert.Equal("user", conf.Clients.First().ServiceAccountUser);
+    }
+    
+    [Fact]
+    [Trait("Category", "service-account-password")]
+    public void Multi_ServiceAccountPassword_ShouldSet()
+    {
+        var host = TestHostFactory.CreateHost(builder =>
+        {
+            builder.Services.Configure<TestConfigProviderOptions>(x =>
+            {
+                x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-multi.config");
+                x.ClientConfigFilePaths = new[]
+                {
+                    TestEnvironment.GetAssetPath(TestAssetLocation.ClientsDirectory, "other-settings.config")
+                };
+            });
+        });
+
+        var conf = host.Service<IServiceConfiguration>();
+        Assert.Equal("password", conf.Clients.First().ServiceAccountPassword);
+    }
+    
+    [Fact]
+    [Trait("Category", "phone-attribute")]
+    public void Multi_PhoneAttribute_ShouldSet()
+    {
+        var host = TestHostFactory.CreateHost(builder =>
+        {
+            builder.Services.Configure<TestConfigProviderOptions>(x =>
+            {
+                x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-multi.config");
+                x.ClientConfigFilePaths = new[]
+                {
+                    TestEnvironment.GetAssetPath(TestAssetLocation.ClientsDirectory, "phone-attribute.config")
+                };  
+            });
+        });
+
+        var conf = host.Service<IServiceConfiguration>();
+        var cli = conf.Clients.First();
+        Assert.Equal(2, cli.PhoneAttributes.Length);
+        Assert.Equivalent(cli.PhoneAttributes, new[] { "mobilephone", "mobilephone2" });
+    }   
+    
+    [Fact]
+    [Trait("Category", "load-active-directory-nested-groups")]
+    public void Multi_LoadNestedGroups_ShouldSet()
+    {
+        var host = TestHostFactory.CreateHost(builder =>
+        {
+            builder.Services.Configure<TestConfigProviderOptions>(x =>
+            {
+                x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-multi.config");
+                x.ClientConfigFilePaths = new[]
+                {
+                    TestEnvironment.GetAssetPath(TestAssetLocation.ClientsDirectory, "other-settings.config")
+                };  
+            });
+        });
+
+        var conf = host.Service<IServiceConfiguration>();
+        var cli = conf.Clients.First();
+        Assert.True(cli.LoadActiveDirectoryNestedGroups);
+    }
+    
+    [Fact]
+    [Trait("Category", "use-active-directory-mobile-user-phone")]
+    public void Multi_UseMobileUserPhone_ShouldSet()
+    {
+        var host = TestHostFactory.CreateHost(builder =>
+        {
+            builder.Services.Configure<TestConfigProviderOptions>(x =>
+            {
+                x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-multi.config");
+                x.ClientConfigFilePaths = new[]
+                {
+                    TestEnvironment.GetAssetPath(TestAssetLocation.ClientsDirectory, "other-settings.config")
+                };  
+            });
+        });
+
+        var conf = host.Service<IServiceConfiguration>();
+        var cli = conf.Clients.First();
+        Assert.Single(cli.PhoneAttributes, x => x == "mobile");
+    }
+    
+    [Fact]
+    [Trait("Category", "use-active-directory-user-phone")]
+    public void Multi_UseUserPhone_ShouldSet()
+    {
+        var host = TestHostFactory.CreateHost(builder =>
+        {
+            builder.Services.Configure<TestConfigProviderOptions>(x =>
+            {
+                x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-multi.config");
+                x.ClientConfigFilePaths = new[]
+                {
+                    TestEnvironment.GetAssetPath(TestAssetLocation.ClientsDirectory, "other-settings.config")
+                };  
+            });
+        });
+
+        var conf = host.Service<IServiceConfiguration>();
+        var cli = conf.Clients.First();
+        Assert.Single(cli.PhoneAttributes, x => x == "telephoneNumber");
+    }
+    
+    [Fact]
+    [Trait("Category", "radius-client-ip")]
+    public void Multi_RadiusClientIp_ShouldAddClients()
+    {
+        var host = TestHostFactory.CreateHost(builder =>
+        {
+            builder.Services.Configure<TestConfigProviderOptions>(x =>
+            {
+                x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-multi.config");
+                x.ClientConfigFilePaths = new[]
+                {
+                    TestEnvironment.GetAssetPath(TestAssetLocation.ClientsDirectory, "radius-client-ip-without-nas-id.config")
+                };  
+            });
+        });
+
+        var conf = host.Service<IServiceConfiguration>();
+
+        var cli = conf.GetClient(IPAddress.Parse("10.10.10.10"));
+        Assert.Equal("radius-client-ip-without-nas-id", cli.Name);
+        
+        var cli1 = conf.GetClient(IPAddress.Parse("11.11.11.11"));
+        Assert.Equal("radius-client-ip-without-nas-id", cli1.Name);
     }
 }

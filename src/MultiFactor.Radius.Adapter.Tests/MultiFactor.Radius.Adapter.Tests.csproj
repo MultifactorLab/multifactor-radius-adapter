@@ -22,6 +22,10 @@
     <None Remove="Assets\root-minimal-multi-credential-delay-1-2.config" />
     <None Remove="Assets\root-minimal-multi-credential-delay-2-3.config" />
     <None Remove="Assets\root-minimal-multi.config" />
+    <None Remove="Assets\root-minimal-single-multifactor-api-timeout-invalid.config" />
+    <None Remove="Assets\root-minimal-single-multifactor-api-timeout-less-than-min.config" />
+    <None Remove="Assets\root-minimal-single-multifactor-api-timeout-valid.config" />
+    <None Remove="Assets\root-minimal-single-multifactor-api-timeout-zero.config" />
     <None Remove="Assets\root-minimal-single.config" />
     <None Remove="Assets\root-single-ffa-ad.config" />
     <None Remove="Assets\root-valid-credential-delay-0.config" />
@@ -69,6 +73,26 @@
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
     </Content>
     <Content Include="Assets\root-minimal-multi-credential-delay-1-2.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <Content Include="Assets\root-minimal-single-multifactor-api-timeout-invalid.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <Content Include="Assets\root-minimal-single-multifactor-api-timeout-less-than-min.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <Content Include="Assets\root-minimal-single-multifactor-api-timeout-zero.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <Content Include="Assets\root-minimal-single-multifactor-api-timeout-valid.config">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
@@ -161,6 +185,30 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="Assets\clients\phone-attribute.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Assets\clients\radius-client-ip-without-nas-id.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Assets\clients\other-settings.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Assets\clients\authentication-cache-lifetime-zero.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Assets\clients\authentication-cache-minimal-matching-true.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Assets\clients\authentication-cache-minimal-matching-false.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Assets\clients\authentication-cache-minimal-matching-invalid.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Assets\clients\authentication-cache-lifetime-invalid.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="Assets\clients\client-use-upn-as-identity-only-true.config">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
@@ -201,6 +249,9 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="Assets\clients\client-cred-delay-0.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Assets\clients\authentication-cache-lifetime.config">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="Assets\clients\radius-reply-with-attribute.config">

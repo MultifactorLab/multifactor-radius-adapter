@@ -2,7 +2,7 @@
 
 namespace MultiFactor.Radius.Adapter.Configuration.Features.AuthenticatedClientCacheFeature;
 
-public class AuthenticatedClientCacheConfig
+public record AuthenticatedClientCacheConfig
 {
     public TimeSpan Lifetime { get; }
     public bool MinimalMatching { get; }
@@ -18,7 +18,11 @@ public class AuthenticatedClientCacheConfig
 
     public static AuthenticatedClientCacheConfig Create(string value, bool minimalMatching = false)
     {
-        if (string.IsNullOrWhiteSpace(value)) return new AuthenticatedClientCacheConfig(TimeSpan.Zero, minimalMatching);
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return Default;
+        }
+
         return new AuthenticatedClientCacheConfig(TimeSpan.ParseExact(value, @"hh\:mm\:ss", null, System.Globalization.TimeSpanStyles.None), minimalMatching);
     }
 }

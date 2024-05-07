@@ -353,7 +353,7 @@ public class ClientConfigurationFactory
         }
         catch
         {
-            throw new InvalidConfigurationException($"Can't parse '{appSettings.Settings[Literals.Configuration.AuthenticationCacheLifetime]?.Value}' value");
+            throw new InvalidConfigurationException($"Can't parse '{Literals.Configuration.AuthenticationCacheLifetime}' value");
         }
     }
 
