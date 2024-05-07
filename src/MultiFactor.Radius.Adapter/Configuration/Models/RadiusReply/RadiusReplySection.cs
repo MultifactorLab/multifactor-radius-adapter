@@ -3,11 +3,9 @@
 //https://github.com/MultifactorLab/multifactor-radius-adapter/blob/main/LICENSE.md
 
 using FluentValidation;
-using System.ComponentModel;
 
 namespace MultiFactor.Radius.Adapter.Configuration.Models.RadiusReply;
 
-[Description("RadiusReply")]
 internal class RadiusReplySection
 {
     public RadiusReplyAttributesSection Attributes { get; set; } = new();
