@@ -1,4 +1,5 @@
 ﻿using MultiFactor.Radius.Adapter.Configuration.Core;
+using System.Linq;
 using System.Text;
 
 namespace MultiFactor.Radius.Adapter.Configuration
@@ -7,15 +8,11 @@ namespace MultiFactor.Radius.Adapter.Configuration
     {
         public static void Validate(this IServiceConfiguration serviceConfiguration)
         {
+            var sources = new[] { AuthenticationSource.Radius, AuthenticationSource.None };
+
             foreach (var client in serviceConfiguration.Clients)
             {
-                var requireTechUser = client.FirstFactorAuthenticationSource == AuthenticationSource.ActiveDirectory
-                    ||
-                    client.FirstFactorAuthenticationSource == AuthenticationSource.Ldap
-                    ||
-                    client.CheckMembership;
-
-                if (!requireTechUser)
+                if (!sources.Contains(client.FirstFactorAuthenticationSource) || !client.CheckMembership)
                 {
                     continue;
                 }
