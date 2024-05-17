@@ -1,5 +1,4 @@
 ﻿using MultiFactor.Radius.Adapter.Configuration.Core;
-using System.Text;
 
 namespace MultiFactor.Radius.Adapter.Configuration
 {
@@ -22,8 +21,8 @@ namespace MultiFactor.Radius.Adapter.Configuration
 
                 if (string.IsNullOrWhiteSpace(client.ServiceAccountUser) || string.IsNullOrWhiteSpace(client.ServiceAccountPassword))
                 {
-                    var msg = new StringBuilder($"Configuration error: 'service-account-user' and 'service-account-password' elements not found. Please check configuration of client '{client.Name}'.");
-                    throw new System.Exception(msg.ToString());
+                    var msg = $"Configuration error: 'service-account-user' and 'service-account-password' elements not found. Please check configuration of client '{client.Name}'.";
+                    throw new System.Exception(msg);
                 }
             }
         }
