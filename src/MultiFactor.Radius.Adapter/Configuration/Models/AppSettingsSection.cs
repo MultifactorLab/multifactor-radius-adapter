@@ -7,51 +7,51 @@ namespace MultiFactor.Radius.Adapter.Configuration.Models;
 
 public class AppSettingsSection
 {
-    public string MultifactorApiUrl { get; set; }
-    public string MultifactorApiProxy { get; set; }
-    public string MultifactorApiTimeout { get; set; }
-    public string MultifactorNasIdentifier { get; set; }
-    public string MultifactorSharedSecret { get; set; }
-    public string SignUpGroups { get; set; }
-    public bool BypassSecondFactorWhenApiUnreachable { get; set; } = true;
+    public string MultifactorApiUrl { get; init; }
+    public string MultifactorApiProxy { get; init; }
+    public string MultifactorApiTimeout { get; init; }
+    public string MultifactorNasIdentifier { get; init; }
+    public string MultifactorSharedSecret { get; init; }
+    public string SignUpGroups { get; init; }
+    public bool BypassSecondFactorWhenApiUnreachable { get; init; } = true;
 
 
-    public AuthenticationSource FirstFactorAuthenticationSource { get; set; }
+    public AuthenticationSource FirstFactorAuthenticationSource { get; init; }
 
 
-    public string ActiveDirectoryDomain { get; set; }
-    public string ActiveDirectory2faBypassGroup { get; set; }
-    public string ActiveDirectory2faGroup { get; set; }
-    public string ActiveDirectoryGroup { get; set; }
-    public string LdapBindDn { get; set; }
-    public bool LoadActiveDirectoryNestedGroups { get; set; } = false;
-    public bool UseActiveDirectoryMobileUserPhone { get; set; } = false;
-    public bool UseActiveDirectoryUserPhone { get; set; } = false;
-    public bool UseUpnAsIdentity { get; set; } = false;
-    public string UseAttributeAsIdentity { get; set; }
-    public string PhoneAttribute { get; set; }
-    public string ServiceAccountPassword { get; set; }
-    public string ServiceAccountUser { get; set; }
+    public string ActiveDirectoryDomain { get; init; }
+    public string ActiveDirectory2faBypassGroup { get; init; }
+    public string ActiveDirectory2faGroup { get; init; }
+    public string ActiveDirectoryGroup { get; init; }
+    public string LdapBindDn { get; init; }
+    public bool LoadActiveDirectoryNestedGroups { get; init; } = false;
+    public bool UseActiveDirectoryMobileUserPhone { get; init; } = false;
+    public bool UseActiveDirectoryUserPhone { get; init; } = false;
+    public bool UseUpnAsIdentity { get; init; } = false;
+    public string UseAttributeAsIdentity { get; init; }
+    public string PhoneAttribute { get; init; }
+    public string ServiceAccountPassword { get; init; }
+    public string ServiceAccountUser { get; init; }
 
 
-    public string AdapterClientEndpoint { get; set; }
-    public string AdapterServerEndpoint { get; set; }
-    public string NpsServerEndpoint { get; set; }
-    public string RadiusClientIp { get; set; }
-    public string RadiusClientNasIdentifier { get; set; }
-    public string RadiusSharedSecret { get; set; }
+    public string AdapterClientEndpoint { get; init; }
+    public string AdapterServerEndpoint { get; init; }
+    public string NpsServerEndpoint { get; init; }
+    public string RadiusClientIp { get; init; }
+    public string RadiusClientNasIdentifier { get; init; }
+    public string RadiusSharedSecret { get; init; }
 
 
-    public string PrivacyMode { get; set; }
-    public PreAuthMode PreAuthenticationMethod { get; set; }
-    public string AuthenticationCacheLifetime { get; set; }
-    public bool AuthenticationCacheMinimalMatching { get; set; } = false;
-    public string InvalidCredentialDelay { get; set; }
+    public string PrivacyMode { get; init; }
+    public PreAuthMode PreAuthenticationMethod { get; init; }
+    public string AuthenticationCacheLifetime { get; init; }
+    public bool AuthenticationCacheMinimalMatching { get; init; } = false;
+    public string InvalidCredentialDelay { get; init; }
 
 
-    public string LoggingFormat { get; set; }
-    public string LoggingLevel { get; set; }
-    public string CallingStationIdAttribute { get; set; }
-    public string ConsoleLogOutputTemplate { get; set; }
-    public string FileLogOutputTemplate { get; set; }
+    public string LoggingFormat { get; init; }
+    public string LoggingLevel { get; init; }
+    public string CallingStationIdAttribute { get; init; }
+    public string ConsoleLogOutputTemplate { get; init; }
+    public string FileLogOutputTemplate { get; init; }
 }

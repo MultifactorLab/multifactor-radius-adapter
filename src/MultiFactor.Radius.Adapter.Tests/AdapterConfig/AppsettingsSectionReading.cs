@@ -141,4 +141,19 @@ public class AppConfigConfiurationSourceTests
                 x.Count == null;
         });
     }
+    
+    [Fact]
+    [Trait("Category", "bypass-second-factor-when-api-unreachable")]
+    public void Get_BypassSecondFactorWhenApiUnreachableShouldBeTrueByDefault()
+    {
+        var path = TestEnvironment.GetAssetPath(TestAssetLocation.ClientsDirectory, "user-name-transform-rules.config");
+
+        var config = new ConfigurationBuilder()
+            .Add(new XmlAppConfigurationSource(path))
+            .Build();
+
+        var bound = config.Get<RadiusAdapterConfiguration>();
+
+        Assert.True(bound!.AppSettings.BypassSecondFactorWhenApiUnreachable);
+    }
 }

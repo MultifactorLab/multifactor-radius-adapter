@@ -10,9 +10,9 @@ namespace MultiFactor.Radius.Adapter.Configuration.Models;
 
 internal class RadiusAdapterConfiguration
 {
-    public AppSettingsSection AppSettings { get; set; } = new();
-    public RadiusReplySection RadiusReply { get; set; } = new();
-    public UserNameTransform.UserNameTransformRulesSection UserNameTransformRules { get; set; } = new();
+    public AppSettingsSection AppSettings { get; init; } = new();
+    public RadiusReplySection RadiusReply { get; init; } = new();
+    public UserNameTransform.UserNameTransformRulesSection UserNameTransformRules { get; init; } = new();
 }
 
 internal class RadiusAdapterConfigurationValidator : AbstractValidator<RadiusAdapterConfiguration>
