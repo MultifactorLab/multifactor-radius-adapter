@@ -1,4 +1,6 @@
-﻿using Moq;
+﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
+using Moq;
 using MultiFactor.Radius.Adapter.Configuration.Core;
 using MultiFactor.Radius.Adapter.Extensions;
 using MultiFactor.Radius.Adapter.Framework;
@@ -24,6 +26,8 @@ internal static class TestHostFactory
         builder.Services.ReplaceService<IClientConfigurationsProvider, TestClientConfigsProvider>();
 
         builder.Services.ReplaceService(new Mock<IRadiusRequestPostProcessor>().Object);
+
+        builder.Services.ReplaceService<ILoggerFactory, NullLoggerFactory>();
 
         builder.ConfigureApplication();
 
