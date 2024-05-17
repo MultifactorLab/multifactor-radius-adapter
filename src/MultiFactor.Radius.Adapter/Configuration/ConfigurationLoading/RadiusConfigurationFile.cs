@@ -27,13 +27,13 @@ internal record RadiusConfigurationFile
 
         if (path.IndexOfAny(System.IO.Path.GetInvalidPathChars()) != -1)
         {
-            throw new ArgumentException("Wrong configuration path", nameof(path));
+            throw new ArgumentException("Invalid configuration path", nameof(path));
         }
 
         var name = System.IO.Path.GetFileName(path);
         if (!name.EndsWith(".config"))
         {
-            throw new ArgumentException("Wrong configuration path", nameof(path));
+            throw new ArgumentException("Invalid configuration path", nameof(path));
         }
 
         Path = path;

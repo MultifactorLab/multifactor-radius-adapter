@@ -2,7 +2,6 @@
 //Please see licence at 
 //https://github.com/MultifactorLab/multifactor-radius-adapter/blob/main/LICENSE.md
 
-using FluentValidation;
 using MultiFactor.Radius.Adapter.Configuration.Features.PreAuthModeFeature;
 namespace MultiFactor.Radius.Adapter.Configuration.Models;
 
@@ -14,7 +13,7 @@ public class AppSettingsSection
     public string MultifactorNasIdentifier { get; set; }
     public string MultifactorSharedSecret { get; set; }
     public string SignUpGroups { get; set; }
-    public bool BypassSecondFactorWhenApiUnreachable { get; set; }
+    public bool BypassSecondFactorWhenApiUnreachable { get; set; } = true;
 
 
     public AuthenticationSource FirstFactorAuthenticationSource { get; set; }
@@ -25,10 +24,10 @@ public class AppSettingsSection
     public string ActiveDirectory2faGroup { get; set; }
     public string ActiveDirectoryGroup { get; set; }
     public string LdapBindDn { get; set; }
-    public bool LoadActiveDirectoryNestedGroups { get; set; }
-    public bool UseActiveDirectoryMobileUserPhone { get; set; }
-    public bool UseActiveDirectoryUserPhone { get; set; }
-    public bool UseUpnAsIdentity { get; set; }
+    public bool LoadActiveDirectoryNestedGroups { get; set; } = false;
+    public bool UseActiveDirectoryMobileUserPhone { get; set; } = false;
+    public bool UseActiveDirectoryUserPhone { get; set; } = false;
+    public bool UseUpnAsIdentity { get; set; } = false;
     public string UseAttributeAsIdentity { get; set; }
     public string PhoneAttribute { get; set; }
     public string ServiceAccountPassword { get; set; }
@@ -46,7 +45,7 @@ public class AppSettingsSection
     public string PrivacyMode { get; set; }
     public PreAuthMode PreAuthenticationMethod { get; set; }
     public string AuthenticationCacheLifetime { get; set; }
-    public bool AuthenticationCacheMinimalMatching { get; set; }
+    public bool AuthenticationCacheMinimalMatching { get; set; } = false;
     public string InvalidCredentialDelay { get; set; }
 
 

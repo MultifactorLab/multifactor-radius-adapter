@@ -30,15 +30,13 @@ internal class XmlAppConfigurationSource : ConfigurationProvider, IConfiguration
         var root = xml.Root;
 
         var appSettings = root.Element(_appSettingsElement);
-        if (appSettings is null)
+        if (appSettings != null)
         {
-            throw new Exception($"Invalid xml config: required section '{_appSettingsElement}' not found");
+            var appSettingsElements = appSettings.Elements().ToArray();
+            XmlAssert.HasUniqueElements(appSettingsElements, x => x.Attribute("key")?.Value);
+
+            FillAppSettingsSection(appSettingsElements);
         }
-
-        var appSettingsElements = appSettings.Elements().ToArray();
-        XmlAssert.HasUniqueElements(appSettingsElements, x => x.Attribute("key")?.Value);
-
-        FillAppSettingsSection(appSettingsElements);
 
         var sections = root.Elements()
             .Where(x => x.Name != _appSettingsElement)

@@ -3,23 +3,23 @@
     public enum PreAuthMode
     {
         /// <summary>
+        /// No mode specified
+        /// </summary>
+        None = 0,
+
+        /// <summary>
         /// One-time password
         /// </summary>
-        Otp,
+        Otp = 1,
 
         /// <summary>
         /// Mobile app push.
         /// </summary>
-        Push,
+        Push = 2,
 
         /// <summary>
         /// Telegram bot.
         /// </summary>
-        Telegram,
-
-        /// <summary>
-        /// No mode specified
-        /// </summary>
-        None
+        Telegram = 4
     }
 }
