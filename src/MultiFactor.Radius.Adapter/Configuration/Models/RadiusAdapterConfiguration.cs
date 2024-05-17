@@ -12,8 +12,7 @@ internal class RadiusAdapterConfiguration
 {
     public AppSettingsSection AppSettings { get; set; } = new();
     public RadiusReplySection RadiusReply { get; set; } = new();
-    public ActiveDirectorySection ActiveDirectory { get; set; } = new();
-    public UserNameTransformRulesSection UserNameTransformRules { get; set; } = new();
+    public UserNameTransform.UserNameTransformRulesSection UserNameTransformRules { get; set; } = new();
 }
 
 internal class RadiusAdapterConfigurationValidator : AbstractValidator<RadiusAdapterConfiguration>
@@ -25,9 +24,7 @@ internal class RadiusAdapterConfigurationValidator : AbstractValidator<RadiusAda
         RuleFor(x => x.RadiusReply).NotNull();
         RuleFor(x => x.RadiusReply).SetValidator(new RadiusReplySectionValidator());
 
-        RuleFor(x => x.ActiveDirectory).NotNull();
-
         RuleFor(x => x.UserNameTransformRules).NotNull();
-        //RuleFor(x => x.UserNameTransformRules).SetValidator(new UserNameTransformRulesSectionValidator());
+        RuleFor(x => x.UserNameTransformRules).SetValidator(new UserNameTransformRulesSectionValidator());
     }
 }

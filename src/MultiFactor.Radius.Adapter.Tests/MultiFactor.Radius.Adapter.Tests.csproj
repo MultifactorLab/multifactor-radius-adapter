@@ -260,6 +260,9 @@
     <None Update="Assets\clients\radius-reply-with-condition.config">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="Assets\clients\user-name-transform-rules.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="Assets\clients\radius-reply-with-sufficient.config">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

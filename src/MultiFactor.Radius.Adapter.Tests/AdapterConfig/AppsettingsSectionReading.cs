@@ -1,4 +1,8 @@
-﻿using MultiFactor.Radius.Adapter.Tests.Fixtures;
+﻿using Microsoft.Extensions.Configuration;
+using MultiFactor.Radius.Adapter.Configuration.ConfigurationLoading;
+using MultiFactor.Radius.Adapter.Configuration.Models;
+using MultiFactor.Radius.Adapter.Configuration.Models.RadiusReply;
+using MultiFactor.Radius.Adapter.Tests.Fixtures;
 
 namespace MultiFactor.Radius.Adapter.Tests.AdapterConfig;
 
@@ -56,5 +60,85 @@ public class AppConfigConfiurationSourceTests
         Assert.Equal("otp", source.AllData["appSettings:PreAuthenticationMethod"]);
         Assert.Equal("10", source.AllData["appSettings:AuthenticationCacheLifetime"]);
         Assert.Equal("false", source.AllData["appSettings:AuthenticationCacheMinimalMatching"]);
+    }
+    
+    [Fact]
+    public void Get_ShouldBindAndAllNestedElementsNotBeNull()
+    {
+        var path = TestEnvironment.GetAssetPath("root-minimal-multi.config");
+
+        var config = new ConfigurationBuilder()
+            .Add(new XmlAppConfigurationSource(path))
+            .Build();
+
+        var bound = config.Get<RadiusAdapterConfiguration>();
+
+        Assert.NotNull(bound?.AppSettings);
+
+        Assert.NotNull(bound.RadiusReply?.Attributes?.Elements);
+        Assert.Empty(bound.RadiusReply.Attributes.Elements);
+
+        Assert.NotNull(bound.UserNameTransformRules);
+        Assert.Empty(bound.UserNameTransformRules.Elements);
+    }
+    
+    [Fact]
+    [Trait("Category", "Radius Reply Attributes")]
+    public void Get_ShouldBindRadiusReplySection()
+    {
+        var path = TestEnvironment.GetAssetPath(TestAssetLocation.ClientsDirectory, "radius-reply-join.config");
+
+        var config = new ConfigurationBuilder()
+            .Add(new XmlAppConfigurationSource(path))
+            .Build();
+
+        var bound = config.Get<RadiusAdapterConfiguration>();
+
+        Assert.Equal(2, bound!.RadiusReply.Attributes.Elements.Length);
+
+        Assert.Contains(bound.RadiusReply.Attributes.Elements, x =>
+        {
+            return x.Name == "Fortinet-Group-Name" && 
+                x.Value == "Users" && 
+                x.When == "UserGroup=VPN Users" && 
+                x.Sufficient;
+        });
+        
+        Assert.Contains(bound.RadiusReply.Attributes.Elements, x =>
+        {
+            return x.Name == "Fortinet-Group-Name" && 
+                x.Value == "Admins" && 
+                x.When == "UserGroup=VPN Admins" && 
+                !x.Sufficient;
+        });
+    }
+    
+    [Fact]
+    [Trait("Category", "User Name Transform Rules")]
+    public void Get_ShouldBindUserNameTransformRulesSection()
+    {
+        var path = TestEnvironment.GetAssetPath(TestAssetLocation.ClientsDirectory, "user-name-transform-rules.config");
+
+        var config = new ConfigurationBuilder()
+            .Add(new XmlAppConfigurationSource(path))
+            .Build();
+
+        var bound = config.Get<RadiusAdapterConfiguration>();
+
+        Assert.Equal(2, bound!.UserNameTransformRules.Elements.Length);
+
+        Assert.Contains(bound.UserNameTransformRules.Elements, x =>
+        {
+            return x.Match == "^([^@]*)$" &&
+                x.Replace == "$1@domain.local" &&
+                x.Count == 3;
+        });
+        
+        Assert.Contains(bound!.UserNameTransformRules.Elements, x =>
+        {
+            return x.Match == "^([^@]*)$" &&
+                x.Replace == "$1@domain.local" &&
+                x.Count == null;
+        });
     }
 }
