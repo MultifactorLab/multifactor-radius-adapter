@@ -30,15 +30,22 @@ namespace MultiFactor.Radius.Adapter.Services.BindIdentityFormatting
                 throw new ArgumentNullException(nameof(ldapUri));
             }
 
-            return _clientConfiguration.FirstFactorAuthenticationSource switch
+            var isFreeIpa = _clientConfiguration.IsFreeIpa;
+            var authSource = _clientConfiguration.FirstFactorAuthenticationSource;
+
+            if (isFreeIpa || authSource == Configuration.AuthenticationSource.Ldap)
+            {
+                return FormatIdentityLdap(user);
+            }
+
+            return authSource switch
             {
                 Configuration.AuthenticationSource.None or Configuration.AuthenticationSource.ActiveDirectory => FormatIdentityAD(user, ldapUri),
-                Configuration.AuthenticationSource.Ldap => FormatIdentityLdap(user),
                 _ => user.Name,
             };
         }
 
-        private static string FormatIdentityAD(LdapIdentity user, string ldapUri)
+        private string FormatIdentityAD(LdapIdentity user, string ldapUri)
         {
             if (user.Type == IdentityType.UserPrincipalName)
             {

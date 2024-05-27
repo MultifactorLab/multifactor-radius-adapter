@@ -183,6 +183,11 @@ namespace MultiFactor.Radius.Adapter.Configuration
                     .Any(attr => attr.IsMemberOf || attr.UserGroupCondition != null);
         }
 
+        public bool IsFreeIpa
+        {
+            get { return !string.IsNullOrEmpty(LdapBindDn); }
+        }
+
         public RandomWaiterConfig InvalidCredentialDelay { get; private set; }
         public PreAuthModeDescriptor PreAuthnMode { get; private set; } = PreAuthModeDescriptor.Default;
 

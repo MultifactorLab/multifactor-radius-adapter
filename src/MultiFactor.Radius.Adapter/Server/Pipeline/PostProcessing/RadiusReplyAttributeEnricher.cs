@@ -42,6 +42,11 @@ public class RadiusReplyAttributeEnricher
 
                 foreach (var val in attrElement.GetValues(context))
                 {
+                    if(val == null)
+                    {
+                        _logger.LogDebug("Attribute '{attrname:l}' got no value, skipping", attr.Key);
+                        continue;
+                    }
                     _logger.LogDebug("Added/replaced attribute '{attrname:l}:{attrval:l}' to reply", attr.Key, val.ToString());
                     convertedValues.Add(ConvertType(attr.Key, val));
                 }

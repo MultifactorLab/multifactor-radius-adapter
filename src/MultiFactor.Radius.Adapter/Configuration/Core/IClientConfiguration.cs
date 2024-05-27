@@ -39,6 +39,7 @@ namespace MultiFactor.Radius.Adapter.Configuration.Core
         public string TwoFAIdentityAttribute { get; }
         public bool UseIdentityAttribute => !string.IsNullOrEmpty(TwoFAIdentityAttribute);
         bool ShouldLoadUserGroups();
+        bool IsFreeIpa { get; }
         RandomWaiterConfig InvalidCredentialDelay { get; }
         PreAuthModeDescriptor PreAuthnMode { get; }
     }
