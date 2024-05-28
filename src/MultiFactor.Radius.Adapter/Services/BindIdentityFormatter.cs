@@ -30,8 +30,8 @@ namespace MultiFactor.Radius.Adapter.Services.BindIdentityFormatting
                 throw new ArgumentNullException(nameof(ldapUri));
             }
 
-            var isFreeIpa = _clientConfiguration.IsFreeIpa;
             var authSource = _clientConfiguration.FirstFactorAuthenticationSource;
+            var isFreeIpa = _clientConfiguration.IsFreeIpa && authSource != Configuration.AuthenticationSource.ActiveDirectory;
 
             if (isFreeIpa || authSource == Configuration.AuthenticationSource.Ldap)
             {

@@ -209,6 +209,10 @@ public class ClientConfigurationFactory
         {
             throw new InvalidConfigurationException($"'{Literals.Configuration.ActiveDirectoryDomain}' element not found");
         }
+        if (builder.FirstFactorAuthenticationSource == AuthenticationSource.ActiveDirectory && !string.IsNullOrEmpty(ldapBindDnSetting))
+        {
+            throw new InvalidConfigurationException($"'{Literals.Configuration.LdapBindDn}' shouldn't be used in combination with {Literals.Configuration.FirstFactorAuthSource} == {AuthenticationSource.ActiveDirectory}");
+        }
 
         //legacy settings for general phone attribute usage
         if (bool.TryParse(useActiveDirectoryUserPhoneSetting, out var useActiveDirectoryUserPhone))
