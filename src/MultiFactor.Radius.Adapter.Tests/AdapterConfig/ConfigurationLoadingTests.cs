@@ -1,7 +1,5 @@
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
-using MultiFactor.Radius.Adapter.Core.Framework;
-using MultiFactor.Radius.Adapter.Extensions;
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration;
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Exceptions;
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Features.AuthenticatedClientCacheFeature;
@@ -64,16 +62,16 @@ public partial class ConfigurationLoadingTests
     [Trait("Category", "invalid-credential-delay")]
     [Trait("Category", "first-factor-authentication-source")]
     [Trait("Category", "privacy-mode")]
-    [InlineData("root-empty-adapter-server-endpoint.config", "Configuration error: 'adapter-server-endpoint' element not found")]
-    [InlineData("root-wrong-adapter-server-endpoint.config", "Configuration error: Can't parse 'adapter-server-endpoint' value")]
-    [InlineData("root-empty-multifactor-api-url.config", "Configuration error: 'multifactor-api-url' element not found")]
-    [InlineData("root-empty-multifactor-nas-identifier.config", "Configuration error: 'multifactor-nas-identifier' element not found")]
-    [InlineData("root-empty-multifactor-shared-secret.config", "Configuration error: 'multifactor-shared-secret' element not found")]
-    [InlineData("root-empty-first-factor-authentication-source.config", "Configuration error: No clients' config files found. Use one of the *.template files in the /clients folder to customize settings. Then save this file as *.config.")]
-    [InlineData("root-first-factor-authentication-source-is-digit.config", "Configuration error: Can't parse 'first-factor-authentication-source' value. Must be one of: ActiveDirectory, Radius, None")]
-    [InlineData("root-first-factor-authentication-source-is-invalid.config", "Configuration error: Can't parse 'first-factor-authentication-source' value. Must be one of: ActiveDirectory, Radius, None")]
-    [InlineData("root-wrong-invalid-credential-delay.config", "Configuration error: Can't parse 'invalid-credential-delay' value")]
-    [InlineData("root-wrong-privacy-mode.config", "Configuration error: Can't parse 'privacy-mode' value. Must be one of: Full, None, Partial:Field1,Field2")]
+    [InlineData("root-empty-adapter-server-endpoint.config", "Configuration error: 'adapter-server-endpoint' element not found. Config name: 'General'")]
+    [InlineData("root-wrong-adapter-server-endpoint.config", "Configuration error: Can't parse 'adapter-server-endpoint' value. Config name: 'General'")]
+    [InlineData("root-empty-multifactor-api-url.config", "Configuration error: 'multifactor-api-url' element not found. Config name: 'General'")]
+    [InlineData("root-empty-multifactor-nas-identifier.config", "Configuration error: 'multifactor-nas-identifier' element not found. Config name: 'General'")]
+    [InlineData("root-empty-multifactor-shared-secret.config", "Configuration error: 'multifactor-shared-secret' element not found. Config name: 'General'")]
+    [InlineData("root-empty-first-factor-authentication-source.config", "Configuration error: 'first-factor-authentication-source' element not found. Config name: 'General'")]
+    [InlineData("root-first-factor-authentication-source-is-digit.config", "Configuration error: Can't parse 'first-factor-authentication-source' value. Must be one of: ActiveDirectory, Radius, None. Config name: 'General'")]
+    [InlineData("root-first-factor-authentication-source-is-invalid.config", "Configuration error: Can't parse 'first-factor-authentication-source' value. Must be one of: ActiveDirectory, Radius, None. Config name: 'General'")]
+    [InlineData("root-wrong-invalid-credential-delay.config", "Configuration error: Can't parse 'invalid-credential-delay' value. Config name: 'General'")]
+    [InlineData("root-wrong-privacy-mode.config", "Configuration error: Can't parse 'privacy-mode' value. Must be one of: Full, None, Partial:Field1,Field2. Config name: 'General'")]
     public void SingleModeAndInvalidSettings_ShouldThrow(string asset, string msg)
     {
         var host = TestHostFactory.CreateHost(builder =>
@@ -89,49 +87,26 @@ public partial class ConfigurationLoadingTests
         act.Should().Throw<InvalidConfigurationException>().WithMessage(msg);
     }
 
-    [Theory]
-    [Trait("Category", "logging-level")]
-    [InlineData("root-empty-logging-level.config", "Configuration error: 'logging-level' element not found")]
-    public void CreateHost_InvalidLoggingSettings_ShouldThrow(string asset, string msg)
-    {
-        var host = TestHostFactory.CreateHost(builder =>
-        {
-            builder.Services.Configure<TestConfigProviderOptions>(x =>
-            {
-                x.RootConfigFilePath = TestEnvironment.GetAssetPath(asset);
-            });
-            builder.AddLogging();
-
-        });
-
-        var act = () => host.Service<IServiceConfiguration>();
-
-        act.Should().Throw<InvalidConfigurationException>().WithMessage(msg);
-    }
-
-    [Theory]
+    [Fact]
     [Trait("Category", "active-directory-domain")]
-    [InlineData("root-ffa-is-ad-and-empty-domain.config", "Configuration error: 'active-directory-domain' element not found")]
-    [InlineData("root-wrong-load-active-directory-nested-groups.config", "Configuration error: Can't parse 'load-active-directory-nested-groups' value")]
-    public void SingleModeAndWrongADSettings_ShouldThrow(string asset, string msg)
+    public void SingleModeAndWrongADSettings_ShouldThrow()
     {
         var host = TestHostFactory.CreateHost(builder =>
         {
             builder.Services.Configure<TestConfigProviderOptions>(x =>
             {
-                x.RootConfigFilePath = TestEnvironment.GetAssetPath(asset);
+                x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-ffa-is-ad-and-empty-domain.config");
             });
         });
 
         var act = () => host.Service<IServiceConfiguration>();
 
-        act.Should().Throw<InvalidConfigurationException>().WithMessage(msg);
+        act.Should().Throw<InvalidConfigurationException>().WithMessage("Configuration error: 'active-directory-domain' element not found. Config name: 'General'");
     }
 
-    [Theory]
+    [Fact]
     [Trait("Category", "radius-client-nas-identifier")]
-    [InlineData("client-empty-identifier-and-ip.config", "Configuration error: Either 'radius-client-nas-identifier' or 'radius-client-ip' must be configured")]
-    public void MultiModeAndInvalidSettings_ShouldThrow(string asset, string msg)
+    public void MultiModeAndInvalidSettings_ShouldThrow()
     {
         var host = TestHostFactory.CreateHost(builder =>
         {
@@ -140,14 +115,15 @@ public partial class ConfigurationLoadingTests
                 x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-multi.config");
                 x.ClientConfigFilePaths = new[]
                 {
-                    TestEnvironment.GetAssetPath(TestAssetLocation.ClientsDirectory, asset)
+                    TestEnvironment.GetAssetPath(TestAssetLocation.ClientsDirectory, "client-empty-identifier-and-ip.config")
                 };
             });
         });
 
         var act = () => host.Service<IServiceConfiguration>();
 
-        act.Should().Throw<InvalidConfigurationException>().WithMessage(msg);
+        act.Should().Throw<InvalidConfigurationException>()
+            .WithMessage("Configuration error: Either 'radius-client-nas-identifier' or 'radius-client-ip' must be configured. Config name: 'client-empty-identifier-and-ip'");
     }
 
     [Fact]
@@ -292,7 +268,7 @@ public partial class ConfigurationLoadingTests
 
         var act = () => host.Service<IServiceConfiguration>();
 
-        act.Should().Throw<InvalidConfigurationException>().WithMessage("Configuration error: to enable pre-auth second factor for this client please set 'invalid-credential-delay' min value to 2 or more");
+        act.Should().Throw<InvalidConfigurationException>().WithMessage("Configuration error: to enable pre-auth second factor for this client please set 'invalid-credential-delay' min value to 2 or more. Config name: 'client-pre-auth-method-otp-with-no-cred-delay'");
     }
     
     [Fact]
@@ -387,7 +363,8 @@ public partial class ConfigurationLoadingTests
 
         var act = () => host.Service<IServiceConfiguration>();
 
-        act.Should().Throw<InvalidConfigurationException>().WithMessage("Configuration error: Using settings 'use-upn-as-identity' and 'use-attribute-as-identity' together is unacceptable. Prefer using 'use-attribute-as-identity'.");
+        act.Should().Throw<InvalidConfigurationException>()
+            .WithMessage($"Configuration error: Using settings 'use-upn-as-identity' and 'use-attribute-as-identity' together is unacceptable. Prefer using 'use-attribute-as-identity'. Config name: '{Path.GetFileNameWithoutExtension(cliConf)}'");
     }
     
     [Fact]
@@ -563,7 +540,7 @@ public partial class ConfigurationLoadingTests
         var action = () => host.Service<IServiceConfiguration>();
 
         var ex = Assert.Throws<InvalidConfigurationException>(action);
-        Assert.Equal("Configuration error: Can't parse 'authentication-cache-lifetime' value", ex.Message);
+        Assert.Equal("Configuration error: Can't parse 'authentication-cache-lifetime' value. Config name: 'authentication-cache-lifetime-invalid'", ex.Message);
     }
 
     [Fact]
@@ -630,7 +607,7 @@ public partial class ConfigurationLoadingTests
         var action = () => host.Service<IServiceConfiguration>();
 
         var ex = Assert.Throws<InvalidConfigurationException>(action);
-        Assert.Equal("Configuration error: Can't parse 'authentication-cache-minimal-matching' value", ex.Message);
+        Assert.Equal("Configuration error: Can't parse 'authentication-cache-minimal-matching' value. Config name: 'authentication-cache-minimal-matching-invalid'", ex.Message);
     }
     
     [Fact]

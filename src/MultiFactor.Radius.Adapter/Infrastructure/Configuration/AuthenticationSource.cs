@@ -9,9 +9,10 @@ namespace MultiFactor.Radius.Adapter.Infrastructure.Configuration
     [Flags]
     public enum AuthenticationSource
     {
-        None = 0,
-        ActiveDirectory = 1,
-        Radius = 2,
-        Ldap = 4
+        NotSpecified = 0,
+        None = 1,
+        ActiveDirectory = 2,
+        Radius = 4,
+        Ldap = 8
     }
 }

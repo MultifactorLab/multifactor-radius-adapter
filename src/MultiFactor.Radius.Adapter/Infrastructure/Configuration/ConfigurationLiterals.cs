@@ -2,6 +2,8 @@
 
 internal static class ConfigurationLiterals
 {
+    public const string RootConfigName = "General";
+
     public static class Logging
     {
         public const string ConsoleLogOutputTemplate = "console-log-output-template";

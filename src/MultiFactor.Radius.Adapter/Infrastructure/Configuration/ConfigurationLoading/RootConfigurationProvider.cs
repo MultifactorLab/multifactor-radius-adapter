@@ -9,25 +9,6 @@ using System.Reflection;
 
 namespace MultiFactor.Radius.Adapter.Infrastructure.Configuration.ConfigurationLoading;
 
-public class DefaultRootConfigurationProvider : IRootConfigurationProvider
-{
-    private readonly Lazy<RadiusAdapterConfiguration> _rootConfig = new(() =>
-    {
-        var asm = Assembly.GetExecutingAssembly();
-        var path = $"{asm.Location}.config";
-
-        var rdsRootConfig = new RadiusConfigurationFile(path);
-        var config = RadiusAdapterConfigurationFactory.Create(rdsRootConfig);
-
-        return config;
-    });
-
-    public RadiusAdapterConfiguration GetRootConfiguration()
-    {
-        return _rootConfig.Value;
-    }
-}
-
 internal static class RootConfigurationProvider
 {
     private static readonly Lazy<RadiusAdapterConfiguration> _rootConfig = new(() =>

@@ -38,32 +38,36 @@ public class ClientConfigurationFactory
         if (string.IsNullOrEmpty(appSettings.FirstFactorAuthenticationSource))
         {
             throw InvalidConfigurationException.For(x => x.AppSettings.FirstFactorAuthenticationSource, 
-                "'{prop}' element not found");
+                "'{prop}' element not found. Config name: '{0}'",
+                name);
         }
 
         var isDigit = int.TryParse(appSettings.FirstFactorAuthenticationSource, out _);
         if (isDigit || !Enum.TryParse<AuthenticationSource>(appSettings.FirstFactorAuthenticationSource, true, out var firstFactorAuthenticationSource))
         {
-            throw InvalidConfigurationException.For(x => x.AppSettings.MultifactorSharedSecret,
-                "Can't parse '{prop}' value. Must be one of: ActiveDirectory, Radius, None");
+            throw InvalidConfigurationException.For(x => x.AppSettings.FirstFactorAuthenticationSource,
+                "Can't parse '{prop}' value. Must be one of: ActiveDirectory, Radius, None. Config name: '{0}'", name);
         }
 
         if (string.IsNullOrEmpty(appSettings.RadiusSharedSecret))
         {
             throw InvalidConfigurationException.For(x => x.AppSettings.RadiusSharedSecret,
-                "'{prop}' element not found");
+                "'{prop}' element not found. Config name: '{0}'",
+                name);
         }
 
         if (string.IsNullOrEmpty(appSettings.MultifactorNasIdentifier))
         {
             throw InvalidConfigurationException.For(x => x.AppSettings.MultifactorNasIdentifier,
-                "'{prop}' element not found");
+                "'{prop}' element not found. Config name: '{0}'",
+                name);
         }
 
         if (string.IsNullOrEmpty(appSettings.MultifactorSharedSecret))
         {
             throw InvalidConfigurationException.For(x => x.AppSettings.MultifactorSharedSecret,
-                "'{prop}' element not found");
+                "'{prop}' element not found. Config name: '{0}'",
+                name);
         }
 
         var builder = new ClientConfiguration(name,
@@ -82,25 +86,26 @@ public class ClientConfigurationFactory
         {
             case AuthenticationSource.ActiveDirectory:
             case AuthenticationSource.Ldap:
-                LoadActiveDirectoryAuthenticationSourceSettings(builder, appSettings);
+                ReadActiveDirectoryAuthenticationSourceSettings(builder, appSettings);
                 break;
             case AuthenticationSource.Radius:
-                LoadRadiusAuthenticationSourceSettings(builder, appSettings);
-                LoadActiveDirectoryAuthenticationSourceSettings(builder, appSettings);
+                ReadRadiusAuthenticationSourceSettings(builder, appSettings);
+                ReadActiveDirectoryAuthenticationSourceSettings(builder, appSettings);
                 break;
             case AuthenticationSource.None:
-                LoadActiveDirectoryAuthenticationSourceSettings(builder, appSettings);
+                ReadActiveDirectoryAuthenticationSourceSettings(builder, appSettings);
                 break;
         }
 
         if (builder.CheckMembership && string.IsNullOrEmpty(builder.ActiveDirectoryDomain))
         {
             throw InvalidConfigurationException.For(x => x.AppSettings.ActiveDirectoryDomain,
-                "Membership verification impossible: '{prop}' element not found");
+                "Membership verification impossible: '{prop}' element not found. Config name: '{0}'",
+                builder.Name);
         }
 
-        LoadRadiusReplyAttributes(builder, _dictionary, configuration.RadiusReply);
-        LoadUserNameTransformRulesSection(configuration, builder);
+        ReadRadiusReplyAttributes(builder, _dictionary, configuration.RadiusReply);
+        ReadUserNameTransformRulesSection(configuration, builder);
 
         builder.SetServiceAccountUser(appSettings.ServiceAccountUser ?? string.Empty);
         builder.SetServiceAccountPassword(appSettings.ServiceAccountPassword ?? string.Empty);
@@ -133,8 +138,9 @@ public class ClientConfigurationFactory
         }
         catch
         {
-            throw InvalidConfigurationException.For(x => x.AppSettings.InvalidCredentialDelay, 
-                "Can't parse '{0}' value");
+            throw InvalidConfigurationException.For(x => x.AppSettings.InvalidCredentialDelay,
+                "Can't parse '{prop}' value. Config name: '{0}'",
+                builder.Name);
         }
     }
 
@@ -146,14 +152,16 @@ public class ClientConfigurationFactory
         }
         catch
         {
-            throw InvalidConfigurationException.For(x => x.AppSettings.PreAuthenticationMethod, 
-                "Can't parse '{prop}' value. Must be one of: {0}", PreAuthModeDescriptor.DisplayAvailableModes());
+            throw InvalidConfigurationException.For(x => x.AppSettings.PreAuthenticationMethod,
+                "Can't parse '{prop}' value. Must be one of: {0}. Config name: '{1}'", PreAuthModeDescriptor.DisplayAvailableModes(),
+                builder.Name);
         }
 
         if (builder.PreAuthnMode.Mode != PreAuthMode.None && builder.InvalidCredentialDelay.Min < 2)
         {
             throw InvalidConfigurationException.For(x => x.AppSettings.InvalidCredentialDelay,
-                "To enable pre-auth second factor for this client please set '{prop}' min value to 2 or more");
+                "To enable pre-auth second factor for this client please set '{prop}' min value to 2 or more. Config name: '{0}'",
+                builder.Name);
         }
     }
 
@@ -166,11 +174,12 @@ public class ClientConfigurationFactory
         catch
         {
             throw InvalidConfigurationException.For(x => x.AppSettings.PrivacyMode,
-                "Can't parse '{prop}' value. Must be one of: Full, None, Partial:Field1,Field2");
+                "Can't parse '{prop}' value. Must be one of: Full, None, Partial:Field1,Field2. Config name: '{0}'",
+                builder.Name);
         }
     }
 
-    private static void LoadUserNameTransformRulesSection(RadiusAdapterConfiguration configuration, ClientConfiguration builder)
+    private static void ReadUserNameTransformRulesSection(RadiusAdapterConfiguration configuration, ClientConfiguration builder)
     { 
         foreach (var rule in configuration.UserNameTransformRules.Elements)
         {
@@ -178,12 +187,13 @@ public class ClientConfigurationFactory
         }  
     }
 
-    private void LoadActiveDirectoryAuthenticationSourceSettings(ClientConfiguration builder, AppSettingsSection appSettings)
+    private void ReadActiveDirectoryAuthenticationSourceSettings(ClientConfiguration builder, AppSettingsSection appSettings)
     {
         if (builder.FirstFactorAuthenticationSource == AuthenticationSource.ActiveDirectory && string.IsNullOrEmpty(appSettings.ActiveDirectoryDomain))
         {
             throw InvalidConfigurationException.For(x => x.AppSettings.ActiveDirectoryDomain,
-                "'{prop}' element not found");
+                "'{prop}' element not found. Config name: '{0}'",
+                builder.Name);
         }
 
         //legacy settings for general phone attribute usage      
@@ -191,12 +201,12 @@ public class ClientConfigurationFactory
         {
             builder.AddPhoneAttribute("telephoneNumber");
         }
-        
+
         //legacy settings for mobile phone attribute usage
         if (appSettings.UseActiveDirectoryMobileUserPhone)
         {
             builder.AddPhoneAttribute("mobile");
-        } 
+        }
 
         if (!string.IsNullOrEmpty(appSettings.PhoneAttribute))
         {
@@ -231,47 +241,73 @@ public class ClientConfigurationFactory
             builder.AddActiveDirectory2FaBypassGroups(appSettings.ActiveDirectory2faBypassGroup.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries));
         }
 
+        ReadCustomIdentitySettings(builder, appSettings);
+    }
+
+    private void ReadCustomIdentitySettings(ClientConfiguration builder, AppSettingsSection appSettings)
+    {
         // MUST be before 'use-upn-as-identity' check
-        if (!string.IsNullOrEmpty(appSettings.UseAttributeAsIdentity))
+        var hasUseAttributeAsIdentity = !string.IsNullOrEmpty(appSettings.UseAttributeAsIdentity);
+        var hasUseUpnAsIdentity = !string.IsNullOrEmpty(appSettings.UseUpnAsIdentity);
+        if (hasUseUpnAsIdentity && hasUseAttributeAsIdentity)
+        {
+            throw InvalidConfigurationException.For(x => x.AppSettings.UseUpnAsIdentity,
+                "Using settings '{prop}' and '{0}' together is unacceptable. Prefer using '{0}'. Config name: '{1}'",
+                RadiusAdapterConfigurationDescription.Property(x => x.AppSettings.UseAttributeAsIdentity),
+                builder.Name);
+        }
+
+        if (hasUseAttributeAsIdentity)
         {
             builder.SetUseAttributeAsIdentity(appSettings.UseAttributeAsIdentity);
         }
 
-        if (appSettings.UseUpnAsIdentity)
+        if (hasUseUpnAsIdentity)
         {
-            if (!string.IsNullOrEmpty(appSettings.UseAttributeAsIdentity))
+            if (!bool.TryParse(appSettings.UseUpnAsIdentity, out var parsed))
             {
                 throw InvalidConfigurationException.For(x => x.AppSettings.UseUpnAsIdentity,
-                    "Using settings '{prop}' and '{0}' together is unacceptable. Prefer using '{0}'.",
-                    RadiusAdapterConfigurationDescription.Property(x => x.AppSettings.UseAttributeAsIdentity));
+                    "Can't parse '{prop}' value. Config name: '{0}'",
+                    builder.Name);
             }
 
-            _logger.LogWarning("The setting '{UseUpnAsIdentity:l}' is deprecated, use '{UseAttributeAsIdentity:l}' instead",
-                 RadiusAdapterConfigurationDescription.Property(x => x.AppSettings.UseUpnAsIdentity),
-                 RadiusAdapterConfigurationDescription.Property(x => x.AppSettings.UseAttributeAsIdentity));
+            if (parsed)
+            {
+                _logger.LogWarning("The setting '{UseUpnAsIdentity:l}' is deprecated, use '{UseAttributeAsIdentity:l}' instead",
+                    RadiusAdapterConfigurationDescription.Property(x => x.AppSettings.UseUpnAsIdentity),
+                    RadiusAdapterConfigurationDescription.Property(x => x.AppSettings.UseAttributeAsIdentity));
 
-            builder.SetUseAttributeAsIdentity("userPrincipalName");
-        } 
+                builder.SetUseAttributeAsIdentity("userPrincipalName");
+            }
+        }
     }
 
-    private static void LoadRadiusAuthenticationSourceSettings(ClientConfiguration builder, AppSettingsSection appSettings)
+    private static void ReadRadiusAuthenticationSourceSettings(ClientConfiguration builder, AppSettingsSection appSettings)
     {
         if (string.IsNullOrEmpty(appSettings.AdapterClientEndpoint))
         {
-            throw new InvalidConfigurationException("'adapter-client-endpoint' element not found");
+            throw InvalidConfigurationException.For(x => x.AppSettings.AdapterClientEndpoint, 
+                "'{prop}' element not found. Config name: '{0}'",
+                builder.Name);
         }
         if (string.IsNullOrEmpty(appSettings.NpsServerEndpoint))
         {
-            throw new InvalidConfigurationException("'nps-server-endpoint' element not found");
+            throw InvalidConfigurationException.For(x => x.AppSettings.NpsServerEndpoint,
+                "'{prop}' element not found. Config name: '{0}'",
+                builder.Name);
         }
 
         if (!IPEndPointFactory.TryParse(appSettings.AdapterClientEndpoint, out var serviceClientEndpoint))
         {
-            throw new InvalidConfigurationException("Can't parse 'adapter-client-endpoint' value");
+            throw InvalidConfigurationException.For(x => x.AppSettings.AdapterClientEndpoint,
+                "Can't parse '{prop}' value. Config name: '{0}'",
+                builder.Name);
         }
         if (!IPEndPointFactory.TryParse(appSettings.NpsServerEndpoint, out var npsEndpoint))
         {
-            throw new InvalidConfigurationException("Can't parse 'nps-server-endpoint' value");
+            throw InvalidConfigurationException.For(x => x.AppSettings.NpsServerEndpoint,
+                "Can't parse '{prop}' value. Config name: '{0}'",
+                builder.Name);
         }
 
         builder.SetServiceClientEndpoint(serviceClientEndpoint);
@@ -292,7 +328,8 @@ public class ClientConfigurationFactory
         if (!Regex.IsMatch(signUpGroupsSettings, signUpGroupsRegex, RegexOptions.IgnoreCase))
         {
             throw InvalidConfigurationException.For(x => x.AppSettings.SignUpGroups,
-                "Invalid group names. Please check '{prop}' settings property and fix syntax errors.");
+                "Invalid group names. Please check '{prop}' settings property and fix syntax errors. Config name: '{0}'",
+                builder.Name);
         }
 
         builder.SetSignUpGroups(signUpGroupsSettings);
@@ -308,11 +345,12 @@ public class ClientConfigurationFactory
         catch
         {
             throw InvalidConfigurationException.For(x => x.AppSettings.AuthenticationCacheLifetime,
-                "Can't parse '{prop}' value");
+                "Can't parse '{prop}' value. Config name: '{0}'",
+                builder.Name);
         }
     }
 
-    private static void LoadRadiusReplyAttributes(ClientConfiguration builder, IRadiusDictionary dictionary, RadiusReplySection radiusReplyAttributesSection)
+    private static void ReadRadiusReplyAttributes(ClientConfiguration builder, IRadiusDictionary dictionary, RadiusReplySection radiusReplyAttributesSection)
     {
         var replyAttributes = new Dictionary<string, List<RadiusReplyAttributeValue>>();
 
@@ -321,7 +359,7 @@ public class ClientConfigurationFactory
             foreach (var attribute in radiusReplyAttributesSection.Attributes.Elements)
             {
                 var radiusAttribute = dictionary.GetAttribute(attribute.Name)
-                    ?? throw new InvalidConfigurationException($"Unknown attribute '{attribute.Name}' in RadiusReply configuration element, please see dictionary");
+                    ?? throw new InvalidConfigurationException($"Unknown attribute '{attribute.Name}' in RadiusReply configuration element, please see dictionary. Config name: '{builder.Name}'");
 
                 if (!replyAttributes.ContainsKey(attribute.Name))
                 {
@@ -341,7 +379,7 @@ public class ClientConfigurationFactory
                 }
                 catch (Exception ex)
                 {
-                    throw new InvalidConfigurationException($"Error while parsing attribute '{radiusAttribute.Name}' with {radiusAttribute.Type} value '{attribute.Value}' in RadiusReply configuration element: {ex.Message}");
+                    throw new InvalidConfigurationException($"Error while parsing attribute '{radiusAttribute.Name}' with {radiusAttribute.Type} value '{attribute.Value}' in RadiusReply configuration element: {ex.Message}. Config name: '{builder.Name}'");
                 }     
             }
         }

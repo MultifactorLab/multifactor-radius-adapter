@@ -1,28 +1,19 @@
-﻿using Microsoft.Extensions.Options;
-using MultiFactor.Radius.Adapter.Infrastructure.Configuration;
-using MultiFactor.Radius.Adapter.Infrastructure.Configuration.ConfigurationLoading;
+﻿using MultiFactor.Radius.Adapter.Infrastructure.Configuration.ConfigurationLoading;
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Models;
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration.XmlAppConfiguration;
 using System.Reflection;
 
 namespace MultiFactor.Radius.Adapter.Tests.Fixtures.ConfigLoading;
 
-internal class TestRootConfigProvider : IRootConfigurationProvider
+internal static class TestRootConfigProvider
 {
-    private readonly TestConfigProviderOptions _options;
-
-    public TestRootConfigProvider(IOptions<TestConfigProviderOptions> options)
-    {
-        _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
-    }
-
-    public RadiusAdapterConfiguration GetRootConfiguration()
+    public static RadiusAdapterConfiguration GetRootConfiguration(TestConfigProviderOptions options)
     {
         RadiusConfigurationFile rdsRootConfig;
 
-        if (!string.IsNullOrWhiteSpace(_options.RootConfigFilePath))
+        if (!string.IsNullOrWhiteSpace(options.RootConfigFilePath))
         {
-            rdsRootConfig = new RadiusConfigurationFile(_options.RootConfigFilePath);
+            rdsRootConfig = new RadiusConfigurationFile(options.RootConfigFilePath);
         }
         else
         {

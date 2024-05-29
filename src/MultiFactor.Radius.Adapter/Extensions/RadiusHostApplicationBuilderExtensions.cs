@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using MultiFactor.Radius.Adapter.Core.Framework;
+using MultiFactor.Radius.Adapter.Infrastructure.Configuration.ConfigurationLoading;
 using MultiFactor.Radius.Adapter.Infrastructure.Logging;
 using MultiFactor.Radius.Adapter.Server.Pipeline.AccessChallenge;
 using MultiFactor.Radius.Adapter.Services;
@@ -14,7 +15,7 @@ using System;
 
 namespace MultiFactor.Radius.Adapter.Extensions;
 
-internal static class ConfigureApplicationExtension
+internal static class RadiusHostApplicationBuilderExtensions
 {
     public static RadiusHostApplicationBuilder ConfigureApplication(this RadiusHostApplicationBuilder builder, Action<IServiceCollection> configureServices = null)
     {
@@ -50,17 +51,11 @@ internal static class ConfigureApplicationExtension
 
     public static RadiusHostApplicationBuilder AddLogging(this RadiusHostApplicationBuilder builder)
     {
-        builder.Services.AddSingleton<SerilogLoggerFactory>();
-
-        var logger = prov.GetRequiredService<SerilogLoggerFactory>().CreateLogger();
-
+        var rootConfig = RootConfigurationProvider.GetRootConfiguration();
+        var logger = SerilogLoggerFactory.CreateLogger(rootConfig);
         Log.Logger = logger;
-        builder.InternalHostApplicationBuilder.Services.AddLogging(x =>
-        {
-            x.ClearProviders();
-            x.ser
-        });
-        builder.InternalHostApplicationBuilder.Configuration[.Logging.ClearProviders();
+
+        builder.InternalHostApplicationBuilder.Logging.ClearProviders();
         builder.InternalHostApplicationBuilder.Logging.AddSerilog(logger);
 
         return builder;

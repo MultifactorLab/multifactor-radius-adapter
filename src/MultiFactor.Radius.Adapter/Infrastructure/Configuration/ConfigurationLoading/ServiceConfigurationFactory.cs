@@ -14,23 +14,24 @@ namespace MultiFactor.Radius.Adapter.Infrastructure.Configuration.ConfigurationL
 
 public class ServiceConfigurationFactory
 {
-    private readonly IRootConfigurationProvider _appConfigurationProvider;
     private readonly IClientConfigurationsProvider _clientConfigurationsProvider;
     private readonly ClientConfigurationFactory _clientConfigFactory;
 
-    public ServiceConfigurationFactory(IRootConfigurationProvider appConfigurationProvider,
-        IClientConfigurationsProvider clientConfigurationsProvider,
+    public ServiceConfigurationFactory(IClientConfigurationsProvider clientConfigurationsProvider,
         ClientConfigurationFactory clientConfigFactory)
     {
-        _appConfigurationProvider = appConfigurationProvider ?? throw new ArgumentNullException(nameof(appConfigurationProvider));
         _clientConfigurationsProvider = clientConfigurationsProvider ?? throw new ArgumentNullException(nameof(clientConfigurationsProvider));
         _clientConfigFactory = clientConfigFactory ?? throw new ArgumentNullException(nameof(clientConfigFactory));
     }
 
     public IServiceConfiguration CreateConfig(RadiusAdapterConfiguration rootConfiguration)
     {
-        var rootConfig = _appConfigurationProvider.GetRootConfiguration();
-        var appsettings = rootConfig.AppSettings;
+        if (rootConfiguration is null)
+        {
+            throw new ArgumentNullException(nameof(rootConfiguration));
+        }
+
+        var appsettings = rootConfiguration.AppSettings;
 
         var apiUrlSetting = appsettings.MultifactorApiUrl;
         var apiProxySetting = appsettings.MultifactorApiProxy;
@@ -40,7 +41,8 @@ public class ServiceConfigurationFactory
         if (string.IsNullOrEmpty(apiUrlSetting))
         {
             throw InvalidConfigurationException.For(x => x.AppSettings.MultifactorApiUrl,
-                "'{prop}' element not found");
+                "'{prop}' element not found. Config name: '{0}'",
+                ConfigurationLiterals.RootConfigName);
         }
 
         IPEndPoint serviceServerEndpoint = ParseAdapterServerEndpoint(appsettings);
@@ -61,8 +63,8 @@ public class ServiceConfigurationFactory
         var clientConfigs = _clientConfigurationsProvider.GetClientConfigurations();
         if (clientConfigs.Length == 0)
         {
-            var client = _clientConfigFactory.CreateConfig("General", rootConfig, builder);
-            builder.AddClient(IPAddress.Any, client).IsSingleClientMode(true);
+            var generalClient = _clientConfigFactory.CreateConfig(ConfigurationLiterals.RootConfigName, rootConfiguration, builder);
+            builder.AddClient(IPAddress.Any, generalClient).IsSingleClientMode(true);
             return builder;
         }
 
@@ -84,8 +86,9 @@ public class ServiceConfigurationFactory
             if (string.IsNullOrEmpty(radiusClientIpSetting))
             {
                 throw InvalidConfigurationException.For(x => x.AppSettings.RadiusClientNasIdentifier,
-                    "Either '{prop}' or '{0}' must be configured",
-                    RadiusAdapterConfigurationDescription.Property(x => x.AppSettings.RadiusClientIp));
+                    "Either '{prop}' or '{0}' must be configured. Config name: '{0}'",
+                    RadiusAdapterConfigurationDescription.Property(x => x.AppSettings.RadiusClientIp),
+                    ConfigurationLiterals.RootConfigName);
             }
 
             var elements = radiusClientIpSetting.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
@@ -120,13 +123,15 @@ public class ServiceConfigurationFactory
         if (string.IsNullOrEmpty(appSettings.AdapterServerEndpoint))
         {
             throw InvalidConfigurationException.For(x => x.AppSettings.AdapterServerEndpoint,
-                "'{prop}' element not found");
+                "'{prop}' element not found. Config name: '{0}'",
+                ConfigurationLiterals.RootConfigName);
         }
 
         if (!IPEndPointFactory.TryParse(appSettings.AdapterServerEndpoint, out var serviceServerEndpoint))
         {
             throw InvalidConfigurationException.For(x => x.AppSettings.AdapterServerEndpoint,
-                "Can't parse '{prop}' value");
+                "Can't parse '{prop}' value. Config name: '{0}'",
+                ConfigurationLiterals.RootConfigName);
         }
 
         return serviceServerEndpoint;
@@ -142,7 +147,8 @@ public class ServiceConfigurationFactory
         catch
         {
             throw InvalidConfigurationException.For(x => x.AppSettings.InvalidCredentialDelay,
-                "Can't parse '{prop}' value");            
+                "Can't parse '{prop}' value. Config name: '{0}'",
+                ConfigurationLiterals.RootConfigName);            
         }
     }
 }

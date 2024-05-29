@@ -7,7 +7,7 @@ namespace MultiFactor.Radius.Adapter.Tests.AdapterConfig;
 
 [Trait("Category", "Adapter Configuration")]
 [Trait("Category", "App config Reading")]
-public class AppConfigConfiurationSourceTests
+public class AppConfigConfigurationSourceTests
 {
     [Fact]
     public void Load_ShouldLoadAndTransformNames()

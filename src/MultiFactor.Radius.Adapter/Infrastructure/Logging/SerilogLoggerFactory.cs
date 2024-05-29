@@ -1,8 +1,8 @@
 ﻿using Elastic.CommonSchema.Serilog;
-using MultiFactor.Radius.Adapter.Core;
 using MultiFactor.Radius.Adapter.Core.Serialization;
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration;
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Exceptions;
+using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Models;
 using Serilog;
 using Serilog.Core;
 using Serilog.Events;
@@ -13,21 +13,15 @@ using System.IO;
 
 namespace MultiFactor.Radius.Adapter.Infrastructure.Logging
 {
-    public class SerilogLoggerFactory
+    internal static class SerilogLoggerFactory
     {
-        private readonly IRootConfigurationProvider _rootConfigurationProvider;
-
-        public SerilogLoggerFactory(ApplicationVariables variables, IRootConfigurationProvider rootConfigurationProvider)
+        public static ILogger CreateLogger(RadiusAdapterConfiguration rootConfiguration)
         {
-            if (variables is null)
+            if (rootConfiguration is null)
             {
-                throw new ArgumentNullException(nameof(variables));
+                throw new ArgumentNullException(nameof(rootConfiguration));
             }
-            _rootConfigurationProvider = rootConfigurationProvider ?? throw new ArgumentNullException(nameof(rootConfigurationProvider));
-        }
 
-        public ILogger CreateLogger()
-        {
             var levelSwitch = new LoggingLevelSwitch(LogEventLevel.Information);
 
             var loggerConfiguration = new LoggerConfiguration()
@@ -35,39 +29,45 @@ namespace MultiFactor.Radius.Adapter.Infrastructure.Logging
                 .MinimumLevel.Override("Microsoft.Extensions.Http.DefaultHttpClientFactory", LogEventLevel.Warning)
                 .Enrich.FromLogContext();
 
-            ConfigureLogging(loggerConfiguration);
+            ConfigureLogging(loggerConfiguration,
+                rootConfiguration.AppSettings.LoggingFormat,
+                rootConfiguration.AppSettings.FileLogOutputTemplate, 
+                rootConfiguration.AppSettings.ConsoleLogOutputTemplate);
 
-            var config = _rootConfigurationProvider.GetRootConfiguration();
-            var level = config.AppSettings.LoggingLevel;
+            var level = rootConfiguration.AppSettings.LoggingLevel;
             if (string.IsNullOrWhiteSpace(level))
             {
-                throw new InvalidConfigurationException($"'{LoggingLevel}' element not found");
+                throw InvalidConfigurationException.For(x => x.AppSettings.LoggingLevel, "'{prop}' element not found. Config name: '{0}'",
+                    ConfigurationLiterals.RootConfigName);
             }
 
-            SetLogLevel(level, levelSwitch);
+            SetLogLevel(levelSwitch, level);
             var logger = loggerConfiguration.CreateLogger();
 
             return logger;
         }
 
-        private void ConfigureLogging(LoggerConfiguration loggerConfiguration)
+        private static void ConfigureLogging(LoggerConfiguration loggerConfiguration, 
+            string loggingForamt, 
+            string fileTemplate, 
+            string consoleTemplate)
         {
-            var path = Path.GetDirectoryName(AppDomain.CurrentDomain.BaseDirectory);
-            var fileTemplate = _rootConfigurationProvider.GetRootConfiguration().AppSettings.FileLogOutputTemplate;
-            var consoleTemplate = _rootConfigurationProvider.GetRootConfiguration().AppSettings.ConsoleLogOutputTemplate;
-
-            var formatter = GetLogFormatter();
+            var adapterPath = Path.GetDirectoryName(AppDomain.CurrentDomain.BaseDirectory);
+            var logsPath = $"{adapterPath}{Path.DirectorySeparatorChar}logs{Path.DirectorySeparatorChar}log-.txt";
+            var formatter = GetLogFormatter(loggingForamt);
             if (formatter != null)
             {
                 loggerConfiguration
                     .WriteTo.Console(formatter)
                     .WriteTo.File(formatter,
-                    $"{path}{Path.DirectorySeparatorChar}logs{Path.DirectorySeparatorChar}log-.txt",
+                    logsPath,
                     rollingInterval: RollingInterval.Day);
 
                 if (!string.IsNullOrEmpty(fileTemplate))
                 {
-                    Log.Logger.Warning($"The {LoggingFormat} parameter cannot be used together with the template. The {FileLogOutputTemplate} parameter will be ignored.");
+                    Log.Logger.Warning("The {LoggingFormat:l} parameter cannot be used together with the template. The {FileLogOutputTemplate:l} parameter will be ignored.",
+                        RadiusAdapterConfigurationDescription.Property(x => x.AppSettings.LoggingFormat),
+                        RadiusAdapterConfigurationDescription.Property(x => x.AppSettings.FileLogOutputTemplate));
                 }
 
                 return;
@@ -85,20 +85,20 @@ namespace MultiFactor.Radius.Adapter.Infrastructure.Logging
             if (fileTemplate != null)
             {
                 loggerConfiguration.WriteTo.File(
-                    $"{path}{Path.DirectorySeparatorChar}logs{Path.DirectorySeparatorChar}log-.txt",
+                    logsPath,
                     rollingInterval: RollingInterval.Day,
                     outputTemplate: fileTemplate);
             }
             else
             {
                 loggerConfiguration.WriteTo.File(
-                    $"{path}{Path.DirectorySeparatorChar}logs{Path.DirectorySeparatorChar}log-.txt",
+                    logsPath,
                     rollingInterval: RollingInterval.Day);
             }
             
         }
 
-        private static void SetLogLevel(string level, LoggingLevelSwitch levelSwitch)
+        private static void SetLogLevel(LoggingLevelSwitch levelSwitch, string level)
         {
             switch (level)
             {
@@ -118,20 +118,17 @@ namespace MultiFactor.Radius.Adapter.Infrastructure.Logging
                     levelSwitch.MinimumLevel = LogEventLevel.Error;
                     break;
             }
-            Log.Logger.Information($"Logging level: {levelSwitch.MinimumLevel}");
+            Log.Logger.Information("Logging minimum level: {Level:l}", levelSwitch.MinimumLevel);
         }
 
-        private ITextFormatter GetLogFormatter()
+        private static ITextFormatter GetLogFormatter(string loggingFormat)
         {
-            var root = _rootConfigurationProvider.GetRootConfiguration();
-
-            var format = root.AppSettings.LoggingFormat;
-            if (string.IsNullOrEmpty(format))
+            if (string.IsNullOrEmpty(loggingFormat))
             {
                 return null;
             }
 
-            if (!Enum.TryParse<SerilogJsonFormatterTypes>(format, true, out var formatterType))
+            if (!Enum.TryParse<SerilogJsonFormatterTypes>(loggingFormat, true, out var formatterType))
             {
                 return null;
             }

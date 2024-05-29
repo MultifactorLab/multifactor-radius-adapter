@@ -64,7 +64,6 @@ internal static class RadiusHost
 
     private static void AddConfiguration(this IServiceCollection services)
     {
-        services.AddSingleton<IRootConfigurationProvider, DefaultRootConfigurationProvider>();
         services.AddSingleton<IClientConfigurationsProvider, DefaultClientConfigurationsProvider>();
 
         services.AddSingleton<ServiceConfigurationFactory>();
@@ -72,8 +71,12 @@ internal static class RadiusHost
 
         services.AddSingleton(prov =>
         {
-            var config = prov.GetRequiredService<ServiceConfigurationFactory>().CreateConfig();
+            var rootConfig = RootConfigurationProvider.GetRootConfiguration();
+            var factory = prov.GetRequiredService<ServiceConfigurationFactory>();
+
+            var config = factory.CreateConfig(rootConfig);
             config.Validate();
+
             return config;
         });
     }
