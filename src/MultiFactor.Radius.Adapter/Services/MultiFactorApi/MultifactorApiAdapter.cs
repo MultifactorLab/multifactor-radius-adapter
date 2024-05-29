@@ -4,11 +4,11 @@
 
 
 using Microsoft.Extensions.Logging;
-using MultiFactor.Radius.Adapter.Configuration;
-using MultiFactor.Radius.Adapter.Configuration.Features.PreAuthModeFeature;
-using MultiFactor.Radius.Adapter.Configuration.Features.PrivacyModeFeature;
-using MultiFactor.Radius.Adapter.Core.Http;
-using MultiFactor.Radius.Adapter.Framework.Context;
+using MultiFactor.Radius.Adapter.Core.Framework.Context;
+using MultiFactor.Radius.Adapter.Infrastructure.Configuration;
+using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Features.PreAuthModeFeature;
+using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Features.PrivacyModeFeature;
+using MultiFactor.Radius.Adapter.Infrastructure.Http;
 using MultiFactor.Radius.Adapter.Server;
 using MultiFactor.Radius.Adapter.Services.MultiFactorApi.Dto;
 using MultiFactor.Radius.Adapter.Services.MultiFactorApi.Models;

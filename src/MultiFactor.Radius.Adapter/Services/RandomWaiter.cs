@@ -1,6 +1,6 @@
 ﻿using System.Threading.Tasks;
 using System;
-using MultiFactor.Radius.Adapter.Configuration.Features.RandomWaiterFeature;
+using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Features.RandomWaiterFeature;
 
 namespace MultiFactor.Radius.Adapter.Services
 {

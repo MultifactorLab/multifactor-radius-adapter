@@ -1,22 +1,16 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
-using MultiFactor.Radius.Adapter.Configuration.Core;
-using MultiFactor.Radius.Adapter.Core;
-using MultiFactor.Radius.Adapter.Core.Ldap;
-using MultiFactor.Radius.Adapter.Framework;
-using MultiFactor.Radius.Adapter.Logging;
+using MultiFactor.Radius.Adapter.Core.Framework;
+using MultiFactor.Radius.Adapter.Infrastructure.Logging;
 using MultiFactor.Radius.Adapter.Server.Pipeline.AccessChallenge;
 using MultiFactor.Radius.Adapter.Services;
 using MultiFactor.Radius.Adapter.Services.Ldap;
-using MultiFactor.Radius.Adapter.Services.Ldap.Connection;
 using MultiFactor.Radius.Adapter.Services.Ldap.MembershipVerification;
 using MultiFactor.Radius.Adapter.Services.Ldap.Profile;
 using MultiFactor.Radius.Adapter.Services.Ldap.UserGroupsReading;
 using MultiFactor.Radius.Adapter.Services.MultiFactorApi;
 using Serilog;
 using System;
-using System.Linq;
 
 namespace MultiFactor.Radius.Adapter.Extensions;
 
@@ -56,27 +50,19 @@ internal static class ConfigureApplicationExtension
 
     public static RadiusHostApplicationBuilder AddLogging(this RadiusHostApplicationBuilder builder)
     {
-        // temporary service provider.
-        var services = new ServiceCollection();
+        builder.Services.AddSingleton<SerilogLoggerFactory>();
 
-        var appVarDescriptor = builder.InternalHostApplicationBuilder.Services.FirstOrDefault(x => x.ServiceType == typeof(ApplicationVariables))
-            ?? throw new System.Exception($"Service type '{typeof(ApplicationVariables)}' was not found in the RadiusHostApplicationBuilder services");
-        services.Add(appVarDescriptor);
-
-        var rootConfigProvDescriptor = builder.InternalHostApplicationBuilder.Services.FirstOrDefault(x => x.ServiceType == typeof(IRootConfigurationProvider))
-            ?? throw new System.Exception($"Service type '{typeof(IRootConfigurationProvider)}' was not found in the RadiusHostApplicationBuilder services");
-        services.Add(rootConfigProvDescriptor);
-
-        services.AddSingleton<SerilogLoggerFactory>();
-
-        var prov = services.BuildServiceProvider();
         var logger = prov.GetRequiredService<SerilogLoggerFactory>().CreateLogger();
 
         Log.Logger = logger;
-        builder.InternalHostApplicationBuilder.Logging.ClearProviders();
+        builder.InternalHostApplicationBuilder.Services.AddLogging(x =>
+        {
+            x.ClearProviders();
+            x.ser
+        });
+        builder.InternalHostApplicationBuilder.Configuration[.Logging.ClearProviders();
         builder.InternalHostApplicationBuilder.Logging.AddSerilog(logger);
 
         return builder;
     }
-
 }

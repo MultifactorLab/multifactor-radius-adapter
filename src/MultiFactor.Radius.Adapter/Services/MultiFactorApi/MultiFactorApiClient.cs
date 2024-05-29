@@ -4,7 +4,7 @@
 
 
 using Microsoft.Extensions.Logging;
-using MultiFactor.Radius.Adapter.Core.Http;
+using MultiFactor.Radius.Adapter.Infrastructure.Http;
 using MultiFactor.Radius.Adapter.Services.MultiFactorApi.Dto;
 using System;
 using System.Collections.Generic;
@@ -18,12 +18,12 @@ namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi
     internal class MultifactorApiClient : IMultifactorApiClient
     {
         private readonly ILogger<MultifactorApiClient> _logger;
-        private readonly IHttpClientAdapter _httpClientAdapter;
+        private readonly HttpClientAdapter _httpClientAdapter;
 
-        public MultifactorApiClient(ILogger<MultifactorApiClient> logger, IHttpClientAdapter httpClientAdapter)
+        public MultifactorApiClient(ILogger<MultifactorApiClient> logger, HttpClientAdapter httpClientAdapter)
         {
-            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            _httpClientAdapter = httpClientAdapter ?? throw new ArgumentNullException(nameof(httpClientAdapter));
+            _logger = logger;
+            _httpClientAdapter = httpClientAdapter;
         }
 
         public Task<AccessRequestDto> CreateRequestAsync(CreateRequestDto dto, BasicAuthHeaderValue auth)

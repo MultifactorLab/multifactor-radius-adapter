@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using MultiFactor.Radius.Adapter.Configuration.Core;
-using MultiFactor.Radius.Adapter.Core.Http;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using MultiFactor.Radius.Adapter.Infrastructure.Configuration;
+using MultiFactor.Radius.Adapter.Infrastructure.Http;
 using MultiFactor.Radius.Adapter.Server.Pipeline.FirstFactorAuthentication;
 using MultiFactor.Radius.Adapter.Server.Pipeline.FirstFactorAuthentication.Processing;
 using MultiFactor.Radius.Adapter.Services.MultiFactorApi;
@@ -21,9 +22,9 @@ public static class ServiceCollectionExtension
 
     public static void AddHttpServices(this IServiceCollection services)
     {
-        services.AddSingleton<IHttpClientAdapter, HttpClientAdapter>();
+        services.TryAddSingleton<HttpClientAdapter>();
         services.AddHttpContextAccessor();
-        services.AddTransient<MfTraceIdHeaderSetter>();
+        services.TryAddSingleton<MfTraceIdHeaderSetter>();
 
         services.AddHttpClient(nameof(HttpClientAdapter), (prov, client) =>
         {

@@ -1,4 +1,4 @@
-﻿using MultiFactor.Radius.Adapter.Configuration;
+﻿using MultiFactor.Radius.Adapter.Infrastructure.Configuration;
 using MultiFactor.Radius.Adapter.Server;
 
 namespace MultiFactor.Radius.Adapter.Tests.AdapterConfig

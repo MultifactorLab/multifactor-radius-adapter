@@ -1,5 +1,5 @@
 ﻿using Microsoft.Extensions.Configuration;
-using MultiFactor.Radius.Adapter.Configuration.ConfigurationLoading;
+using MultiFactor.Radius.Adapter.Infrastructure.Configuration.ConfigurationLoading;
 using MultiFactor.Radius.Adapter.Tests.Fixtures;
 
 namespace MultiFactor.Radius.Adapter.Tests.AdapterConfig

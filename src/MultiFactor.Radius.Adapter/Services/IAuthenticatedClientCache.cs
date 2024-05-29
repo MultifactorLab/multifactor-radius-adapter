@@ -1,4 +1,4 @@
-﻿using MultiFactor.Radius.Adapter.Configuration.Core;
+﻿using MultiFactor.Radius.Adapter.Infrastructure.Configuration;
 
 namespace MultiFactor.Radius.Adapter.Services
 {

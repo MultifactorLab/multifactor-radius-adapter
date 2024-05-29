@@ -1,6 +1,9 @@
 ﻿using Microsoft.Extensions.Options;
-using MultiFactor.Radius.Adapter.Configuration.Core;
-using System.Configuration;
+using MultiFactor.Radius.Adapter.Infrastructure.Configuration;
+using MultiFactor.Radius.Adapter.Infrastructure.Configuration.ConfigurationLoading;
+using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Models;
+using MultiFactor.Radius.Adapter.Infrastructure.Configuration.XmlAppConfiguration;
+using System.Reflection;
 
 namespace MultiFactor.Radius.Adapter.Tests.Fixtures.ConfigLoading;
 
@@ -13,17 +16,27 @@ internal class TestRootConfigProvider : IRootConfigurationProvider
         _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
     }
 
-    public System.Configuration.Configuration GetRootConfiguration()
+    public RadiusAdapterConfiguration GetRootConfiguration()
     {
-        if (string.IsNullOrWhiteSpace(_options.RootConfigFilePath))
+        RadiusConfigurationFile rdsRootConfig;
+
+        if (!string.IsNullOrWhiteSpace(_options.RootConfigFilePath))
         {
-            return ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
+            rdsRootConfig = new RadiusConfigurationFile(_options.RootConfigFilePath);
+        }
+        else
+        {
+            var asm = Assembly.GetAssembly(typeof(RdsEntryPoint));
+            if (asm is null)
+            {
+                throw new Exception("Main assembly not found");
+            }
+
+            var path = $"{asm.Location}.config";
+            rdsRootConfig = new RadiusConfigurationFile(path);
         }
 
-        var customConfigFileMap = new ExeConfigurationFileMap
-        {
-            ExeConfigFilename = _options.RootConfigFilePath
-        };
-        return ConfigurationManager.OpenMappedExeConfiguration(customConfigFileMap, ConfigurationUserLevel.None);
+        var config = RadiusAdapterConfigurationFactory.Create(rdsRootConfig);
+        return config;
     }
 }

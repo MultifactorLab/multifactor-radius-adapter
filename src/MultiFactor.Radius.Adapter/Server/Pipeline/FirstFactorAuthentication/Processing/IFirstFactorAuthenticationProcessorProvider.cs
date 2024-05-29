@@ -1,4 +1,4 @@
-﻿using MultiFactor.Radius.Adapter.Configuration;
+﻿using MultiFactor.Radius.Adapter.Infrastructure.Configuration;
 
 namespace MultiFactor.Radius.Adapter.Server.Pipeline.FirstFactorAuthentication.Processing
 {

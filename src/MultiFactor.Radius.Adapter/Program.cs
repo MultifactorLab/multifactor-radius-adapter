@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using MultiFactor.Radius.Adapter.Core.Framework;
 using MultiFactor.Radius.Adapter.Extensions;
-using MultiFactor.Radius.Adapter.Framework;
 using MultiFactor.Radius.Adapter.Server.Pipeline.AccessChallenge;
 using MultiFactor.Radius.Adapter.Server.Pipeline.AccessRequestFilter;
 using MultiFactor.Radius.Adapter.Server.Pipeline.FirstFactorAuthentication;
@@ -10,10 +10,14 @@ using MultiFactor.Radius.Adapter.Server.Pipeline.SecondFactorAuthentication;
 using MultiFactor.Radius.Adapter.Server.Pipeline.StatusServer;
 using MultiFactor.Radius.Adapter.Server.Pipeline.TransformUserName;
 using Serilog;
-using Serilog.Events;
 using System;
 using System.Text;
 
+Log.Logger = new LoggerConfiguration()
+    .MinimumLevel
+    .Information()
+    .WriteTo.Console()
+    .CreateLogger();
 
 IHost host = null;
 
@@ -39,14 +43,7 @@ catch (Exception ex)
 {
     var errorMessage = FlattenException(ex);
 
-    if (Log.Logger != null && Log.IsEnabled(LogEventLevel.Error))
-    {
-        Log.Logger.Error(ex, "Unable to start: {Message:l}", errorMessage);
-    }
-    else
-    {
-        Console.WriteLine($"Unable to start: {errorMessage}");
-    }
+    Log.Logger.Error(ex, "Unable to start: {Message:l}", errorMessage);
 
     await host?.StopAsync();
 }
@@ -71,3 +68,5 @@ static string FlattenException(Exception exception)
 
     return stringBuilder.ToString();
 }
+
+public partial class RdsEntryPoint { }

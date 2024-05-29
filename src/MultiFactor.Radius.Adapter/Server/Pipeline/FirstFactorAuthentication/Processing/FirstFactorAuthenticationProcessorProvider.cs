@@ -1,4 +1,4 @@
-﻿using MultiFactor.Radius.Adapter.Configuration;
+﻿using MultiFactor.Radius.Adapter.Infrastructure.Configuration;
 using System;
 using System.Collections.Generic;
 using System.Linq;

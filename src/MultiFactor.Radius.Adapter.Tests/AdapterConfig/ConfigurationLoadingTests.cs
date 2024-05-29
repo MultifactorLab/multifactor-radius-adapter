@@ -1,12 +1,11 @@
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
-using MultiFactor.Radius.Adapter.Configuration.Core;
-using MultiFactor.Radius.Adapter.Configuration.Features.AuthenticatedClientCacheFeature;
-using MultiFactor.Radius.Adapter.Configuration.Features.PreAuthModeFeature;
-using MultiFactor.Radius.Adapter.Core;
-using MultiFactor.Radius.Adapter.Core.Exceptions;
+using MultiFactor.Radius.Adapter.Core.Framework;
 using MultiFactor.Radius.Adapter.Extensions;
-using MultiFactor.Radius.Adapter.Framework;
+using MultiFactor.Radius.Adapter.Infrastructure.Configuration;
+using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Exceptions;
+using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Features.AuthenticatedClientCacheFeature;
+using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Features.PreAuthModeFeature;
 using MultiFactor.Radius.Adapter.Tests.Fixtures;
 using MultiFactor.Radius.Adapter.Tests.Fixtures.ConfigLoading;
 using System.Net;
@@ -95,17 +94,17 @@ public partial class ConfigurationLoadingTests
     [InlineData("root-empty-logging-level.config", "Configuration error: 'logging-level' element not found")]
     public void CreateHost_InvalidLoggingSettings_ShouldThrow(string asset, string msg)
     {
-        var act = () =>
+        var host = TestHostFactory.CreateHost(builder =>
         {
-            var builder = RadiusHost.CreateApplicationBuilder();
-            builder.AddLogging();
-            builder.ConfigureApplication();
             builder.Services.Configure<TestConfigProviderOptions>(x =>
             {
                 x.RootConfigFilePath = TestEnvironment.GetAssetPath(asset);
             });
-            return builder.Build();
-        };
+            builder.AddLogging();
+
+        });
+
+        var act = () => host.Service<IServiceConfiguration>();
 
         act.Should().Throw<InvalidConfigurationException>().WithMessage(msg);
     }
@@ -388,7 +387,7 @@ public partial class ConfigurationLoadingTests
 
         var act = () => host.Service<IServiceConfiguration>();
 
-        act.Should().Throw<InvalidConfigurationException>().WithMessage($"Configuration error: Using settings '{Literals.Configuration.UseUpnAsIdentity}' and '{Literals.Configuration.UseAttributeAsIdentity}' together is unacceptable. Prefer using '{Literals.Configuration.UseAttributeAsIdentity}'.");
+        act.Should().Throw<InvalidConfigurationException>().WithMessage("Configuration error: Using settings 'use-upn-as-identity' and 'use-attribute-as-identity' together is unacceptable. Prefer using 'use-attribute-as-identity'.");
     }
     
     [Fact]
@@ -564,7 +563,7 @@ public partial class ConfigurationLoadingTests
         var action = () => host.Service<IServiceConfiguration>();
 
         var ex = Assert.Throws<InvalidConfigurationException>(action);
-        Assert.Equal($"Configuration error: Can't parse '{Literals.Configuration.AuthenticationCacheLifetime}' value", ex.Message);
+        Assert.Equal("Configuration error: Can't parse 'authentication-cache-lifetime' value", ex.Message);
     }
 
     [Fact]
@@ -631,7 +630,7 @@ public partial class ConfigurationLoadingTests
         var action = () => host.Service<IServiceConfiguration>();
 
         var ex = Assert.Throws<InvalidConfigurationException>(action);
-        Assert.Equal($"Configuration error: Can't parse '{Literals.Configuration.AuthenticationCacheMinimalMatching}' value", ex.Message);
+        Assert.Equal("Configuration error: Can't parse 'authentication-cache-minimal-matching' value", ex.Message);
     }
     
     [Fact]

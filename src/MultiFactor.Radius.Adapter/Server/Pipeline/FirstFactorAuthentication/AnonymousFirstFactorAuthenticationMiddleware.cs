@@ -1,8 +1,9 @@
 ﻿using Microsoft.Extensions.Logging;
-using MultiFactor.Radius.Adapter.Configuration.Features.PreAuthModeFeature;
+using MultiFactor.Radius.Adapter.Core.Framework.Context;
+using MultiFactor.Radius.Adapter.Core.Framework.Pipeline;
 using MultiFactor.Radius.Adapter.Core.Radius;
-using MultiFactor.Radius.Adapter.Framework.Context;
-using MultiFactor.Radius.Adapter.Framework.Pipeline;
+using MultiFactor.Radius.Adapter.Infrastructure.Configuration;
+using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Features.PreAuthModeFeature;
 using MultiFactor.Radius.Adapter.Services.ActiveDirectory.MembershipVerification;
 using MultiFactor.Radius.Adapter.Services.Ldap.MembershipVerification;
 using System.Threading.Tasks;
@@ -26,7 +27,7 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.FirstFactorAuthentication
 
         public async Task InvokeAsync(RadiusContext context, RadiusRequestDelegate next)
         {
-            var isNoneFirstFactorSource = context.FirstFactorAuthenticationSource == Configuration.AuthenticationSource.None;
+            var isNoneFirstFactorSource = context.FirstFactorAuthenticationSource == AuthenticationSource.None;
             var preAuthModeEnabled = context.PreAuthMode != PreAuthMode.None;
             var needFirstFactorAuth = context.Authentication.FirstFactor == AuthenticationCode.Awaiting;
             var needSecondFactorAuth = context.Authentication.SecondFactor == AuthenticationCode.Awaiting;

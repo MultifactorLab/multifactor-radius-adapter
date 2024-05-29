@@ -1,4 +1,4 @@
-﻿using MultiFactor.Radius.Adapter.Configuration.Features.PreAuthModeFeature;
+﻿using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Features.PreAuthModeFeature;
 
 namespace MultiFactor.Radius.Adapter.Tests.AdapterConfig;
 

@@ -1,4 +1,4 @@
-﻿using MultiFactor.Radius.Adapter.Framework.Context;
+﻿using MultiFactor.Radius.Adapter.Core.Framework.Context;
 
 namespace MultiFactor.Radius.Adapter.Tests
 {
