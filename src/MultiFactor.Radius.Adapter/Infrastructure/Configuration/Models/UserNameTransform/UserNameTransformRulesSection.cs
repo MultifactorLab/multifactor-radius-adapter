@@ -2,23 +2,37 @@
 //Please see licence at 
 //https://github.com/MultifactorLab/multifactor-radius-adapter/blob/main/LICENSE.md
 
-using FluentValidation;
 using Microsoft.Extensions.Configuration;
 using System;
+using System.Linq;
 
 namespace MultiFactor.Radius.Adapter.Infrastructure.Configuration.Models.UserNameTransform;
 
 public class UserNameTransformRulesSection
 {
     [ConfigurationKeyName("add")]
-    public UserNameTransformRule[] Elements { get; set; } = Array.Empty<UserNameTransformRule>();
-}
+    private UserNameTransformRule[] _elements { get; set; }
+    
+    [ConfigurationKeyName("add")]
+    private UserNameTransformRule _singleElement { get; set; }
 
-internal class UserNameTransformRulesSectionValidator : AbstractValidator<UserNameTransformRulesSection>
-{
-    public UserNameTransformRulesSectionValidator()
+    public UserNameTransformRule[] Elements
     {
-        RuleFor(x => x.Elements).NotNull();
-        RuleForEach(x => x.Elements).SetValidator(new UserNameTransformRuleValidator());
+        get
+        {
+            // To deal with a single element binding to array issue, we should map a single claim manually 
+            // See: https://github.com/dotnet/runtime/issues/57325
+            if (!string.IsNullOrWhiteSpace(_singleElement?.Match))
+            {
+                return new [] { _singleElement };
+            }
+        
+            if (_elements != null && _elements.All(x => !string.IsNullOrWhiteSpace(x.Match)))
+            {
+                return _elements;
+            }
+
+            return Array.Empty<UserNameTransformRule>();
+        }
     }
 }

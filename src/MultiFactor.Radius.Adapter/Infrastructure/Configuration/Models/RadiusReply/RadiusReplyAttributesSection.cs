@@ -2,10 +2,10 @@
 //Please see licence at 
 //https://github.com/MultifactorLab/multifactor-radius-adapter/blob/main/LICENSE.md
 
-using FluentValidation;
 using Microsoft.Extensions.Configuration;
 using System;
 using System.ComponentModel;
+using System.Linq;
 
 namespace MultiFactor.Radius.Adapter.Infrastructure.Configuration.Models.RadiusReply;
 
@@ -13,10 +13,10 @@ namespace MultiFactor.Radius.Adapter.Infrastructure.Configuration.Models.RadiusR
 public class RadiusReplyAttributesSection
 {
     [ConfigurationKeyName("add")]
-    private RadiusReplyAttribute[] _elements { get; init; } = Array.Empty<RadiusReplyAttribute>();
+    private RadiusReplyAttribute[] _elements { get; set; }
 
     [ConfigurationKeyName("add")]
-    private RadiusReplyAttribute _element { get; init; }
+    private RadiusReplyAttribute _singleElement { get; set; }
 
     public RadiusReplyAttribute[] Elements
     {
@@ -24,26 +24,17 @@ public class RadiusReplyAttributesSection
         {
             // To deal with a single element binding to array issue, we should map a single claim manually 
             // See: https://github.com/dotnet/runtime/issues/57325
-            if (_elements.Length != 0)
+            if (!string.IsNullOrWhiteSpace(_singleElement?.Name))
+            {
+                return new [] { _singleElement };
+            }
+        
+            if (_elements != null && _elements.All(x => !string.IsNullOrWhiteSpace(x.Name)))
             {
                 return _elements;
             }
 
-            if (_element is not null)
-            {
-                return new [] { _element };
-            }
-
             return Array.Empty<RadiusReplyAttribute>();
         }
-    }
-}
-
-internal class RadiusReplyAttributesSectionValidator : AbstractValidator<RadiusReplyAttributesSection>
-{
-    public RadiusReplyAttributesSectionValidator()
-    {
-        RuleFor(x => x.Elements).NotNull();
-        RuleForEach(x => x.Elements).SetValidator(new RadiusReplyAttributeValidator());
     }
 }

@@ -3,7 +3,6 @@ using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Features.Authentic
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Features.PreAuthModeFeature;
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Features.PrivacyModeFeature;
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Features.RandomWaiterFeature;
-using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Features.UserNameTransformFeature;
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Models.UserNameTransform;
 using MultiFactor.Radius.Adapter.Server;
 using System.Collections.Generic;

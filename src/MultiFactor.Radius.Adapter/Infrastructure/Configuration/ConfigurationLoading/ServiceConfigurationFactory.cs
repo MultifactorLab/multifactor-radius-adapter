@@ -86,9 +86,9 @@ public class ServiceConfigurationFactory
             if (string.IsNullOrEmpty(radiusClientIpSetting))
             {
                 throw InvalidConfigurationException.For(x => x.AppSettings.RadiusClientNasIdentifier,
-                    "Either '{prop}' or '{0}' must be configured. Config name: '{0}'",
+                    "Either '{prop}' or '{0}' must be configured. Config name: '{1}'",
                     RadiusAdapterConfigurationDescription.Property(x => x.AppSettings.RadiusClientIp),
-                    ConfigurationLiterals.RootConfigName);
+                    client.Name);
             }
 
             var elements = radiusClientIpSetting.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries);

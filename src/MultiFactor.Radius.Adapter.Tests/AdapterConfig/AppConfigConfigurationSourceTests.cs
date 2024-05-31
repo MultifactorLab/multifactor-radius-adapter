@@ -89,7 +89,6 @@ public class AppConfigConfigurationSourceTests
 
         var config = new ConfigurationBuilder()
             .Add(new XmlAppConfigurationSource(path))
-            .AddRadiusEnvironmentVariables("")
             .Build();
 
         var bound = config.BindRadiusAdapterConfig();
@@ -111,6 +110,25 @@ public class AppConfigConfigurationSourceTests
                 x.When == "UserGroup=VPN Admins" && 
                 !x.Sufficient;
         });
+    }
+    
+    [Fact]
+    [Trait("Category", "User Name Transform Rules")]
+    public void Get_Single_ShouldBindRadiusReplySection()
+    {
+        var path = TestEnvironment.GetAssetPath(TestAssetLocation.ClientsDirectory, "radius-reply-single.config");
+
+        var config = new ConfigurationBuilder()
+            .Add(new XmlAppConfigurationSource(path))
+            .Build();
+
+        var bound = config.BindRadiusAdapterConfig();
+
+        var attribute = Assert.Single(bound.RadiusReply.Attributes.Elements);
+        Assert.Equal("Fortinet-Group-Name", attribute.Name);
+        Assert.Equal("Users", attribute.Value);
+        Assert.Equal("UserGroup=VPN Users", attribute.When);
+        Assert.True(attribute.Sufficient);
     }
     
     [Fact]
@@ -140,6 +158,24 @@ public class AppConfigConfigurationSourceTests
                 x.Replace == "$1@domain.local" &&
                 x.Count == null;
         });
+    }
+    
+    [Fact]
+    [Trait("Category", "User Name Transform Rules")]
+    public void Get_SingleRule_ShouldBindUserNameTransformRulesSection()
+    {
+        var path = TestEnvironment.GetAssetPath(TestAssetLocation.ClientsDirectory, "user-name-transform-single-rule.config");
+
+        var config = new ConfigurationBuilder()
+            .Add(new XmlAppConfigurationSource(path))
+            .Build();
+
+        var bound = config.BindRadiusAdapterConfig();
+
+        var rule = Assert.Single(bound.UserNameTransformRules.Elements);
+        Assert.Equal("^([^@]*)$", rule.Match);
+        Assert.Equal("$1@domain.local", rule.Replace);
+        Assert.Equal(3, rule.Count);
     }
     
     [Fact]

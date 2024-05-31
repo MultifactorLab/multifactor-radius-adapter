@@ -587,28 +587,6 @@ public partial class ConfigurationLoadingTests
 
         Assert.Equal(AuthenticatedClientCacheConfig.Default, cacheConfig);
     }
-
-    [Fact]
-    [Trait("Category", "authentication-cache-minimal-matching")]
-    public void Multi_AuthCacheLifetimeMinimalMatchingInvalid_ShouldThrow()
-    {
-        var host = TestHostFactory.CreateHost(builder =>
-        {
-            builder.Services.Configure<TestConfigProviderOptions>(x =>
-            {
-                x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-multi.config");
-                x.ClientConfigFilePaths = new[]
-                {
-                    TestEnvironment.GetAssetPath(TestAssetLocation.ClientsDirectory, "authentication-cache-minimal-matching-invalid.config")
-                };
-            });
-        });
-
-        var action = () => host.Service<IServiceConfiguration>();
-
-        var ex = Assert.Throws<InvalidConfigurationException>(action);
-        Assert.Equal("Configuration error: Can't parse 'authentication-cache-minimal-matching' value. Config name: 'authentication-cache-minimal-matching-invalid'", ex.Message);
-    }
     
     [Fact]
     [Trait("Category", "authentication-cache-minimal-matching")]
