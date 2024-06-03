@@ -7,7 +7,7 @@ internal class TestEnvironmentVariables
 {
     private readonly HashSet<string> _names;
 
-    public TestEnvironmentVariables(HashSet<string> names)
+    private TestEnvironmentVariables(HashSet<string> names)
     {
         _names = names;
     }

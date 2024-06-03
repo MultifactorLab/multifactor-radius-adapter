@@ -1,4 +1,6 @@
-﻿namespace MultiFactor.Radius.Adapter.Infrastructure.Configuration;
+﻿using MultiFactor.Radius.Adapter.Infrastructure.Configuration.RootLevel;
+
+namespace MultiFactor.Radius.Adapter.Infrastructure.Configuration;
 
 public static class ServiceConfigurationExtensions
 {

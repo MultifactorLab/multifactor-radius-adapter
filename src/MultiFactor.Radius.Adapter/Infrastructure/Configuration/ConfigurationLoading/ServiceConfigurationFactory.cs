@@ -9,6 +9,7 @@ using NetTools;
 using System;
 using System.Net;
 using System.Threading;
+using MultiFactor.Radius.Adapter.Infrastructure.Configuration.RootLevel;
 
 namespace MultiFactor.Radius.Adapter.Infrastructure.Configuration.ConfigurationLoading;
 
@@ -42,7 +43,7 @@ public class ServiceConfigurationFactory
         {
             throw InvalidConfigurationException.For(x => x.AppSettings.MultifactorApiUrl,
                 "'{prop}' element not found. Config name: '{0}'",
-                ConfigurationLiterals.RootConfigName);
+                RootConfigurationFile.ConfigName);
         }
 
         IPEndPoint serviceServerEndpoint = ParseAdapterServerEndpoint(appsettings);
@@ -63,7 +64,7 @@ public class ServiceConfigurationFactory
         var clientConfigs = _clientConfigurationsProvider.GetClientConfigurations();
         if (clientConfigs.Length == 0)
         {
-            var generalClient = _clientConfigFactory.CreateConfig(ConfigurationLiterals.RootConfigName, rootConfiguration, builder);
+            var generalClient = _clientConfigFactory.CreateConfig(RootConfigurationFile.ConfigName, rootConfiguration, builder);
             builder.AddClient(IPAddress.Any, generalClient).IsSingleClientMode(true);
             return builder;
         }
@@ -124,14 +125,14 @@ public class ServiceConfigurationFactory
         {
             throw InvalidConfigurationException.For(x => x.AppSettings.AdapterServerEndpoint,
                 "'{prop}' element not found. Config name: '{0}'",
-                ConfigurationLiterals.RootConfigName);
+                RootConfigurationFile.ConfigName);
         }
 
         if (!IPEndPointFactory.TryParse(appSettings.AdapterServerEndpoint, out var serviceServerEndpoint))
         {
             throw InvalidConfigurationException.For(x => x.AppSettings.AdapterServerEndpoint,
                 "Can't parse '{prop}' value. Config name: '{0}'",
-                ConfigurationLiterals.RootConfigName);
+                RootConfigurationFile.ConfigName);
         }
 
         return serviceServerEndpoint;
@@ -148,7 +149,7 @@ public class ServiceConfigurationFactory
         {
             throw InvalidConfigurationException.For(x => x.AppSettings.InvalidCredentialDelay,
                 "Can't parse '{prop}' value. Config name: '{0}'",
-                ConfigurationLiterals.RootConfigName);            
+                RootConfigurationFile.ConfigName);            
         }
     }
 }

@@ -6,6 +6,8 @@ using MultiFactor.Radius.Adapter.Core.Radius;
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration;
 using MultiFactor.Radius.Adapter.Server;
 using System.Net;
+using MultiFactor.Radius.Adapter.Infrastructure.Configuration.ClientLevel;
+using MultiFactor.Radius.Adapter.Infrastructure.Configuration.RootLevel;
 
 namespace MultiFactor.Radius.Adapter.Tests.Fixtures;
 

@@ -7,6 +7,7 @@ using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Features.PreAuthMo
 using MultiFactor.Radius.Adapter.Tests.Fixtures;
 using MultiFactor.Radius.Adapter.Tests.Fixtures.ConfigLoading;
 using System.Net;
+using MultiFactor.Radius.Adapter.Infrastructure.Configuration.RootLevel;
 
 namespace MultiFactor.Radius.Adapter.Tests.AdapterConfig;
 
@@ -51,7 +52,7 @@ public partial class ConfigurationLoadingTests
         var conf = host.Service<IServiceConfiguration>();
         conf.Should().NotBeNull();
         conf.SingleClientMode.Should().BeTrue();
-        conf.Clients.Should().NotBeEmpty().And.ContainSingle(x => x.Name == "General");
+        conf.Clients.Should().NotBeEmpty().And.ContainSingle(x => x.Name == "multifactor-radius-adapter.dll");
     }
 
     [Theory]
@@ -62,16 +63,26 @@ public partial class ConfigurationLoadingTests
     [Trait("Category", "invalid-credential-delay")]
     [Trait("Category", "first-factor-authentication-source")]
     [Trait("Category", "privacy-mode")]
-    [InlineData("root-empty-adapter-server-endpoint.config", "Configuration error: 'adapter-server-endpoint' element not found. Config name: 'General'")]
-    [InlineData("root-wrong-adapter-server-endpoint.config", "Configuration error: Can't parse 'adapter-server-endpoint' value. Config name: 'General'")]
-    [InlineData("root-empty-multifactor-api-url.config", "Configuration error: 'multifactor-api-url' element not found. Config name: 'General'")]
-    [InlineData("root-empty-multifactor-nas-identifier.config", "Configuration error: 'multifactor-nas-identifier' element not found. Config name: 'General'")]
-    [InlineData("root-empty-multifactor-shared-secret.config", "Configuration error: 'multifactor-shared-secret' element not found. Config name: 'General'")]
-    [InlineData("root-empty-first-factor-authentication-source.config", "Configuration error: 'first-factor-authentication-source' element not found. Config name: 'General'")]
-    [InlineData("root-first-factor-authentication-source-is-digit.config", "Configuration error: Can't parse 'first-factor-authentication-source' value. Must be one of: ActiveDirectory, Radius, None. Config name: 'General'")]
-    [InlineData("root-first-factor-authentication-source-is-invalid.config", "Configuration error: Can't parse 'first-factor-authentication-source' value. Must be one of: ActiveDirectory, Radius, None. Config name: 'General'")]
-    [InlineData("root-wrong-invalid-credential-delay.config", "Configuration error: Can't parse 'invalid-credential-delay' value. Config name: 'General'")]
-    [InlineData("root-wrong-privacy-mode.config", "Configuration error: Can't parse 'privacy-mode' value. Must be one of: Full, None, Partial:Field1,Field2. Config name: 'General'")]
+    [InlineData("root-empty-adapter-server-endpoint.config", 
+        "Configuration error: 'adapter-server-endpoint' element not found. Config name: 'multifactor-radius-adapter.dll'")]
+    [InlineData("root-wrong-adapter-server-endpoint.config", 
+        "Configuration error: Can't parse 'adapter-server-endpoint' value. Config name: 'multifactor-radius-adapter.dll'")]
+    [InlineData("root-empty-multifactor-api-url.config", 
+        "Configuration error: 'multifactor-api-url' element not found. Config name: 'multifactor-radius-adapter.dll'")]
+    [InlineData("root-empty-multifactor-nas-identifier.config", 
+        "Configuration error: 'multifactor-nas-identifier' element not found. Config name: 'multifactor-radius-adapter.dll'")]
+    [InlineData("root-empty-multifactor-shared-secret.config", 
+        "Configuration error: 'multifactor-shared-secret' element not found. Config name: 'multifactor-radius-adapter.dll'")]
+    [InlineData("root-empty-first-factor-authentication-source.config", 
+        "Configuration error: 'first-factor-authentication-source' element not found. Config name: 'multifactor-radius-adapter.dll'")]
+    [InlineData("root-first-factor-authentication-source-is-digit.config", 
+        "Configuration error: Can't parse 'first-factor-authentication-source' value. Must be one of: ActiveDirectory, Radius, None. Config name: 'multifactor-radius-adapter.dll'")]
+    [InlineData("root-first-factor-authentication-source-is-invalid.config", 
+        "Configuration error: Can't parse 'first-factor-authentication-source' value. Must be one of: ActiveDirectory, Radius, None. Config name: 'multifactor-radius-adapter.dll'")]
+    [InlineData("root-wrong-invalid-credential-delay.config", 
+        "Configuration error: Can't parse 'invalid-credential-delay' value. Config name: 'multifactor-radius-adapter.dll'")]
+    [InlineData("root-wrong-privacy-mode.config", 
+        "Configuration error: Can't parse 'privacy-mode' value. Must be one of: Full, None, Partial:Field1,Field2. Config name: 'multifactor-radius-adapter.dll'")]
     public void SingleModeAndInvalidSettings_ShouldThrow(string asset, string msg)
     {
         var host = TestHostFactory.CreateHost(builder =>
@@ -101,7 +112,8 @@ public partial class ConfigurationLoadingTests
 
         var act = () => host.Service<IServiceConfiguration>();
 
-        act.Should().Throw<InvalidConfigurationException>().WithMessage("Configuration error: 'active-directory-domain' element not found. Config name: 'General'");
+        act.Should().Throw<InvalidConfigurationException>()
+            .WithMessage("Configuration error: 'active-directory-domain' element not found. Config name: 'multifactor-radius-adapter.dll'");
     }
 
     [Fact]

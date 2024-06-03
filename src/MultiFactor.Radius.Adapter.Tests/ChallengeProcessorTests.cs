@@ -11,6 +11,7 @@ using MultiFactor.Radius.Adapter.Services.MultiFactorApi;
 using MultiFactor.Radius.Adapter.Services.MultiFactorApi.Models;
 using MultiFactor.Radius.Adapter.Tests.Fixtures.Radius;
 using System.Net;
+using MultiFactor.Radius.Adapter.Infrastructure.Configuration.ClientLevel;
 
 namespace MultiFactor.Radius.Adapter.Tests
 {

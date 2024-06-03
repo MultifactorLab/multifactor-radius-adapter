@@ -8,6 +8,7 @@ using MultiFactor.Radius.Adapter.Services.MultiFactorApi;
 using System;
 using System.Net.Http;
 using System.Security.Authentication;
+using MultiFactor.Radius.Adapter.Infrastructure.Configuration.RootLevel;
 
 namespace MultiFactor.Radius.Adapter.Extensions;
 

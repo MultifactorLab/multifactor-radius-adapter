@@ -2,6 +2,7 @@
 using Serilog.Core;
 using Serilog.Events;
 using System;
+using MultiFactor.Radius.Adapter.Infrastructure.Configuration.ClientLevel;
 
 namespace MultiFactor.Radius.Adapter.Infrastructure.Logging.Enrichers
 {

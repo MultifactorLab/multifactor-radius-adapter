@@ -27,6 +27,7 @@ using MultiFactor.Radius.Adapter.Core.Radius;
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration;
 using System;
 using System.Net;
+using MultiFactor.Radius.Adapter.Infrastructure.Configuration.ClientLevel;
 
 namespace MultiFactor.Radius.Adapter.Server;
 

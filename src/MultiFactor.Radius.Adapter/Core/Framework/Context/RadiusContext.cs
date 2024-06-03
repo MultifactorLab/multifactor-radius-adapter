@@ -10,6 +10,7 @@ using MultiFactor.Radius.Adapter.Services.Ldap.Profile;
 using System;
 using System.Collections.ObjectModel;
 using System.Net;
+using MultiFactor.Radius.Adapter.Infrastructure.Configuration.ClientLevel;
 
 namespace MultiFactor.Radius.Adapter.Core.Framework.Context
 {

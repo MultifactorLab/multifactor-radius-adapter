@@ -1,16 +1,15 @@
-﻿using MultiFactor.Radius.Adapter.Core;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net;
+using MultiFactor.Radius.Adapter.Core;
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Features.AuthenticatedClientCacheFeature;
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Features.PreAuthModeFeature;
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Features.PrivacyModeFeature;
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Features.RandomWaiterFeature;
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Models.UserNameTransform;
-using MultiFactor.Radius.Adapter.Server;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
 
-namespace MultiFactor.Radius.Adapter.Infrastructure.Configuration;
+namespace MultiFactor.Radius.Adapter.Infrastructure.Configuration.ClientLevel;
 
 public class ClientConfiguration : IClientConfiguration
 {
@@ -167,7 +166,7 @@ public class ClientConfiguration : IClientConfiguration
 
     private readonly List<UserNameTransformRule> _userNameTransformRules = new();
     /// <summary>
-    /// Username transfor rules
+    /// Username transform rules
     /// </summary>
     public UserNameTransformRule[] UserNameTransformRules => _userNameTransformRules.ToArray();
 

@@ -10,7 +10,7 @@ namespace MultiFactor.Radius.Adapter.Infrastructure.Configuration.ConfigurationL
 
 internal static class ConfigurationBuilderExtensions
 {
-    private const string _prefix = "RAD_";
+    private const string _basePrefix = "RAD_";
 
     public static IConfigurationBuilder AddRadiusConfigurationFile(this IConfigurationBuilder configurationBuilder, RadiusConfigurationFile file)
     {
@@ -23,9 +23,12 @@ internal static class ConfigurationBuilderExtensions
         return configurationBuilder;
     }
 
-    public static IConfigurationBuilder AddRadiusEnvironmentVariables(this IConfigurationBuilder configurationBuilder, string configName = null)
+    public static IConfigurationBuilder AddRadiusEnvironmentVariables(this IConfigurationBuilder configurationBuilder, 
+        string configName = null)
     {
-        var prefix = $"{_prefix}{configName}" ?? string.Empty;
+        var prefix = string.IsNullOrWhiteSpace(configName)
+            ? _basePrefix
+            : $"{_basePrefix}{configName}_";
         configurationBuilder.AddEnvironmentVariables(prefix);
         return configurationBuilder;
     }

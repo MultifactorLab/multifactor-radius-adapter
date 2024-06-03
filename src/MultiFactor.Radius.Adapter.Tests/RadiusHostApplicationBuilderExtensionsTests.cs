@@ -22,7 +22,7 @@ namespace MultiFactor.Radius.Adapter.Tests
             };
 
             act.Should().Throw<InvalidConfigurationException>()
-                .WithMessage("Configuration error: 'logging-level' element not found. Config name: 'General'");
+                .WithMessage("Configuration error: 'logging-level' element not found. Config name: 'multifactor-radius-adapter.dll'");
         }
     }
 }

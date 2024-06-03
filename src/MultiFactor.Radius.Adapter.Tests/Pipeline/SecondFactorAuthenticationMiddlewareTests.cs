@@ -14,6 +14,8 @@ using MultiFactor.Radius.Adapter.Tests.Fixtures;
 using MultiFactor.Radius.Adapter.Tests.Fixtures.ConfigLoading;
 using MultiFactor.Radius.Adapter.Tests.Fixtures.Radius;
 using System.Net;
+using MultiFactor.Radius.Adapter.Infrastructure.Configuration.ClientLevel;
+using MultiFactor.Radius.Adapter.Infrastructure.Configuration.RootLevel;
 
 namespace MultiFactor.Radius.Adapter.Tests.Pipeline;
 

@@ -11,6 +11,7 @@ using MultiFactor.Radius.Adapter.Services;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using MultiFactor.Radius.Adapter.Infrastructure.Configuration.RootLevel;
 
 namespace MultiFactor.Radius.Adapter.Server.Pipeline.PostProcessing;
 

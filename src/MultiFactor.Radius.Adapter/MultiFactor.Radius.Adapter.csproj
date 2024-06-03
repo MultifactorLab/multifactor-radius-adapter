@@ -6,6 +6,7 @@
 		<Authors>Multifactor</Authors>
 		<Description>Multifactor Radus Adapter</Description>
 		<Version>2.0.0</Version>
+		<DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
@@ -56,11 +57,13 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<Folder Include="clients\" />
+		<InternalsVisibleTo Include="MultiFactor.Radius.Adapter.Tests" />
 	</ItemGroup>
 
 	<ItemGroup>
-		<InternalsVisibleTo Include="MultiFactor.Radius.Adapter.Tests" />
+	  <Content Include="..\.dockerignore">
+	    <Link>.dockerignore</Link>
+	  </Content>
 	</ItemGroup>
 
 </Project>

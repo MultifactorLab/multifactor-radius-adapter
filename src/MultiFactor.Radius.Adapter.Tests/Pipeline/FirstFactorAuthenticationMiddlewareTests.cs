@@ -5,6 +5,7 @@ using MultiFactor.Radius.Adapter.Core.Framework.Context;
 using MultiFactor.Radius.Adapter.Core.Framework.Pipeline;
 using MultiFactor.Radius.Adapter.Core.Radius;
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration;
+using MultiFactor.Radius.Adapter.Infrastructure.Configuration.ClientLevel;
 using MultiFactor.Radius.Adapter.Server.Pipeline.FirstFactorAuthentication;
 using MultiFactor.Radius.Adapter.Server.Pipeline.FirstFactorAuthentication.Processing;
 using MultiFactor.Radius.Adapter.Tests.Fixtures;

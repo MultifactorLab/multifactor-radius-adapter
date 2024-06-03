@@ -10,6 +10,7 @@ using Serilog.Formatting;
 using Serilog.Formatting.Compact;
 using System;
 using System.IO;
+using MultiFactor.Radius.Adapter.Infrastructure.Configuration.RootLevel;
 
 namespace MultiFactor.Radius.Adapter.Infrastructure.Logging
 {
@@ -37,8 +38,9 @@ namespace MultiFactor.Radius.Adapter.Infrastructure.Logging
             var level = rootConfiguration.AppSettings.LoggingLevel;
             if (string.IsNullOrWhiteSpace(level))
             {
-                throw InvalidConfigurationException.For(x => x.AppSettings.LoggingLevel, "'{prop}' element not found. Config name: '{0}'",
-                    ConfigurationLiterals.RootConfigName);
+                throw InvalidConfigurationException.For(x => x.AppSettings.LoggingLevel, 
+                    "'{prop}' element not found. Config name: '{0}'",
+                    RootConfigurationFile.ConfigName);
             }
 
             SetLogLevel(levelSwitch, level);

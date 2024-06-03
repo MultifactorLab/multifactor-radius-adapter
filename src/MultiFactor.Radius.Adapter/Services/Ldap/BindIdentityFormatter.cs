@@ -5,6 +5,7 @@
 using MultiFactor.Radius.Adapter.Core.Services.Ldap;
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration;
 using System;
+using MultiFactor.Radius.Adapter.Infrastructure.Configuration.ClientLevel;
 
 namespace MultiFactor.Radius.Adapter.Services.Ldap
 {

@@ -7,6 +7,7 @@ using MultiFactor.Radius.Adapter.Infrastructure.Configuration;
 using MultiFactor.Radius.Adapter.Services.Ldap.Profile;
 using System;
 using System.Linq;
+using MultiFactor.Radius.Adapter.Infrastructure.Configuration.ClientLevel;
 
 namespace MultiFactor.Radius.Adapter.Services.Ldap.MembershipVerification
 {

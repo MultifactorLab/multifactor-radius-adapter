@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using MultiFactor.Radius.Adapter.Infrastructure.Configuration.ClientLevel;
 using static LdapForNet.Native.Native;
 
 namespace MultiFactor.Radius.Adapter.Services.Ldap.Profile;

@@ -40,6 +40,9 @@
     <None Update="Assets\clients\radius-reply-single.config">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="Assets\clients\client-minimal-for-overriding.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
   <ItemGroup>
