@@ -43,6 +43,9 @@
     <None Update="Assets\clients\client-minimal-for-overriding.config">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="Assets\clients\client minimal spaced.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
   <ItemGroup>

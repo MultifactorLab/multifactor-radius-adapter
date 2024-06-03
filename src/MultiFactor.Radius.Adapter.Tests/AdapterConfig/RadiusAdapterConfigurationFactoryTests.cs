@@ -86,6 +86,22 @@ public class RadiusAdapterConfigurationFactoryTests
             Assert.Equal("my key", config.AppSettings.MultifactorNasIdentifier);
             Assert.Equal("my secret", config.AppSettings.MultifactorSharedSecret);
         });
+    }    
+    
+    [Fact]
+    public void CreateClientWithSpacedName_OverrideByEnvVar_ShouldCreate()
+    {
+        TestEnvironmentVariables.With(env =>
+        {
+            env.SetEnvironmentVariable("rad_client-minimal-spaced_appsettings__RadiusClientNasIdentifier", 
+                "Linux");
+            
+            var path = TestEnvironment.GetAssetPath(TestAssetLocation.ClientsDirectory, 
+                "client-minimal-for-overriding.config");
+            var config = RadiusAdapterConfigurationFactory.Create(path, "client minimal spaced");
+        
+            Assert.Equal("Linux", config.AppSettings.RadiusClientNasIdentifier);
+        });
     }
     
     [Fact]
