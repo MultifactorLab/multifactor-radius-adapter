@@ -17,7 +17,7 @@ namespace MultiFactor.Radius.Adapter.Extensions;
 
 internal static class RadiusHostApplicationBuilderExtensions
 {
-    public static RadiusHostApplicationBuilder ConfigureApplication(this RadiusHostApplicationBuilder builder, Action<IServiceCollection> configureServices = null)
+    public static void ConfigureApplication(this RadiusHostApplicationBuilder builder, Action<IServiceCollection> configureServices = null)
     {
         if (builder is null)
         {
@@ -46,10 +46,9 @@ internal static class RadiusHostApplicationBuilderExtensions
         builder.Services.AddHttpServices();
 
         configureServices?.Invoke(builder.Services);
-        return builder;
     }
 
-    public static RadiusHostApplicationBuilder AddLogging(this RadiusHostApplicationBuilder builder)
+    public static void AddLogging(this RadiusHostApplicationBuilder builder)
     {
         var rootConfig = RootConfigurationProvider.GetRootConfiguration();
         var logger = SerilogLoggerFactory.CreateLogger(rootConfig);
@@ -57,7 +56,5 @@ internal static class RadiusHostApplicationBuilderExtensions
 
         builder.InternalHostApplicationBuilder.Logging.ClearProviders();
         builder.InternalHostApplicationBuilder.Logging.AddSerilog(logger);
-
-        return builder;
     }
 }

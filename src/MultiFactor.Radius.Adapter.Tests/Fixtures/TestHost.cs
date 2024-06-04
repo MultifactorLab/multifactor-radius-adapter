@@ -3,7 +3,6 @@ using Microsoft.Extensions.Hosting;
 using MultiFactor.Radius.Adapter.Core.Framework.Context;
 using MultiFactor.Radius.Adapter.Core.Framework.Pipeline;
 using MultiFactor.Radius.Adapter.Core.Radius;
-using MultiFactor.Radius.Adapter.Infrastructure.Configuration;
 using MultiFactor.Radius.Adapter.Server;
 using System.Net;
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration.ClientLevel;

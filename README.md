@@ -2,7 +2,7 @@
 
 # multifactor-radius-adapter
 
-_Also available in other languages: [Русский](README.ru.md)_
+_Also, available in other languages: [Русский](README.ru.md)_
 
 **multifactor-radius-adapter** is a RADIUS server for Linux. It allows you to quickly add multifactor authentication through RADIUS protocol to your VPN, VDI, RDP, and other resources.
 
@@ -189,30 +189,32 @@ The component's parameters are stored in ```/opt/multifactor/radius/multifactor-
 ### General Parameters
 
 ```xml
-<!-- The address and port (UDP) on which the adapter will receive authentication requests from clients -->
-<!-- If you specify 0.0.0.0, then the adapter will listen on all network interfaces -->
-<add key="adapter-server-endpoint" value="0.0.0.0:1812"/>
+<appSettings>
+  <!-- The address and port (UDP) on which the adapter will receive authentication requests from clients -->
+  <!-- If you specify 0.0.0.0, then the adapter will listen on all network interfaces -->
+  <add key="adapter-server-endpoint" value="0.0.0.0:1812"/>
 
-<!-- Shared secret to authenticate RADIUS clients -->
-<add key="radius-shared-secret" value=""/>
+  <!-- Shared secret to authenticate RADIUS clients -->
+  <add key="radius-shared-secret" value=""/>
 
-<!-- How to check the first factor: Active Directory, RADIUS or None (do not check) -->
-<add key="first-factor-authentication-source" value="ActiveDirectory"/>
+  <!-- How to check the first factor: Active Directory, RADIUS or None (do not check) -->
+  <add key="first-factor-authentication-source" value="ActiveDirectory"/>
 
-<!-- Multifactor API address -->
-<add key="multifactor-api-url" value="https://api.multifactor.ru"/>
-<!--Timeout for requests in the Multifactor API, the minimum value is 65 seconds-->
-<add key="multifactor-api-timeout" value="00:01:05"/>
-<!-- NAS-Identifier parameter to connect to the Multifactor API (found in user profile) -->
-<add key="multifactor-nas-identifier" value=""/>
-<!-- Shared Secret parameter to connect to the Multifactor API (found in user profile) -->
-<add key="multifactor-shared-secret" value=""/>
+  <!-- Multifactor API address -->
+  <add key="multifactor-api-url" value="https://api.multifactor.ru"/>
+  <!--Timeout for requests in the Multifactor API, the minimum value is 65 seconds-->
+  <add key="multifactor-api-timeout" value="00:01:05"/>
+  <!-- NAS-Identifier parameter to connect to the Multifactor API (found in user profile) -->
+  <add key="multifactor-nas-identifier" value=""/>
+  <!-- Shared Secret parameter to connect to the Multifactor API (found in user profile) -->
+  <add key="multifactor-shared-secret" value=""/>
 
-<!-- Use this option to access the Multifactor API via HTTP proxy (optional)-->
-<!--add key="multifactor-api-proxy" value="http://proxy:3128"/-->
+  <!-- Use this option to access the Multifactor API via HTTP proxy (optional)-->
+  <!--add key="multifactor-api-proxy" value="http://proxy:3128"/-->
 
-<!-- Logging level: 'Debug', 'Info', 'Warn', 'Error' -->
-<add key="logging-level" value="Debug"/>
+  <!-- Logging level: 'Debug', 'Info', 'Warn', 'Error' -->
+  <add key="logging-level" value="Debug"/>
+</appSettings>
 ```
 
 ### Active Directory Connection Parameters
@@ -220,35 +222,39 @@ The component's parameters are stored in ```/opt/multifactor/radius/multifactor-
 To check the first factor in the Active Directory domain, the following parameters apply:
 
 ```xml
-<!--ActiveDirectory authentication settings: for example domain.local on host 10.0.0.4 -->
-<add key="active-directory-domain" value="ldaps://10.0.0.4/DC=domain,DC=local"/>
+<appSettings>
+  <!--ActiveDirectory authentication settings: for example domain.local on host 10.0.0.4 -->
+  <add key="active-directory-domain" value="ldaps://10.0.0.4/DC=domain,DC=local"/>
 
-<!--Give access to users from specified group only (not checked if setting is removed)-->
-<add key="active-directory-group" value="VPN Users"/>
-<!--Require the second factor for users from a specified group only (second factor is required for users if the setting is removed)-->
-<add key="active-directory-2fa-group" value="2FA Users"/>
-<!--Use your users' phone numbers listed in Active Directory to send one-time SMS codes (not used if settings are removed)-->
-<!--add key="use-active-directory-user-phone" value="true"/-->
-<!--add key="use-active-directory-mobile-user-phone" value="true"/-->
+  <!--Give access to users from specified group only (not checked if setting is removed)-->
+  <add key="active-directory-group" value="VPN Users"/>
+  <!--Require the second factor for users from a specified group only (second factor is required for users if the setting is removed)-->
+  <add key="active-directory-2fa-group" value="2FA Users"/>
+  <!--Use your users' phone numbers listed in Active Directory to send one-time SMS codes (not used if settings are removed)-->
+  <!--add key="use-active-directory-user-phone" value="true"/-->
+  <!--add key="use-active-directory-mobile-user-phone" value="true"/-->
+</appSettings>
 ```
 
 When the ```use-active-directory-user-phone``` option is enabled, the component will use the phone recorded in the General tab. The format of the phone can be anything.
 
-<img src="https://multifactor.pro/img/radius-adapter/ra-ad-phone-source.png" width="300">
+<img src="https://multifactor.pro/img/radius-adapter/ra-ad-phone-source.png" alt="AD phone" width="300">
 
 When the ```use-active-directory-mobile-user-phone``` option is enabled, the component will use the phone recorded in the Telephones tab in the Mobile field. The format of the phone can also be any format.
 
-<img src="https://multifactor.pro/img/radius-adapter/ra-ad-mobile-phone-source.png" width="300">
+<img src="https://multifactor.pro/img/radius-adapter/ra-ad-mobile-phone-source.png" alt="AD mobile phone" width="300">
 
 ### External RADIUS Server Connection
 
 To check the first factor in RADIUS, for example in Network Policy Server, the following parameters are applicable:
 
 ```xml
-<!--Address (UDP) from which the adapter will connect to the server -->
-<add key="adapter-client-endpoint" value="192.168.0.1"/>
-<!--Server address and port (UDP) -->
-<add key="nps-server-endpoint" value="192.168.0.10:1812"/>
+<appSettings>
+  <!--Address (UDP) from which the adapter will connect to the server -->
+  <add key="adapter-client-endpoint" value="192.168.0.1"/>
+  <!--Server address and port (UDP) -->
+  <add key="nps-server-endpoint" value="192.168.0.10:1812"/>
+</appSettings>
 ```
 
 ### Optional RADIUS Attributes
@@ -271,14 +277,16 @@ You can specify attributes the component will pass further upon successful authe
 The following parameters will help you set up access to the MULTIFACTOR API when checking the second factor:
 
 ```xml
-<!-- Use the specified attribute as the user identity when checking the second factor-->
-<add key="use-attribute-as-identity" value="mail"/>
-<!-- Skip repeated authentications without requesting the second factor for 1 hour, 20 minutes, 10 seconds (caching is disabled if you remove the setting) -->
-<add key="authentication-cache-lifetime" value="01:20:10" />
-<!-- If the API is unavailable, skip the MULTIFACTOR without checking (by default), or deny access (false) -->
-<add key="bypass-second-factor-when-api-unreachable" value="true"/>
-<!-- Automatically assign MULTIFACTOR group membership to registering users -->
-<add key="sign-up-groups" value="group1;Group name 2"/>
+<appSettings>
+  <!-- Use the specified attribute as the user identity when checking the second factor-->
+  <add key="use-attribute-as-identity" value="mail"/>
+  <!-- Skip repeated authentications without requesting the second factor for 1 hour, 20 minutes, 10 seconds (caching is disabled if you remove the setting) -->
+  <add key="authentication-cache-lifetime" value="01:20:10" />
+  <!-- If the API is unavailable, skip the MULTIFACTOR without checking (by default), or deny access (false) -->
+  <add key="bypass-second-factor-when-api-unreachable" value="true"/>
+  <!-- Automatically assign MULTIFACTOR group membership to registering users -->
+  <add key="sign-up-groups" value="group1;Group name 2"/>
+</appSettings>
 ```
 
 ### Logging
@@ -286,10 +294,12 @@ The following parameters will help you set up access to the MULTIFACTOR API when
 There are such options to customize logging:
 
 ```xml
-<!--Allows you to customize the template of logs which get into the system log -->
-<add key="console-log-output-template" value="outputTemplate"/>
-<!--Allows you to customize the logs’ template which get into the file -->
-<add key="file-log-output-template" value="outputTemplate"/>
+<appSettings>
+  <!--Allows you to customize the template of logs which get into the system log -->
+  <add key="console-log-output-template" value="outputTemplate"/>
+  <!--Allows you to customize the logs’ template which get into the file -->
+  <add key="file-log-output-template" value="outputTemplate"/>
+</appSettings>
 ```
 
 As ```outputTemplate``` also acts text template which shows the logging system how the message should be formatted. For example
@@ -304,10 +314,12 @@ For more information [see this page.](https://github.com/serilog/serilog/wiki/Fo
 Moreover, logging can be provided in json:
 
 ```xml
-<add key="logging-format" value="format"/>
+<appSettings>
+  <add key="logging-format" value="format"/>
+</appSettings>
 ```
 
-Keep in mind that ```console-log-output-template``` and ```file-log-output-template``` settings are not applicable for the JSON log format, but its possible to choose from predefined formats. Here are possible values of the ```format``` parametr (register is not case-sensitive).
+Keep in mind that ```console-log-output-template``` and ```file-log-output-template``` settings are not applicable for the JSON log format, but it's possible to choose from predefined formats. Here are possible values of the ```format``` parametr (register is not case-sensitive).
 
 * ```Json``` or ```JsonUtc```. Compact logging, times in UTC.
 
@@ -347,6 +359,71 @@ Keep in mind that ```console-log-output-template``` and ```file-log-output-templ
      }
    }
    ```
+### Configuring the Adapter using Environment Variables
+
+There is another way to configure the Adapter - by setting environment variables.  
+This approach has a number of advantages:
+- independence from configuration files: solves the problem of possible overwriting of files;
+- easier containerization: just set a set of environment variables inside the container;
+- increased security: sensitive data can be transferred via variables without using the file system.
+
+When launched, the Adapter reads the configuration from the `multifactor-radius-adapter.dll.config` file, as well as from the `*.config` files located in the **/clients** folder.  
+After this, the adapter receives values from the environment and "overlays" them on top of the settings read from the settings files.  
+Thus, it turns out that values from environment variables overload values from settings files.  
+By the way, you don’t have to use settings files at all (leave them with default values): any settings can be described through environment variables.
+
+##### Examples
+
+Syntax:
+```shell
+# Linux
+export VAR=VALUE
+
+# Windows (PowerShell)
+$Env:VAR = VALUE
+```
+**VAR** - environment variable name, **VALUE** - variable value.  
+The `export` directive is needed to set the specified variable not only for the current shell, but also for all processes launched from this shell.
+
+To pass settings to the adapter via environment variables, you must specify the name correctly.  
+To transfer the setting to the main config (multifactor-radius-adapter.dll.config), the variable name should look like this:
+```shell
+export RAD_APPSETTINGS__FirstFactorAuthenticationSource=ActiveDirectory
+```
+**RAD_** - prefix.  
+**APPSETTINGS** - section inside the configuration file.  
+**FirstFactorAuthenticationSource** - name of a setting.  
+**__** - nesting separator.
+Case is **not important**.
+
+Alternative way:
+```xml
+<appsettings>
+  <add key="first-factor-authentication-source" value="ActiveDirectory" />
+</appsettings>
+```
+
+More complex example:
+```shell
+export RAD_RADIUSREPLY__ATTRIBUTES__ADD__0__NAME=Class
+export RAD_RADIUSREPLY__ATTRIBUTES__ADD__0__VALUE=users1
+```
+0 - an index (number) of element.
+
+Alternative way:
+```xml
+<RadiusReply>
+  <Attributes>
+    <add name="Class" value="users1" />
+  </Attributes>
+</RadiusReply>
+```
+
+If you need to pass setting to the client configuration, you must just insert configuration name after **RAD_** prefix. For example, for the configuration that is in the `my-rad.config` file, the variable name would look like this:  
+```shell
+export RAD_my-rad_APPSETTINGS__FirstFactorAuthenticationSource=ActiveDirectory
+```
+
 
 ## Start-Up
 
@@ -378,7 +455,7 @@ Use Radius Adapter Component to implement 2FA in one of the following scenarios:
 * Two-factor authentication for VPN devices [Cisco](https://multifactor.pro/docs/vpn/cisco-anyconnect-vpn-2fa/), [Fortigate](https://multifactor.pro/docs/vpn/fortigate-forticlient-vpn-2fa/), [CheckPoint](https://multifactor.pro/docs/vpn/checkpoint-remote-access-vpn-2fa/), Mikrotik, Huawei and others;
 * Two-factor authentication for [Windows VPN with Routing and Remote Access Service (RRAS)](https://multifactor.pro/docs/windows-2fa-rras-vpn/);
 * Two-factor authentication for [Microsoft Remote Desktop Gateway](https://multifactor.pro/docs/windows-2fa-remote-desktop-gateway/) ;
-* Two factor authentication for [VMware Horizon](https://multifactor.pro/docs/vmware-horizon-2fa/);
+* Two-factor authentication for [VMware Horizon](https://multifactor.pro/docs/vmware-horizon-2fa/);
 * [Citrix Gateway](https://multifactor.pro/docs/citrix-radius-2fa/) two-factor authentication;
 * Apache Guacamole two-factor authentication;
 * Two-factor authentication for Wi-Fi hotspots;

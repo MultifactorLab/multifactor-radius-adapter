@@ -1,6 +1,5 @@
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
-using MultiFactor.Radius.Adapter.Infrastructure.Configuration;
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Exceptions;
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Features.AuthenticatedClientCacheFeature;
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Features.PreAuthModeFeature;

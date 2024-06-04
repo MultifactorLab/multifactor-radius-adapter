@@ -1,5 +1,4 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
+﻿using Microsoft.Extensions.Hosting;
 using MultiFactor.Radius.Adapter.Core.Framework;
 using MultiFactor.Radius.Adapter.Extensions;
 using MultiFactor.Radius.Adapter.Server.Pipeline.AccessChallenge;
@@ -12,12 +11,6 @@ using MultiFactor.Radius.Adapter.Server.Pipeline.TransformUserName;
 using Serilog;
 using System;
 using System.Text;
-
-Log.Logger = new LoggerConfiguration()
-    .MinimumLevel
-    .Information()
-    .WriteTo.Console()
-    .CreateLogger();
 
 IHost host = null;
 
@@ -47,6 +40,8 @@ catch (Exception ex)
 
     await host?.StopAsync();
 }
+
+return;
 
 static string FlattenException(Exception exception)
 {

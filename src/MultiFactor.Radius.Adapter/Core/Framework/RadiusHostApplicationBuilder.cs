@@ -40,11 +40,11 @@ internal class RadiusHostApplicationBuilder
         Services.AddTransient(typeof(TMiddleware));
         RadiusRequestDelegate middleware(RadiusRequestDelegate next)
         {
-            return async context =>
+            return context =>
             {
                 if (context.Flags.TerminateFlag)
                 {
-                    return;
+                    return Task.CompletedTask;
                 }
 
                 TMiddleware middleware;
@@ -58,7 +58,7 @@ internal class RadiusHostApplicationBuilder
                     throw new InvalidOperationException($"Unable to create middleware {typeof(TMiddleware)}: {ex.Message}", ex);
                 }
 
-                await middleware.InvokeAsync(context, next);
+                return middleware.InvokeAsync(context, next);
             };
         }
 
@@ -67,7 +67,7 @@ internal class RadiusHostApplicationBuilder
     }
 
     /// <summary>
-    /// Builds the <see cref="IHost"/> and returns it from the internal host builder.
+    /// Builds <see cref="IHost"/> and returns it from the internal host builder.
     /// </summary>
     /// <returns></returns>
     public IHost Build()

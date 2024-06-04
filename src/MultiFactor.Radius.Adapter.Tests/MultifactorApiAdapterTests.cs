@@ -3,7 +3,6 @@ using MultiFactor.Radius.Adapter.Tests.Fixtures.Radius;
 using System.Net;
 using MultiFactor.Radius.Adapter.Services.MultiFactorApi;
 using MultiFactor.Radius.Adapter.Services;
-using MultiFactor.Radius.Adapter.Core.Radius;
 using MultiFactor.Radius.Adapter.Services.Ldap;
 using MultiFactor.Radius.Adapter.Services.MultiFactorApi.Dto;
 using MultiFactor.Radius.Adapter.Tests.Fixtures;
