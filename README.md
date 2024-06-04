@@ -396,6 +396,8 @@ export RAD_APPSETTINGS__FirstFactorAuthenticationSource=ActiveDirectory
 **__** - nesting separator.
 Case is **not important**.
 
+> Note: if the name of the configuration file contains whitespace characters, when forming the name for the environment variable, these spaces must be replaced with an underscore character: `my rad` -> `my_rad`.
+
 Alternative way:
 ```xml
 <appsettings>
