@@ -93,7 +93,7 @@ public class RadiusAdapterConfigurationFactoryTests
     {
         TestEnvironmentVariables.With(env =>
         {
-            env.SetEnvironmentVariable("rad_client_minimal_spaced_appsettings__RadiusClientNasIdentifier", 
+            env.SetEnvironmentVariable("rad_clientminimalspaced_appsettings__RadiusClientNasIdentifier", 
                 "Linux");
             
             var path = TestEnvironment.GetAssetPath(TestAssetLocation.ClientsDirectory, 

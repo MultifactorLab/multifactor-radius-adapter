@@ -42,8 +42,7 @@ internal static class ConfigurationBuilderExtensions
             return string.Empty;
         }
         
-        name = Regex.Replace(name, @"\s+", " ");
-        name = name.Replace(' ', '_');
+        name = Regex.Replace(name, @"\s+", string.Empty);
         return name;
     }
 }
