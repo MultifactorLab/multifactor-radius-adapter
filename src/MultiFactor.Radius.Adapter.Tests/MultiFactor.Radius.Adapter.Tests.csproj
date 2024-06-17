@@ -46,6 +46,9 @@
     <None Update="Assets\clients\client minimal spaced.config">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="Assets\clients\radius-reply-with-multiple-conditions.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
   <ItemGroup>

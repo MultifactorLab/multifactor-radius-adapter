@@ -3,6 +3,7 @@
 //https://github.com/MultifactorLab/multifactor-radius-adapter/blob/main/LICENSE.md
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using MultiFactor.Radius.Adapter.Core.Framework.Context;
 
@@ -30,17 +31,20 @@ public class RadiusReplyAttributeValue
     /// <summary>
     /// Is list of all user groups attribute
     /// </summary>
-    public bool IsMemberOf => LdapAttributeName?.ToLower() == "memberof";    
+    public bool IsMemberOf => LdapAttributeName?.ToLower() == "memberof";
 
+    private readonly List<string> _userGroupCondition = new();
     /// <summary>
     /// User group condition
     /// </summary>
-    public string UserGroupCondition { get; private set; }
+    public string[] UserGroupCondition => _userGroupCondition.ToArray();
+
+    private readonly List<string> _userNameCondition = new();
 
     /// <summary>
     /// User name condition
     /// </summary>
-    public string UserNameCondition { get; private set; }
+    public string[] UserNameCondition => _userNameCondition.ToArray();
 
     /// <summary>
     /// Const value with optional condition
@@ -93,27 +97,29 @@ public class RadiusReplyAttributeValue
             return context.Profile.Attributes.Has(LdapAttributeName);
         }
 
-        //if matched user name condition
-        if (!string.IsNullOrEmpty(UserNameCondition))
+        // if matched username condition
+        if (_userNameCondition.Count != 0)
         {
             var userName = context.UserName;
-            var isCanonical = Utils.IsCanicalUserName(UserNameCondition);
-            if (isCanonical)
-            {
-                userName = Utils.CanonicalizeUserName(userName);
-            }
+            return _userNameCondition.Any(Compare);
 
-            return string.Compare(userName, UserNameCondition, StringComparison.InvariantCultureIgnoreCase) == 0;
+            bool Compare(string conditionName)
+            {
+                var toMatch = Utils.IsCanicalUserName(conditionName)
+                    ? conditionName
+                    : Utils.CanonicalizeUserName(userName);
+
+                return string.Compare(toMatch, conditionName, StringComparison.InvariantCultureIgnoreCase) == 0;
+            }
         }
 
         //if matched user group condition
-        if (!string.IsNullOrEmpty(UserGroupCondition))
+        if (_userGroupCondition.Count != 0)
         {
-            var isInGroup = context
-                .UserGroups
-                .Any(g => string.Compare(g, UserGroupCondition, StringComparison.InvariantCultureIgnoreCase) == 0);
-
-            return isInGroup;
+            return UserGroupCondition.Intersect(
+                context.UserGroups,
+                StringComparer.OrdinalIgnoreCase
+            ).Any();
         }
 
         return true; //without conditions
@@ -123,7 +129,7 @@ public class RadiusReplyAttributeValue
     {
         if (IsMemberOf)
         {
-            return context.UserGroups.ToArray();
+            return context.UserGroups.Select(x => (object)x).ToArray();
         }
 
         if (FromLdap)
@@ -131,7 +137,7 @@ public class RadiusReplyAttributeValue
             return new object[] { context.Profile.Attributes.GetValue(LdapAttributeName) };
         }
 
-        return new object[] { Value };
+        return new [] { Value };
     }
 
     private void ParseConditionClause(string clause)
@@ -141,11 +147,13 @@ public class RadiusReplyAttributeValue
         switch (parts[0])
         {
             case "UserGroup":
-                UserGroupCondition = parts[1];
+                _userGroupCondition.AddRange(parts[1].Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries).Select(x => x.Trim()));
                 break;
+            
             case "UserName":
-                UserNameCondition = parts[1];
+                _userNameCondition.AddRange(parts[1].Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries).Select(x => x.Trim()));
                 break;
+            
             default:
                 throw new Exception($"Unknown condition '{clause}'");
         }

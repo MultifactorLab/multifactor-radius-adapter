@@ -80,7 +80,7 @@ internal class LdapAttributes : ILdapAttributes
         _attrs = new Dictionary<string, List<string>>();
         foreach (var attr in source.Keys)
         {
-            _attrs[attr] = new List<string>(source[attr]);
+            _attrs[ToLower(attr)] = new List<string>(source[attr]);
         }
     }
 
@@ -91,7 +91,7 @@ internal class LdapAttributes : ILdapAttributes
             throw new ArgumentNullException(nameof(attribute));
         }
         // ToLower(CultureInfo.InvariantCulture) - same as in the native DirectoryServices search result entry.
-        return _attrs.ContainsKey(attribute.ToLower(CultureInfo.InvariantCulture));
+        return _attrs.ContainsKey(ToLower(attribute));
     }
 
     public string GetValue(string attribute)
@@ -101,7 +101,7 @@ internal class LdapAttributes : ILdapAttributes
             throw new ArgumentNullException(nameof(attribute));
         }
 
-        var attr = attribute.ToLower(CultureInfo.InvariantCulture);
+        var attr = ToLower(attribute);
         if (!_attrs.ContainsKey(attr))
         {
             return default;
@@ -117,8 +117,7 @@ internal class LdapAttributes : ILdapAttributes
             throw new ArgumentNullException(nameof(attribute));
         }
 
-        var attr = attribute.ToLower(CultureInfo.InvariantCulture);
-
+        var attr = ToLower(attribute);
         if (!_attrs.ContainsKey(attr))
         {
             return new ReadOnlyCollection<string>(Array.Empty<string>());
@@ -139,7 +138,7 @@ internal class LdapAttributes : ILdapAttributes
             throw new ArgumentNullException(nameof(value));
         }
 
-        var attr = attribute.ToLower(CultureInfo.InvariantCulture);
+        var attr = ToLower(attribute);
         if (!_attrs.ContainsKey(attr))
         {
             _attrs[attr] = new List<string>();
@@ -161,7 +160,7 @@ internal class LdapAttributes : ILdapAttributes
             throw new ArgumentNullException(nameof(attribute));
         }
 
-        var attr = attribute.ToLower(CultureInfo.InvariantCulture);
+        var attr = ToLower(attribute);
         if (_attrs.ContainsKey(attr))
         {
             _attrs[attr].Remove(attribute);
@@ -177,9 +176,11 @@ internal class LdapAttributes : ILdapAttributes
             throw new ArgumentNullException(nameof(attribute));
         }
 
-        var attr = attribute.ToLower(CultureInfo.InvariantCulture);
+        var attr = ToLower(attribute);
         _attrs[attr] = new List<string>(value);
 
         return this;
     }
+    
+    private static string ToLower(string s) => s.ToLower(CultureInfo.InvariantCulture);
 }
