@@ -68,7 +68,7 @@ namespace MultiFactor.Radius.Adapter.Services.BindIdentityFormatting
 
         private string FormatIdentityLdap(LdapIdentity user)
         {
-            if (user.Type == IdentityType.UserPrincipalName)
+            if (user.Type == IdentityType.UserPrincipalName || user.Type == IdentityType.DistinguishedName)
             {
                 return user.Name;
             }
