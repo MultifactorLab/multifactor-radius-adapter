@@ -30,15 +30,22 @@ namespace MultiFactor.Radius.Adapter.Services.BindIdentityFormatting
                 throw new ArgumentNullException(nameof(ldapUri));
             }
 
-            return _clientConfiguration.FirstFactorAuthenticationSource switch
+            var authSource = _clientConfiguration.FirstFactorAuthenticationSource;
+            var isFreeIpa = _clientConfiguration.IsFreeIpa && authSource != Configuration.AuthenticationSource.ActiveDirectory;
+
+            if (isFreeIpa || authSource == Configuration.AuthenticationSource.Ldap)
+            {
+                return FormatIdentityLdap(user);
+            }
+
+            return authSource switch
             {
                 Configuration.AuthenticationSource.None or Configuration.AuthenticationSource.ActiveDirectory => FormatIdentityAD(user, ldapUri),
-                Configuration.AuthenticationSource.Ldap => FormatIdentityLdap(user),
                 _ => user.Name,
             };
         }
 
-        private static string FormatIdentityAD(LdapIdentity user, string ldapUri)
+        private string FormatIdentityAD(LdapIdentity user, string ldapUri)
         {
             if (user.Type == IdentityType.UserPrincipalName)
             {
@@ -61,7 +68,7 @@ namespace MultiFactor.Radius.Adapter.Services.BindIdentityFormatting
 
         private string FormatIdentityLdap(LdapIdentity user)
         {
-            if (user.Type == IdentityType.UserPrincipalName)
+            if (user.Type == IdentityType.UserPrincipalName || user.Type == IdentityType.DistinguishedName)
             {
                 return user.Name;
             }

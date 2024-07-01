@@ -93,14 +93,17 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap
             };
         }
 
-        public static LdapNames Create(AuthenticationSource source)
+        public static LdapNames Create(AuthenticationSource source, bool isFreeIpa)
         {
+            if (isFreeIpa || source == AuthenticationSource.Ldap)
+            {
+                return new LdapNames(LdapServerType.Generic);
+            }
             return source switch
             {
                 AuthenticationSource.ActiveDirectory
                     or AuthenticationSource.Radius
                     or AuthenticationSource.None => new LdapNames(LdapServerType.ActiveDirectory),
-                AuthenticationSource.Ldap => new LdapNames(LdapServerType.Generic),
                 _ => throw new NotImplementedException(source.ToString()),
             };
         }

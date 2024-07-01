@@ -161,6 +161,15 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="Assets\clients\client-format-dn-with-ad.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Assets\clients\client-ldap-bind-dn-with-ldap.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Assets\clients\client-ldap-bind-dn-with-ad.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="Assets\clients\pre-auth-method\client-pre-auth-method-otp-with-no-cred-delay.config">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

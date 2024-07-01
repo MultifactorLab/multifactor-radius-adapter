@@ -1,7 +1,9 @@
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
+using MultiFactor.Radius.Adapter.Configuration;
 using MultiFactor.Radius.Adapter.Configuration.Core;
 using MultiFactor.Radius.Adapter.Configuration.Features.PreAuthModeFeature;
+using MultiFactor.Radius.Adapter.Core;
 using MultiFactor.Radius.Adapter.Core.Exceptions;
 using MultiFactor.Radius.Adapter.Extensions;
 using MultiFactor.Radius.Adapter.Framework;
@@ -352,5 +354,47 @@ public partial class ConfigurationLoadingTests
         var cli = conf.Clients.First();
 
         Assert.Equal(PreAuthMode.Otp, cli.PreAuthnMode.Mode);
+    }
+
+
+    [Fact]
+    public void LoadActiveDirectoryFirstFactorWithLdapBindDN_ShouldThrow()
+    {
+        var host = TestHostFactory.CreateHost(builder =>
+        {
+            builder.Services.Configure<TestConfigProviderOptions>(x =>
+            {
+                x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-multi.config");
+                x.ClientConfigFilePaths = new[]
+                {
+                    TestEnvironment.GetAssetPath(TestAssetLocation.ClientsDirectory, "client-ldap-bind-dn-with-ad.config")
+                };
+            });
+        });
+
+        var act = () => host.Service<IServiceConfiguration>();
+
+        act.Should().Throw<InvalidConfigurationException>().WithMessage("Configuration error: " +
+            $"'{Literals.Configuration.LdapBindDn}' shouldn't be used in combination with {Literals.Configuration.FirstFactorAuthSource} == {AuthenticationSource.ActiveDirectory}");
+    }
+
+    [Fact]
+    public void LoadNotActiveDirectoryFirstFactorWithLdapBindDN_ShouldSuccess()
+    {
+        var host = TestHostFactory.CreateHost(builder =>
+        {
+            builder.Services.Configure<TestConfigProviderOptions>(x =>
+            {
+                x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-multi.config");
+                x.ClientConfigFilePaths = new[]
+                {
+                    TestEnvironment.GetAssetPath(TestAssetLocation.ClientsDirectory, "client-ldap-bind-dn-with-ldap.config")
+                };
+            });
+        });
+
+        var conf = host.Service<IServiceConfiguration>();
+        var cli = conf.Clients.First();
+        cli.LdapBindDn.Should().NotBeNull();
     }
 }
