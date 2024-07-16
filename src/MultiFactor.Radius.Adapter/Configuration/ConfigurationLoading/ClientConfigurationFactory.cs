@@ -1,4 +1,4 @@
-﻿//Copyright(c) 2020 MultiFactor
+//Copyright(c) 2020 MultiFactor
 //Please see licence at 
 //https://github.com/MultifactorLab/multifactor-radius-adapter/blob/main/LICENSE.md
 
@@ -177,17 +177,28 @@ public class ClientConfigurationFactory
     private static void LoadUserNameTransformRulesSection(Config configuration, ClientConfiguration builder)
     {
         var userNameTransformRulesSection = configuration.GetSection("UserNameTransformRules") as UserNameTransformRulesSection;
-
-        if (userNameTransformRulesSection?.Members != null)
+        if(userNameTransformRulesSection == null)
         {
-            foreach (var member in userNameTransformRulesSection?.Members)
+            return;
+        }
+
+        var fillRules = (UserNameTransformRulesCollection collection, UserNameTransformRulesScope scope) =>
+        {
+            if (collection == null || collection.Count == 0)
+            {
+                return;
+            }
+            foreach (var member in collection)
             {
                 if (member is UserNameTransformRulesElement rule)
                 {
-                    builder.AddUserNameTransformRule(rule);
+                    builder.AddUserNameTransformRule(rule, scope);
                 }
             }
-        }
+        };
+        fillRules(userNameTransformRulesSection?.Members, UserNameTransformRulesScope.Both);
+        fillRules(userNameTransformRulesSection?.BeforeFirstFactor?.Members, UserNameTransformRulesScope.BeforeFirstFactor);
+        fillRules(userNameTransformRulesSection?.BeforeSecondFactor?.Members, UserNameTransformRulesScope.BeforeSecondFactor);
     }
 
     private void LoadActiveDirectoryAuthenticationSourceSettings(ClientConfiguration builder, AppSettingsSection appSettings)

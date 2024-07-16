@@ -62,6 +62,8 @@ namespace MultiFactor.Radius.Adapter.Framework.Context
         /// User-Name RADIUS attribute value.
         /// </summary>
         public string UserName => RequestPacket.UserName;
+        public string OriginalUserName { get; init; }
+
 
         public UserPassphrase Passphrase { get; private set; }
 

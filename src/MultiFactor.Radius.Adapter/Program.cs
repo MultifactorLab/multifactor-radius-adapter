@@ -30,6 +30,7 @@ try
     builder.UseMiddleware<AnonymousFirstFactorAuthenticationMiddleware>();
     builder.UseMiddleware<PreSecondFactorAuthenticationMiddleware>();
     builder.UseMiddleware<FirstFactorAuthenticationMiddleware>();
+    builder.UseMiddleware<SecondFactorTransformUserNameMiddleware>();
     builder.UseMiddleware<SecondFactorAuthenticationMiddleware>();
 
     host = builder.Build();

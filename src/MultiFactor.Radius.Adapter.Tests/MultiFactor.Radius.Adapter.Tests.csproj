@@ -9,6 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Assets\clients\username-transformation-rule-before-first-fa.config" />
     <None Remove="Assets\root-empty-adapter-server-endpoint.config" />
     <None Remove="Assets\root-empty-first-factor-authentication-source.config" />
     <None Remove="Assets\root-empty-logging-level.config" />
@@ -25,10 +26,20 @@
     <None Remove="Assets\root-single-ffa-ad.config" />
     <None Remove="Assets\root-valid-credential-delay-0.config" />
     <None Remove="Assets\root-valid-credential-delay-1-2.config" />
+    <None Remove="Assets\root-username-transformation-rules-before-first-fa.config" />
     <None Remove="Assets\root-wrong-adapter-server-endpoint.config" />
     <None Remove="Assets\root-wrong-invalid-credential-delay.config" />
     <None Remove="Assets\root-wrong-load-active-directory-nested-groups.config" />
     <None Remove="Assets\root-wrong-privacy-mode.config" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Assets\clients\username-transformation-rule-before-first-fa.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Assets\clients\username-transformation-rule-legacy.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
   <ItemGroup>

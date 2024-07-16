@@ -1,4 +1,4 @@
-﻿using MultiFactor.Radius.Adapter.Configuration.Features.AuthenticatedClientCacheFeature;
+using MultiFactor.Radius.Adapter.Configuration.Features.AuthenticatedClientCacheFeature;
 using MultiFactor.Radius.Adapter.Configuration.Features.PreAuthModeFeature;
 using MultiFactor.Radius.Adapter.Configuration.Features.PrivacyModeFeature;
 using MultiFactor.Radius.Adapter.Configuration.Features.RandomWaiterFeature;
@@ -35,7 +35,7 @@ namespace MultiFactor.Radius.Adapter.Configuration.Core
         IPEndPoint ServiceClientEndpoint { get; }
         string SignUpGroups { get; }
         string[] SplittedActiveDirectoryDomains { get; }
-        UserNameTransformRulesElement[] UserNameTransformRules { get; }
+        UserNameTransformRules UserNameTransformRules { get; }
         public string TwoFAIdentityAttribute { get; }
         public bool UseIdentityAttribute => !string.IsNullOrEmpty(TwoFAIdentityAttribute);
         bool ShouldLoadUserGroups();
