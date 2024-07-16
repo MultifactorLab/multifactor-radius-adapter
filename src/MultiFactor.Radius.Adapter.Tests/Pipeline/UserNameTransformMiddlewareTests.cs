@@ -1,11 +1,13 @@
-﻿using FluentAssertions;
+﻿using Elastic.CommonSchema;
+using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Moq;
 using MultiFactor.Radius.Adapter.Configuration.Core;
-using MultiFactor.Radius.Adapter.Core.Pipeline;
+using MultiFactor.Radius.Adapter.Framework.Context;
+using MultiFactor.Radius.Adapter.Framework.Pipeline;
 using MultiFactor.Radius.Adapter.Server;
-using MultiFactor.Radius.Adapter.Server.Pipeline;
+using MultiFactor.Radius.Adapter.Server.Pipeline.TransformUserName;
 using MultiFactor.Radius.Adapter.Tests.Fixtures;
 using MultiFactor.Radius.Adapter.Tests.Fixtures.ConfigLoading;
 using MultiFactor.Radius.Adapter.Tests.Fixtures.Radius;
@@ -14,13 +16,14 @@ namespace MultiFactor.Radius.Adapter.Tests.Pipeline
 {
     public class UserNameTransformMiddlewareTests
     {
-        private IHost CreateHost(string asset)
+        private TestHost CreateHost(string asset)
         {
-            return TestHostFactory.CreateHost(services =>
+            return TestHostFactory.CreateHost(builder =>
             {
-                services.RemoveService<IRootConfigurationProvider>().AddSingleton<IRootConfigurationProvider, TestRootConfigProvider>();
-                services.RemoveService<IClientConfigurationsProvider>().AddSingleton<IClientConfigurationsProvider, TestClientConfigsProvider>();
-                services.Configure<TestConfigProviderOptions>(x =>
+                builder.Services.RemoveService<IRootConfigurationProvider>().AddSingleton<IRootConfigurationProvider, TestRootConfigProvider>();
+                builder.Services.RemoveService<IClientConfigurationsProvider>().AddSingleton<IClientConfigurationsProvider, TestClientConfigsProvider>();
+                builder.Services.AddSingleton<TransformUserNameMiddleware>();
+                builder.Services.Configure<TestConfigProviderOptions>(x =>
                 {
                     x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-single.config");
                     x.ClientConfigFilePaths = new[]
@@ -37,16 +40,14 @@ namespace MultiFactor.Radius.Adapter.Tests.Pipeline
         {
             var host = CreateHost(asset);
 
-            var config = host.Services.GetRequiredService<IServiceConfiguration>();
+            var config = host.Service<IServiceConfiguration>();
             var responseSender = new Mock<IRadiusResponseSender>();
-            var context = new RadiusContext(config.Clients[0], responseSender.Object, new Mock<IServiceProvider>().Object)
+            var context = new RadiusContext(RadiusPacketFactory.AccessRequest(), config.Clients[0], new Mock<IServiceProvider>().Object)
             {
-                RequestPacket = RadiusPacketFactory.AccessRequest(),
-                UserName = from,
                 OriginalUserName = from
             };
 
-            var middleware = host.Services.GetRequiredService<TransformUserNameMiddleware>();
+            var middleware = host.Service<TransformUserNameMiddleware>();
             var nextDelegate = new Mock<RadiusRequestDelegate>();
             await middleware.InvokeAsync(context, nextDelegate.Object);
             context.UserName.Should().BeEquivalentTo(to);
@@ -57,23 +58,20 @@ namespace MultiFactor.Radius.Adapter.Tests.Pipeline
         public async Task Invoke_LegacyShouldChangeBothFactors(string asset, string from, string to)
         {
             var host = CreateHost(asset);
-            var config = host.Services.GetRequiredService<IServiceConfiguration>();
+            var config = host.Service<IServiceConfiguration>();
             var responseSender = new Mock<IRadiusResponseSender>();
-            var context = new RadiusContext(config.Clients[0], responseSender.Object, new Mock<IServiceProvider>().Object)
+            var context = new RadiusContext(RadiusPacketFactory.AccessRequest(), config.Clients[0], new Mock<IServiceProvider>().Object)
             {
-                RequestPacket = RadiusPacketFactory.AccessRequest(),
-                UserName = from,
                 OriginalUserName = from
             };
-
-            var middleware = host.Services.GetRequiredService<TransformUserNameMiddleware>();
+            var middleware = host.Service<TransformUserNameMiddleware>();
             var nextDelegate = new Mock<RadiusRequestDelegate>();
-            context.ClientConfiguration.UserNameTransformRules.BeforeFirstFactor.Length.Should().BeGreaterThan(0);
-            context.ClientConfiguration.UserNameTransformRules.BeforeSecondFactor.Length.Should().BeGreaterThan(0);
+            context.Configuration.UserNameTransformRules.BeforeFirstFactor.Length.Should().BeGreaterThan(0);
+            context.Configuration.UserNameTransformRules.BeforeSecondFactor.Length.Should().BeGreaterThan(0);
             await middleware.InvokeAsync(context, nextDelegate.Object);
             context.UserName.Should().BeEquivalentTo(to);
 
-            middleware = host.Services.GetRequiredService<TransformUserNameMiddleware>();
+            middleware = host.Service<TransformUserNameMiddleware>();
         }
 
     }
