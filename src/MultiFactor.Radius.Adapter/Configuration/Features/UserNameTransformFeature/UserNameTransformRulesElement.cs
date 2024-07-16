@@ -1,4 +1,4 @@
-﻿//Copyright(c) 2022 MultiFactor
+//Copyright(c) 2022 MultiFactor
 //Please see licence at 
 //https://github.com/MultifactorLab/multifactor-radius-adapter/blob/main/LICENSE.md
 
@@ -15,6 +15,11 @@ namespace MultiFactor.Radius.Adapter.Configuration.Features.UserNameTransformFea
         public string Replace => (string)this["replace"];
 
         [ConfigurationProperty("count", IsKey = false, IsRequired = false)]
-        public int? Count => (int?)this["count"];
+        public int? Count
+        {
+            get { return (int?)this["count"]; }
+        }
+
+        public UserNameTransformRulesScope Scope = UserNameTransformRulesScope.Both;
     }
 }
