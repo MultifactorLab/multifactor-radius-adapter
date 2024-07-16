@@ -3,14 +3,15 @@
 //https://github.com/MultifactorLab/multifactor-radius-adapter/blob/main/LICENSE.md
 
 using MultiFactor.Radius.Adapter.Configuration.Features.UserNameTransformFeature;
+using MultiFactor.Radius.Adapter.Framework.Context;
 
-namespace MultiFactor.Radius.Adapter.Server.Pipeline
+namespace MultiFactor.Radius.Adapter.Server.Pipeline.TransformUserName
 {
-    public class SecondFactorUserNameTransformMiddleware : TransformUserNameMiddleware
+    public class SecondFactorTransformUserNameMiddleware : TransformUserNameMiddleware
     {
         protected override UserNameTransformRule[] GetConfigurationRules(RadiusContext context)
         {
-            return context.ClientConfiguration.UserNameTransformRules.BeforeSecondFactor;
+            return context.Configuration.UserNameTransformRules.BeforeSecondFactor;
         }
     }
 }
