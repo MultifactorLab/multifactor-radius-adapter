@@ -372,6 +372,14 @@ After this, the adapter receives values from the environment and "overlays" them
 Thus, it turns out that values from environment variables overload values from settings files.  
 By the way, you don’t have to use settings files at all (leave them with default values): any settings can be described through environment variables.
 
+To allow the adapter to read settings for multi-client mode from environment variables, you should place client configuration files into the `clients` folder, but you can keep them empty.  
+Here is an example of an empty file:
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+</configuration>
+```
+
 ##### Examples
 
 Syntax:
@@ -396,7 +404,7 @@ export RAD_APPSETTINGS__FirstFactorAuthenticationSource=ActiveDirectory
 **__** - nesting separator.
 Case is **not important**.
 
-> Note: if the name of the configuration file contains whitespace characters, when forming the name for the environment variable, these spaces must be replaced with an underscore character: `my rad` -> `my_rad`.
+> Note: if the name of the configuration file contains whitespace characters, when forming the name for the environment variable, these spaces must be ignored: `my rad` -> `myrad`.
 
 Alternative way:
 ```xml
