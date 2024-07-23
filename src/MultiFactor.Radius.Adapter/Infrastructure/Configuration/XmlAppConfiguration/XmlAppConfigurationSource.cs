@@ -5,7 +5,6 @@
 using Microsoft.Extensions.Configuration;
 using MultiFactor.Radius.Adapter.Core.Extensions;
 using System;
-using System.IO;
 using System.Linq;
 using System.Xml.Linq;
 
@@ -26,8 +25,25 @@ internal class XmlAppConfigurationSource : ConfigurationProvider, IConfiguration
 
     public override void Load()
     {
+        try
+        {
+            LoadInternal();
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"Failed to load configuration file '{_path.Path}'", ex);
+        }
+    }
+
+    private void LoadInternal()
+    {
         var xml = XDocument.Load(_path);
         var root = xml.Root;
+        
+        if (root is null)
+        {
+            throw new Exception("Root XML element not found");
+        }
 
         var appSettings = root.Element(_appSettingsElement);
         if (appSettings != null)
@@ -45,15 +61,7 @@ internal class XmlAppConfigurationSource : ConfigurationProvider, IConfiguration
 
         foreach (var section in sections)
         {
-            try
-            {
-                FillSection(section);
-            }
-            // убрать срань
-            catch (StackOverflowException ex)
-            {
-                throw new Exception($"Section '{section.Name}' has too many levels of nested nodes", ex);
-            }
+            FillSection(section);
         }
     }
 

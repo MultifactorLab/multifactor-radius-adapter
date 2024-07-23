@@ -11,6 +11,7 @@ using MultiFactor.Radius.Adapter.Server.Pipeline.TransformUserName;
 using Serilog;
 using System;
 using System.Text;
+using System.Threading.Tasks;
 
 IHost host = null;
 
@@ -38,7 +39,7 @@ catch (Exception ex)
 
     Log.Logger.Error(ex, "Unable to start: {Message:l}", errorMessage);
 
-    await host?.StopAsync();
+    await (host?.StopAsync() ?? Task.CompletedTask);
 }
 
 return;

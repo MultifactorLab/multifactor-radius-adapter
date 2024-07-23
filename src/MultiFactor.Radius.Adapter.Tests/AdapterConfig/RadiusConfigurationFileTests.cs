@@ -56,7 +56,7 @@ public class RadiusConfigurationFileTests
     }
     
     [Fact]
-    public void Cast_ToStringFromCorrectRadConfFile_ShouldThrow()
+    public void Cast_ToStringFromCorrectRadConfFile_ShouldNotThrow()
     {
         RadiusConfigurationFile file = new("dir/file.config");
         var s = (string)file;
