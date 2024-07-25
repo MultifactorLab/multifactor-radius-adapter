@@ -2,10 +2,9 @@
   "profiles": {
     "MultiFactor.Radius.Adapter": {
       "commandName": "Project",
-      "launchBrowser": true,
+      "launchBrowser": false,
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development",
-        "RADPTR_MY.RADIUS_WIN__configuration__appSettings__service-account-user": "MY User"
+        "ASPNETCORE_ENVIRONMENT": "Development"
       },
       "applicationUrl": "https://localhost:62468;http://localhost:62469"
     },
