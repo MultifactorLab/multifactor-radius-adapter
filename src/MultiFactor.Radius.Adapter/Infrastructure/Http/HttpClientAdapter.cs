@@ -40,10 +40,6 @@ namespace MultiFactor.Radius.Adapter.Infrastructure.Http
             using var response = await cli.SendAsync(request);
 
             response.EnsureSuccessStatusCode();
-            if (response.Content == null)
-            {
-                return default;
-            }
 
             var parsed = await DeserializeAsync<T>(response.Content);
             _logger.LogDebug("Received response from API: {@response}", parsed);

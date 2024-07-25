@@ -33,7 +33,9 @@ Windows version of the component is available in our [MultiFactor.Radius.Adapter
   * [External RADIUS Server Connection](#external-radius-server-connection)
   * [Optional RADIUS Attributes](#optional-radius-attributes)
   * [Second factor verification parameters](#second-factor-verification-parameters)
+  * [2FA before 1FA](#second-factor-authentication-before-first-factor-authentication)
   * [Customize logging](#logging)
+  * [Environment variables](#configuring-the-adapter-using-environment-variables)
 * [Start-Up](#start-up)
 * [Logs](#logs)
 * [Limitations of Active Directory Integration](#limitations-of-active-directory-integration)
@@ -286,6 +288,54 @@ The following parameters will help you set up access to the MULTIFACTOR API when
   <add key="bypass-second-factor-when-api-unreachable" value="true"/>
   <!-- Automatically assign MULTIFACTOR group membership to registering users -->
   <add key="sign-up-groups" value="group1;Group name 2"/>
+</appSettings>
+```
+
+### Second Factor Authentication before First Factor Authentication
+
+The Adapter now supports new mode: Second Factor Authentication before First Factor Authentication.
+If this mode is enabled, the user will have to confirm the second factor before he can proceed to confirm the first (login/password).
+All current features such as BYPASS and INLINE ENROLLMENT are available in the new mode as well.
+
+> Note: The Second Factor Authentication before First Factor Authentication mode is not available for **Winlogon** and **RDGW** resources.
+
+All available methods - push, telegram, otp - specifies the preferred method for the current user during the authentication session on the Multifactor Cloud side. This means that the specified method will be preferred. But if this method is not available, the next one will be used according to priority.
+
+In **otp** mode, the user must enter the OTP code in the `User-Password` attribute along with the password. If no password is required, the user only needs to enter the OTP code.  
+Examples of `User-Password` attribute content:
+
+- password + otp: mypassword123456
+- otp only: 123456
+
+#### Configuration
+
+You can activate this mode by adding the following option to the client config:  
+`<add key="pre-authentication-method" value="METHOD"/>`
+Allowed **METHOD** values: none (by default), push, telegram, otp.
+
+If the mode is enabled (push, telegram, otp) it is necessary to add invalid credential delay settings in root or client level config:
+`<add key="invalid-credential-delay" value="DELAY"/>`  
+The minimal value of **DELAY** must be 2.
+
+#### Configuration examples
+
+```xml
+<appSettings>
+  <!-- feature disabled -->
+  <add key="pre-authentication-method" value="none"/>
+  <add key="invalid-credential-delay" value="0"/>
+  
+  <!-- push -->
+  <add key="pre-authentication-method" value="push"/>
+  <add key="invalid-credential-delay" value="2"/>
+  
+  <!-- telegram -->
+  <add key="pre-authentication-method" value="telegram"/>
+  <add key="invalid-credential-delay" value="3-5"/>
+  
+  <!-- otp -->
+  <add key="pre-authentication-method" value="otp"/>
+  <add key="invalid-credential-delay" value="4"/>
 </appSettings>
 ```
 

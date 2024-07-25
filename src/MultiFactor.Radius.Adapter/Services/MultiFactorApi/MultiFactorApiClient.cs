@@ -58,9 +58,12 @@ namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi
 
         private async Task<AccessRequestDto> SendRequest(string url, object payload, BasicAuthHeaderValue auth)
         {
+            var trace = $"rds-{Guid.NewGuid()}";
+            using var scope = _logger.BeginScope(new Dictionary<string, object>(1) { { "mf-trace-id", trace } });
             var headers = new Dictionary<string, string>
             {
-                {"Authorization", $"Basic {auth.GetBase64()}" }
+                {"Authorization", $"Basic {auth.GetBase64()}" },
+                {"mf-trace-id", trace }
             };
 
             try
