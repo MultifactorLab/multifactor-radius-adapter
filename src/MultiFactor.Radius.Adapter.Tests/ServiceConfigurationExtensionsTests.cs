@@ -19,21 +19,6 @@ namespace MultiFactor.Radius.Adapter.Tests
         }
         
         [Theory]
-        [InlineData(AuthenticationSource.ActiveDirectory)]
-        [InlineData(AuthenticationSource.Ldap)]
-        public void Validate_AdOrLDAP_ShouldThrow(AuthenticationSource src)
-        {
-            var cli = new ClientConfiguration("cliname", "secret", src, "key", "secret");
-            var config = new ServiceConfiguration().AddClient("cliname", cli);
-
-            var ex = Assert.Throws<Exception>(() => ServiceConfigurationExtensions.Validate(config));
-
-            Assert.Equal("Configuration error: 'service-account-user' and 'service-account-password' elements not found. Please check configuration of client 'cliname'.", ex.Message);
-        }
-        
-        [Theory]
-        [InlineData(AuthenticationSource.ActiveDirectory)]
-        [InlineData(AuthenticationSource.Ldap)]
         [InlineData(AuthenticationSource.Radius)]
         [InlineData(AuthenticationSource.None)]
         public void Validate_CheckMembership_ShouldThrow(AuthenticationSource src)

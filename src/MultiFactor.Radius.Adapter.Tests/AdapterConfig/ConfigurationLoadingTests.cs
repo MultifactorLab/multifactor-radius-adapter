@@ -1,18 +1,12 @@
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
-using MultiFactor.Radius.Adapter.Configuration;
-using MultiFactor.Radius.Adapter.Configuration.Core;
-using MultiFactor.Radius.Adapter.Configuration.Features.PreAuthModeFeature;
-using MultiFactor.Radius.Adapter.Core;
-using MultiFactor.Radius.Adapter.Core.Exceptions;
-using MultiFactor.Radius.Adapter.Extensions;
-using MultiFactor.Radius.Adapter.Framework;
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Exceptions;
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Features.AuthenticatedClientCacheFeature;
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Features.PreAuthModeFeature;
 using MultiFactor.Radius.Adapter.Tests.Fixtures;
 using MultiFactor.Radius.Adapter.Tests.Fixtures.ConfigLoading;
 using System.Net;
+using MultiFactor.Radius.Adapter.Infrastructure.Configuration;
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration.RootLevel;
 
 namespace MultiFactor.Radius.Adapter.Tests.AdapterConfig;
@@ -861,7 +855,7 @@ public partial class ConfigurationLoadingTests
         var act = () => host.Service<IServiceConfiguration>();
 
         act.Should().Throw<InvalidConfigurationException>().WithMessage("Configuration error: " +
-            $"'{Literals.Configuration.LdapBindDn}' shouldn't be used in combination with {Literals.Configuration.FirstFactorAuthSource} == {AuthenticationSource.ActiveDirectory}");
+            $"'ldap-bind-dn' shouldn't be used in combination with 'first-factor-authentication-source' == {AuthenticationSource.ActiveDirectory}");
     }
 
     [Fact]

@@ -52,11 +52,11 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap
                 return user.Name;
             }
 
-            //try create upn from domain name
+            //try to create upn from domain name
             if (Uri.IsWellFormedUriString(ldapUri, UriKind.Absolute))
             {
                 var uri = new Uri(ldapUri);
-                if (uri.PathAndQuery != null && uri.PathAndQuery != "/")
+                if (uri.PathAndQuery != "/")
                 {
                     var fqdn = LdapIdentity.DnToFqdn(uri.PathAndQuery);
                     return $"{user.Name}@{fqdn}";

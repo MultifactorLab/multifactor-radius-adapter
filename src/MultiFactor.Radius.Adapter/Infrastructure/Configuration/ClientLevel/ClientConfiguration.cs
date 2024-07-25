@@ -186,6 +186,8 @@ public class ClientConfiguration : IClientConfiguration
 
     public RandomWaiterConfig InvalidCredentialDelay { get; private set; }
     public PreAuthModeDescriptor PreAuthnMode { get; private set; } = PreAuthModeDescriptor.Default;
+    public bool IsFreeIpa => !string.IsNullOrEmpty(LdapBindDn);
+    
 
     public ClientConfiguration SetBypassSecondFactorWhenApiUnreachable(bool val)
     {

@@ -1,8 +1,6 @@
 ﻿using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
-using MultiFactor.Radius.Adapter.Configuration;
-using MultiFactor.Radius.Adapter.Configuration.Core;
-using MultiFactor.Radius.Adapter.Services.BindIdentityFormatting;
+using MultiFactor.Radius.Adapter.Infrastructure.Configuration.RootLevel;
 using MultiFactor.Radius.Adapter.Services.Ldap;
 using MultiFactor.Radius.Adapter.Tests.Fixtures;
 using MultiFactor.Radius.Adapter.Tests.Fixtures.ConfigLoading;
@@ -16,7 +14,6 @@ namespace MultiFactor.Radius.Adapter.Tests
         [InlineData("client-format-dn-with-ad.config", "testuser", "testuser@base.dn")]
         [InlineData("client-format-dn-with-ad.config", "testuser@upn", "testuser@upn")]
         [InlineData("client-format-dn-with-ad.config", "UPN\\testuser", "testuser@base.dn")]
-
         public void BindIdentityFormatter_ShouldFormat(string clientConfigPath, string identity, string expectation)
         {
             var host = TestHostFactory.CreateHost(builder =>

@@ -40,4 +40,5 @@ public interface IClientConfiguration
     bool ShouldLoadUserGroups();
     RandomWaiterConfig InvalidCredentialDelay { get; }
     PreAuthModeDescriptor PreAuthnMode { get; }
+    bool IsFreeIpa { get; }
 }

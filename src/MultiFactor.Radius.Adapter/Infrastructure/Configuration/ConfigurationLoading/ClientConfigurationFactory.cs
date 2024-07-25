@@ -222,9 +222,17 @@ public class ClientConfigurationFactory
         {
             builder.SetActiveDirectoryDomain(appSettings.ActiveDirectoryDomain);
         }
+        
 
         if (!string.IsNullOrWhiteSpace(appSettings.LdapBindDn))
         {
+            if (builder.FirstFactorAuthenticationSource == AuthenticationSource.ActiveDirectory)
+            {
+                throw InvalidConfigurationException.For(x => x.AppSettings.LdapBindDn, 
+                    "'{prop}' shouldn't be used in combination with '{0}' == {1}",
+                    RadiusAdapterConfigurationDescription.Property(x => x.AppSettings.FirstFactorAuthenticationSource),
+                    AuthenticationSource.ActiveDirectory);
+            }
             builder.SetLdapBindDn(appSettings.LdapBindDn);
         }
 
