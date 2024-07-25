@@ -3,17 +3,18 @@ using MultiFactor.Radius.Adapter.Tests.Fixtures.Radius;
 using MultiFactor.Radius.Adapter.Tests.Fixtures;
 using Microsoft.Extensions.DependencyInjection;
 using MultiFactor.Radius.Adapter.Tests.Fixtures.ConfigLoading;
-using MultiFactor.Radius.Adapter.Framework.Pipeline;
 using MultiFactor.Radius.Adapter.Server.Pipeline.PostProcessing;
 using MultiFactor.Radius.Adapter.Server;
 using MultiFactor.Radius.Adapter.Core.Radius;
 using System.Net;
+using MultiFactor.Radius.Adapter.Core.Framework.Pipeline;
 
 namespace MultiFactor.Radius.Adapter.Tests
 {
     public class RadiusRequestPostProcessorTests
     {
         [Fact]
+        [Trait("Category", "Challenge")]
         public async Task AccessChallenge_ShouldSetAttrs()
         {
             var host = TestHostFactory.CreateHost(builder =>

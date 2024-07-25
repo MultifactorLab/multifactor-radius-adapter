@@ -2,19 +2,18 @@
 using MultiFactor.Radius.Adapter.Tests.Fixtures.Radius;
 using System.Net;
 using MultiFactor.Radius.Adapter.Services.MultiFactorApi;
-using MultiFactor.Radius.Adapter.Core.Http;
 using MultiFactor.Radius.Adapter.Services;
-using MultiFactor.Radius.Adapter.Configuration;
-using MultiFactor.Radius.Adapter.Core.Radius;
-using MultiFactor.Radius.Adapter.Configuration.Features.PrivacyModeFeature;
 using MultiFactor.Radius.Adapter.Services.Ldap;
 using MultiFactor.Radius.Adapter.Services.MultiFactorApi.Dto;
-using MultiFactor.Radius.Adapter.Configuration.Core;
 using MultiFactor.Radius.Adapter.Tests.Fixtures;
 using Microsoft.Extensions.DependencyInjection;
 using MultiFactor.Radius.Adapter.Tests.Fixtures.ConfigLoading;
 using MultiFactor.Radius.Adapter.Services.Ldap.Profile;
-using MultiFactor.Radius.Adapter.Framework.Context;
+using MultiFactor.Radius.Adapter.Core.Framework.Context;
+using MultiFactor.Radius.Adapter.Infrastructure.Configuration;
+using MultiFactor.Radius.Adapter.Infrastructure.Configuration.ClientLevel;
+using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Features.PrivacyModeFeature;
+using MultiFactor.Radius.Adapter.Infrastructure.Http;
 
 namespace MultiFactor.Radius.Adapter.Tests
 {

@@ -1,7 +1,8 @@
-﻿using MultiFactor.Radius.Adapter.Core.Http;
+﻿using MultiFactor.Radius.Adapter.Infrastructure.Http;
 
 namespace MultiFactor.Radius.Adapter.Tests
 {
+    [Trait("Category", "multifactor-api-proxy")]
     public class WebProxyFactoryTests
     {
         [Theory]

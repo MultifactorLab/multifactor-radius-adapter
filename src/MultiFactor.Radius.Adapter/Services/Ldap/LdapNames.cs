@@ -1,5 +1,5 @@
-﻿using MultiFactor.Radius.Adapter.Configuration;
-using MultiFactor.Radius.Adapter.Core.Services.Ldap;
+﻿using MultiFactor.Radius.Adapter.Core.Services.Ldap;
+using MultiFactor.Radius.Adapter.Infrastructure.Configuration;
 using System;
 
 namespace MultiFactor.Radius.Adapter.Services.Ldap

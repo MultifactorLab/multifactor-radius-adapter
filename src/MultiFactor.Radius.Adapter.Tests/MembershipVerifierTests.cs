@@ -1,6 +1,7 @@
 ﻿using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
-using MultiFactor.Radius.Adapter.Configuration;
+using MultiFactor.Radius.Adapter.Infrastructure.Configuration;
+using MultiFactor.Radius.Adapter.Infrastructure.Configuration.ClientLevel;
 using MultiFactor.Radius.Adapter.Services.Ldap;
 using MultiFactor.Radius.Adapter.Services.Ldap.MembershipVerification;
 using MultiFactor.Radius.Adapter.Services.Ldap.Profile;
@@ -9,6 +10,8 @@ using MultiFactor.Radius.Adapter.Tests.Fixtures.ConfigLoading;
 
 namespace MultiFactor.Radius.Adapter.Tests
 {
+    [Trait("Category", "Ldap")]
+    [Trait("Category", "Verify Membership")]
     public class MembershipVerifierTests
     {
         [Fact]

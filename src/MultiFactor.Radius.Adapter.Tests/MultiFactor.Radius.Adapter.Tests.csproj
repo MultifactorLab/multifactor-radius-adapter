@@ -9,6 +9,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Assets\root-all-appsettings-items.config" />
+    <None Remove="Assets\root-all-appsettings-items.config" />
     <None Remove="Assets\root-empty-adapter-server-endpoint.config" />
     <None Remove="Assets\root-empty-first-factor-authentication-source.config" />
     <None Remove="Assets\root-empty-logging-level.config" />
@@ -21,6 +23,10 @@
     <None Remove="Assets\root-minimal-multi-credential-delay-1-2.config" />
     <None Remove="Assets\root-minimal-multi-credential-delay-2-3.config" />
     <None Remove="Assets\root-minimal-multi.config" />
+    <None Remove="Assets\root-minimal-single-multifactor-api-timeout-invalid.config" />
+    <None Remove="Assets\root-minimal-single-multifactor-api-timeout-less-than-min.config" />
+    <None Remove="Assets\root-minimal-single-multifactor-api-timeout-valid.config" />
+    <None Remove="Assets\root-minimal-single-multifactor-api-timeout-zero.config" />
     <None Remove="Assets\root-minimal-single.config" />
     <None Remove="Assets\root-single-ffa-ad.config" />
     <None Remove="Assets\root-valid-credential-delay-0.config" />
@@ -29,6 +35,21 @@
     <None Remove="Assets\root-wrong-invalid-credential-delay.config" />
     <None Remove="Assets\root-wrong-load-active-directory-nested-groups.config" />
     <None Remove="Assets\root-wrong-privacy-mode.config" />
+    <None Update="Assets\clients\user-name-transform-single-rule.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Assets\clients\radius-reply-single.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Assets\clients\client-minimal-for-overriding.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Assets\clients\client minimal spaced.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Assets\clients\radius-reply-with-multiple-conditions.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
   <ItemGroup>
@@ -57,12 +78,37 @@
       <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
     </Content>
+    <Content Include="Assets\root-all-appsettings-items.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
     <Content Include="Assets\root-minimal-multi-credential-delay-2-3.config">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
     </Content>
     <Content Include="Assets\root-minimal-multi-credential-delay-1-2.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <Content Include="Assets\root-minimal-single-multifactor-api-timeout-invalid.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <Content Include="Assets\root-minimal-single-multifactor-api-timeout-less-than-min.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <Content Include="Assets\root-minimal-single-multifactor-api-timeout-zero.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <Content Include="Assets\root-minimal-single-multifactor-api-timeout-valid.config">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
@@ -155,6 +201,7 @@
   </ItemGroup>
 
   <ItemGroup>
+<<<<<<< HEAD
     <Reference Include="LdapForNet">
       <HintPath>..\libs\LdapForNet.dll</HintPath>
     </Reference>
@@ -168,6 +215,45 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="Assets\clients\client-ldap-bind-dn-with-ad.config">
+=======
+    <None Update="Assets\clients\phone-attribute.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Assets\clients\radius-client-ip-without-nas-id.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Assets\clients\other-settings.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Assets\clients\authentication-cache-lifetime-zero.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Assets\clients\authentication-cache-minimal-matching-true.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Assets\clients\authentication-cache-minimal-matching-false.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Assets\clients\authentication-cache-minimal-matching-invalid.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Assets\clients\authentication-cache-lifetime-invalid.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Assets\clients\client-use-upn-as-identity-only-true.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Assets\clients\client-use-upn-as-identity-only-false.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Assets\clients\client-identity-attr-without-use-upn-as-identity.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Assets\clients\client-identity-attr-with-use-upn-as-identity-false.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Assets\clients\client-identity-attr-with-use-upn-as-identity-true.config">
+>>>>>>> refs/heads/feature/new-configd
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="Assets\clients\pre-auth-method\client-pre-auth-method-otp-with-no-cred-delay.config">
@@ -197,10 +283,120 @@
     <None Update="Assets\clients\client-cred-delay-0.config">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="Assets\clients\authentication-cache-lifetime.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="Assets\clients\radius-reply-with-attribute.config">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="Assets\clients\radius-reply-with-condition.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Assets\clients\user-name-transform-rules.config">
+    <None Remove="Assets\root-minimal-single-multifactor-api-timeout-invalid.config" />
+    <None Remove="Assets\root-minimal-single-multifactor-api-timeout-less-than-min.config" />
+    <None Remove="Assets\root-minimal-single-multifactor-api-timeout-valid.config" />
+    <None Remove="Assets\root-minimal-single-multifactor-api-timeout-zero.config" />
+    <None Update="Assets\clients\user-name-transform-single-rule.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Assets\clients\radius-reply-single.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Assets\clients\client-minimal-for-overriding.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Assets\clients\client minimal spaced.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Assets\clients\radius-reply-with-multiple-conditions.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <Content Include="Assets\root-all-appsettings-items.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <Content Include="Assets\root-minimal-single-multifactor-api-timeout-invalid.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <Content Include="Assets\root-minimal-single-multifactor-api-timeout-less-than-min.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <Content Include="Assets\root-minimal-single-multifactor-api-timeout-zero.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <Content Include="Assets\root-minimal-single-multifactor-api-timeout-valid.config">
+    <None Update="Assets\clients\phone-attribute.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Assets\clients\radius-client-ip-without-nas-id.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Assets\clients\other-settings.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Assets\clients\authentication-cache-lifetime-zero.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Assets\clients\authentication-cache-minimal-matching-true.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Assets\clients\authentication-cache-minimal-matching-false.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Assets\clients\authentication-cache-minimal-matching-invalid.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Assets\clients\authentication-cache-lifetime-invalid.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Assets\clients\client-use-upn-as-identity-only-true.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Assets\clients\client-use-upn-as-identity-only-false.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Assets\clients\client-identity-attr-without-use-upn-as-identity.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Assets\clients\client-identity-attr-with-use-upn-as-identity-false.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Assets\clients\client-identity-attr-with-use-upn-as-identity-true.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <Reference Include="LdapForNet">
+      <HintPath>..\libs\LdapForNet.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Assets\clients\client-format-dn-with-ad.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Assets\clients\client-ldap-bind-dn-with-ldap.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Assets\clients\client-ldap-bind-dn-with-ad.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Assets\clients\authentication-cache-lifetime.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Assets\clients\user-name-transform-rules.config">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="Assets\clients\radius-reply-with-sufficient.config">

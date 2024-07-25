@@ -1,12 +1,12 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using MultiFactor.Radius.Adapter.Configuration.Core;
-using MultiFactor.Radius.Adapter.Core.Http;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using MultiFactor.Radius.Adapter.Infrastructure.Http;
 using MultiFactor.Radius.Adapter.Server.Pipeline.FirstFactorAuthentication;
 using MultiFactor.Radius.Adapter.Server.Pipeline.FirstFactorAuthentication.Processing;
-using MultiFactor.Radius.Adapter.Services.MultiFactorApi;
 using System;
 using System.Net.Http;
 using System.Security.Authentication;
+using MultiFactor.Radius.Adapter.Infrastructure.Configuration.RootLevel;
 
 namespace MultiFactor.Radius.Adapter.Extensions;
 
@@ -21,9 +21,7 @@ public static class ServiceCollectionExtension
 
     public static void AddHttpServices(this IServiceCollection services)
     {
-        services.AddSingleton<IHttpClientAdapter, HttpClientAdapter>();
-        services.AddHttpContextAccessor();
-        services.AddTransient<MfTraceIdHeaderSetter>();
+        services.TryAddSingleton<HttpClientAdapter>();
 
         services.AddHttpClient(nameof(HttpClientAdapter), (prov, client) =>
         {
@@ -46,12 +44,13 @@ public static class ServiceCollectionExtension
 
             if (!WebProxyFactory.TryCreateWebProxy(config.ApiProxy, out var webProxy))
             {
-                throw new Exception("Unable to initialize WebProxy. Please, check whether multifactor-api-proxy URI is valid.");
+                throw new Exception(
+                    "Unable to initialize WebProxy. Please, check whether multifactor-api-proxy URI is valid.");
             }
+
             handler.Proxy = webProxy;
 
             return handler;
-        })
-        .AddHttpMessageHandler<MfTraceIdHeaderSetter>();
+        });
     }
 }

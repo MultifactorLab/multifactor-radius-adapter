@@ -3,6 +3,8 @@ using MultiFactor.Radius.Adapter.Services.Ldap;
 
 namespace MultiFactor.Radius.Adapter.Tests
 {
+    [Trait("Category", "Ldap")]
+    [Trait("Category", "Ldap User")]
     public class LdapIdentityTests
     {
         [Fact]

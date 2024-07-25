@@ -3,8 +3,8 @@
 //https://github.com/MultifactorLab/multifactor-radius-adapter/blob/main/LICENSE.md
 
 using Microsoft.Extensions.Logging;
+using MultiFactor.Radius.Adapter.Core.Framework.Context;
 using MultiFactor.Radius.Adapter.Core.Radius.Attributes;
-using MultiFactor.Radius.Adapter.Framework.Context;
 using System;
 using System.Collections.Generic;
 using System.Globalization;

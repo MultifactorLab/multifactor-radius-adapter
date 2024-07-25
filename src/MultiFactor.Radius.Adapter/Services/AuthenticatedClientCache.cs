@@ -1,7 +1,8 @@
 ﻿using Microsoft.Extensions.Logging;
-using MultiFactor.Radius.Adapter.Configuration.Core;
+using MultiFactor.Radius.Adapter.Infrastructure.Configuration;
 using System;
 using System.Collections.Concurrent;
+using MultiFactor.Radius.Adapter.Infrastructure.Configuration.ClientLevel;
 
 namespace MultiFactor.Radius.Adapter.Services
 {

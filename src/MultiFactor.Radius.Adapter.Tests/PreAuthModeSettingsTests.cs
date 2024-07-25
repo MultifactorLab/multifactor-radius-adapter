@@ -1,10 +1,10 @@
-﻿using MultiFactor.Radius.Adapter.Configuration.Features.PreAuthModeFeature;
+﻿using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Features.PreAuthModeFeature;
 
 namespace MultiFactor.Radius.Adapter.Tests.AdapterConfig;
 
 public partial class ConfigurationLoadingTests
 {
-    [Trait("Category", "Pre Authentication Method")]
+    [Trait("Category", "pre-authentication-method")]
     public class PreAuthModeSettingsTests
     {
         [Fact]

@@ -6,7 +6,8 @@
 		<Authors>Multifactor</Authors>
 		<Description>Multifactor Radus Adapter</Description>
 		<Version>2.1.0</Version>
-	</PropertyGroup>
+        <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+    </PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
 		<CodeAnalysisRuleSet />
@@ -19,11 +20,11 @@
 	<PropertyGroup>
 		<ServerGarbageCollection>true</ServerGarbageCollection>
 		<UserSecretsId>f07ad043-43df-44e3-965d-beb88a9eac86</UserSecretsId>
-		<DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
 	</PropertyGroup>
 
 	<ItemGroup>
 		<PackageReference Include="Elastic.CommonSchema.Serilog" Version="8.6.1" />
+		<PackageReference Include="FluentValidation" Version="11.9.0" />
 		<PackageReference Include="IPAddressRange" Version="6.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.0" />
 		<PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.19.6" />
@@ -61,10 +62,13 @@
 
 	<ItemGroup>
 		<Folder Include="clients\" />
-	</ItemGroup>
+        <InternalsVisibleTo Include="MultiFactor.Radius.Adapter.Tests" />
+    </ItemGroup>
 
 	<ItemGroup>
-		<InternalsVisibleTo Include="MultiFactor.Radius.Adapter.Tests" />
+	  <Content Include="..\.dockerignore">
+	    <Link>.dockerignore</Link>
+	  </Content>
 	</ItemGroup>
 
 	<ItemGroup>

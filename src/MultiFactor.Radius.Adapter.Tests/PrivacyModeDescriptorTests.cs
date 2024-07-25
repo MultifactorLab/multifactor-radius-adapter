@@ -1,9 +1,9 @@
 ﻿using FluentAssertions;
-using MultiFactor.Radius.Adapter.Configuration.Features.PrivacyModeFeature;
+using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Features.PrivacyModeFeature;
 
 namespace MultiFactor.Radius.Adapter.Tests;
 
-[Trait("Category", "Privacy Mode")]
+[Trait("Category", "privacy-mode")]
 public class PrivacyModeDescriptorTests
 {
     [Theory]

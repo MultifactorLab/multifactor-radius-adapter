@@ -1,11 +1,14 @@
 ﻿using Microsoft.Extensions.Options;
-using MultiFactor.Radius.Adapter.Configuration.Core;
-using System.Configuration;
+using MultiFactor.Radius.Adapter.Infrastructure.Configuration;
+using MultiFactor.Radius.Adapter.Infrastructure.Configuration.ConfigurationLoading;
+using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Models;
+using MultiFactor.Radius.Adapter.Infrastructure.Configuration.XmlAppConfiguration;
 
 namespace MultiFactor.Radius.Adapter.Tests.Fixtures.ConfigLoading;
 
 internal class TestClientConfigsProvider : IClientConfigurationsProvider
 {
+    private Dictionary<RadiusConfigurationFile, RadiusAdapterConfiguration> _dict = new();
     private readonly TestConfigProviderOptions _options;
 
     public TestClientConfigsProvider(IOptions<TestConfigProviderOptions> options)
@@ -13,25 +16,24 @@ internal class TestClientConfigsProvider : IClientConfigurationsProvider
         _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
     }
 
-    public System.Configuration.Configuration[] GetClientConfigurations()
+    public RadiusAdapterConfiguration[] GetClientConfigurations()
     {
         var clientConfigFiles = GetFiles().ToArray();
         if (clientConfigFiles.Length == 0)
         {
-            return Array.Empty<System.Configuration.Configuration>();
+            return Array.Empty<RadiusAdapterConfiguration>();
         }
 
-        var list = new List<System.Configuration.Configuration>();
-        foreach (var file in clientConfigFiles)
-        {
-            var customConfigFileMap = new ExeConfigurationFileMap
-            {
-                ExeConfigFilename = file
-            };
-            list.Add(ConfigurationManager.OpenMappedExeConfiguration(customConfigFileMap, ConfigurationUserLevel.None));
-        }
+        _dict = clientConfigFiles
+            .Select(x => new RadiusConfigurationFile(x))
+            .ToDictionary(k => k, v => RadiusAdapterConfigurationFactory.Create(v, v.NameWithoutExtension));
 
-        return list.ToArray();
+        return _dict.Select(x => x.Value).ToArray();
+    }
+
+    public RadiusConfigurationFile GetSource(RadiusAdapterConfiguration configuration)
+    {
+        return _dict.FirstOrDefault(x => x.Value == configuration).Key;
     }
 
     private IEnumerable<string> GetFiles()

@@ -1,13 +1,9 @@
-﻿using MultiFactor.Radius.Adapter.Configuration.Features.PreAuthModeFeature;
-using MultiFactor.Radius.Adapter.Framework.Context;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using MultiFactor.Radius.Adapter.Core.Framework.Context;
+using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Features.PreAuthModeFeature;
 
 namespace MultiFactor.Radius.Adapter.Tests
 {
+    [Trait("Categosy", "UserPassphrase")]
     public class UserPassphraseTests
     {
         [Theory]

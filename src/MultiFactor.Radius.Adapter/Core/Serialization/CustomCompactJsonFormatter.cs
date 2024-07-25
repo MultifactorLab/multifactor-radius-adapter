@@ -12,7 +12,7 @@ namespace MultiFactor.Radius.Adapter.Core.Serialization;
 // important - the timestamp use local (not UTC) format
 public class CustomCompactJsonFormatter : ITextFormatter
 {
-    readonly JsonValueFormatter _valueFormatter;
+    private readonly JsonValueFormatter _valueFormatter;
     private static string _timestampTemplate;
 
     public CustomCompactJsonFormatter(string timestampTemplate, JsonValueFormatter valueFormatter = null)
@@ -27,7 +27,7 @@ public class CustomCompactJsonFormatter : ITextFormatter
         output.WriteLine();
     }
 
-    public static void FormatEvent(LogEvent logEvent, TextWriter output, JsonValueFormatter valueFormatter)
+    private static void FormatEvent(LogEvent logEvent, TextWriter output, JsonValueFormatter valueFormatter)
     {
         if (logEvent == null) throw new ArgumentNullException(nameof(logEvent));
         if (output == null) throw new ArgumentNullException(nameof(output));

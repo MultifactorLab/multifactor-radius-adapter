@@ -2,7 +2,7 @@
 
 namespace MultiFactor.Radius.Adapter.Core
 {
-    public class ApiCredential
+    public record ApiCredential
     {
         public string Usr { get; }
         public string Pwd { get; }

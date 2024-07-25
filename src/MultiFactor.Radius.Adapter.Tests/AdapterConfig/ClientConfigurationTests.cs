@@ -1,11 +1,12 @@
-﻿using MultiFactor.Radius.Adapter.Configuration;
-using MultiFactor.Radius.Adapter.Server;
+﻿using MultiFactor.Radius.Adapter.Infrastructure.Configuration;
+using MultiFactor.Radius.Adapter.Infrastructure.Configuration.ClientLevel;
 
 namespace MultiFactor.Radius.Adapter.Tests.AdapterConfig
 {
     public class ClientConfigurationTests
     {
         [Theory]
+        [Trait("Category", "CheckMembership")]
         [InlineData(AuthenticationSource.None)]
         [InlineData(AuthenticationSource.ActiveDirectory)]
         [InlineData(AuthenticationSource.Radius)]
@@ -17,6 +18,7 @@ namespace MultiFactor.Radius.Adapter.Tests.AdapterConfig
         }
 
         [Theory]
+        [Trait("Category", "CheckMembership")]
         [InlineData(AuthenticationSource.None)]
         [InlineData(AuthenticationSource.ActiveDirectory)]
         [InlineData(AuthenticationSource.Radius)]
@@ -31,6 +33,7 @@ namespace MultiFactor.Radius.Adapter.Tests.AdapterConfig
         }
         
         [Theory]
+        [Trait("Category", "CheckMembership")]
         [InlineData(AuthenticationSource.None)]
         [InlineData(AuthenticationSource.ActiveDirectory)]
         [InlineData(AuthenticationSource.Radius)]
@@ -45,6 +48,7 @@ namespace MultiFactor.Radius.Adapter.Tests.AdapterConfig
         }
         
         [Theory]
+        [Trait("Category", "CheckMembership")]
         [InlineData(AuthenticationSource.None)]
         [InlineData(AuthenticationSource.ActiveDirectory)]
         [InlineData(AuthenticationSource.Radius)]
@@ -59,6 +63,7 @@ namespace MultiFactor.Radius.Adapter.Tests.AdapterConfig
         }
         
         [Theory]
+        [Trait("Category", "CheckMembership")]
         [InlineData(AuthenticationSource.None)]
         [InlineData(AuthenticationSource.ActiveDirectory)]
         [InlineData(AuthenticationSource.Radius)]
@@ -73,6 +78,7 @@ namespace MultiFactor.Radius.Adapter.Tests.AdapterConfig
         }
         
         [Theory]
+        [Trait("Category", "CheckMembership")]
         [InlineData(AuthenticationSource.None)]
         [InlineData(AuthenticationSource.ActiveDirectory)]
         [InlineData(AuthenticationSource.Radius)]
@@ -87,6 +93,7 @@ namespace MultiFactor.Radius.Adapter.Tests.AdapterConfig
         }
         
         [Theory]
+        [Trait("Category", "CheckMembership")]
         [InlineData(AuthenticationSource.None)]
         [InlineData(AuthenticationSource.ActiveDirectory)]
         [InlineData(AuthenticationSource.Radius)]
@@ -101,6 +108,7 @@ namespace MultiFactor.Radius.Adapter.Tests.AdapterConfig
         }
         
         [Theory]
+        [Trait("Category", "CheckMembership")]
         [InlineData(AuthenticationSource.None)]
         [InlineData(AuthenticationSource.ActiveDirectory)]
         [InlineData(AuthenticationSource.Radius)]
