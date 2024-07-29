@@ -451,8 +451,8 @@ export RAD_APPSETTINGS__FirstFactorAuthenticationSource=ActiveDirectory
 **RAD_** - prefix.  
 **APPSETTINGS** - section inside the configuration file.  
 **FirstFactorAuthenticationSource** - name of a setting.  
-**__** - nesting separator.
-Case is **not important**.
+**__** - nesting separator.  
+Case of variable name is **not important**.
 
 > Note: if the name of the configuration file contains whitespace characters, when forming the name for the environment variable, these spaces must be ignored: `my rad` -> `myrad`.
 
