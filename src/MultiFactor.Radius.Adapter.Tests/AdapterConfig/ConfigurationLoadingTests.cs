@@ -896,7 +896,6 @@ public partial class ConfigurationLoadingTests
             });
         });
         var act = host.Service<IServiceConfiguration>();
-        act.Should().NotBeNull();
         act.Clients.Should()
             .NotBeNull()
             .And.HaveCountGreaterThan(0);

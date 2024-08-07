@@ -20,7 +20,7 @@ namespace MultiFactor.Radius.Adapter.Tests.Pipeline
             return TestHostFactory.CreateHost(builder =>
             {
                 builder.UseMiddleware<AccessChallengeMiddleware>();
-                builder.UseMiddleware<TransformUserNameMiddleware>();
+                builder.UseMiddleware<FirstFactorTransformUserNameMiddleware>();
                 builder.Services.Configure<TestConfigProviderOptions>(x =>
                 {
                     x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-single.config");
@@ -44,7 +44,7 @@ namespace MultiFactor.Radius.Adapter.Tests.Pipeline
                 OriginalUserName = from
             };
 
-            var middleware = host.Service<TransformUserNameMiddleware>();
+            var middleware = host.Service<FirstFactorTransformUserNameMiddleware>();
             var nextDelegate = new Mock<RadiusRequestDelegate>();
             await middleware.InvokeAsync(context, nextDelegate.Object);
             context.UserName.Should().BeEquivalentTo(to);
@@ -61,14 +61,12 @@ namespace MultiFactor.Radius.Adapter.Tests.Pipeline
             {
                 OriginalUserName = from
             };
-            var middleware = host.Service<TransformUserNameMiddleware>();
+            var middleware = host.Service<FirstFactorTransformUserNameMiddleware>();
             var nextDelegate = new Mock<RadiusRequestDelegate>();
             context.Configuration.UserNameTransformRules.BeforeFirstFactor.Length.Should().BeGreaterThan(0);
             context.Configuration.UserNameTransformRules.BeforeSecondFactor.Length.Should().BeGreaterThan(0);
             await middleware.InvokeAsync(context, nextDelegate.Object);
             context.UserName.Should().BeEquivalentTo(to);
-
-            middleware = host.Service<TransformUserNameMiddleware>();
         }
 
     }

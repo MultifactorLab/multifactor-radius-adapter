@@ -8,7 +8,7 @@
             {
                 yield return new object[]
                 {
-                    new UsernameTransformationRuleTestCase()
+                    new UsernameTransformationRuleTestCase
                     {
                         Asset = "username-transformation-rule-before-first-fa.config",
                         ReplaceFirst = "$0@test.local",
@@ -20,7 +20,7 @@
 
                 yield return new object[]
                 {
-                    new UsernameTransformationRuleTestCase()
+                    new UsernameTransformationRuleTestCase
                     {
                         Asset = "username-transformation-rule-legacy.config",
                         ReplaceFirst = "$0@test.local",

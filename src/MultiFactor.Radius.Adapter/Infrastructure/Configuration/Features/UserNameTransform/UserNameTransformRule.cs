@@ -1,6 +1,6 @@
 ﻿using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Models.UserNameTransformFeature;
 
-namespace MultiFactor.Radius.Adapter.Infrastructure.Configuration.Models.UserNameTransform;
+namespace MultiFactor.Radius.Adapter.Infrastructure.Configuration.Features.UserNameTransform;
 
 public class UserNameTransformRule
 {
