@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
-using MultiFactor.Radius.Adapter.Configuration.Features.UserNameTransformFeature;
 using MultiFactor.Radius.Adapter.Core;
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Features.AuthenticatedClientCacheFeature;
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Features.PreAuthModeFeature;
@@ -10,6 +9,7 @@ using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Features.PrivacyMo
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Features.RandomWaiterFeature;
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Features.UserNameTransformFeature;
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Models.UserNameTransform;
+using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Models.UserNameTransformFeature;
 
 namespace MultiFactor.Radius.Adapter.Infrastructure.Configuration.ClientLevel;
 
@@ -189,7 +189,6 @@ public class ClientConfiguration : IClientConfiguration
     public RandomWaiterConfig InvalidCredentialDelay { get; private set; }
     public PreAuthModeDescriptor PreAuthnMode { get; private set; } = PreAuthModeDescriptor.Default;
     public bool IsFreeIpa => !string.IsNullOrEmpty(LdapBindDn);
-    
 
     public ClientConfiguration SetBypassSecondFactorWhenApiUnreachable(bool val)
     {

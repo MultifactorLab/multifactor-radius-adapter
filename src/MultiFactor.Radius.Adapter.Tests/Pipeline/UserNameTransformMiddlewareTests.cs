@@ -1,12 +1,11 @@
-﻿using Elastic.CommonSchema;
-using FluentAssertions;
+﻿using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Moq;
-using MultiFactor.Radius.Adapter.Configuration.Core;
-using MultiFactor.Radius.Adapter.Framework.Context;
-using MultiFactor.Radius.Adapter.Framework.Pipeline;
+using MultiFactor.Radius.Adapter.Core.Framework.Context;
+using MultiFactor.Radius.Adapter.Core.Framework.Pipeline;
+using MultiFactor.Radius.Adapter.Infrastructure.Configuration.RootLevel;
 using MultiFactor.Radius.Adapter.Server;
+using MultiFactor.Radius.Adapter.Server.Pipeline.AccessChallenge;
 using MultiFactor.Radius.Adapter.Server.Pipeline.TransformUserName;
 using MultiFactor.Radius.Adapter.Tests.Fixtures;
 using MultiFactor.Radius.Adapter.Tests.Fixtures.ConfigLoading;
@@ -20,14 +19,12 @@ namespace MultiFactor.Radius.Adapter.Tests.Pipeline
         {
             return TestHostFactory.CreateHost(builder =>
             {
-                builder.Services.RemoveService<IRootConfigurationProvider>().AddSingleton<IRootConfigurationProvider, TestRootConfigProvider>();
-                builder.Services.RemoveService<IClientConfigurationsProvider>().AddSingleton<IClientConfigurationsProvider, TestClientConfigsProvider>();
-                builder.Services.AddSingleton<TransformUserNameMiddleware>();
+                builder.UseMiddleware<AccessChallengeMiddleware>();
+                builder.UseMiddleware<TransformUserNameMiddleware>();
                 builder.Services.Configure<TestConfigProviderOptions>(x =>
                 {
                     x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-single.config");
-                    x.ClientConfigFilePaths = new[]
-                    {
+                    x.ClientConfigFilePaths = new[] {
                         TestEnvironment.GetAssetPath(TestAssetLocation.ClientsDirectory, asset)
                     };
                 });
@@ -41,7 +38,7 @@ namespace MultiFactor.Radius.Adapter.Tests.Pipeline
             var host = CreateHost(asset);
 
             var config = host.Service<IServiceConfiguration>();
-            var responseSender = new Mock<IRadiusResponseSender>();
+
             var context = new RadiusContext(RadiusPacketFactory.AccessRequest(), config.Clients[0], new Mock<IServiceProvider>().Object)
             {
                 OriginalUserName = from

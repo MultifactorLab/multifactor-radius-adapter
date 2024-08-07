@@ -4,9 +4,9 @@
 
 using MultiFactor.Radius.Adapter.Core.Framework.Context;
 using MultiFactor.Radius.Adapter.Core.Framework.Pipeline;
-using MultiFactor.Radius.Adapter.Configuration.Features.UserNameTransformFeature;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Models.UserNameTransform;
 
 namespace MultiFactor.Radius.Adapter.Server.Pipeline.TransformUserName
 {

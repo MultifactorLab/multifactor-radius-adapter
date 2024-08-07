@@ -8,6 +8,7 @@ using MultiFactor.Radius.Adapter.Tests.Fixtures.ConfigLoading;
 using System.Net;
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration;
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration.RootLevel;
+using MultiFactor.Radius.Adapter.Tests.Data.UsernameTransformationRules;
 
 namespace MultiFactor.Radius.Adapter.Tests.AdapterConfig;
 
@@ -883,14 +884,8 @@ public partial class ConfigurationLoadingTests
     [MemberData(nameof(UsernameTransformationRuleTestCases.TestCase1), MemberType = typeof(UsernameTransformationRuleTestCases))]
     public void ReadConfiguration_ShouldReadUsernameTransformationRules(UsernameTransformationRuleTestCase data)
     {
-        var host = TestHostFactory.CreateHost(builder => {
-            builder.Services
-                .RemoveService<IRootConfigurationProvider>()
-                .AddSingleton<IRootConfigurationProvider, TestRootConfigProvider>();
-            builder.Services
-                .RemoveService<IClientConfigurationsProvider>()
-                .AddSingleton<IClientConfigurationsProvider, TestClientConfigsProvider>();
-
+        var host = TestHostFactory.CreateHost(builder =>
+        {
             builder.Services.Configure<TestConfigProviderOptions>(x =>
             {
                 x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-multi.config");

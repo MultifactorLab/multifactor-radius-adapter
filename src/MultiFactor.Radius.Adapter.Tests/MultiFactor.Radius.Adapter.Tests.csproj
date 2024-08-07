@@ -9,6 +9,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <None Remove="Assets\root-all-appsettings-items.config" />
         <None Remove="Assets\root-empty-adapter-server-endpoint.config" />
         <None Remove="Assets\root-empty-first-factor-authentication-source.config" />
         <None Remove="Assets\root-empty-logging-level.config" />
@@ -49,7 +50,6 @@
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
     </ItemGroup>
-        <None Remove="Assets\root-all-appsettings-items.config" />
 
     <ItemGroup>
         <Reference Include="LdapForNet">

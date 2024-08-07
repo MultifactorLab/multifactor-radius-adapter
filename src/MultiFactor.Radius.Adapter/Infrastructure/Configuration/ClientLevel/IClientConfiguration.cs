@@ -34,7 +34,7 @@ public interface IClientConfiguration
     IPEndPoint ServiceClientEndpoint { get; }
     string SignUpGroups { get; }
     string[] SplittedActiveDirectoryDomains { get; }
-    UserNameTransformRule[] UserNameTransformRules { get; }
+    UserNameTransformRules UserNameTransformRules { get; }
     public string TwoFAIdentityAttribute { get; }
     public bool UseIdentityAttribute => !string.IsNullOrEmpty(TwoFAIdentityAttribute);
     bool ShouldLoadUserGroups();

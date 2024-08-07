@@ -11,7 +11,6 @@ using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Features.PrivacyMo
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Features.RandomWaiterFeature;
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Models;
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Models.RadiusReply;
-using MultiFactor.Radius.Adapter.Server;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -19,8 +18,9 @@ using System.Net;
 using System.Text.RegularExpressions;
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration.ClientLevel;
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration.RootLevel;
-using MultiFactor.Radius.Adapter.Configuration.Features.UserNameTransformFeature;
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Features.UserNameTransformFeature;
+using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Models.UserNameTransform;
+using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Models.UserNameTransformFeature;
 
 namespace MultiFactor.Radius.Adapter.Infrastructure.Configuration.ConfigurationLoading;
 
@@ -86,9 +86,6 @@ public class ClientConfigurationFactory
         ReadInvalidCredDelaySetting(appSettings, builder, serviceConfig);
         ReadPreAuthModeSetting(appSettings, builder);
 
-        var userNameTransformRulesSection = configuration.UserNameTransformRules;
-        LoadUserNameTransformRulesSection(userNameTransformRulesSection, builder);
-
         switch (builder.FirstFactorAuthenticationSource)
         {
             case AuthenticationSource.ActiveDirectory:
@@ -112,7 +109,9 @@ public class ClientConfigurationFactory
         }
 
         ReadRadiusReplyAttributes(builder, _dictionary, configuration.RadiusReply);
-        ReadUserNameTransformRulesSection(configuration, builder);
+
+        var userNameTransformRulesSection = configuration.UserNameTransformRules;
+        LoadUserNameTransformRulesSection(userNameTransformRulesSection, builder);
 
         builder.SetServiceAccountUser(appSettings.ServiceAccountUser ?? string.Empty);
         builder.SetServiceAccountPassword(appSettings.ServiceAccountPassword ?? string.Empty);
@@ -188,9 +187,9 @@ public class ClientConfigurationFactory
 
     private static void LoadUserNameTransformRulesSection(UserNameTransformRulesSection userNameTransformRulesSection, ClientConfiguration builder)
     {
-        var fillRules = (UserNameTransformRulesCollection collection, UserNameTransformRulesScope scope) =>
+        var fillRules = (UserNameTransformRulesElement[] collection, UserNameTransformRulesScope scope) =>
         {
-            if (collection == null || collection.Count == 0)
+            if (collection == null || collection.Count() == 0)
             {
                 return;
             }
@@ -202,9 +201,9 @@ public class ClientConfigurationFactory
                 }
             }
         };
-        fillRules(userNameTransformRulesSection?.Members, UserNameTransformRulesScope.Both);
-        fillRules(userNameTransformRulesSection?.BeforeFirstFactor?.Members, UserNameTransformRulesScope.BeforeFirstFactor);
-        fillRules(userNameTransformRulesSection?.BeforeSecondFactor?.Members, UserNameTransformRulesScope.BeforeSecondFactor);
+        fillRules(userNameTransformRulesSection?.Elements, UserNameTransformRulesScope.Both);
+        fillRules(userNameTransformRulesSection?.BeforeFirstFactor?.Elements, UserNameTransformRulesScope.BeforeFirstFactor);
+        fillRules(userNameTransformRulesSection?.BeforeSecondFactor?.Elements, UserNameTransformRulesScope.BeforeSecondFactor);
     }
 
     private void ReadActiveDirectoryAuthenticationSourceSettings(ClientConfiguration builder, AppSettingsSection appSettings)

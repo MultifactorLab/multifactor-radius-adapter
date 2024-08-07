@@ -1,12 +1,16 @@
-﻿//Copyright(c) 2020 MultiFactor
-//Please see licence at 
-//https://github.com/MultifactorLab/multifactor-radius-adapter/blob/main/LICENSE.md
+﻿using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Models.UserNameTransformFeature;
 
 namespace MultiFactor.Radius.Adapter.Infrastructure.Configuration.Models.UserNameTransform;
 
 public class UserNameTransformRule
 {
-    public string Match { get; init; }
-    public string Replace { get; init; }
-    public int? Count { get; init; }
+    public UserNameTransformRulesElement Element { get; init; }
+    public UserNameTransformRulesScope Scope { get; init; }
+
+    public UserNameTransformRule(UserNameTransformRulesElement element, UserNameTransformRulesScope scope)
+    {
+        Element = element;
+        Scope = scope;
+    }
 }
+
