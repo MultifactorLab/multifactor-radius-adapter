@@ -2,23 +2,30 @@
 //Please see licence at 
 //https://github.com/MultifactorLab/multifactor-radius-adapter/blob/main/LICENSE.md
 
-using LdapForNet;
-using MultiFactor.Radius.Adapter.Services.Ldap;
 using System;
 using System.Threading.Tasks;
-using static LdapForNet.Native.Native;
+using MultiFactor.Radius.Adapter.Services.Ldap.Profile;
 
 namespace MultiFactor.Radius.Adapter.Services.Ldap.Connection;
 
 public interface ILdapConnectionAdapter : IDisposable
 {
-    string Uri { get; }
+    string Path { get; }
 
     /// <summary>
     /// Returns user that has been successfully binded with LDAP directory.
     /// </summary>
-    LdapIdentity BindedUser { get; }
+    LdapIdentity Username { get; }
 
     Task<LdapDomain> WhereAmIAsync();
-    Task<LdapEntry[]> SearchQueryAsync(string baseDn, string filter, LdapSearchScope scope, params string[] attributes);
+    Task<ILdapAttributes[]> SearchQueryAsync(string baseDn, string filter, SearchScope scope, params string[] attributes);
+}
+
+public enum SearchScope
+{
+    DEFAULT = -1, // 0xFFFFFFFF
+    BASE = 0,
+    ONELEVEL = 1,
+    SUBTREE = 2,
+    CHILDREN = 3
 }

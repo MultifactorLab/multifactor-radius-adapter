@@ -33,41 +33,19 @@ public class ProfileLoader
         var domain = await adapter.WhereAmIAsync();
         _logger.LogDebug("Querying user '{user:l}' in {domainName:l}", user.Name, domain.Name);
 
-        var response = await adapter.SearchQueryAsync(domain.Name, searchFilter, LdapSearchScope.LDAP_SCOPE_SUB, queryAttributes);
+        var response = await adapter.SearchQueryAsync(domain.Name, searchFilter, SearchScope.SUBTREE, queryAttributes);
         var entry = response.SingleOrDefault() ?? throw new LdapUserNotFoundException(user.Name, domain.Name);
 
         //base profile
-        var profileAttributes = new LdapAttributes(entry.Dn);
-        var profile = new LdapProfile(LdapIdentity.BaseDn(entry.Dn), profileAttributes, clientConfig.PhoneAttributes, clientConfig.TwoFAIdentityAttribute);
-
-        var attrs = entry.DirectoryAttributes;
-        var keys = queryAttributes.Where(x => !x.Equals("memberof", StringComparison.OrdinalIgnoreCase));
-        foreach (var key in keys)
-        {
-            if (!attrs.Contains(key))
-            {
-                profileAttributes.Add(key, Array.Empty<string>());
-                continue;
-            }     
-            
-            var values = attrs[key].GetValues<string>();
-            profileAttributes.Add(key, values);    
-        }
-
-        //groups
-        var groups = attrs.Contains("memberOf")
-            ? attrs["memberOf"].GetValues<string>()
-            : Array.Empty<string>();
-
-        profileAttributes.Add("memberOf", groups.Select(LdapIdentity.DnToCn).ToArray());
+        var profile = new LdapProfile(LdapIdentity.BaseDn(entry.DistinguishedName), entry, clientConfig.PhoneAttributes, clientConfig.TwoFAIdentityAttribute);
 
         _logger.LogDebug("User '{User:l}' profile loaded: {DistinguishedName:l} (upn={Upn:l})", 
             user, profile.DistinguishedName, profile.Upn);
 
         if (clientConfig.ShouldLoadUserGroups())
         {
-            var additionalGroups = await _userGroupsSource.GetUserGroupsAsync(clientConfig, adapter, entry.Dn);
-            profileAttributes.Add("memberOf", additionalGroups);
+            var additionalGroups = await _userGroupsSource.GetUserGroupsAsync(clientConfig, adapter, entry.DistinguishedName); 
+            // profileAttributes.Add("memberOf", additionalGroups);
         }
 
         return profile;
@@ -88,7 +66,8 @@ public class ProfileLoader
         return queryAttributes.Distinct().ToArray();
     }
 
-    public async Task<ILdapAttributes> LoadAttributesAsync(IClientConfiguration clientConfig, ILdapConnectionAdapter adapter, LdapIdentity user, params string[] attrs)
+    public async Task<ILdapAttributes> LoadAttributesAsync(IClientConfiguration clientConfig, ILdapConnectionAdapter adapter, 
+        LdapIdentity user, params string[] attrs)
     {
         var names = LdapNames.Create(clientConfig.FirstFactorAuthenticationSource, clientConfig.IsFreeIpa);
         var searchFilter = $"(&(objectClass={names.UserClass})({names.Identity(user)}={user.Name}))";
@@ -96,19 +75,10 @@ public class ProfileLoader
         var domain = await adapter.WhereAmIAsync();
         _logger.LogDebug("Querying user '{user:l}' in {domainName}", user.Name, domain.Name);
 
-        var response = await adapter.SearchQueryAsync(domain.Name, searchFilter, LdapSearchScope.LDAP_SCOPE_SUB, attrs.Distinct().ToArray());
+        var response = await adapter.SearchQueryAsync(domain.Name, searchFilter, SearchScope.SUBTREE, attrs.Distinct().ToArray());
         var entry = response.SingleOrDefault() ?? throw new LdapUserNotFoundException(user.Name, domain.Name);
-        var dirAttrs = entry.DirectoryAttributes;
-        var attributes = new LdapAttributes(entry.Dn);
-        foreach (var a in attrs)
-        {
-            if (dirAttrs.TryGetValue(a, out var reqAttr))
-            {
-                attributes.Add(a, reqAttr.GetValues<string>());
-            }
-        }
 
-        return attributes;
+        return entry;
     }
 
     private static string[] GetLdapReplyAttributes(IClientConfiguration config)

@@ -26,16 +26,19 @@ public class LdapService
     private readonly ProfileLoader _profileLoader;
     private readonly ILogger<LdapService> _logger;
     private readonly ILoggerFactory _loggerFactory;
+    private readonly LdapConnectionFactory _connectionFactory;
 
     protected virtual LdapNames Names => new(LdapServerType.Generic);
 
     public LdapService(ProfileLoader profileLoader, 
         ILogger<LdapService> logger,
-        ILoggerFactory loggerFactory)
+        ILoggerFactory loggerFactory,
+        LdapConnectionFactory connectionFactory)
     {
         _profileLoader = profileLoader;
         _logger = logger;
         _loggerFactory = loggerFactory;
+        _connectionFactory = connectionFactory;
     }
 
     /// <summary>
@@ -67,11 +70,7 @@ public class LdapService
 
         try
         {
-            using var connection = await LdapConnectionAdapter.CreateAsync(ldapUri, 
-                user, 
-                password, 
-                formatter,
-                _loggerFactory.CreateLogger<LdapConnectionAdapter>());
+            using var connection = _connectionFactory.Create(ldapUri, user, password);
             var domain = await connection.WhereAmIAsync();
 
             _logger.LogInformation("User '{user:l}' credential and status verified successfully in '{domain:l}'",

@@ -37,9 +37,9 @@ public class ProfileLoaderTests
         adapter.Setup(x => x.WhereAmIAsync()).ReturnsAsync(domain);
         adapter.Setup(x => x.SearchQueryAsync(It.Is<string>(x => x == domain.Name), 
             It.IsAny<string>(), 
-            It.Is<LdapSearchScope>(x => x == LdapSearchScope.LDAP_SCOPE_SUB), 
+            It.Is<SearchScope>(s => s == SearchScope.SUBTREE), 
             It.IsAny<string[]>()))
-            .ReturnsAsync(Array.Empty<LdapEntry>());
+            .ReturnsAsync([]);
 
         var clientConfig = new ClientConfiguration("custom", "shared_secret", AuthenticationSource.ActiveDirectory, "key", "secret")
             .SetLoadActiveDirectoryNestedGroups(false);
@@ -69,26 +69,24 @@ public class ProfileLoaderTests
             .Add("mail", "username@post.org")
             .Add("userPrincipalName", "user.name@domain.local")
             .Add("sAMAccountName", "user.name")
-            .Add("memberOf", "Users");
+            .Add("memberOf", "CN=Users,DC=domain,DC=local");
 
-        var entry = LdapEntryFactory.Create("CN=User Name,CN=Users,DC=domain,DC=local", x =>
-        {
-            x.Add("sAMAccountName", "user.name")
+        var entry = new LdapAttributes("CN=User Name,CN=Users,DC=domain,DC=local").Add("sAMAccountName", "user.name")
              .Add("displayName", "User Name")
              .Add("distinguishedName", "CN=User Name,CN=Users,DC=domain,DC=local")
              .Add("memberOf", "CN=Users,DC=domain,DC=local")
              .Add("mail", "username@post.org")
              .Add("userPrincipalName", "user.name@domain.local");
-        });
+
         var domain = LdapDomain.Parse("dc=domain,dc=local");
 
         var adapter = new Mock<ILdapConnectionAdapter>();
         adapter.Setup(x => x.WhereAmIAsync()).ReturnsAsync(domain);
         adapter.Setup(x => x.SearchQueryAsync(It.Is<string>(x => x == domain.Name), 
             It.IsAny<string>(), 
-            It.Is<LdapSearchScope>(x => x == LdapSearchScope.LDAP_SCOPE_SUB), 
+            It.Is<SearchScope>(s => s == SearchScope.SUBTREE), 
             It.IsAny<string[]>()))
-            .ReturnsAsync(new[] { entry } );
+            .ReturnsAsync([entry]);
 
         var clientConfig = new ClientConfiguration("custom", "shared_secret", AuthenticationSource.ActiveDirectory, "key", "secret")
             .SetLoadActiveDirectoryNestedGroups(false)
@@ -120,20 +118,18 @@ public class ProfileLoaderTests
             });
         });
 
-        var entry = LdapEntryFactory.Create("CN=User Name,CN=Users,DC=domain,DC=local", x =>
-        {
-            x.Add("myAttrOne", "User Name");
-            x.Add("myAttrTwo", "mail@mail.dev");
-        });
+        var entry = new LdapAttributes("CN=User Name,CN=Users,DC=domain,DC=local")
+            .Add("myAttrOne", "User Name")
+            .Add("myAttrTwo", "mail@mail.dev");
         var domain = LdapDomain.Parse("dc=domain,dc=local");
 
         var adapter = new Mock<ILdapConnectionAdapter>();
         adapter.Setup(x => x.WhereAmIAsync()).ReturnsAsync(domain);
         adapter.Setup(x => x.SearchQueryAsync(It.Is<string>(x => x == domain.Name),
             It.IsAny<string>(),
-            It.Is<LdapSearchScope>(x => x == LdapSearchScope.LDAP_SCOPE_SUB),
+            It.Is<SearchScope>(x => x == SearchScope.SUBTREE),
             It.IsAny<string[]>()))
-            .ReturnsAsync(new[] { entry });
+            .ReturnsAsync([ entry]);
 
         var clientConfig = new ClientConfiguration("custom", "shared_secret", AuthenticationSource.ActiveDirectory, "key", "secret")
             .AddRadiusReplyAttribute("radiusAttr", new[] 

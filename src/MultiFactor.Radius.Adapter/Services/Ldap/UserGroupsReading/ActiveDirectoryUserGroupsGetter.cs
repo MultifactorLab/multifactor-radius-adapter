@@ -24,8 +24,8 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.UserGroupsReading
             }
             var searchFilter = $"(member:1.2.840.113556.1.4.1941:={EscapeUserDn(userDn)})";
             var domain = await adapter.WhereAmIAsync();
-            var response = await adapter.SearchQueryAsync(domain.Name, searchFilter, LdapSearchScope.LDAP_SCOPE_SUB, "DistinguishedName");
-            return response.Select(entry => LdapIdentity.DnToCn(entry.Dn)).ToArray();
+            var response = await adapter.SearchQueryAsync(domain.Name, searchFilter, SearchScope.SUBTREE, "DistinguishedName");
+            return response.Select(entry => LdapIdentity.DnToCn(entry.DistinguishedName)).ToArray();
         }
 
         public string EscapeUserDn(string userDn)

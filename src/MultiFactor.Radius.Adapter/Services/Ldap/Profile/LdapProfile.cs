@@ -58,7 +58,14 @@ public class LdapProfile
         }
     }
 
-    public ReadOnlyCollection<string> MemberOf => Attributes.GetValues("memberOf");
+    public ReadOnlyCollection<string> MemberOf
+    {
+        get
+        {
+            var groups = Attributes.GetValues("memberOf").Select(x => Ldap.DistinguishedName.IsDistinguishedName(x) ? LdapIdentity.DnToCn(x) : x);
+            return new ReadOnlyCollection<string>(groups.ToArray());
+        }
+    }
 
     public ILdapAttributes Attributes { get; private set; }
 

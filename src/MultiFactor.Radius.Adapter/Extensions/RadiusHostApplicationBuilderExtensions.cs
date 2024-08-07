@@ -12,6 +12,7 @@ using MultiFactor.Radius.Adapter.Services.Ldap.UserGroupsReading;
 using MultiFactor.Radius.Adapter.Services.MultiFactorApi;
 using Serilog;
 using System;
+using MultiFactor.Radius.Adapter.Services.Ldap.Connection;
 
 namespace MultiFactor.Radius.Adapter.Extensions;
 
@@ -30,6 +31,8 @@ internal static class RadiusHostApplicationBuilderExtensions
         builder.Services.AddSingleton<ISecondFactorChallengeProcessor, SecondFactorChallengeProcessor>();
 
         builder.Services.AddFirstAuthFactorProcessing();
+
+        builder.Services.AddSingleton<LdapConnectionFactory>();
 
         builder.Services.AddSingleton<UserGroupsGetterProvider>();
         builder.Services.AddSingleton<UserGroupsSource>();

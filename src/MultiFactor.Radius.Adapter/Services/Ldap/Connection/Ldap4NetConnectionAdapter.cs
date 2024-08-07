@@ -4,35 +4,38 @@
 
 using LdapForNet;
 using Microsoft.Extensions.Logging;
-using MultiFactor.Radius.Adapter.Infrastructure.Configuration;
 using MultiFactor.Radius.Adapter.Services.Ldap.Connection.Exceptions;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
+using LdapForNet.Native;
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration.ClientLevel;
+using MultiFactor.Radius.Adapter.Services.Ldap.Profile;
 using static LdapForNet.Native.Native;
+using LdapAttributes = MultiFactor.Radius.Adapter.Services.Ldap.Profile.LdapAttributes;
 
 namespace MultiFactor.Radius.Adapter.Services.Ldap.Connection;
 
-public class LdapConnectionAdapter : ILdapConnectionAdapter
+public class Ldap4NetConnectionAdapter : ILdapConnectionAdapter
 {
     private readonly LdapConnection _connection;
-    public string Uri { get; }
-    private readonly ILogger<LdapConnectionAdapter> _logger;
+    public string Path { get; }
+    private readonly ILogger<Ldap4NetConnectionAdapter> _logger;
     private LdapDomain _whereAmI;
 
     /// <summary>
     /// Returns user that has been successfully binded with LDAP directory.
     /// </summary>
-    public LdapIdentity BindedUser { get; }
+    public LdapIdentity Username { get; }
 
-    private LdapConnectionAdapter(string uri, LdapIdentity user, ILogger<LdapConnectionAdapter> logger)
+    private Ldap4NetConnectionAdapter(string uri, LdapIdentity user, ILogger<Ldap4NetConnectionAdapter> logger)
     {
         _connection = new LdapConnection();
-        Uri = uri;
-        BindedUser = user;
+        Path = uri;
+        Username = user;
         _logger = logger;
     }
 
@@ -41,33 +44,97 @@ public class LdapConnectionAdapter : ILdapConnectionAdapter
         if (_whereAmI != null) return _whereAmI;
 
         var filter = "(objectclass=*)";
-        var queryResult = await SearchQueryAsync("", filter, LdapSearchScope.LDAP_SCOPE_BASEOBJECT, "defaultNamingContext");
-        var result = queryResult.SingleOrDefault() ?? throw new InvalidOperationException($"Unable to query '{Uri}' for current user");
+        var queryResult = await SearchQueryAsync("", filter,  SearchScope.BASE, "defaultNamingContext");
+        var result = queryResult.SingleOrDefault() ?? throw new InvalidOperationException($"Unable to query '{Path}' for current user");
 
-        var defaultNamingContext = result.DirectoryAttributes["defaultNamingContext"].GetValue<string>();
+        var defaultNamingContext = result.GetValue("defaultNamingContext");
         _whereAmI = LdapDomain.Parse(defaultNamingContext);
 
         return _whereAmI;
     }
 
-    public async Task<LdapEntry[]> SearchQueryAsync(string baseDn, string filter, LdapSearchScope scope, params string[] attributes)
+    public async Task<ILdapAttributes[]> SearchQueryAsync(string baseDn, string filter, SearchScope scope, params string[] attributes)
     {
+        baseDn ??= string.Empty;
         var sw = Stopwatch.StartNew();
-        var searchResult = await _connection.SearchAsync(baseDn, filter, attributes, scope);
-
+        var searchResult = await _connection.SearchAsync(baseDn, filter, attributes, MapToNative(scope));
+        sw.Stop();
         if (sw.Elapsed.TotalSeconds > 2)
         {
             _logger?.LogWarning("Slow response while querying {baseDn:l}. Time elapsed {elapsed}", baseDn, sw.Elapsed);
         }
 
-        return searchResult.ToArray();
+        if (searchResult.Count == 0)
+        {
+            return [];
+        }
+
+        var collection = new List<ILdapAttributes>();
+        foreach (var entry in searchResult)
+        {
+            var profileAttributes = new LdapAttributes(entry.Dn);
+            collection.Add(profileAttributes);
+            
+            var attrs = entry.DirectoryAttributes;
+            var keys = attributes.Where(x => !x.Equals("memberof", StringComparison.OrdinalIgnoreCase));
+            foreach (var key in keys)
+            {
+                if (!attrs.Contains(key))
+                {
+                    profileAttributes.Add(key, Array.Empty<string>());
+                    continue;
+                }     
+            
+                var values = attrs[key].GetValues<string>();
+                profileAttributes.Add(key, values);    
+            }
+
+            //groups
+            var groups = attrs.Contains("memberOf")
+                ? attrs["memberOf"].GetValues<string>()
+                : Array.Empty<string>();
+
+            profileAttributes.Add("memberOf", groups);
+
+            // if (clientConfig.ShouldLoadUserGroups())
+            // {
+            //     var additionalGroups = await _userGroupsSource.GetUserGroupsAsync(clientConfig, adapter, entry.Dn);
+            //     profileAttributes.Add("memberOf", additionalGroups);
+            // }
+        }
+        
+        return collection.ToArray();
+    }
+
+    private static Native.LdapSearchScope MapToNative(SearchScope scope)
+    {
+        switch (scope)
+        {
+            case SearchScope.DEFAULT:
+                return LdapSearchScope.LDAP_SCOPE_DEFAULT;
+            
+            case SearchScope.BASE:
+                return LdapSearchScope.LDAP_SCOPE_BASEOBJECT;
+            
+            case SearchScope.ONELEVEL:
+                return LdapSearchScope.LDAP_SCOPE_ONE;
+            
+            case SearchScope.SUBTREE:
+                return LdapSearchScope.LDAP_SCOPE_SUBTREE;
+            
+            case SearchScope.CHILDREN:
+                return LdapSearchScope.LDAP_SCOPE_SUBORDINATE;
+            
+            default:
+                throw new Exception($"Unknown {scope}");
+        }
     }
 
     public static async Task<ILdapConnectionAdapter> CreateAsync(string uri, 
         LdapIdentity user, 
         string password,
         BindIdentityFormatter formatter,
-        ILogger<LdapConnectionAdapter> logger)
+        ILogger<Ldap4NetConnectionAdapter> logger)
     {
         if (uri is null)
         {
@@ -94,7 +161,7 @@ public class LdapConnectionAdapter : ILdapConnectionAdapter
             throw new ArgumentNullException(nameof(logger));
         }
 
-        var instance = new LdapConnectionAdapter(uri, user, logger);
+        var instance = new Ldap4NetConnectionAdapter(uri, user, logger);
 
         if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
@@ -125,7 +192,7 @@ public class LdapConnectionAdapter : ILdapConnectionAdapter
 
     public static async Task<ILdapConnectionAdapter> CreateAsTechnicalAccAsync(string domain, 
         IClientConfiguration clientConfig,
-        ILogger<LdapConnectionAdapter> logger)
+        ILogger<Ldap4NetConnectionAdapter> logger)
     {
         try
         {

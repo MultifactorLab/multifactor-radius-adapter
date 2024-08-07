@@ -18,16 +18,19 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.MembershipVerification
         private readonly MembershipVerifier _membershipVerifier;
         private readonly ILogger _logger;
         private readonly ILoggerFactory _loggerFactory;
+        private readonly LdapConnectionFactory _connectionFactory;
 
         public MembershipProcessor(ProfileLoader profileLoader,
             MembershipVerifier membershipVerifier,
             ILogger<MembershipProcessor> logger,
-            ILoggerFactory loggerFactory)
+            ILoggerFactory loggerFactory,
+            LdapConnectionFactory connectionFactory)
         {
             _profileLoader = profileLoader ?? throw new ArgumentNullException(nameof(profileLoader));
             _membershipVerifier = membershipVerifier ?? throw new ArgumentNullException(nameof(membershipVerifier));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _loggerFactory = loggerFactory;
+            _connectionFactory = connectionFactory;
         }
 
         /// <summary>
@@ -57,7 +60,7 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.MembershipVerification
                     var user = LdapIdentity.ParseUser(userName);
 
                     _logger.LogDebug("Verifying user '{user:l}' membership at '{domain:l}'", user.Name, domain);
-                    using var connAdapter = await LdapConnectionAdapter.CreateAsTechnicalAccAsync(domain, context.Configuration, _loggerFactory.CreateLogger<LdapConnectionAdapter>());
+                    using var connAdapter = _connectionFactory.Create(domain, LdapIdentity.ParseUser( context.Configuration.ServiceAccountUser), context.Configuration.ServiceAccountPassword);
                     profile ??= await _profileLoader.LoadAsync(context.Configuration, connAdapter, user);
 
                     var res = _membershipVerifier.VerifyMembership(context.Configuration, profile, domain, user);
@@ -104,7 +107,7 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.MembershipVerification
 
                 try
                 {
-                    using var connAdapter = await LdapConnectionAdapter.CreateAsTechnicalAccAsync(domain, clientConfig, _loggerFactory.CreateLogger<LdapConnectionAdapter>());
+                    using var connAdapter = _connectionFactory.Create(domain, LdapIdentity.ParseUser( context.Configuration.ServiceAccountUser), context.Configuration.ServiceAccountPassword);
                     var attributes = await _profileLoader.LoadAttributesAsync(clientConfig, connAdapter, user, new[] { attr });
                     if (attributes.Keys.Count == 0)
                     {
