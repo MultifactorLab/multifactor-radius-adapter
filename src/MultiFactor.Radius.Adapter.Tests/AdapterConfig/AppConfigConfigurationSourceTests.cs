@@ -78,7 +78,7 @@ public class AppConfigConfigurationSourceTests
         Assert.Empty(bound.RadiusReply.Attributes.Elements);
 
         Assert.NotNull(bound.UserNameTransformRules);
-        //Assert.Empty(bound.UserNameTransformRules.BeforeFirstFactor.Members);
+        Assert.Empty(bound.UserNameTransformRules.Elements);
     }
     
     [Fact]
@@ -143,9 +143,9 @@ public class AppConfigConfigurationSourceTests
 
         var bound = config.BindRadiusAdapterConfig();
 
-        /*Assert.Equal(2, bound!.UserNameTransformRules.BeforeFirstFactor.Members.Count);
+        Assert.Equal(2, bound!.UserNameTransformRules.Elements.Count());
 
-        Assert.Contains(bound.UserNameTransformRules.BeforeFirstFactor.Members, x =>
+        Assert.Contains(bound.UserNameTransformRules.Elements, x =>
         {
             return x.Match == "^([^@]*)$" &&
                 x.Replace == "$1@domain.local" &&
@@ -157,7 +157,7 @@ public class AppConfigConfigurationSourceTests
             return x.Match == "^([^@]*)$" &&
                 x.Replace == "$1@domain.local" &&
                 x.Count == null;
-        });*/
+        });
     }
 
     [Fact]
@@ -172,10 +172,10 @@ public class AppConfigConfigurationSourceTests
 
         var bound = config.BindRadiusAdapterConfig();
 
-        //var rule = Assert.Single(bound.UserNameTransformRules.BeforeFirstFactor.Members[);
-        //Assert.Equal("^([^@]*)$", rule.Match);
-        //Assert.Equal("$1@domain.local", rule.Replace);
-       // Assert.Equal(3, rule.Count);
+        var rule = Assert.Single(bound.UserNameTransformRules.Elements);
+        Assert.Equal("^([^@]*)$", rule.Match);
+        Assert.Equal("$1@domain.local", rule.Replace);
+        Assert.Equal(3, rule.Count);
     }
     
     [Fact]
