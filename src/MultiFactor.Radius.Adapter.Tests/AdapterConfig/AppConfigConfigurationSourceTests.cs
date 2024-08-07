@@ -143,7 +143,7 @@ public class AppConfigConfigurationSourceTests
 
         var bound = config.BindRadiusAdapterConfig();
 
-        Assert.Equal(2, bound!.UserNameTransformRules.Elements.Length);
+        Assert.Equal(2, bound!.UserNameTransformRules.Elements.Count());
 
         Assert.Contains(bound.UserNameTransformRules.Elements, x =>
         {
@@ -159,7 +159,7 @@ public class AppConfigConfigurationSourceTests
                 x.Count == null;
         });
     }
-    
+
     [Fact]
     [Trait("Category", "User Name Transform Rules")]
     public void Get_SingleRule_ShouldBindUserNameTransformRulesSection()

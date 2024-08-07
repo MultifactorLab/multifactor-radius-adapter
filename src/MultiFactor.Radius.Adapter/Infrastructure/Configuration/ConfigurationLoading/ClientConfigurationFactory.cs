@@ -11,7 +11,6 @@ using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Features.PrivacyMo
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Features.RandomWaiterFeature;
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Models;
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Models.RadiusReply;
-using MultiFactor.Radius.Adapter.Server;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -19,6 +18,9 @@ using System.Net;
 using System.Text.RegularExpressions;
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration.ClientLevel;
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration.RootLevel;
+using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Models.UserNameTransform;
+using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Models.UserNameTransformFeature;
+using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Features.UserNameTransform;
 
 namespace MultiFactor.Radius.Adapter.Infrastructure.Configuration.ConfigurationLoading;
 
@@ -107,7 +109,9 @@ public class ClientConfigurationFactory
         }
 
         ReadRadiusReplyAttributes(builder, _dictionary, configuration.RadiusReply);
-        ReadUserNameTransformRulesSection(configuration, builder);
+
+        var userNameTransformRulesSection = configuration.UserNameTransformRules;
+        LoadUserNameTransformRulesSection(userNameTransformRulesSection, builder);
 
         builder.SetServiceAccountUser(appSettings.ServiceAccountUser ?? string.Empty);
         builder.SetServiceAccountPassword(appSettings.ServiceAccountPassword ?? string.Empty);
@@ -181,12 +185,25 @@ public class ClientConfigurationFactory
         }
     }
 
-    private static void ReadUserNameTransformRulesSection(RadiusAdapterConfiguration configuration, ClientConfiguration builder)
-    { 
-        foreach (var rule in configuration.UserNameTransformRules.Elements)
+    private static void LoadUserNameTransformRulesSection(UserNameTransformRulesSection userNameTransformRulesSection, ClientConfiguration builder)
+    {
+        var fillRules = (UserNameTransformRulesElement[] collection, UserNameTransformRulesScope scope) =>
         {
-            builder.AddUserNameTransformRule(rule);
-        }  
+            if (collection == null || collection.Count() == 0)
+            {
+                return;
+            }
+            foreach (var member in collection)
+            {
+                if (member is UserNameTransformRulesElement rule)
+                {
+                    builder.AddUserNameTransformRule(rule, scope);
+                }
+            }
+        };
+        fillRules(userNameTransformRulesSection?.Elements, UserNameTransformRulesScope.Both);
+        fillRules(userNameTransformRulesSection?.BeforeFirstFactor?.Elements, UserNameTransformRulesScope.BeforeFirstFactor);
+        fillRules(userNameTransformRulesSection?.BeforeSecondFactor?.Elements, UserNameTransformRulesScope.BeforeSecondFactor);
     }
 
     private void ReadActiveDirectoryAuthenticationSourceSettings(ClientConfiguration builder, AppSettingsSection appSettings)

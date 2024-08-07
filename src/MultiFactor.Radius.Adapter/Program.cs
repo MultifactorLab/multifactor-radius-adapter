@@ -23,11 +23,12 @@ try
 
     builder.UseMiddleware<StatusServerMiddleware>();
     builder.UseMiddleware<AccessRequestFilterMiddleware>();
-    builder.UseMiddleware<TransformUserNameMiddleware>();
+    builder.UseMiddleware<FirstFactorTransformUserNameMiddleware>();
     builder.UseMiddleware<AccessChallengeMiddleware>();
     builder.UseMiddleware<AnonymousFirstFactorAuthenticationMiddleware>();
     builder.UseMiddleware<PreSecondFactorAuthenticationMiddleware>();
     builder.UseMiddleware<FirstFactorAuthenticationMiddleware>();
+    builder.UseMiddleware<SecondFactorTransformUserNameMiddleware>();
     builder.UseMiddleware<SecondFactorAuthenticationMiddleware>();
 
     host = builder.Build();

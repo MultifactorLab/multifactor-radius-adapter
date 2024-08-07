@@ -7,7 +7,8 @@ using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Features.Authentic
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Features.PreAuthModeFeature;
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Features.PrivacyModeFeature;
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Features.RandomWaiterFeature;
-using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Models.UserNameTransform;
+using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Features.UserNameTransform;
+using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Models.UserNameTransformFeature;
 
 namespace MultiFactor.Radius.Adapter.Infrastructure.Configuration.ClientLevel;
 
@@ -164,11 +165,11 @@ public class ClientConfiguration : IClientConfiguration
     /// </summary>
     public IReadOnlyDictionary<string, RadiusReplyAttributeValue[]> RadiusReplyAttributes => _radiusReplyAttributes;
 
-    private readonly List<UserNameTransformRule> _userNameTransformRules = new();
     /// <summary>
     /// Username transform rules
     /// </summary>
-    public UserNameTransformRule[] UserNameTransformRules => _userNameTransformRules.ToArray();
+    private readonly UserNameTransformRules _userNameTransformRules = new();
+    public UserNameTransformRules UserNameTransformRules => _userNameTransformRules;
 
     public string CallingStationIdVendorAttribute { get; private set; }
 
@@ -187,7 +188,6 @@ public class ClientConfiguration : IClientConfiguration
     public RandomWaiterConfig InvalidCredentialDelay { get; private set; }
     public PreAuthModeDescriptor PreAuthnMode { get; private set; } = PreAuthModeDescriptor.Default;
     public bool IsFreeIpa => !string.IsNullOrEmpty(LdapBindDn);
-    
 
     public ClientConfiguration SetBypassSecondFactorWhenApiUnreachable(bool val)
     {
@@ -369,14 +369,14 @@ public class ClientConfiguration : IClientConfiguration
         return this;
     }
 
-    public ClientConfiguration AddUserNameTransformRule(UserNameTransformRule rule)
+    public ClientConfiguration AddUserNameTransformRule(UserNameTransformRulesElement rule, UserNameTransformRulesScope scope = UserNameTransformRulesScope.Both)
     {
         if (rule is null)
         {
             throw new ArgumentNullException(nameof(rule));
         }
 
-        _userNameTransformRules.Add(rule);
+        _userNameTransformRules.AddRule(rule, scope);
         return this;
     }
 
