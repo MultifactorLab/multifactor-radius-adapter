@@ -64,7 +64,6 @@ namespace MultiFactor.Radius.Adapter.Core.Framework.Context
         public string UserName => RequestPacket.UserName;
         public string OriginalUserName { get; init; }
 
-
         public UserPassphrase Passphrase { get; private set; }
 
         /// <summary>
