@@ -3,6 +3,7 @@
 //https://github.com/MultifactorLab/multifactor-radius-adapter/blob/main/LICENSE.md
 
 using Microsoft.Extensions.Logging;
+using MultiFactor.Radius.Adapter.Core;
 using MultiFactor.Radius.Adapter.Core.Framework.Context;
 using MultiFactor.Radius.Adapter.Core.Radius;
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration;
@@ -70,12 +71,15 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.FirstFactorAuthentication.P
                 //sending request as is to Remote Radius Server
                 using var client = new RadiusClient(context.Configuration.ServiceClientEndpoint, _logger);
                 _logger.LogDebug("Sending AccessRequest message with id={id} to Remote Radius Server {endpoint:l}", context.RequestPacket.Header.Identifier, context.Configuration.NpsServerEndpoint);
-                var requestBytes = _packetParser.GetBytes(context.RequestPacket);
-                var response = await client.SendPacketAsync(context.RequestPacket.Header.Identifier, requestBytes, context.Configuration.NpsServerEndpoint, TimeSpan.FromSeconds(5));
+                
+                var identity = UserNameTransformation.Transform(context.UserName, context.Configuration.UserNameTransformRules.BeforeFirstFactor);
+                var requestPacket = context.RequestPacket.Clone().UpdateAttribute("User-Name", identity);
+                var requestBytes = _packetParser.GetBytes(requestPacket);
+                var response = await client.SendPacketAsync(requestPacket.Header.Identifier, requestBytes, context.Configuration.NpsServerEndpoint, TimeSpan.FromSeconds(5));
 
                 if (response != null)
                 {
-                    var responsePacket = _packetParser.Parse(response, context.RequestPacket.SharedSecret, context.RequestPacket.Header.Authenticator);
+                    var responsePacket = _packetParser.Parse(response, requestPacket.SharedSecret, requestPacket.Header.Authenticator);
                     _logger.LogDebug("Received {code:l} message with id={id} from Remote Radius Server", responsePacket.Header.Code.ToString(), responsePacket.Header.Identifier);
 
                     if (responsePacket.Header.Code == PacketCode.AccessAccept)
@@ -90,7 +94,7 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.FirstFactorAuthentication.P
                 }
                 else
                 {
-                    _logger.LogWarning("Remote Radius Server did not respond on message with id={id}", context.RequestPacket.Header.Identifier);
+                    _logger.LogWarning("Remote Radius Server did not respond on message with id={id}", requestPacket.Header.Identifier);
                     context.Flags.SkipResponse();
                     return PacketCode.AccessReject;
                 }
