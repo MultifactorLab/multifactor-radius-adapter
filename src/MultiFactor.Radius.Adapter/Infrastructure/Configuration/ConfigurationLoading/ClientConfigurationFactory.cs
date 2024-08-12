@@ -19,7 +19,6 @@ using System.Text.RegularExpressions;
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration.ClientLevel;
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration.RootLevel;
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Models.UserNameTransform;
-using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Models.UserNameTransformFeature;
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Features.UserNameTransform;
 
 namespace MultiFactor.Radius.Adapter.Infrastructure.Configuration.ConfigurationLoading;

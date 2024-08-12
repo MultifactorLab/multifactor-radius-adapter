@@ -1,4 +1,4 @@
-﻿using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Models.UserNameTransformFeature;
+﻿using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Models.UserNameTransform;
 using System.Collections.Generic;
 using System.Linq;
 

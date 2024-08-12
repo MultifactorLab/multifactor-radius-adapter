@@ -2,7 +2,7 @@
 //Please see licence at 
 //https://github.com/MultifactorLab/multifactor-radius-adapter/blob/main/LICENSE.md
 
-namespace MultiFactor.Radius.Adapter.Infrastructure.Configuration.Models.UserNameTransformFeature;
+namespace MultiFactor.Radius.Adapter.Infrastructure.Configuration.Models.UserNameTransform;
 
 public class UserNameTransformRulesElement
 {

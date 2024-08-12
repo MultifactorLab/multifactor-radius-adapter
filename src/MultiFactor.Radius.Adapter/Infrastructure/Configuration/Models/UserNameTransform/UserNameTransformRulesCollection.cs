@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.Configuration;
 using System;
 
-namespace MultiFactor.Radius.Adapter.Infrastructure.Configuration.Models.UserNameTransformFeature;
+namespace MultiFactor.Radius.Adapter.Infrastructure.Configuration.Models.UserNameTransform;
 
 public class UserNameTransformRulesCollection
 {
