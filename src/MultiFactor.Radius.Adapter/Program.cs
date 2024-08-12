@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Hosting;
 using MultiFactor.Radius.Adapter.Core.Framework;
 using MultiFactor.Radius.Adapter.Extensions;
 using MultiFactor.Radius.Adapter.Server.Pipeline.AccessChallenge;
@@ -7,7 +7,6 @@ using MultiFactor.Radius.Adapter.Server.Pipeline.FirstFactorAuthentication;
 using MultiFactor.Radius.Adapter.Server.Pipeline.PreSecondFactorAuthentication;
 using MultiFactor.Radius.Adapter.Server.Pipeline.SecondFactorAuthentication;
 using MultiFactor.Radius.Adapter.Server.Pipeline.StatusServer;
-using MultiFactor.Radius.Adapter.Server.Pipeline.TransformUserName;
 using Serilog;
 using System;
 using System.Text;
@@ -23,12 +22,10 @@ try
 
     builder.UseMiddleware<StatusServerMiddleware>();
     builder.UseMiddleware<AccessRequestFilterMiddleware>();
-    builder.UseMiddleware<FirstFactorTransformUserNameMiddleware>();
     builder.UseMiddleware<AccessChallengeMiddleware>();
     builder.UseMiddleware<AnonymousFirstFactorAuthenticationMiddleware>();
     builder.UseMiddleware<PreSecondFactorAuthenticationMiddleware>();
     builder.UseMiddleware<FirstFactorAuthenticationMiddleware>();
-    builder.UseMiddleware<SecondFactorTransformUserNameMiddleware>();
     builder.UseMiddleware<SecondFactorAuthenticationMiddleware>();
 
     host = builder.Build();

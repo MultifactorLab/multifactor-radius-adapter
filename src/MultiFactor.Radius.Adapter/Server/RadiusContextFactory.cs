@@ -56,7 +56,6 @@ public class RadiusContextFactory
         {
             RemoteEndpoint = remote,
             ProxyEndpoint = proxy,
-            OriginalUserName = packet.UserName,
         };
     }
 }

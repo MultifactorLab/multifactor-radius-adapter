@@ -70,7 +70,6 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.FirstFactorAuthentication.P
                 //sending request as is to Remote Radius Server
                 using var client = new RadiusClient(context.Configuration.ServiceClientEndpoint, _logger);
                 _logger.LogDebug("Sending AccessRequest message with id={id} to Remote Radius Server {endpoint:l}", context.RequestPacket.Header.Identifier, context.Configuration.NpsServerEndpoint);
-
                 var requestBytes = _packetParser.GetBytes(context.RequestPacket);
                 var response = await client.SendPacketAsync(context.RequestPacket.Header.Identifier, requestBytes, context.Configuration.NpsServerEndpoint, TimeSpan.FromSeconds(5));
 
