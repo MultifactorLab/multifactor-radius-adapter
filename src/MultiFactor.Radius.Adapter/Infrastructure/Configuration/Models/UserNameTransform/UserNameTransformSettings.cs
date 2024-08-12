@@ -5,9 +5,9 @@ namespace MultiFactor.Radius.Adapter.Infrastructure.Configuration.Models.UserNam
 public class UserNameTransformSettings
 {
     [ConfigurationKeyName("add")]
-    private UserNameTransformRulesElement[] _elements { get; set; }
+    private UserNameTransformRule[] _elements { get; set; }
 
-    public UserNameTransformRulesElement[] Elements
+    public UserNameTransformRule[] Elements
     {
         get
         {

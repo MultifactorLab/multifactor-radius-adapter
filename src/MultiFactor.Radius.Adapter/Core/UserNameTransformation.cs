@@ -5,7 +5,7 @@ namespace MultiFactor.Radius.Adapter.Core
 {
     static class UserNameTransformation
     {
-        internal static string Transform(string userName, UserNameTransformRule[] rules)
+        internal static string Transform(string userName, UserNameTransformScopedRule[] rules)
         {
             foreach (var rule in rules)
             {

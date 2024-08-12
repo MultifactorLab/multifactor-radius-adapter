@@ -369,14 +369,14 @@ public class ClientConfiguration : IClientConfiguration
         return this;
     }
 
-    public ClientConfiguration AddUserNameTransformRule(UserNameTransformRulesElement rule, UserNameTransformRulesScope scope = UserNameTransformRulesScope.Both)
+    public ClientConfiguration AddUserNameTransformRule(UserNameTransformRule rule, UserNameTransformRuleKind kind)
     {
         if (rule is null)
         {
             throw new ArgumentNullException(nameof(rule));
         }
 
-        _userNameTransformRules.AddRule(rule, scope);
+        _userNameTransformRules.AddRule(rule, kind);
         return this;
     }
 

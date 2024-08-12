@@ -30,7 +30,7 @@ namespace MultiFactor.Radius.Adapter.Tests
 
         [Theory]
         [InlineData("username-transformation-rule-before-first-fa.config", "first", "first@test.local", "first@tes1t.local")]
-        public void Invoke_ShouldTransform(string asset, string from, string toFirst, string toSecond)
+        public void UsernameTransform_NewFormat_ShouldChangeEachFactor(string asset, string from, string toFirst, string toSecond)
         {
             var host = CreateHost(asset);
 
@@ -40,8 +40,8 @@ namespace MultiFactor.Radius.Adapter.Tests
             {
             };
 
-            context.Configuration.UserNameTransformRules.BeforeFirstFactor.Length.Should().BeGreaterThan(0);
-            context.Configuration.UserNameTransformRules.BeforeSecondFactor.Length.Should().BeGreaterThan(0);
+            context.Configuration.UserNameTransformRules.BeforeFirstFactor.Should().NotBeEmpty();
+            context.Configuration.UserNameTransformRules.BeforeSecondFactor.Should().NotBeEmpty();
             var result = UserNameTransformation.Transform(from, context.Configuration.UserNameTransformRules.BeforeFirstFactor);
             result.Should().NotBeNull().And.BeEquivalentTo(toFirst);
 
@@ -51,7 +51,7 @@ namespace MultiFactor.Radius.Adapter.Tests
 
         [Theory]
         [InlineData("username-transformation-rule-legacy.config", "first", "first@test.local")]
-        public void Invoke_LegacyShouldChangeBothFactors(string asset, string from, string to)
+        public void UsernameTransform_LegacyFormat_ShouldChangeBothFactors(string asset, string from, string to)
         {
             var host = CreateHost(asset);
             var config = host.Service<IServiceConfiguration>();

@@ -186,7 +186,7 @@ public class ClientConfigurationFactory
 
     private static void LoadUserNameTransformRulesSection(UserNameTransformRulesSection userNameTransformRulesSection, ClientConfiguration builder)
     {
-        var fillRules = (UserNameTransformRulesElement[] collection, UserNameTransformRulesScope scope) =>
+        var fillRules = (UserNameTransformRule[] collection, UserNameTransformRuleKind scope) =>
         {
             if (collection == null || collection.Count() == 0)
             {
@@ -194,15 +194,15 @@ public class ClientConfigurationFactory
             }
             foreach (var member in collection)
             {
-                if (member is UserNameTransformRulesElement rule)
+                if (member is UserNameTransformRule rule)
                 {
                     builder.AddUserNameTransformRule(rule, scope);
                 }
             }
         };
-        fillRules(userNameTransformRulesSection?.Elements, UserNameTransformRulesScope.Both);
-        fillRules(userNameTransformRulesSection?.BeforeFirstFactor?.Elements, UserNameTransformRulesScope.BeforeFirstFactor);
-        fillRules(userNameTransformRulesSection?.BeforeSecondFactor?.Elements, UserNameTransformRulesScope.BeforeSecondFactor);
+        fillRules(userNameTransformRulesSection?.Elements, UserNameTransformRuleKind.Both);
+        fillRules(userNameTransformRulesSection?.BeforeFirstFactor?.Elements, UserNameTransformRuleKind.BeforeFirstFactor);
+        fillRules(userNameTransformRulesSection?.BeforeSecondFactor?.Elements, UserNameTransformRuleKind.BeforeSecondFactor);
     }
 
     private void ReadActiveDirectoryAuthenticationSourceSettings(ClientConfiguration builder, AppSettingsSection appSettings)

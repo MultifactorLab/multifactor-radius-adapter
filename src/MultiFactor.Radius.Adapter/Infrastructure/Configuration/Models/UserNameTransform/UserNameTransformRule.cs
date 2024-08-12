@@ -4,7 +4,7 @@
 
 namespace MultiFactor.Radius.Adapter.Infrastructure.Configuration.Models.UserNameTransform;
 
-public class UserNameTransformRulesElement
+public class UserNameTransformRule
 {
     public string Match { get; init; }
     public string Replace { get; init; }

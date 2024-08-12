@@ -6,11 +6,11 @@ namespace MultiFactor.Radius.Adapter.Infrastructure.Configuration.Models.UserNam
 public class UserNameTransformRulesCollection
 {
     [ConfigurationKeyName("add")]
-    private UserNameTransformRulesElement[] _elements { get; set; }
+    private UserNameTransformRule[] _elements { get; set; }
     [ConfigurationKeyName("add")]
-    private UserNameTransformRulesElement _singleElement { get; set; }
+    private UserNameTransformRule _singleElement { get; set; }
 
-    public UserNameTransformRulesElement[] Elements
+    public UserNameTransformRule[] Elements
     {
         get
         {
@@ -28,7 +28,7 @@ public class UserNameTransformRulesCollection
                 return _elements;
             }
 
-            return Array.Empty<UserNameTransformRulesElement>();
+            return Array.Empty<UserNameTransformRule>();
         }
     }
 }

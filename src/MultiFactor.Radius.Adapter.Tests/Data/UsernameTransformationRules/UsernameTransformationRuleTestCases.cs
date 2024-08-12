@@ -1,6 +1,6 @@
 ﻿namespace MultiFactor.Radius.Adapter.Tests.Data.UsernameTransformationRules
 {
-    public class UsernameTransformationRuleTestCases
+    class UsernameTransformationRuleTestCases
     {
         public static IEnumerable<object[]> TestCase1
         {

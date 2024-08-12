@@ -6,13 +6,13 @@ namespace MultiFactor.Radius.Adapter.Infrastructure.Configuration.Features.UserN
 
 public class UserNameTransformRules
 {
-    private readonly List<UserNameTransformRule> _rules = new();
-    public UserNameTransformRule[] BeforeFirstFactor => _rules.Where(x => x.Scope == UserNameTransformRulesScope.BeforeFirstFactor || x.Scope == UserNameTransformRulesScope.Both).ToArray();
+    private readonly List<UserNameTransformScopedRule> _rules = new();
+    public UserNameTransformScopedRule[] BeforeFirstFactor => _rules.Where(x => x.Kind == UserNameTransformRuleKind.BeforeFirstFactor || x.Kind == UserNameTransformRuleKind.Both).ToArray();
 
-    public UserNameTransformRule[] BeforeSecondFactor => _rules.Where(x => x.Scope == UserNameTransformRulesScope.BeforeSecondFactor || x.Scope == UserNameTransformRulesScope.Both).ToArray();
+    public UserNameTransformScopedRule[] BeforeSecondFactor => _rules.Where(x => x.Kind == UserNameTransformRuleKind.BeforeSecondFactor || x.Kind == UserNameTransformRuleKind.Both).ToArray();
 
-    public void AddRule(UserNameTransformRulesElement element, UserNameTransformRulesScope scope)
+    public void AddRule(UserNameTransformRule element, UserNameTransformRuleKind kind)
     {
-        _rules.Add(new UserNameTransformRule(element, scope));
+        _rules.Add(new UserNameTransformScopedRule(element, kind));
     }
 }
