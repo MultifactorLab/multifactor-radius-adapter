@@ -903,11 +903,11 @@ public partial class ConfigurationLoadingTests
         act.Clients[0].UserNameTransformRules.BeforeFirstFactor.Should()
             .NotBeNullOrEmpty()
             .And
-            .ContainSingle(x => x.Element.Replace == data.ReplaceFirst && x.Element.Match == data.MatchFirst);
+            .ContainSingle(x => x.Replace == data.ReplaceFirst && x.Match == data.MatchFirst);
 
         act.Clients[0].UserNameTransformRules.BeforeSecondFactor.Should()
             .NotBeNullOrEmpty()
             .And
-            .ContainSingle(x => x.Element.Replace == data.ReplaceSecond && x.Element.Match == data.MatchSecond);
+            .ContainSingle(x => x.Replace == data.ReplaceSecond && x.Match == data.MatchSecond);
     }
 }

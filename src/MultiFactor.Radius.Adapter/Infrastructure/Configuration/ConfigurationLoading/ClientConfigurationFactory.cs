@@ -109,8 +109,7 @@ public class ClientConfigurationFactory
 
         ReadRadiusReplyAttributes(builder, _dictionary, configuration.RadiusReply);
 
-        var userNameTransformRulesSection = configuration.UserNameTransformRules;
-        LoadUserNameTransformRulesSection(userNameTransformRulesSection, builder);
+        LoadUserNameTransformRulesSection(configuration, builder);
 
         builder.SetServiceAccountUser(appSettings.ServiceAccountUser ?? string.Empty);
         builder.SetServiceAccountPassword(appSettings.ServiceAccountPassword ?? string.Empty);
@@ -184,25 +183,25 @@ public class ClientConfigurationFactory
         }
     }
 
-    private static void LoadUserNameTransformRulesSection(UserNameTransformRulesSection userNameTransformRulesSection, ClientConfiguration builder)
+    private static void LoadUserNameTransformRulesSection(RadiusAdapterConfiguration configuration, ClientConfiguration builder)
     {
-        var fillRules = (UserNameTransformRule[] collection, UserNameTransformRuleKind scope) =>
+        var userNameTransformRulesSection = configuration.UserNameTransformRules;
+        var firstFactorRules = new List<UserNameTransformRule>();
+        var secondFactorRules = new List<UserNameTransformRule>();
+
+        if (userNameTransformRulesSection?.Elements?.Length > 0)
         {
-            if (collection == null || collection.Count() == 0)
-            {
-                return;
-            }
-            foreach (var member in collection)
-            {
-                if (member is UserNameTransformRule rule)
-                {
-                    builder.AddUserNameTransformRule(rule, scope);
-                }
-            }
-        };
-        fillRules(userNameTransformRulesSection?.Elements, UserNameTransformRuleKind.Both);
-        fillRules(userNameTransformRulesSection?.BeforeFirstFactor?.Elements, UserNameTransformRuleKind.BeforeFirstFactor);
-        fillRules(userNameTransformRulesSection?.BeforeSecondFactor?.Elements, UserNameTransformRuleKind.BeforeSecondFactor);
+            firstFactorRules.AddRange(userNameTransformRulesSection.Elements);
+            secondFactorRules.AddRange(userNameTransformRulesSection.Elements);
+        }
+
+        firstFactorRules.AddRange(userNameTransformRulesSection?.BeforeFirstFactor?.Elements ?? Array.Empty<UserNameTransformRule>());
+        secondFactorRules.AddRange(userNameTransformRulesSection?.BeforeSecondFactor?.Elements ?? Array.Empty<UserNameTransformRule>());
+
+        builder.SetUserNameTransformRules(
+            new UserNameTransformRules(firstFactorRules, secondFactorRules)
+        );
+
     }
 
     private void ReadActiveDirectoryAuthenticationSourceSettings(ClientConfiguration builder, AppSettingsSection appSettings)

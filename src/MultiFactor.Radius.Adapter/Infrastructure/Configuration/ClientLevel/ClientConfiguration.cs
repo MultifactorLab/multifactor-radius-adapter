@@ -14,10 +14,10 @@ namespace MultiFactor.Radius.Adapter.Infrastructure.Configuration.ClientLevel;
 
 public class ClientConfiguration : IClientConfiguration
 {
-    public ClientConfiguration(string name, 
-        string rdsSharedSecret, 
+    public ClientConfiguration(string name,
+        string rdsSharedSecret,
         AuthenticationSource firstFactorAuthSource,
-        string apiKey, 
+        string apiKey,
         string apiSecret)
     {
         if (string.IsNullOrWhiteSpace(name))
@@ -168,8 +168,12 @@ public class ClientConfiguration : IClientConfiguration
     /// <summary>
     /// Username transform rules
     /// </summary>
-    private readonly UserNameTransformRules _userNameTransformRules = new();
-    public UserNameTransformRules UserNameTransformRules => _userNameTransformRules;
+    public UserNameTransformRules UserNameTransformRules { get; private set; } = new();
+    public ClientConfiguration SetUserNameTransformRules(UserNameTransformRules val)
+    {
+        UserNameTransformRules = val;
+        return this;
+    }
 
     public string CallingStationIdVendorAttribute { get; private set; }
 
@@ -366,17 +370,6 @@ public class ClientConfiguration : IClientConfiguration
         }
 
         _radiusReplyAttributes[attr] = values.ToArray();
-        return this;
-    }
-
-    public ClientConfiguration AddUserNameTransformRule(UserNameTransformRule rule, UserNameTransformRuleKind kind)
-    {
-        if (rule is null)
-        {
-            throw new ArgumentNullException(nameof(rule));
-        }
-
-        _userNameTransformRules.AddRule(rule, kind);
         return this;
     }
 

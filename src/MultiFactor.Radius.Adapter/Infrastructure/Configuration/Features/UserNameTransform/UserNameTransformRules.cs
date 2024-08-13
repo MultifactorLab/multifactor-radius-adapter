@@ -1,4 +1,5 @@
 ﻿using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Models.UserNameTransform;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -6,13 +7,21 @@ namespace MultiFactor.Radius.Adapter.Infrastructure.Configuration.Features.UserN
 
 public class UserNameTransformRules
 {
-    private readonly List<UserNameTransformScopedRule> _rules = new();
-    public UserNameTransformScopedRule[] BeforeFirstFactor => _rules.Where(x => x.Kind == UserNameTransformRuleKind.BeforeFirstFactor || x.Kind == UserNameTransformRuleKind.Both).ToArray();
+    private readonly UserNameTransformRule[] _firstFactorRules;
+    public UserNameTransformRule[] BeforeFirstFactor => _firstFactorRules;
 
-    public UserNameTransformScopedRule[] BeforeSecondFactor => _rules.Where(x => x.Kind == UserNameTransformRuleKind.BeforeSecondFactor || x.Kind == UserNameTransformRuleKind.Both).ToArray();
+    private readonly UserNameTransformRule[] _secondFactorRules;
+    public UserNameTransformRule[] BeforeSecondFactor => _secondFactorRules;
 
-    public void AddRule(UserNameTransformRule element, UserNameTransformRuleKind kind)
+    public UserNameTransformRules(IEnumerable<UserNameTransformRule> firstFactorRules, IEnumerable<UserNameTransformRule> secondFactorRules)
     {
-        _rules.Add(new UserNameTransformScopedRule(element, kind));
+        _firstFactorRules = firstFactorRules.ToArray();
+        _secondFactorRules = secondFactorRules.ToArray();
+    }
+
+    public UserNameTransformRules()
+    {
+        _firstFactorRules = Array.Empty<UserNameTransformRule>();
+        _secondFactorRules = Array.Empty<UserNameTransformRule>();
     }
 }
