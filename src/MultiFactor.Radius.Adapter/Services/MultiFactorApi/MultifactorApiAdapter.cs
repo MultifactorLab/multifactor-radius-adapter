@@ -4,6 +4,7 @@
 
 
 using Microsoft.Extensions.Logging;
+using MultiFactor.Radius.Adapter.Core;
 using MultiFactor.Radius.Adapter.Core.Framework.Context;
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration;
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Features.PreAuthModeFeature;
@@ -104,7 +105,7 @@ namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi
 
             var payload = new CreateRequestDto
             {
-                Identity = identity,
+                Identity = UserNameTransformation.Transform(identity, context.Configuration.UserNameTransformRules.BeforeSecondFactor),
                 Name = displayName,
                 Email = email,
                 Phone = userPhone,

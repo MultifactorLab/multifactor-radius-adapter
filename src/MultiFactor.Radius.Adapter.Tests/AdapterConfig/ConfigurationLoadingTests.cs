@@ -8,6 +8,7 @@ using MultiFactor.Radius.Adapter.Tests.Fixtures.ConfigLoading;
 using System.Net;
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration;
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration.RootLevel;
+using MultiFactor.Radius.Adapter.Tests.Data.UsernameTransformationRules;
 
 namespace MultiFactor.Radius.Adapter.Tests.AdapterConfig;
 
@@ -876,5 +877,37 @@ public partial class ConfigurationLoadingTests
         var conf = host.Service<IServiceConfiguration>();
         var cli = conf.Clients.First();
         cli.LdapBindDn.Should().NotBeNull();
+    }
+
+
+    [Theory]
+    [MemberData(nameof(UsernameTransformationRuleTestCases.TestCase1), MemberType = typeof(UsernameTransformationRuleTestCases))]
+    public void ReadConfiguration_ShouldReadUsernameTransformationRules(UsernameTransformationRuleTestCase data)
+    {
+        var host = TestHostFactory.CreateHost(builder =>
+        {
+            builder.Services.Configure<TestConfigProviderOptions>(x =>
+            {
+                x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-multi.config");
+                x.ClientConfigFilePaths = new[]
+                {
+                    TestEnvironment.GetAssetPath(TestAssetLocation.ClientsDirectory, data.Asset)
+                };
+            });
+        });
+        var act = host.Service<IServiceConfiguration>();
+        act.Clients.Should()
+            .NotBeNull()
+            .And.HaveCountGreaterThan(0);
+
+        act.Clients[0].UserNameTransformRules.BeforeFirstFactor.Should()
+            .NotBeNullOrEmpty()
+            .And
+            .ContainSingle(x => x.Replace == data.ReplaceFirst && x.Match == data.MatchFirst);
+
+        act.Clients[0].UserNameTransformRules.BeforeSecondFactor.Should()
+            .NotBeNullOrEmpty()
+            .And
+            .ContainSingle(x => x.Replace == data.ReplaceSecond && x.Match == data.MatchSecond);
     }
 }
