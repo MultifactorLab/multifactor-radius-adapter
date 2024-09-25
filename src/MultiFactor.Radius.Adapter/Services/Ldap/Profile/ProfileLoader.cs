@@ -59,7 +59,7 @@ public class ProfileLoader
             ? attrs["memberOf"].GetValues<string>()
             : Array.Empty<string>();
 
-        profileAttributes.Add("memberOf", groups.Select(LdapIdentity.DnToCn).ToArray());
+        var userGroupsCn = groups.Select(LdapIdentity.DnToCn).ToList();
 
         _logger.LogDebug("User '{User:l}' profile loaded: {DistinguishedName:l} (upn={Upn:l})", 
             user, profile.DistinguishedName, profile.Upn);
@@ -67,9 +67,9 @@ public class ProfileLoader
         if (clientConfig.ShouldLoadUserGroups())
         {
             var additionalGroups = await _userGroupsSource.GetUserGroupsAsync(clientConfig, adapter, entry.Dn);
-            profileAttributes.Add("memberOf", additionalGroups);
+            userGroupsCn.AddRange(additionalGroups);
         }
-
+        profileAttributes.Add("memberOf", userGroupsCn.Distinct(StringComparer.OrdinalIgnoreCase));
         return profile;
     }
 

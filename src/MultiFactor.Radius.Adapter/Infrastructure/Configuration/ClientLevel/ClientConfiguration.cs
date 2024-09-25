@@ -85,6 +85,10 @@ public class ClientConfiguration : IClientConfiguration
     /// Bypass second factor when MultiFactor API is unreachable
     /// </summary>
     public bool BypassSecondFactorWhenApiUnreachable { get; private set; }
+    
+    public string NestedGroupsBaseDn { get; private set; }
+        
+    public string[] SplittedNestedGroupsBaseDn => NestedGroupsBaseDn?.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries) ?? new string[0];
 
     public PrivacyModeDescriptor PrivacyMode { get; private set; } = PrivacyModeDescriptor.Default;
 
@@ -314,6 +318,12 @@ public class ClientConfiguration : IClientConfiguration
     public ClientConfiguration SetLoadActiveDirectoryNestedGroups(bool val)
     {
         LoadActiveDirectoryNestedGroups = val;
+        return this;
+    }
+    
+    public ClientConfiguration SetNestedGroupsBaseDn(string val)
+    {
+        NestedGroupsBaseDn = val;
         return this;
     }
 
