@@ -17,7 +17,7 @@ public interface IClientConfigurationsProvider
     /// </summary>
     /// <param name="configuration">Configuration instance.</param>
     /// <returns>Radius Configuration File</returns>
-    RadiusConfigurationFile GetSource(RadiusAdapterConfiguration configuration);
+    RadiusConfigurationSource GetSource(RadiusAdapterConfiguration configuration);
 
     /// <summary>
     /// Returns all client configurations.

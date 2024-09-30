@@ -26,12 +26,12 @@ internal class TestClientConfigsProvider : IClientConfigurationsProvider
 
         _dict = clientConfigFiles
             .Select(x => new RadiusConfigurationFile(x))
-            .ToDictionary(k => k, v => RadiusAdapterConfigurationFactory.Create(v, v.NameWithoutExtension));
+            .ToDictionary(k => k, v => RadiusAdapterConfigurationFactory.Create(v, v.Name));
 
         return _dict.Select(x => x.Value).ToArray();
     }
 
-    public RadiusConfigurationFile GetSource(RadiusAdapterConfiguration configuration)
+    public RadiusConfigurationSource GetSource(RadiusAdapterConfiguration configuration)
     {
         return _dict.FirstOrDefault(x => x.Value == configuration).Key;
     }

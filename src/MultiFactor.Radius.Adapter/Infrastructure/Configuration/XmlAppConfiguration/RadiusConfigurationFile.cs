@@ -9,7 +9,7 @@ namespace MultiFactor.Radius.Adapter.Infrastructure.Configuration.XmlAppConfigur
 /// <summary>
 /// Describes a Radius Adapter configuration file.
 /// </summary>
-public record RadiusConfigurationFile
+public sealed class RadiusConfigurationFile : RadiusConfigurationSource
 {
     /// <summary>
     /// Configuration file path.
@@ -19,12 +19,12 @@ public record RadiusConfigurationFile
     /// <summary>
     /// Configuration file name without extension.
     /// </summary>
-    public string NameWithoutExtension { get; }
+    public override string Name { get; }
 
     /// <summary>
     /// Configuration file name with extension.
     /// </summary>
-    public string Name { get; }
+    public string FileName { get; }
 
     public RadiusConfigurationFile(string path)
     {
@@ -45,8 +45,8 @@ public record RadiusConfigurationFile
         }
 
         Path = path;
-        NameWithoutExtension = System.IO.Path.GetFileNameWithoutExtension(path);
-        Name = System.IO.Path.GetFileName(path);
+        Name = System.IO.Path.GetFileNameWithoutExtension(path);
+        FileName = System.IO.Path.GetFileName(path);
     }
 
     public static implicit operator string(RadiusConfigurationFile path)
@@ -71,5 +71,5 @@ public record RadiusConfigurationFile
         }
     }
 
-    public override string ToString() => Name;
+    public override string ToString() => FileName;
 }

@@ -5,6 +5,7 @@
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration.XmlAppConfiguration;
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Models;
 using System;
+using System.IO;
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration.RootLevel;
 
 namespace MultiFactor.Radius.Adapter.Infrastructure.Configuration.ConfigurationLoading;
@@ -14,11 +15,16 @@ internal static class RootConfigurationProvider
     private static readonly Lazy<RadiusAdapterConfiguration> _rootConfig = new(() =>
     {
         var path = RootConfigurationFile.Path;
-
         var rdsRootConfig = new RadiusConfigurationFile(path);
-        var config = RadiusAdapterConfigurationFactory.Create(rdsRootConfig);
+        
+        // try to read a file...
+        if (File.Exists(rdsRootConfig))
+        {
+            return RadiusAdapterConfigurationFactory.Create(rdsRootConfig);
+        }
 
-        return config;
+        // ... and try to read an environment variables otherwise.
+        return RadiusAdapterConfigurationFactory.Create();
     });
 
     public static RadiusAdapterConfiguration GetRootConfiguration() => _rootConfig.Value;

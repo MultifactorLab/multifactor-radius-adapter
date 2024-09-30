@@ -25,6 +25,9 @@
 	<ItemGroup>
 	  <Compile Remove="Server\Pipeline\TransformUserName\**" />
 	  <Content Remove="Server\Pipeline\TransformUserName\**" />
+	  <Content Include="..\.dockerignore">
+	    <Link>.dockerignore</Link>
+	  </Content>
 	  <EmbeddedResource Remove="Server\Pipeline\TransformUserName\**" />
 	  <None Remove="Server\Pipeline\TransformUserName\**" />
 	</ItemGroup>
@@ -71,12 +74,6 @@
 		<Folder Include="clients\" />
         <InternalsVisibleTo Include="MultiFactor.Radius.Adapter.Tests" />
     </ItemGroup>
-
-	<ItemGroup>
-	  <Content Include="..\.dockerignore">
-	    <Link>.dockerignore</Link>
-	  </Content>
-	</ItemGroup>
 
 	<ItemGroup>
 	  <Reference Include="LdapForNet">
