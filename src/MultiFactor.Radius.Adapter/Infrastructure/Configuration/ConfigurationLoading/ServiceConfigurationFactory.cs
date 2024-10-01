@@ -70,7 +70,7 @@ public class ServiceConfigurationFactory
                     "You have tried to set the timeout to {httpRequestTimeout} seconds. The recommended timeout is {recommendedApiTimeout} seconds. If you are sure, use {forcedForm} form of value",
                     apiTimeout.TotalSeconds,
                     _recommendedApiTimeout.TotalSeconds,
-                    apiTimeoutSetting + "!");
+                    $"{apiTimeoutSetting}!");
 
                 apiTimeout = _recommendedApiTimeout;
             }
