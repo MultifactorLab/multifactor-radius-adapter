@@ -445,6 +445,40 @@ public partial class ConfigurationLoadingTests
     
     [Fact]
     [Trait("Category", "multifactor-api-timeout")]
+    public void ForcedApiTimeout_ShouldSetProvidedApiTimeout()
+    {
+        var host = TestHostFactory.CreateHost(builder =>
+        {
+            builder.Services.Configure<TestConfigProviderOptions>(x =>
+            {
+                x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-forced-api-timeout-valid.config");
+            });
+        });
+
+        var conf = host.Service<IServiceConfiguration>();
+
+        Assert.Equal(TimeSpan.FromSeconds(5), conf.ApiTimeout);
+    }
+    
+    [Fact]
+    [Trait("Category", "multifactor-api-timeout")]
+    public void NotRecommendedApiTimeout_ShouldSetDefaultApiTimeout()
+    {
+        var host = TestHostFactory.CreateHost(builder =>
+        {
+            builder.Services.Configure<TestConfigProviderOptions>(x =>
+            {
+                x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-not-recommended-api-timeout-valid.config");
+            });
+        });
+
+        var conf = host.Service<IServiceConfiguration>();
+
+        Assert.Equal(TimeSpan.FromSeconds(65), conf.ApiTimeout);
+    }
+    
+    [Fact]
+    [Trait("Category", "multifactor-api-timeout")]
     public void Single_ApiTimeoutInvalid_ShouldSetDefault()
     {
         var host = TestHostFactory.CreateHost(builder =>
