@@ -152,4 +152,117 @@ public class ProfileLoaderTests
         var myAttrTwo = profile.Attributes.GetValue("myAttrTwo");
         Assert.Equal("mail@mail.dev", myAttrTwo);
     }
+    
+    [Fact]
+    public async Task Load_UseNestedGroupsBaseDnNotEmpty_ShouldReturnProfile()
+    {
+        var host = TestHostFactory.CreateHost(builder =>
+        {
+            builder.Services.Configure<TestConfigProviderOptions>(x =>
+            {
+                x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-single.config");
+            });
+        });
+
+        var attrs = new LdapAttributes("CN=User Name,CN=Users,DC=domain,DC=local");
+        var baseDn = LdapIdentity.BaseDn("CN=User Name,CN=Users,DC=domain,DC=local");
+        
+        var user = LdapEntryFactory.Create("CN=User Name,CN=Users,DC=domain,DC=local", x =>
+        {
+            x.Add("memberOf", "CN=Users,DC=domain,DC=local");
+        });
+        
+        var expectedProfile = new LdapProfile(baseDn, attrs, Array.Empty<string>(), null);
+        attrs.Add("memberOf", new List<string>() { "Users", "test1", "test2", "test3" });
+        
+        var domain = LdapDomain.Parse("dc=domain,dc=local");
+        var adapter = new Mock<ILdapConnectionAdapter>();
+        adapter.Setup(x => x.WhereAmIAsync()).ReturnsAsync(domain);
+        adapter.Setup(x => x.SearchQueryAsync(It.Is<string>(x => x == domain.Name), 
+                It.IsAny<string>(), 
+                It.Is<LdapSearchScope>(x => x == LdapSearchScope.LDAP_SCOPE_SUB), 
+                It.IsAny<string[]>()))
+            .ReturnsAsync(new[] { user } );
+
+        var clientConfig = new ClientConfiguration(
+                "custom",
+                "shared_secret",
+                AuthenticationSource.ActiveDirectory,
+                "key", "secret")
+            .SetLoadActiveDirectoryNestedGroups(true)
+            .SetNestedGroupsBaseDn("DC=test1,DC=test1;CN=test2,DC=test2,DC=test2;OU=test3,DC=test3,DC=test3")
+            .AddActiveDirectoryGroup("test1");
+        
+        foreach (var nestedDn in clientConfig.SplittedNestedGroupsBaseDn)
+        {
+            adapter.Setup(x => x.SearchQueryAsync(It.Is<string>(x => x == nestedDn), 
+                    It.IsAny<string>(), 
+                    It.Is<LdapSearchScope>(x => x == LdapSearchScope.LDAP_SCOPE_SUB), 
+                    It.IsAny<string[]>()))
+                .ReturnsAsync(new[] { new LdapEntry() {Dn = nestedDn}} );
+        }
+        
+        var loader = host.Service<ProfileLoader>();
+
+        var profile = await loader.LoadAsync(clientConfig, adapter.Object, LdapIdentity.ParseUser("some.user@domain.local"));
+
+        profile.Should().NotBeNull();
+        profile.MemberOf.Should().BeEquivalentTo(expectedProfile.MemberOf);
+    }
+    
+    [Theory]
+    [ClassData(typeof(EmptyStringsListInput))]
+    public async Task Load_UseNestedGroupsBaseDnEmpty_ShouldReturnProfile(string emptyNestedDn)
+    {
+        var host = TestHostFactory.CreateHost(builder =>
+        {
+            builder.Services.Configure<TestConfigProviderOptions>(x =>
+            {
+                x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-single.config");
+            });
+        });
+
+        var attrs = new LdapAttributes("CN=User Name,CN=Users,DC=domain,DC=local");
+        var baseDn = LdapIdentity.BaseDn("CN=User Name,CN=Users,DC=domain,DC=local");
+        
+        var user = LdapEntryFactory.Create("CN=User Name,CN=Users,DC=domain,DC=local", x =>
+        {
+            x.Add("memberOf", "CN=Users,DC=domain,DC=local");
+        });
+        
+        var expectedProfile = new LdapProfile(baseDn, attrs, Array.Empty<string>(), null);
+        attrs.Add("memberOf", new List<string>() { "Users", "User Name" });
+        
+        var domain = LdapDomain.Parse("dc=domain,dc=local");
+        var adapter = new Mock<ILdapConnectionAdapter>();
+        adapter.Setup(x => x.WhereAmIAsync()).ReturnsAsync(domain);
+        adapter.Setup(x => x.SearchQueryAsync(It.Is<string>(x => x == domain.Name), 
+                It.IsAny<string>(), 
+                It.Is<LdapSearchScope>(x => x == LdapSearchScope.LDAP_SCOPE_SUB), 
+                It.IsAny<string[]>()))
+            .ReturnsAsync(new[] { user } );
+
+        var clientConfig = new ClientConfiguration(
+                "custom",
+                "shared_secret",
+                AuthenticationSource.ActiveDirectory,
+                "key", "secret")
+            .SetLoadActiveDirectoryNestedGroups(true)
+            .SetNestedGroupsBaseDn(emptyNestedDn)
+            .AddActiveDirectoryGroup("test1");
+
+     adapter.Setup(x => x.SearchQueryAsync(
+             It.Is<string>(x => x == user.Dn),
+             It.IsAny<string>(),
+             It.Is<LdapSearchScope>(x => x == LdapSearchScope.LDAP_SCOPE_SUB),
+             It.IsAny<string[]>()))
+         .ReturnsAsync(new[] { new LdapEntry() {Dn = user.Dn}} );
+     
+        var loader = host.Service<ProfileLoader>();
+
+        var profile = await loader.LoadAsync(clientConfig, adapter.Object, LdapIdentity.ParseUser("some.user@domain.local"));
+
+        profile.Should().NotBeNull();
+        profile.MemberOf.Should().BeEquivalentTo(expectedProfile.MemberOf);
+    }
 }

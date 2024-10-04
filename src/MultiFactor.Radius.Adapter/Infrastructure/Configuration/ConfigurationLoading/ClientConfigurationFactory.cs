@@ -232,6 +232,7 @@ public class ClientConfigurationFactory
         }
 
         builder.SetLoadActiveDirectoryNestedGroups(appSettings.LoadActiveDirectoryNestedGroups);
+        builder.SetNestedGroupsBaseDn(appSettings.NestedGroupsBaseDn);
 
         if (!string.IsNullOrWhiteSpace(appSettings.ActiveDirectoryDomain))
         {
