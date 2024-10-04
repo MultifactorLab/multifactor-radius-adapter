@@ -5,7 +5,7 @@ using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Features.Authentic
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Features.PreAuthModeFeature;
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Features.PrivacyModeFeature;
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Features.RandomWaiterFeature;
-using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Models.UserNameTransform;
+using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Features.UserNameTransform;
 
 namespace MultiFactor.Radius.Adapter.Infrastructure.Configuration.ClientLevel;
 
@@ -35,7 +35,7 @@ public interface IClientConfiguration
     string SignUpGroups { get; }
     string[] SplittedActiveDirectoryDomains { get; }
     string[] SplittedNestedGroupsBaseDn { get; }
-    UserNameTransformRule[] UserNameTransformRules { get; }
+    UserNameTransformRules UserNameTransformRules { get; }
     public string TwoFAIdentityAttribute { get; }
     public bool UseIdentityAttribute => !string.IsNullOrEmpty(TwoFAIdentityAttribute);
     bool ShouldLoadUserGroups();

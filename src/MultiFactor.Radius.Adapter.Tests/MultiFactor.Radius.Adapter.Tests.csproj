@@ -56,6 +56,14 @@
             <HintPath>..\libs\LdapForNet.dll</HintPath>
         </Reference>
     </ItemGroup>
+    <ItemGroup>
+        <Content Include="Assets\clients\username-transformation-rule-before-first-fa.config">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </Content>
+        <Content Include="Assets\clients\username-transformation-rule-legacy.config">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </Content>
+    </ItemGroup>
 
     <ItemGroup>
         <Content Include="Assets\root-empty-multifactor-nas-identifier.config">

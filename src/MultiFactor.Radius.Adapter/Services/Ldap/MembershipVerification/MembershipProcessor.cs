@@ -3,6 +3,7 @@
 //https://github.com/MultifactorLab/MultiFactor.Radius.Adapter/blob/master/LICENSE.md
 
 using Microsoft.Extensions.Logging;
+using MultiFactor.Radius.Adapter.Core;
 using MultiFactor.Radius.Adapter.Core.Framework.Context;
 using MultiFactor.Radius.Adapter.Services.Ldap.Connection;
 using MultiFactor.Radius.Adapter.Services.Ldap.Profile;
@@ -40,7 +41,7 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.MembershipVerification
                 throw new ArgumentNullException(nameof(context));
             }
 
-            var userName = context.UserName;
+            var userName = UserNameTransformation.Transform(context.UserName, context.Configuration.UserNameTransformRules.BeforeFirstFactor);
             if (string.IsNullOrEmpty(userName))
             {
                 _logger.LogWarning("Verification user' membership failed: can't find 'User-Name' attribute (messageId: {id}, from: {host:l}:{port})", context.RequestPacket.Header.Identifier, context.RemoteEndpoint.Address, context.RemoteEndpoint.Port);
@@ -90,12 +91,12 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.MembershipVerification
             {
                 throw new ArgumentNullException(nameof(context));
             }
-
-            if (string.IsNullOrEmpty(context.UserName))
+            var transformedUserName = UserNameTransformation.Transform(context.UserName, context.Configuration.UserNameTransformRules.BeforeFirstFactor);
+            if (string.IsNullOrEmpty(transformedUserName))
             {
                 throw new Exception($"Can't find User-Name in message id={context.RequestPacket.Header.Identifier} from {context.RemoteEndpoint.Address}:{context.RemoteEndpoint.Port}");
             }
-            var user = LdapIdentity.ParseUser(context.UserName);
+            var user = LdapIdentity.ParseUser(transformedUserName);
 
             var clientConfig = context.Configuration;
             foreach (var domain in clientConfig.SplittedActiveDirectoryDomains)

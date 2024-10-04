@@ -242,6 +242,20 @@ namespace MultiFactor.Radius.Adapter.Core.Radius
             packet.Attributes.Remove("Proxy-State"); //should be newer
         }
 
+
+        public IRadiusPacket Clone()
+        {
+            var newPacket = new RadiusPacket(Header, Authenticator, SharedSecret);
+            newPacket.Attributes = new Dictionary<string, List<Object>>(Attributes);
+            newPacket.Attributes.Remove("Proxy-State"); 
+            foreach (var attr in _transformMap.Keys)
+            {
+                newPacket.Attributes.Remove(attr);
+                newPacket.AddAttribute(attr, _transformMap[attr]);
+            }
+            return newPacket;
+        }
+
         public void AddAttribute(string name, string value)
         {
             AddAttributeObject(name, value);
@@ -260,6 +274,16 @@ namespace MultiFactor.Radius.Adapter.Core.Radius
         public void AddAttribute(string name, byte[] value)
         {
             AddAttributeObject(name, value);
+        }
+
+        public IRadiusPacket UpdateAttribute(string name, string value)
+        {
+            if (Attributes.ContainsKey(name))
+            {
+                Attributes.Remove(name);
+            }
+            AddAttributeObject(name, value);
+            return this;
         }
 
         internal void AddAttributeObject(string name, object value)
