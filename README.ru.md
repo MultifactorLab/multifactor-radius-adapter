@@ -219,10 +219,11 @@ sudo systemctl enable multifactor-radius
   <!-- Уровень логирования: 'Debug', 'Info', 'Warn', 'Error' -->
   <add key="logging-level" value="Debug"/>
 
-  <!-- Отключить проверку вложенных групп в Active Directory -->
+  <!-- [Опционально] Включить/отключить проверку вложенных групп в Active Directory -->
   <add key="load-active-directory-nested-groups" value="false"/>
 
-  <!-- Базовый dn для проверки вложенных групп пользователя. Задает места в которых искать вложенные группы пользователя. Ускоряет поиск (опционально) -->
+  <!-- [Опционально] Базовые dn, разделенные ';' для проверки вложенных групп пользователя.
+  Укажите контейнеры, в которых следует искать вложенные группы. -->
   <add key="nested-groups-base-dn" value="CN=Users,DC=domain,DC=your;OU=Admins,DC=domain,DC=your"/>
 </appSettings>
 ```

@@ -445,7 +445,7 @@ public partial class ConfigurationLoadingTests
     
     [Fact]
     [Trait("Category", "multifactor-api-timeout")]
-    public void ForcedApiTimeout_ShouldSetProvidedApiTimeout()
+    public void ForcedApiTimeoutSyntaxAndNotRecommendedApiTimeout_ShouldSetProvidedApiTimeout()
     {
         var host = TestHostFactory.CreateHost(builder =>
         {
@@ -462,7 +462,7 @@ public partial class ConfigurationLoadingTests
     
     [Fact]
     [Trait("Category", "multifactor-api-timeout")]
-    public void NotRecommendedApiTimeout_ShouldSetDefaultApiTimeout()
+    public void DefaultApiTimeoutSyntaxAndNotRecommendedApiTimeout_ShouldSetDefaultApiTimeout()
     {
         var host = TestHostFactory.CreateHost(builder =>
         {

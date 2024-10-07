@@ -8,12 +8,13 @@ using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Features.PreAuthMo
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Features.PrivacyModeFeature;
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Features.RandomWaiterFeature;
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Features.UserNameTransform;
-using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Models.UserNameTransform;
 
 namespace MultiFactor.Radius.Adapter.Infrastructure.Configuration.ClientLevel;
 
 public class ClientConfiguration : IClientConfiguration
 {
+    private string _nestedGroupsBaseDn;
+    
     public ClientConfiguration(string name,
         string rdsSharedSecret,
         AuthenticationSource firstFactorAuthSource,
@@ -87,9 +88,10 @@ public class ClientConfiguration : IClientConfiguration
     /// </summary>
     public bool BypassSecondFactorWhenApiUnreachable { get; private set; }
     
-    public string NestedGroupsBaseDn { get; private set; }
-        
-    public string[] SplittedNestedGroupsBaseDn => NestedGroupsBaseDn?.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries) ?? new string[0];
+    public string[] SplittedNestedGroupsBaseDn => _nestedGroupsBaseDn
+        ?.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+        .Distinct(StringComparer.OrdinalIgnoreCase)
+        .ToArray() ?? Array.Empty<string>();
 
     public PrivacyModeDescriptor PrivacyMode { get; private set; } = PrivacyModeDescriptor.Default;
 
@@ -327,7 +329,7 @@ public class ClientConfiguration : IClientConfiguration
     
     public ClientConfiguration SetNestedGroupsBaseDn(string val)
     {
-        NestedGroupsBaseDn = val;
+        _nestedGroupsBaseDn = val;
         return this;
     }
 

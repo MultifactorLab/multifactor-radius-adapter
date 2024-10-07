@@ -11,5 +11,5 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.UserGroupsReading;
 public interface IUserGroupsGetter
 {
     AuthenticationSource AuthenticationSource { get; }
-    Task<string[]> GetUserGroupsFromDnAsync(ILdapConnectionAdapter adapter, string baseDn, string userDn, bool loadNestedGroup);
+    Task<string[]> GetUserGroupsFromContainerAsync(ILdapConnectionAdapter adapter, string baseDn, string userDn, bool loadNestedGroup);
 }

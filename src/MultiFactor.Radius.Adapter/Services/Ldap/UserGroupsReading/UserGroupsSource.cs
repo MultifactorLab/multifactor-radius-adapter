@@ -33,18 +33,11 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.UserGroupsReading
             foreach (var baseDn in baseDnsForSearch)
             {
                 var sw = Stopwatch.StartNew();
-                var foundGroupsNames = await getter.GetUserGroupsFromDnAsync(connectionAdapter, baseDn, userDn, clientConfig.LoadActiveDirectoryNestedGroups);
+                var foundGroupsNames = await getter.GetUserGroupsFromContainerAsync(connectionAdapter, baseDn, userDn, clientConfig.LoadActiveDirectoryNestedGroups);
                 sw.Stop();
-                _logger.LogDebug("Search in {baseDn} for user {userDn} took {ms}ms", baseDn, userDn, sw.ElapsedMilliseconds);
-                if (foundGroupsNames.Length > 0)
-                {
-                    allUserGroupsNames.AddRange(foundGroupsNames);
-                    _logger.LogDebug("Found groups in {baseDn}: {groups}", baseDn, string.Join(",", foundGroupsNames.Select(x => $"'{x}'")));
-                }
-                else
-                {
-                    _logger.LogWarning("User '{dn:l}' does not have any group in {baseDn}.", userDn, baseDn);
-                }
+                _logger.LogTrace("Search in {baseDn} for user {userDn} took {ms}ms", baseDn, userDn, sw.ElapsedMilliseconds);
+                allUserGroupsNames.AddRange(foundGroupsNames);
+                _logger.LogTrace("Found groups in {baseDn}: {groups}", baseDn, string.Join(",", foundGroupsNames.Select(x => $"'{x}'")));
             }
 
             return allUserGroupsNames.ToArray(); 

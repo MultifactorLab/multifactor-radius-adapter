@@ -19,7 +19,7 @@ public class ServiceConfigurationFactory
     private readonly IClientConfigurationsProvider _clientConfigurationsProvider;
     private readonly ClientConfigurationFactory _clientConfigFactory;
     private readonly ILogger<ServiceConfigurationFactory> _logger;
-    private readonly TimeSpan _recommendedApiTimeout = TimeSpan.FromSeconds(65);
+    private static readonly TimeSpan _recommendedMinimalApiTimeout = TimeSpan.FromSeconds(65);
 
     public ServiceConfigurationFactory(
         IClientConfigurationsProvider clientConfigurationsProvider,
@@ -55,24 +55,24 @@ public class ServiceConfigurationFactory
         
         TimeSpan apiTimeout = ParseMultifactorApiTimeout(apiTimeoutSetting,out var forcedTimeout);
         
-        if (Timeout.InfiniteTimeSpan != apiTimeout && apiTimeout < _recommendedApiTimeout)
+        if (Timeout.InfiniteTimeSpan != apiTimeout && apiTimeout < _recommendedMinimalApiTimeout)
         {
             if (forcedTimeout)
             {
                 _logger.LogWarning(
-                    "You have set the timeout to {httpRequestTimeout} seconds. The recommended timeout is {recommendedApiTimeout} seconds. Lowering this threshold may cause incorrect system behavior.",
+                    "You have set the timeout to {httpRequestTimeout} seconds. The recommended minimal timeout is {recommendedApiTimeout} seconds. Lowering this threshold may cause incorrect system behavior.",
                     apiTimeout.TotalSeconds,
-                    _recommendedApiTimeout.TotalSeconds);
+                    _recommendedMinimalApiTimeout.TotalSeconds);
             }
             else
             {
                 _logger.LogWarning(
-                    "You have tried to set the timeout to {httpRequestTimeout} seconds. The recommended timeout is {recommendedApiTimeout} seconds. If you are sure, use {forcedForm} form of value",
+                    "You have tried to set the timeout to {httpRequestTimeout} seconds. The recommended minimal timeout is {recommendedApiTimeout} seconds. If you are sure, use the following syntax: 'value={apiTimeoutSetting}!'",
                     apiTimeout.TotalSeconds,
-                    _recommendedApiTimeout.TotalSeconds,
-                    $"{apiTimeoutSetting}!");
+                    _recommendedMinimalApiTimeout.TotalSeconds,
+                    apiTimeoutSetting);
 
-                apiTimeout = _recommendedApiTimeout;
+                apiTimeout = _recommendedMinimalApiTimeout;
             }
         }
         
@@ -141,7 +141,7 @@ public class ServiceConfigurationFactory
         }
         
         if (!TimeSpan.TryParseExact(mfTimeoutSetting, @"hh\:mm\:ss", null, System.Globalization.TimeSpanStyles.None, out var httpRequestTimeout))
-            return _recommendedApiTimeout;
+            return _recommendedMinimalApiTimeout;
 
         if (httpRequestTimeout == TimeSpan.Zero)
             return Timeout.InfiniteTimeSpan;
