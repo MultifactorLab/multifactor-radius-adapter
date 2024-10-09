@@ -101,16 +101,19 @@ public class RadiusReplyAttributeValue
         if (_userNameCondition.Count != 0)
         {
             var userName = context.UserName;
-            return _userNameCondition.Any(Compare);
-
-            bool Compare(string conditionName)
+            var canonicalUserName = Utils.CanonicalizeUserName(userName);
+            Func<string, bool> compareLogic = (string conditionName) =>
             {
                 var toMatch = Utils.IsCanicalUserName(conditionName)
-                    ? conditionName
-                    : Utils.CanonicalizeUserName(userName);
-
-                return string.Compare(toMatch, conditionName, StringComparison.InvariantCultureIgnoreCase) == 0;
-            }
+                    ? canonicalUserName
+                    : userName;
+                
+                return string.Compare(
+                    toMatch,
+                    conditionName,
+                    StringComparison.InvariantCultureIgnoreCase) == 0;
+            };
+            return _userNameCondition.Any(compareLogic);
         }
 
         //if matched user group condition

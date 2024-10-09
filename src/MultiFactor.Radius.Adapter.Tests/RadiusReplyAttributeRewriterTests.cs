@@ -154,7 +154,7 @@ namespace MultiFactor.Radius.Adapter.Tests
         }
 
         [Fact]
-        public void Rewrite_ResponseShoulContainKeys()
+        public void Rewrite_ResponseShouldContainKeys()
         {
             var host = TestHostFactory.CreateHost(builder =>
             {
@@ -179,7 +179,7 @@ namespace MultiFactor.Radius.Adapter.Tests
         }   
         
         [Fact]
-        public void Rewrite_Sufficient_ResponseShoulContainOneValue()
+        public void Rewrite_Sufficient_ResponseShouldContainOneValue()
         {
             var host = TestHostFactory.CreateHost(builder =>
             {
@@ -255,6 +255,53 @@ namespace MultiFactor.Radius.Adapter.Tests
             
             var displayName = context.ResponsePacket.Attributes["displayName"];
             displayName.Should().ContainSingle("Display Name");
+        }
+        
+        [Theory]
+        [InlineData(int.MaxValue,"127.255.255.255")]
+        [InlineData(int.MinValue,"128.0.0.0")]
+        [InlineData(-1,"255.255.255.255")]
+        [InlineData(-1407254008,"172.31.2.8")]
+        [InlineData(-1062731775, "192.168.0.1")]
+        [InlineData(0,"0.0.0.0")]
+        [InlineData(123,"0.0.0.123")]
+        public void Rewrite_ShouldParseMsRADIUSFramedIPAddress(int intValue, string expectedValue)
+        {
+            var host = TestHostFactory.CreateHost(builder =>
+            {
+                builder.Services.Configure<TestConfigProviderOptions>(x =>
+                {
+                    x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-single.config");
+                });
+
+                var dict = new Mock<IRadiusDictionary>();
+                dict.Setup(x => x.GetAttribute(It.Is<string>(y => y == "Framed-IP-Address"))).Returns(new DictionaryAttribute("Framed-IP-Address", 8, DictionaryAttribute.TYPE_IPADDR));
+                builder.Services.RemoveService<IRadiusDictionary>().AddSingleton(dict.Object);
+            });
+
+            var clientConfig = new ClientConfiguration("custom", "shared_secret", AuthenticationSource.ActiveDirectory, "key", "secret")
+                .AddRadiusReplyAttribute("Framed-IP-Address", new[]
+                {
+                    new RadiusReplyAttributeValue("Framed-IP-Address")
+                });
+            
+            var context = host.CreateContext(requestPacket: RadiusPacketFactory.AccessRequest(), clientConfig: clientConfig, x =>
+            {
+                x.ResponsePacket = RadiusPacketFactory.AccessRequest();
+            });
+            
+            var attrs = new LdapAttributes("CN=User Name,CN=Users,DC=domain,DC=local")
+                .Add("Framed-IP-Address", intValue.ToString());
+            
+            context.Profile.UpdateAttributes(attrs);
+
+            var srv = host.Service<RadiusReplyAttributeEnricher>();
+            srv.RewriteReplyAttributes(context);
+
+            var responseAttrs = context.ResponsePacket.Attributes["Framed-IP-Address"];
+            Assert.Single(responseAttrs);
+            var attr = responseAttrs.First().ToString();
+            Assert.Equal(expectedValue, attr);
         }
     }
 }
