@@ -50,6 +50,25 @@ public class LdapConnectionAdapter : ILdapConnectionAdapter
         return _whereAmI;
     }
 
+    public async Task BindAsync(string bindDn, string password)
+    {
+        if (string.IsNullOrWhiteSpace(bindDn))
+        {
+            throw new ArgumentNullException(nameof(password));
+        }
+        
+        if (string.IsNullOrWhiteSpace(password))
+        {
+            throw new ArgumentNullException(nameof(password));
+        }
+        
+        await _connection.BindAsync(LdapAuthType.Simple, new LdapCredential
+        {
+            UserName = bindDn,
+            Password = password
+        });
+    }
+
     public async Task<LdapEntry[]> SearchQueryAsync(string baseDn, string filter, LdapSearchScope scope, params string[] attributes)
     {
         var sw = Stopwatch.StartNew();
@@ -63,11 +82,11 @@ public class LdapConnectionAdapter : ILdapConnectionAdapter
         return searchResult.ToArray();
     }
 
-    public static async Task<ILdapConnectionAdapter> CreateAsync(string uri, 
-        LdapIdentity user, 
-        string password,
-        BindIdentityFormatter formatter,
-        ILogger<LdapConnectionAdapter> logger)
+    public static ILdapConnectionAdapter CreateAsync(
+        string uri, 
+        LdapIdentity user,
+        ILogger<LdapConnectionAdapter> logger,
+        TimeSpan? timeout = null)
     {
         if (uri is null)
         {
@@ -77,16 +96,6 @@ public class LdapConnectionAdapter : ILdapConnectionAdapter
         if (user is null)
         {
             throw new ArgumentNullException(nameof(user));
-        }
-
-        if (password is null)
-        {
-            throw new ArgumentNullException(nameof(password));
-        }
-
-        if (formatter is null)
-        {
-            throw new ArgumentNullException(nameof(formatter));
         }
 
         if (logger is null)
@@ -113,28 +122,23 @@ public class LdapConnectionAdapter : ILdapConnectionAdapter
 
         instance._connection.SetOption(LdapOption.LDAP_OPT_PROTOCOL_VERSION, (int)LdapVersion.LDAP_VERSION3);
         instance._connection.SetOption(LdapOption.LDAP_OPT_REFERRALS, IntPtr.Zero);
-
-        var bindDn = formatter.FormatIdentity(user, uri);
-        await instance._connection.BindAsync(LdapAuthType.Simple, new LdapCredential
+        if (timeout.HasValue)
         {
-            UserName = bindDn,
-            Password = password
-        });
+            instance._connection.Timeout = timeout.Value;
+        }
+        
         return instance;
     }
 
-    public static async Task<ILdapConnectionAdapter> CreateAsTechnicalAccAsync(string domain, 
+    public static ILdapConnectionAdapter CreateAsTechnicalAccAsync(
+        string domain, 
         IClientConfiguration clientConfig,
         ILogger<LdapConnectionAdapter> logger)
     {
         try
         {
             var user = LdapIdentity.ParseUser(clientConfig.ServiceAccountUser);
-            return await CreateAsync(domain,
-                user,
-                clientConfig.ServiceAccountPassword,
-                new BindIdentityFormatter(clientConfig),
-                logger);
+            return CreateAsync(domain, user, logger);
         }
         catch (Exception ex)
         {

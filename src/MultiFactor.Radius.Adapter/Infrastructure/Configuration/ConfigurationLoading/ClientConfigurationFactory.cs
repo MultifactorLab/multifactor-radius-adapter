@@ -80,7 +80,7 @@ public class ClientConfigurationFactory
             appSettings.MultifactorSharedSecret);
 
         builder.SetBypassSecondFactorWhenApiUnreachable(appSettings.BypassSecondFactorWhenApiUnreachable);
-
+        builder.SetLdapBindTimeout(appSettings.LdapBindTimeout);
         ReadPrivacyModeSetting(appSettings, builder);
         ReadInvalidCredDelaySetting(appSettings, builder, serviceConfig);
         ReadPreAuthModeSetting(appSettings, builder);

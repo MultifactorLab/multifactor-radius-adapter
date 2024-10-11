@@ -39,19 +39,15 @@ public class LdapService
     }
 
     /// <summary>
-    /// Verify User Name, Password, User Status and Policy against Active Directory
+    /// Verify User Status and Policy against Active Directory
     /// </summary>
-    public async Task<bool> VerifyCredential(string userName, string password, string ldapUri, RadiusContext context)
+    public async Task<bool> VerifyMembership(string userName, string password, string ldapUri, RadiusContext context)
     {
         if (string.IsNullOrEmpty(userName))
         {
             throw new ArgumentNullException(nameof(userName));
         }
-        if (string.IsNullOrEmpty(password))
-        {
-            _logger.LogError("Empty password provided for user '{user:l}'", userName);
-            return false;
-        }
+
         if (string.IsNullOrEmpty(ldapUri))
         {
             throw new ArgumentNullException(nameof(ldapUri));
@@ -62,20 +58,14 @@ public class LdapService
         var formatter = new BindIdentityFormatter(context.Configuration);
         var bindDn = formatter.FormatIdentity(user, ldapUri);
 
-        _logger.LogDebug("Verifying user '{user:l}' credential and status at '{ldapUri:l}'", 
-            bindDn, ldapUri);
-
         try
         {
-            using var connection = await LdapConnectionAdapter.CreateAsync(ldapUri, 
-                user, 
-                password, 
-                formatter,
+            using var connection = LdapConnectionAdapter.CreateAsync(
+                ldapUri, 
+                user,
                 _loggerFactory.CreateLogger<LdapConnectionAdapter>());
-            var domain = await connection.WhereAmIAsync();
-
-            _logger.LogInformation("User '{user:l}' credential and status verified successfully in '{domain:l}'",
-                user.Name, domain.Name);
+            
+            await connection.BindAsync(bindDn, password);
 
             var profile = await _profileLoader.LoadAsync(context.Configuration, connection, user);
 
@@ -160,6 +150,48 @@ public class LdapService
         }
 
         return false;
+    }
+    
+    public async Task VerifyCredential(string userName, string password, string ldapUri, RadiusContext context)
+    {   
+        if (string.IsNullOrEmpty(userName))
+        {
+            throw new ArgumentNullException(nameof(userName));
+        }
+        
+        if (string.IsNullOrEmpty(password))
+        {
+            _logger.LogError("Empty password provided for user '{user:l}'", userName);
+            return ;
+        }
+        
+        if (string.IsNullOrEmpty(ldapUri))
+        {
+            throw new ArgumentNullException(nameof(ldapUri));
+        }
+
+        var user = LdapIdentity.ParseUser(userName);
+
+        var formatter = new BindIdentityFormatter(context.Configuration);
+        var bindDn = formatter.FormatIdentity(user, ldapUri);
+        _logger.LogDebug(
+            "Verifying user '{user:l}' credential and status at '{ldapUri:l}'", 
+            bindDn,
+            ldapUri);
+        
+        using var connection = LdapConnectionAdapter.CreateAsync(
+            ldapUri,
+            user,
+            _loggerFactory.CreateLogger<LdapConnectionAdapter>(),
+            context.Configuration.LdapBindTimeout);
+
+        await connection.BindAsync(bindDn, password);
+        var domain = await connection.WhereAmIAsync();
+
+        _logger.LogInformation(
+            "User '{user:l}' credential and status verified successfully in '{domain:l}'",
+            user.Name,
+            domain.Name);
     }
 
     protected async Task<LdapIdentity> WhereAmI(string host, LdapConnection connection)

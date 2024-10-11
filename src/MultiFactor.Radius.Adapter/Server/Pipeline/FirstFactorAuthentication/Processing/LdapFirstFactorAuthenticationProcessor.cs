@@ -53,7 +53,8 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.FirstFactorAuthentication.P
             var ldapUriList = context.Configuration.ActiveDirectoryDomain.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
             foreach (var ldapUri in ldapUriList)
             {
-                var isValid = await _ldapService.VerifyCredential(userName, password, ldapUri, context);
+                await _ldapService.VerifyCredential(userName, password, ldapUri, context);
+                var isValid = await _ldapService.VerifyMembership(userName, password, ldapUri, context);
                 if (isValid)
                 {
                     return PacketCode.AccessAccept;
