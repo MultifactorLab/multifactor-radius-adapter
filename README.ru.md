@@ -80,7 +80,7 @@ Remote Authentication Dial-In User Service (RADIUS) &mdash; сетевой пр�
 
 ### Установка зависимостей
 
-Компонент использует среду выполнения .NET 6 runtime, которая является бесплатной, открытой, разрабатывается компанией Microsoft и Open-Source сообществом. Среда выполнения не накладывает никаких ограничений на использование.
+Компонент использует среду выполнения .NET 8 runtime, которая является бесплатной, открытой, разрабатывается компанией Microsoft и Open-Source сообществом. Среда выполнения не накладывает никаких ограничений на использование.
 
 Для установки выполните команды:
 
@@ -88,7 +88,7 @@ Remote Authentication Dial-In User Service (RADIUS) &mdash; сетевой пр�
 
 ```shell
 sudo rpm -Uvh https://packages.microsoft.com/config/centos/7/packages-microsoft-prod.rpm
-sudo yum install aspnetcore-runtime-6.0
+sudo yum install aspnetcore-runtime-8.0
 ```
 
 <a href="https://docs.microsoft.com/ru-ru/dotnet/core/install/linux-centos" target="_blank">https://docs.microsoft.com/ru-ru/dotnet/core/install/linux-centos</a>
@@ -112,7 +112,7 @@ $ sudo dpkg -i packages-microsoft-prod.deb
 $ sudo apt-get update; \
   sudo apt-get install -y apt-transport-https && \
   sudo apt-get update && \
-  sudo apt-get install -y aspnetcore-runtime-6.0
+  sudo apt-get install -y aspnetcore-runtime-8.0
 ```
 
 <a href="https://docs.microsoft.com/ru-ru/dotnet/core/install/linux-ubuntu" target="_blank">https://docs.microsoft.com/ru-ru/dotnet/core/install/linux-ubuntu</a>
@@ -126,7 +126,7 @@ $ sudo dpkg -i packages-microsoft-prod.deb
 $ sudo apt-get update; \
   sudo apt-get install -y apt-transport-https && \
   sudo apt-get update && \
-  sudo apt-get install -y aspnetcore-runtime-6.0
+  sudo apt-get install -y aspnetcore-runtime-8.0
 ```
 
 <a href="https://docs.microsoft.com/ru-ru/dotnet/core/install/linux-debian" target="_blank">https://docs.microsoft.com/ru-ru/dotnet/core/install/linux-debian</a>
