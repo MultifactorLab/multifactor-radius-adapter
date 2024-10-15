@@ -34,6 +34,8 @@
         <None Remove="Assets\root-wrong-invalid-credential-delay.config" />
         <None Remove="Assets\root-wrong-load-active-directory-nested-groups.config" />
         <None Remove="Assets\root-wrong-privacy-mode.config" />
+        <None Remove="Assets\root-forced-api-timeout-valid.config" />
+        <None Remove="Assets\root-not-recommended-api-timeout-valid.config" />
         <None Update="Assets\clients\user-name-transform-single-rule.config">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
@@ -187,6 +189,16 @@
             <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
         </Content>
         <Content Include="Assets\root-minimal-single.config">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+            <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+            <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+        </Content>
+        <Content Include="Assets\root-forced-api-timeout-valid.config">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+            <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+            <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+        </Content>
+        <Content Include="Assets\root-not-recommended-api-timeout-valid.config">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
             <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
             <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>

@@ -16,15 +16,15 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.UserGroupsReading
     {
         public AuthenticationSource AuthenticationSource => AuthenticationSource.ActiveDirectory | AuthenticationSource.None;
 
-        public async Task<string[]> GetAllUserGroupsAsync(ILdapConnectionAdapter adapter, string userDn, bool loadNestedGroup)
+        public async Task<string[]> GetUserGroupsFromContainerAsync(ILdapConnectionAdapter adapter, string baseDn, string userDn, bool loadNestedGroup)
         {
             if (!loadNestedGroup)
             {
                 return Array.Empty<string>();
             }
-            var searchFilter = $"(member:1.2.840.113556.1.4.1941:={EscapeUserDn(userDn)})";
-            var domain = await adapter.WhereAmIAsync();
-            var response = await adapter.SearchQueryAsync(domain.Name, searchFilter, LdapSearchScope.LDAP_SCOPE_SUB, "DistinguishedName");
+            
+            var searchFilter = $"(&(objectCategory=group)(member:1.2.840.113556.1.4.1941:={EscapeUserDn(userDn)}))";
+            var response = await adapter.SearchQueryAsync(baseDn, searchFilter, LdapSearchScope.LDAP_SCOPE_SUB, "DistinguishedName");
             return response.Select(entry => LdapIdentity.DnToCn(entry.Dn)).ToArray();
         }
 

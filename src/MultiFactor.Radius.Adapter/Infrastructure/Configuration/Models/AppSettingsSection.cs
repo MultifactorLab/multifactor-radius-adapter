@@ -51,7 +51,10 @@ public class AppSettingsSection
     public string LdapBindDn { get; init; }
 
     [Description("load-active-directory-nested-groups")]
-    public bool LoadActiveDirectoryNestedGroups { get; init; } = false;
+    public bool LoadActiveDirectoryNestedGroups { get; init; } = true;
+
+    [Description("nested-groups-base-dn")]
+    public string NestedGroupsBaseDn { get; init; }
 
     [Description("phone-attribute")]
     public string PhoneAttribute { get; init; }

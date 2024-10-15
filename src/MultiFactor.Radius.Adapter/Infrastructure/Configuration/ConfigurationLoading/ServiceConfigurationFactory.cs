@@ -9,6 +9,7 @@ using NetTools;
 using System;
 using System.Net;
 using System.Threading;
+using Microsoft.Extensions.Logging;
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration.RootLevel;
 
 namespace MultiFactor.Radius.Adapter.Infrastructure.Configuration.ConfigurationLoading;
@@ -17,12 +18,17 @@ public class ServiceConfigurationFactory
 {
     private readonly IClientConfigurationsProvider _clientConfigurationsProvider;
     private readonly ClientConfigurationFactory _clientConfigFactory;
+    private readonly ILogger<ServiceConfigurationFactory> _logger;
+    private static readonly TimeSpan _recommendedMinimalApiTimeout = TimeSpan.FromSeconds(65);
 
-    public ServiceConfigurationFactory(IClientConfigurationsProvider clientConfigurationsProvider,
-        ClientConfigurationFactory clientConfigFactory)
+    public ServiceConfigurationFactory(
+        IClientConfigurationsProvider clientConfigurationsProvider,
+        ClientConfigurationFactory clientConfigFactory,
+        ILogger<ServiceConfigurationFactory> logger)
     {
         _clientConfigurationsProvider = clientConfigurationsProvider ?? throw new ArgumentNullException(nameof(clientConfigurationsProvider));
         _clientConfigFactory = clientConfigFactory ?? throw new ArgumentNullException(nameof(clientConfigFactory));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     public IServiceConfiguration CreateConfig(RadiusAdapterConfiguration rootConfiguration)
@@ -38,7 +44,6 @@ public class ServiceConfigurationFactory
         var apiProxySetting = appsettings.MultifactorApiProxy;
         var apiTimeoutSetting = appsettings.MultifactorApiTimeout;
 
-
         if (string.IsNullOrEmpty(apiUrlSetting))
         {
             throw InvalidConfigurationException.For(x => x.AppSettings.MultifactorApiUrl,
@@ -47,8 +52,30 @@ public class ServiceConfigurationFactory
         }
 
         IPEndPoint serviceServerEndpoint = ParseAdapterServerEndpoint(appsettings);
-        TimeSpan apiTimeout = ParseHttpTimeout(apiTimeoutSetting);
+        
+        TimeSpan apiTimeout = ParseMultifactorApiTimeout(apiTimeoutSetting,out var forcedTimeout);
+        
+        if (Timeout.InfiniteTimeSpan != apiTimeout && apiTimeout < _recommendedMinimalApiTimeout)
+        {
+            if (forcedTimeout)
+            {
+                _logger.LogWarning(
+                    "You have set the timeout to {httpRequestTimeout} seconds. The recommended minimal timeout is {recommendedApiTimeout} seconds. Lowering this threshold may cause incorrect system behavior.",
+                    apiTimeout.TotalSeconds,
+                    _recommendedMinimalApiTimeout.TotalSeconds);
+            }
+            else
+            {
+                _logger.LogWarning(
+                    "You have tried to set the timeout to {httpRequestTimeout} seconds. The recommended minimal timeout is {recommendedApiTimeout} seconds. If you are sure, use the following syntax: 'value={apiTimeoutSetting}!'",
+                    apiTimeout.TotalSeconds,
+                    _recommendedMinimalApiTimeout.TotalSeconds,
+                    apiTimeoutSetting);
 
+                apiTimeout = _recommendedMinimalApiTimeout;
+            }
+        }
+        
         var builder = new ServiceConfiguration()
             .SetServiceServerEndpoint(serviceServerEndpoint)
             .SetApiUrl(apiUrlSetting)
@@ -105,19 +132,24 @@ public class ServiceConfigurationFactory
         return builder;
     }
 
-    private static TimeSpan ParseHttpTimeout(string mfTimeoutSetting)
+    private TimeSpan ParseMultifactorApiTimeout(string mfTimeoutSetting, out bool forcedTimeout)
     {
-        TimeSpan _minimalApiTimeout = TimeSpan.FromSeconds(65);
-
+        forcedTimeout = IsForcedTimeout(mfTimeoutSetting);
+        if (forcedTimeout)
+        {
+            mfTimeoutSetting = mfTimeoutSetting.TrimEnd('!');
+        }
+        
         if (!TimeSpan.TryParseExact(mfTimeoutSetting, @"hh\:mm\:ss", null, System.Globalization.TimeSpanStyles.None, out var httpRequestTimeout))
-            return _minimalApiTimeout;
+            return _recommendedMinimalApiTimeout;
 
-        return httpRequestTimeout == TimeSpan.Zero ?
-            Timeout.InfiniteTimeSpan // infinity timeout
-            : httpRequestTimeout < _minimalApiTimeout
-                ? _minimalApiTimeout  // minimal timeout
-                : httpRequestTimeout; // timeout from config
+        if (httpRequestTimeout == TimeSpan.Zero)
+            return Timeout.InfiniteTimeSpan;
+        
+        return httpRequestTimeout;
     }
+
+    private bool IsForcedTimeout(string mfTimeoutSetting) => mfTimeoutSetting?.EndsWith("!") ?? false;
 
     private static IPEndPoint ParseAdapterServerEndpoint(AppSettingsSection appSettings)
     {
