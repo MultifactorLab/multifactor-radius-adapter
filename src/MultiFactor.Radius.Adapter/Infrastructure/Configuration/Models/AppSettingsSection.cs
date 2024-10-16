@@ -132,5 +132,5 @@ public class AppSettingsSection
     public string FileLogOutputTemplate { get; init; }
     
     [Description("ldap-bind-timeout")]
-    public TimeSpan LdapBindTimeout { get; set; } = new TimeSpan(0, 0, 30);
+    public string LdapBindTimeout { get; set; }
 }

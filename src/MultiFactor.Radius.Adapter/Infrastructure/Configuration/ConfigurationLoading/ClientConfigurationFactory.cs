@@ -13,6 +13,7 @@ using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Models;
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Models.RadiusReply;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Net;
 using System.Text.RegularExpressions;
@@ -80,7 +81,12 @@ public class ClientConfigurationFactory
             appSettings.MultifactorSharedSecret);
 
         builder.SetBypassSecondFactorWhenApiUnreachable(appSettings.BypassSecondFactorWhenApiUnreachable);
-        builder.SetLdapBindTimeout(appSettings.LdapBindTimeout);
+
+        if (TimeSpan.TryParseExact(appSettings.LdapBindTimeout, @"hh\:mm\:ss", null, TimeSpanStyles.None, out var ldapBindTimeout))
+        {
+            builder.SetLdapBindTimeout(ldapBindTimeout);
+        }
+
         ReadPrivacyModeSetting(appSettings, builder);
         ReadInvalidCredDelaySetting(appSettings, builder, serviceConfig);
         ReadPreAuthModeSetting(appSettings, builder);

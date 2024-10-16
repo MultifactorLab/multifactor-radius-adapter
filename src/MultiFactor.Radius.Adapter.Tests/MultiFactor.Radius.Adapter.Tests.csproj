@@ -51,6 +51,10 @@
         <None Update="Assets\clients\radius-reply-with-multiple-conditions.config">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
+        <None Remove="Assets\root-ldap-bind-timeout.config" />
+        <None Remove="Assets\root-invalid-ldap-bind-timeout.config" />
+        <None Remove="Assets\root-no-ldap-bind-timeout.config"/>
+        <None Remove="Assets\root-zero-ldap-bind-timeout.config"/>
     </ItemGroup>
 
     <ItemGroup>
@@ -202,6 +206,18 @@
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
             <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
             <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+        </Content>
+        <Content Include="Assets\root-ldap-bind-timeout.config">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
+        <Content Include="Assets\root-invalid-ldap-bind-timeout.config">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
+        <Content Include="Assets\root-no-ldap-bind-timeout.config">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
+        <Content Include="Assets\root-zero-ldap-bind-timeout.config">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </Content>
     </ItemGroup>
 

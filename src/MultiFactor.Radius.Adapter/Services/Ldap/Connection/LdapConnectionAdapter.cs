@@ -109,7 +109,12 @@ public class LdapConnectionAdapter : ILdapConnectionAdapter
         {
             instance._connection.TrustAllCertificates();
         }
-
+        
+        if (timeout.HasValue)
+        {
+            instance._connection.Timeout = timeout.Value;
+        }
+        
         if (System.Uri.IsWellFormedUriString(uri, UriKind.Absolute))
         {
             var ldapUri = new Uri(uri);
@@ -122,10 +127,6 @@ public class LdapConnectionAdapter : ILdapConnectionAdapter
 
         instance._connection.SetOption(LdapOption.LDAP_OPT_PROTOCOL_VERSION, (int)LdapVersion.LDAP_VERSION3);
         instance._connection.SetOption(LdapOption.LDAP_OPT_REFERRALS, IntPtr.Zero);
-        if (timeout.HasValue)
-        {
-            instance._connection.Timeout = timeout.Value;
-        }
         
         return instance;
     }

@@ -13,6 +13,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using static LdapForNet.Native.Native;
 
@@ -184,8 +185,9 @@ public class LdapService
             user,
             _loggerFactory.CreateLogger<LdapConnectionAdapter>(),
             context.Configuration.LdapBindTimeout);
+        
+        await WaitTaskWithTimeout(connection.BindAsync(bindDn, password), context.Configuration.LdapBindTimeout);
 
-        await connection.BindAsync(bindDn, password);
         var domain = await connection.WhereAmIAsync();
 
         _logger.LogInformation(
@@ -247,5 +249,21 @@ public class LdapService
         }
 
         return null;
+    }
+    
+    private static async Task WaitTaskWithTimeout(Task targetTask, TimeSpan timeout)
+    {
+        using var timeoutCancellationTokenSource = new CancellationTokenSource();
+        using var timeoutTask = Task.Delay(timeout, timeoutCancellationTokenSource.Token);
+        using var completedTask = await Task.WhenAny(targetTask, timeoutTask);
+        if (completedTask == targetTask)
+        {
+            timeoutCancellationTokenSource.Cancel();
+            await targetTask;
+        }
+        else
+        {
+            throw new TimeoutException("The operation timed out after " + timeout.TotalSeconds + " seconds");
+        }
     }
 }
