@@ -1,4 +1,6 @@
-﻿namespace MultiFactor.Radius.Adapter.Infrastructure.Configuration.XmlAppConfiguration;
+﻿using System.Text.RegularExpressions;
+
+namespace MultiFactor.Radius.Adapter.Infrastructure.Configuration.XmlAppConfiguration;
 
 public abstract class RadiusConfigurationSource
 {
@@ -23,4 +25,15 @@ public abstract class RadiusConfigurationSource
     }
 
     public override int GetHashCode() => Name.GetHashCode();
+    
+    public static string TransformName(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            return string.Empty;
+        }
+        
+        name = Regex.Replace(name, @"\s+", string.Empty);
+        return name;
+    }
 }

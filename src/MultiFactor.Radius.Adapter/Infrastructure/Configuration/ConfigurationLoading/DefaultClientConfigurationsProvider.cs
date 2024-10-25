@@ -46,15 +46,19 @@ public class DefaultClientConfigurationsProvider : IClientConfigurationsProvider
 
         var dict = new Dictionary<RadiusConfigurationSource, RadiusAdapterConfiguration>();
 
-        foreach (var file in clientConfigFiles.Select(x => new RadiusConfigurationFile(x)))
+        var fileSources = clientConfigFiles.Select(x => new RadiusConfigurationFile(x)).ToArray();
+        foreach (var file in fileSources)
         {
             _logger.LogInformation("Loading client configuration from {path:l}", file);
 
             var config = RadiusAdapterConfigurationFactory.Create(file, file.Name);
             dict.Add(file, config);
         }
-
-        foreach (var envVarClient in GetEnvVarClients().Select(x => new RadiusConfigurationEnvironmentVariable(x)))
+        
+        var envVarSources = GetEnvVarClients()
+            .Select(x => new RadiusConfigurationEnvironmentVariable(x))
+            .ExceptBy(fileSources.Select(x => RadiusConfigurationSource.TransformName(x.Name)), x => x.Name);
+        foreach (var envVarClient in envVarSources)
         {
             _logger.LogInformation("Found environment variable client '{Client:l}'", envVarClient);
             

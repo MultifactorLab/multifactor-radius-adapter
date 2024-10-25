@@ -5,7 +5,6 @@
 using Microsoft.Extensions.Configuration;
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration.XmlAppConfiguration;
 using System;
-using System.Text.RegularExpressions;
 
 namespace MultiFactor.Radius.Adapter.Infrastructure.Configuration.ConfigurationLoading;
 
@@ -27,22 +26,11 @@ internal static class ConfigurationBuilderExtensions
     public static IConfigurationBuilder AddRadiusEnvironmentVariables(this IConfigurationBuilder configurationBuilder, 
         string configName = null)
     {
-        var preparedConfigName = GetName(configName);
+        var preparedConfigName = RadiusConfigurationSource.TransformName(configName);
         var prefix = preparedConfigName == string.Empty
             ? BasePrefix
             : $"{BasePrefix}{preparedConfigName}_";
         configurationBuilder.AddEnvironmentVariables(prefix);
         return configurationBuilder;
-    }
-
-    private static string GetName(string name)
-    {
-        if (string.IsNullOrWhiteSpace(name))
-        {
-            return string.Empty;
-        }
-        
-        name = Regex.Replace(name, @"\s+", string.Empty);
-        return name;
     }
 }
