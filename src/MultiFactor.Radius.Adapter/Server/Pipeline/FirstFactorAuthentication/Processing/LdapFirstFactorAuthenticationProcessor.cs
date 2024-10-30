@@ -18,11 +18,11 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.FirstFactorAuthentication.P
     /// </summary>
     public class LdapFirstFactorAuthenticationProcessor : IFirstFactorAuthenticationProcessor
     {
-        private readonly LdapService _ldapService;
+        private readonly ILdapService _ldapService;
         private readonly ILogger<LdapFirstFactorAuthenticationProcessor> _logger;
 
         public LdapFirstFactorAuthenticationProcessor(
-            LdapService ldapService,
+            ILdapService ldapService,
             ILogger<LdapFirstFactorAuthenticationProcessor> logger)
         {
             _ldapService = ldapService ?? throw new ArgumentNullException(nameof(ldapService));
@@ -57,6 +57,11 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.FirstFactorAuthentication.P
                 if (isValid)
                 {
                     return PacketCode.AccessAccept;
+                }
+
+                if (!string.IsNullOrWhiteSpace(context.MustChangePasswordDomain))
+                {
+                    return PacketCode.AccessReject;
                 }
             }
 

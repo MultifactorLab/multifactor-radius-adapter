@@ -16,7 +16,7 @@ using MultiFactor.Radius.Adapter.Infrastructure.Configuration.ClientLevel;
 namespace MultiFactor.Radius.Adapter.Tests
 {
     [Trait("Category", "Challenge")]
-    public class ChallengeProcessorTests
+    public class SecondFactorChallengeProcessorTests
     {
         [Fact]
         public void AddState_ShouldHasState()

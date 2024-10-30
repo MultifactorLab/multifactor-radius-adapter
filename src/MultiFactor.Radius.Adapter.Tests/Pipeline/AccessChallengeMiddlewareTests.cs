@@ -1,5 +1,6 @@
 ﻿using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Moq;
 using MultiFactor.Radius.Adapter.Core.Framework.Context;
 using MultiFactor.Radius.Adapter.Core.Framework.Pipeline;
@@ -50,9 +51,9 @@ public class AccessChallengeMiddlewareTests
                 x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-single.config");
             });
 
-            var chProc = new Mock<ISecondFactorChallengeProcessor>();
+            var chProc = new Mock<IChallengeProcessor>();
             chProc.Setup(x => x.HasChallengeContext(It.IsAny<ChallengeIdentifier>())).Returns(false);
-            builder.Services.RemoveService<ISecondFactorChallengeProcessor>().AddSingleton(chProc.Object);
+            builder.Services.RemoveService<IChallengeProcessor>().AddSingleton(chProc.Object);
         });
 
         var packet = RadiusPacketFactory.AccessRequest();
@@ -74,7 +75,7 @@ public class AccessChallengeMiddlewareTests
     {
         var expectedReqId = "Qwerty123";
 
-        var chProc = new Mock<ISecondFactorChallengeProcessor>();
+        var chProc = new Mock<IChallengeProcessor>();
         chProc.Setup(x => x.HasChallengeContext(It.IsAny<ChallengeIdentifier>())).Returns(true);
 
         var host = TestHostFactory.CreateHost(builder =>
@@ -84,8 +85,11 @@ public class AccessChallengeMiddlewareTests
             {
                 x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-single.config");
             });
-
-            builder.Services.ReplaceService(chProc.Object);
+            
+            var provider = new Mock<IChallengeProcessorProvider>();
+            provider.Setup(x => x.GetChallengeProcessorForIdentifier(It.IsAny<ChallengeIdentifier>())).Returns(chProc.Object);
+            
+            builder.Services.ReplaceService(provider.Object);
         });
 
         var config = host.Service<IServiceConfiguration>();
@@ -114,10 +118,14 @@ public class AccessChallengeMiddlewareTests
                 x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-single.config");
             });
 
-            var chProc = new Mock<ISecondFactorChallengeProcessor>();
+            builder.Services.RemoveAll<IChallengeProcessor>();
+            var chProc = new Mock<IChallengeProcessor>();
+            var provider = new Mock<IChallengeProcessorProvider>();
             chProc.Setup(x => x.HasChallengeContext(It.IsAny<ChallengeIdentifier>())).Returns(true);
             chProc.Setup(x => x.ProcessChallengeAsync(It.IsAny<ChallengeIdentifier>(), It.IsAny<RadiusContext>())).ReturnsAsync(ChallengeCode.Accept);
-            builder.Services.ReplaceService(chProc.Object);
+            provider.Setup(x => x.GetChallengeProcessorForIdentifier(It.IsAny<ChallengeIdentifier>())).Returns(chProc.Object);
+
+            builder.Services.ReplaceService(provider.Object);
         });
 
         var config = host.Service<IServiceConfiguration>();
@@ -145,11 +153,14 @@ public class AccessChallengeMiddlewareTests
             {
                 x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-single.config");
             });
-
-            var chProc = new Mock<ISecondFactorChallengeProcessor>();
+            var provider = new Mock<IChallengeProcessorProvider>();
+            
+            var chProc = new Mock<IChallengeProcessor>();
             chProc.Setup(x => x.HasChallengeContext(It.IsAny<ChallengeIdentifier>())).Returns(true);
             chProc.Setup(x => x.ProcessChallengeAsync(It.IsAny<ChallengeIdentifier>(), It.IsAny<RadiusContext>())).ReturnsAsync(ChallengeCode.Reject);
-            builder.Services.ReplaceService(chProc.Object);
+            provider.Setup(x => x.GetChallengeProcessorForIdentifier(It.IsAny<ChallengeIdentifier>())).Returns(chProc.Object);
+            
+            builder.Services.ReplaceService(provider.Object);
         });
 
         var config = host.Service<IServiceConfiguration>();
@@ -176,11 +187,16 @@ public class AccessChallengeMiddlewareTests
             {
                 x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-single.config");
             });
-
-            var chProc = new Mock<ISecondFactorChallengeProcessor>();
+            builder.Services.RemoveAll<IChallengeProcessor>();
+            
+            var provider = new Mock<IChallengeProcessorProvider>();
+            
+            var chProc = new Mock<IChallengeProcessor>();
             chProc.Setup(x => x.HasChallengeContext(It.IsAny<ChallengeIdentifier>())).Returns(true);
             chProc.Setup(x => x.ProcessChallengeAsync(It.IsAny<ChallengeIdentifier>(), It.IsAny<RadiusContext>())).ReturnsAsync(ChallengeCode.InProcess);
-            builder.Services.ReplaceService(chProc.Object);
+            provider.Setup(x => x.GetChallengeProcessorForIdentifier(It.IsAny<ChallengeIdentifier>())).Returns(chProc.Object);
+            
+            builder.Services.ReplaceService(provider.Object);
         });
 
         var config = host.Service<IServiceConfiguration>();

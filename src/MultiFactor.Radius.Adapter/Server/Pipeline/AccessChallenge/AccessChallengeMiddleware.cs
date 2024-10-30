@@ -11,11 +11,11 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.AccessChallenge
 {
     public class AccessChallengeMiddleware : IRadiusMiddleware
     {
-        private readonly ISecondFactorChallengeProcessor _challengeProcessor;
+        private readonly IChallengeProcessorProvider _challengeProcessorProvider;
 
-        public AccessChallengeMiddleware(ISecondFactorChallengeProcessor challengeProcessor)
+        public AccessChallengeMiddleware(IChallengeProcessorProvider challengeProcessorProvider)
         {
-            _challengeProcessor = challengeProcessor ?? throw new ArgumentNullException(nameof(challengeProcessor));
+            _challengeProcessorProvider = challengeProcessorProvider ?? throw new ArgumentNullException(nameof(challengeProcessorProvider));
         }
 
         public async Task InvokeAsync(RadiusContext context, RadiusRequestDelegate next)
@@ -27,20 +27,21 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.AccessChallenge
             }
 
             var identifier = new ChallengeIdentifier(context.Configuration.Name, context.RequestPacket.GetString("State"));
-            if (!_challengeProcessor.HasChallengeContext(identifier))
+
+            // second request with Multifactor challenge
+            var challengeProcessor = _challengeProcessorProvider.GetChallengeProcessorForIdentifier(identifier);
+            if (challengeProcessor == null)
             {
                 await next(context);
                 return;
             }
 
-            // second request with Multifactor challenge
-            var resultCode = await _challengeProcessor.ProcessChallengeAsync(identifier, context);
+            var resultCode = await challengeProcessor.ProcessChallengeAsync(identifier, context);
             switch (resultCode)
             {
                 case ChallengeCode.Accept:
-                    // 2fa was passed
                     context.Authentication.SetSecondFactor(AuthenticationCode.Accept);
-                    await next(context); ;
+                    await next(context);
                     break;
 
                 case ChallengeCode.Reject:
@@ -49,11 +50,11 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.AccessChallenge
                     return;
 
                 case ChallengeCode.InProcess:
-                    context.SetMessageState(identifier.RequestId); 
+                    context.SetMessageState(identifier.RequestId);
                     return;
 
                 default:
-                    throw new NotImplementedException($"Unexpected challenge rsult: {resultCode}");
+                    throw new NotImplementedException($"Unexpected challenge result: {resultCode}");
 
             }
         }

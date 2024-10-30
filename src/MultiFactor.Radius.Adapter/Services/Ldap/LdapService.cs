@@ -12,16 +12,23 @@ using MultiFactor.Radius.Adapter.Services.Ldap.Profile;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using static LdapForNet.Native.Native;
 
 namespace MultiFactor.Radius.Adapter.Services.Ldap;
 
+public interface ILdapService
+{
+    Task<PasswordChangeResponse> ChangeUserPasswordAsync(string domain, string oldPassword, string newPassword, RadiusContext context);
+    Task<bool> VerifyCredential(string userName, string password, string ldapUri, RadiusContext context);
+}
+
 /// <summary>
 /// Service to interact with LDAP server
 /// </summary>
-public class LdapService
+public class LdapService : ILdapService
 {
     private readonly ProfileLoader _profileLoader;
     private readonly ILogger<LdapService> _logger;
@@ -144,10 +151,16 @@ public class LdapService
         {
             if (lex.Message != null)
             {
-                var dataReason = ExtractErrorReason(lex.Message);
-                if (dataReason != null)
+                var reason = LdapErrorReasonInfo.Create(lex.Message);
+                if (reason.Flags.HasFlag(LdapErrorFlag.MustChangePassword))
                 {
-                    _logger.LogWarning(lex, "Verification user '{user:l}' at {ldapUri:l} failed: {dataReason:l}", user.Name, ldapUri, dataReason);
+                    
+                    context.SetMustChangePassword(ldapUri);
+                }
+                
+                if (reason.Reason != LdapErrorReason.UnknownError)
+                {
+                    _logger.LogWarning(lex, "Verification user '{user:l}' at {ldapUri:l} failed: {dataReason:l}", user.Name, ldapUri, reason.ReasonText);
                     return false;
                 }
             }
@@ -160,6 +173,30 @@ public class LdapService
         }
 
         return false;
+    }
+
+    public async Task<PasswordChangeResponse> ChangeUserPasswordAsync(
+        string domain,
+        string oldPassword,
+        string newPassword,
+        RadiusContext context)
+    {
+        var user = LdapIdentity.ParseUser(context.UserName);
+        
+        using var connection = await LdapConnectionAdapter.CreateAsTechnicalAccAsync(
+            domain,
+            context.Configuration,
+            _loggerFactory.CreateLogger<LdapConnectionAdapter>());
+        
+        var profile = await _profileLoader.LoadAsync(context.Configuration, connection, user);
+        var request = BuildPasswordChangeRequest(profile.DistinguishedName, oldPassword, newPassword);
+        var response = await connection.SendRequestAsync(request);
+        if (response.ResultCode != ResultCode.Success)
+        {
+            _logger.LogError($"Password change command error: {response.ErrorMessage}");
+            return new PasswordChangeResponse() { Message = response.ErrorMessage, Success = false };
+        }
+        return new PasswordChangeResponse() { Success = true };
     }
 
     protected async Task<LdapIdentity> WhereAmI(string host, LdapConnection connection)
@@ -215,5 +252,26 @@ public class LdapService
         }
 
         return null;
+    }
+
+    private ModifyRequest BuildPasswordChangeRequest(string dn, string oldPassword, string newPassword)
+    {
+        var oldPasswordAttribute = new DirectoryModificationAttribute
+        {
+            Name = "unicodePwd",
+            LdapModOperation = LdapModOperation.LDAP_MOD_DELETE
+        };
+
+        oldPasswordAttribute.Add(Encoding.Unicode.GetBytes($"\"{oldPassword}\""));
+
+        var newPasswordAttribute = new DirectoryModificationAttribute
+        {
+            Name = "unicodePwd",
+            LdapModOperation = LdapModOperation.LDAP_MOD_ADD
+        };
+
+        newPasswordAttribute.Add(Encoding.Unicode.GetBytes($"\"{newPassword}\""));
+        
+         return new ModifyRequest(dn, oldPasswordAttribute, newPasswordAttribute);
     }
 }

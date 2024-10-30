@@ -14,12 +14,13 @@ using System.Threading.Tasks;
 
 namespace MultiFactor.Radius.Adapter.Server.Pipeline.AccessChallenge
 {
-    public class SecondFactorChallengeProcessor : ISecondFactorChallengeProcessor
+    public class SecondFactorChallengeProcessor : IChallengeProcessor
     {
         private readonly ConcurrentDictionary<ChallengeIdentifier, RadiusContext> _challengeContexts = new();
         private readonly IMultifactorApiAdapter _apiAdapter;
         private readonly ILogger<SecondFactorChallengeProcessor> _logger;
-
+        public ChallengeType ChallengeType => ChallengeType.SecondFactor;
+        
         public SecondFactorChallengeProcessor(IMultifactorApiAdapter apiAdapter, ILogger<SecondFactorChallengeProcessor> logger)
         {
             _apiAdapter = apiAdapter ?? throw new ArgumentNullException(nameof(apiAdapter));
