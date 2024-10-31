@@ -52,7 +52,7 @@ public class ServiceConfigurationFactory
                 RootConfigurationFile.ConfigName);
         }
 
-        IPEndPoint serviceServerEndpoint = ParseAdapterServerEndpoint(appsettings);
+        IPEndPoint serviceServerEndpoint = ParseAdapterServerEndpoint(appSettings);
         
         TimeSpan apiTimeout = ParseMultifactorApiTimeout(apiTimeoutSetting,out var forcedTimeout);
         
