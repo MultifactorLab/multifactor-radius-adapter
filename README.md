@@ -427,15 +427,7 @@ This approach has a number of advantages:
 When launched, the Adapter reads the configuration from the `multifactor-radius-adapter.dll.config` file, as well as from the `*.config` files located in the **/clients** folder.  
 After this, the adapter receives values from the environment and "overlays" them on top of the settings read from the settings files.  
 Thus, it turns out that values from environment variables overload values from settings files.  
-By the way, you don’t have to use settings files at all (leave them with default values): any settings can be described through environment variables.
-
-To allow the adapter to read settings for multi-client mode from environment variables, you should place client configuration files into the `clients` folder, but you can keep them empty.  
-Here is an example of an empty file:
-```xml
-<?xml version="1.0" encoding="utf-8"?>
-<configuration>
-</configuration>
-```
+By the way, you don’t have to use settings files at all (leave them with default values or delete the files): any settings can be described through environment variables.
 
 ##### Examples
 
