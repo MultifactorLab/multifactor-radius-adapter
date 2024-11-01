@@ -2,6 +2,7 @@
 //Please see licence at 
 //https://github.com/MultifactorLab/multifactor-radius-adapter/blob/main/LICENSE.md
 
+using System;
 using System.ComponentModel;
 
 namespace MultiFactor.Radius.Adapter.Infrastructure.Configuration.Models;
@@ -129,4 +130,7 @@ public class AppSettingsSection
 
     [Description("file-log-output-template")]
     public string FileLogOutputTemplate { get; init; }
+    
+    [Description("ldap-bind-timeout")]
+    public string LdapBindTimeout { get; set; }
 }

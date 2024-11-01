@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Net;
 using MultiFactor.Radius.Adapter.Core;
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Features.AuthenticatedClientCacheFeature;
@@ -42,4 +43,5 @@ public interface IClientConfiguration
     RandomWaiterConfig InvalidCredentialDelay { get; }
     PreAuthModeDescriptor PreAuthnMode { get; }
     bool IsFreeIpa { get; }
+    public TimeSpan LdapBindTimeout { get; }
 }
