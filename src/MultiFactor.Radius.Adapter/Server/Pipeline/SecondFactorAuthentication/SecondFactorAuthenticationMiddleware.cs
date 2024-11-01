@@ -14,18 +14,18 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.SecondFactorAuthentication;
 
 public class SecondFactorAuthenticationMiddleware : IRadiusMiddleware
 {
-    private readonly ISecondFactorChallengeProcessor _challengeProcessor;
     private readonly IMultifactorApiAdapter _apiAdapter;
     private readonly ILogger<SecondFactorAuthenticationMiddleware> _logger;
-
+    private readonly IChallengeProcessorProvider _challengeProcessorProvider;
+    
     public SecondFactorAuthenticationMiddleware(
-        ISecondFactorChallengeProcessor challengeProcessor,
         IMultifactorApiAdapter apiAdapter,
-        ILogger<SecondFactorAuthenticationMiddleware> logger)
+        ILogger<SecondFactorAuthenticationMiddleware> logger,
+        IChallengeProcessorProvider challengeProcessorProvider)
     {
-        _challengeProcessor = challengeProcessor;
         _apiAdapter = apiAdapter;
         _logger = logger;
+        _challengeProcessorProvider = challengeProcessorProvider;
     }
 
     public async Task InvokeAsync(RadiusContext context, RadiusRequestDelegate next)
@@ -79,7 +79,9 @@ public class SecondFactorAuthenticationMiddleware : IRadiusMiddleware
 
         if (response.Code == AuthenticationCode.Awaiting)
         {
-            _challengeProcessor.AddChallengeContext(context);
+            var challengeProcessor =
+                _challengeProcessorProvider.GetChallengeProcessorByType(ChallengeType.SecondFactor);
+            challengeProcessor.AddChallengeContext(context);
             return;
         }
 

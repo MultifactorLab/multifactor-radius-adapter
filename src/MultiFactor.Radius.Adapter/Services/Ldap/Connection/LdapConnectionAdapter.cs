@@ -142,6 +142,11 @@ public class LdapConnectionAdapter : ILdapConnectionAdapter
         }
     }
 
+    public async Task<DirectoryResponse> SendRequestAsync(DirectoryRequest request)
+    { 
+        return await _connection.SendRequestAsync(request);
+    }
+
     public void Dispose()
     {
         _connection?.Dispose();
