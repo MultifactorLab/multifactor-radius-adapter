@@ -50,13 +50,20 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.FirstFactorAuthentication.P
             }
 
             //check all hosts
-            var ldapUriList = context.Configuration.ActiveDirectoryDomain.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
-            foreach (var ldapUri in ldapUriList)
+            foreach (var ldapUri in context.Configuration.SplittedActiveDirectoryDomains)
             {
-                var isValid = await _ldapService.VerifyCredential(userName, password, ldapUri, context);
-                if (isValid)
+                try
                 {
-                    return PacketCode.AccessAccept;
+                    await _ldapService.VerifyCredential(userName, password, ldapUri, context);
+                    var isValid = await _ldapService.VerifyMembership(userName, password, ldapUri, context);
+                    if (isValid)
+                    {
+                        return PacketCode.AccessAccept;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError("Verification user '{user:l}' at {ldapUri:l} failed: {message:l}", userName, ldapUri, ex.Message);
                 }
 
                 if (!string.IsNullOrWhiteSpace(context.MustChangePasswordDomain))

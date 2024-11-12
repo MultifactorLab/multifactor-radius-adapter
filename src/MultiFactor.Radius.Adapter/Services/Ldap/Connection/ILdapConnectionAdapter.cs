@@ -21,5 +21,6 @@ public interface ILdapConnectionAdapter : IDisposable
 
     Task<LdapDomain> WhereAmIAsync();
     Task<LdapEntry[]> SearchQueryAsync(string baseDn, string filter, LdapSearchScope scope, params string[] attributes);
+    Task BindAsync(string bindDn, string password);
     Task<DirectoryResponse> SendRequestAsync(DirectoryRequest request);
 }

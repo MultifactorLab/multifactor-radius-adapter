@@ -105,7 +105,8 @@ public class ClientConfiguration : IClientConfiguration
     /// </summary>
     public string LdapBindDn { get; private set; }
 
-
+    private TimeSpan _ldapTimeout = new TimeSpan(0, 0, 30);
+    
     private readonly List<string> _activeDirectoryGroups = new();
     /// <summary>
     /// Only members of this group allowed to access (Optional)
@@ -198,6 +199,7 @@ public class ClientConfiguration : IClientConfiguration
     public RandomWaiterConfig InvalidCredentialDelay { get; private set; }
     public PreAuthModeDescriptor PreAuthnMode { get; private set; } = PreAuthModeDescriptor.Default;
     public bool IsFreeIpa => !string.IsNullOrEmpty(LdapBindDn);
+    public TimeSpan LdapBindTimeout => _ldapTimeout;
 
     public ClientConfiguration SetBypassSecondFactorWhenApiUnreachable(bool val)
     {
@@ -411,6 +413,16 @@ public class ClientConfiguration : IClientConfiguration
     public ClientConfiguration SetPreAuthMode(PreAuthModeDescriptor val)
     {
         PreAuthnMode = val ?? throw new ArgumentNullException(nameof(val));
+        return this;
+    }
+
+    public ClientConfiguration SetLdapBindTimeout(TimeSpan val)
+    {
+        if (val > TimeSpan.Zero)
+        {
+            _ldapTimeout = val;
+        }
+
         return this;
     }
 }
