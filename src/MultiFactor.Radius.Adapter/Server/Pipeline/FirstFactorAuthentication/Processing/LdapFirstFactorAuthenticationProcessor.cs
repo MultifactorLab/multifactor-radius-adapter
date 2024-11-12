@@ -10,6 +10,7 @@ using MultiFactor.Radius.Adapter.Infrastructure.Configuration;
 using MultiFactor.Radius.Adapter.Services.Ldap;
 using System;
 using System.Threading.Tasks;
+using LdapForNet;
 
 namespace MultiFactor.Radius.Adapter.Server.Pipeline.FirstFactorAuthentication.Processing
 {
@@ -60,6 +61,24 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.FirstFactorAuthentication.P
                     {
                         return PacketCode.AccessAccept;
                     }
+                }
+                catch (LdapException lex)
+                {
+                    if (lex.Message != null)
+                    {
+                        var reason = LdapErrorReasonInfo.Create(lex.Message);
+                        if (reason.Flags.HasFlag(LdapErrorFlag.MustChangePassword))
+                        {
+                            context.SetMustChangePassword(ldapUri);
+                        }
+                
+                        if (reason.Reason != LdapErrorReason.UnknownError)
+                        {
+                            _logger.LogWarning(lex, "Verification user '{user:l}' at {ldapUri:l} failed: {dataReason:l}", userName, ldapUri, reason.ReasonText);
+                        }
+                    }
+
+                    _logger.LogError(lex, "Verification user '{user:l}' at {ldapUri:l} failed", userName, ldapUri);
                 }
                 catch (Exception ex)
                 {

@@ -23,7 +23,8 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap;
 public interface ILdapService
 {
     Task<PasswordChangeResponse> ChangeUserPasswordAsync(string domain, string oldPassword, string newPassword, RadiusContext context);
-    Task<bool> VerifyCredential(string userName, string password, string ldapUri, RadiusContext context);
+    Task VerifyCredential(string userName, string password, string ldapUri, RadiusContext context);
+    Task<bool> VerifyMembership(string userName, string password, string ldapUri, RadiusContext context);
 }
 
 /// <summary>
@@ -37,7 +38,7 @@ public class LdapService : ILdapService
 
     protected virtual LdapNames Names => new(LdapServerType.Generic);
 
-    public LdapService(ProfileLoader profileLoader, 
+    public LdapService(ProfileLoader profileLoader,
         ILogger<LdapService> logger,
         ILoggerFactory loggerFactory)
     {
@@ -69,10 +70,10 @@ public class LdapService : ILdapService
         try
         {
             using var connection = LdapConnectionAdapter.CreateAsync(
-                ldapUri, 
+                ldapUri,
                 user,
                 _loggerFactory.CreateLogger<LdapConnectionAdapter>());
-            
+
             await connection.BindAsync(bindDn, password);
 
             var profile = await _profileLoader.LoadAsync(context.Configuration, connection, user);
@@ -80,7 +81,8 @@ public class LdapService : ILdapService
             //user must be member of security group
             if (context.Configuration.ActiveDirectoryGroups.Any())
             {
-                var accessGroup = context.Configuration.ActiveDirectoryGroups.FirstOrDefault(group => IsMemberOf(profile, group));
+                var accessGroup =
+                    context.Configuration.ActiveDirectoryGroups.FirstOrDefault(group => IsMemberOf(profile, group));
                 if (accessGroup != null)
                 {
                     _logger.LogDebug("User '{user:l}' is a member of the access group '{group:l}' in {domain:l}",
@@ -88,7 +90,8 @@ public class LdapService : ILdapService
                 }
                 else
                 {
-                    _logger.LogWarning("User '{user:l}' is not a member of any access group ({accGroups:l}) in '{domain:l}'",
+                    _logger.LogWarning(
+                        "User '{user:l}' is not a member of any access group ({accGroups:l}) in '{domain:l}'",
                         user.Name, string.Join(", ", context.Configuration.ActiveDirectoryGroups), profile.BaseDn.Name);
                     return false;
                 }
@@ -97,7 +100,8 @@ public class LdapService : ILdapService
             //only users from group must process 2fa
             if (context.Configuration.ActiveDirectory2FaGroup.Any())
             {
-                var mfaGroup = context.Configuration.ActiveDirectory2FaGroup.FirstOrDefault(group => IsMemberOf(profile, group));
+                var mfaGroup =
+                    context.Configuration.ActiveDirectory2FaGroup.FirstOrDefault(group => IsMemberOf(profile, group));
                 if (mfaGroup != null)
                 {
                     _logger.LogDebug("User '{user:l}' is a member of the 2FA group '{group:l}' in '{domain:l}'",
@@ -105,27 +109,35 @@ public class LdapService : ILdapService
                 }
                 else
                 {
-                    _logger.LogInformation("User '{user:l}' is not a member of any 2FA group ({groups:l}) in '{domain:l}'",
-                        user.Name, string.Join(", ", context.Configuration.ActiveDirectory2FaGroup), profile.BaseDn.Name);
+                    _logger.LogInformation(
+                        "User '{user:l}' is not a member of any 2FA group ({groups:l}) in '{domain:l}'",
+                        user.Name, string.Join(", ", context.Configuration.ActiveDirectory2FaGroup),
+                        profile.BaseDn.Name);
                     context.SetSecondFactorAuth(AuthenticationCode.Bypass);
                 }
             }
 
             //users from group must not process 2fa
-            if (context.Authentication.SecondFactor != AuthenticationCode.Bypass && context.Configuration.ActiveDirectory2FaBypassGroup.Any())
+            if (context.Authentication.SecondFactor != AuthenticationCode.Bypass &&
+                context.Configuration.ActiveDirectory2FaBypassGroup.Any())
             {
-                var bypassGroup = context.Configuration.ActiveDirectory2FaBypassGroup.FirstOrDefault(group => IsMemberOf(profile, group));
+                var bypassGroup =
+                    context.Configuration.ActiveDirectory2FaBypassGroup.FirstOrDefault(group =>
+                        IsMemberOf(profile, group));
 
                 if (bypassGroup != null)
                 {
-                    _logger.LogInformation("User '{user:l}' is a member of the 2FA bypass group '{group:l}' in '{domain:l}'",
+                    _logger.LogInformation(
+                        "User '{user:l}' is a member of the 2FA bypass group '{group:l}' in '{domain:l}'",
                         user.Name, bypassGroup.Trim(), profile.BaseDn.Name);
                     context.SetSecondFactorAuth(AuthenticationCode.Bypass);
                 }
                 else
                 {
-                    _logger.LogDebug("User '{user:l}' is not a member of any 2FA bypass group ({groups:l}) in '{domain:l}'",
-                        user.Name, string.Join(", ", context.Configuration.ActiveDirectory2FaBypassGroup), profile.BaseDn.Name);
+                    _logger.LogDebug(
+                        "User '{user:l}' is not a member of any 2FA bypass group ({groups:l}) in '{domain:l}'",
+                        user.Name, string.Join(", ", context.Configuration.ActiveDirectory2FaBypassGroup),
+                        profile.BaseDn.Name);
                 }
             }
 
@@ -135,7 +147,8 @@ public class LdapService : ILdapService
         }
         catch (LdapUserNotFoundException ex)
         {
-            _logger.LogWarning(ex, "Verification user '{user:l}' at '{ldapUri:l}' failed: {msg:l}", user.Name, ldapUri, ex.Message);
+            _logger.LogWarning(ex, "Verification user '{user:l}' at '{ldapUri:l}' failed: {msg:l}", user.Name, ldapUri,
+                ex.Message);
             return false;
         }
         catch (LdapException lex)
@@ -145,13 +158,13 @@ public class LdapService : ILdapService
                 var reason = LdapErrorReasonInfo.Create(lex.Message);
                 if (reason.Flags.HasFlag(LdapErrorFlag.MustChangePassword))
                 {
-                    
                     context.SetMustChangePassword(ldapUri);
                 }
-                
+
                 if (reason.Reason != LdapErrorReason.UnknownError)
                 {
-                    _logger.LogWarning(lex, "Verification user '{user:l}' at {ldapUri:l} failed: {dataReason:l}", user.Name, ldapUri, reason.ReasonText);
+                    _logger.LogWarning(lex, "Verification user '{user:l}' at {ldapUri:l} failed: {dataReason:l}",
+                        user.Name, ldapUri, reason.ReasonText);
                     return false;
                 }
             }
@@ -165,20 +178,20 @@ public class LdapService : ILdapService
 
         return false;
     }
-    
+
     public async Task VerifyCredential(string userName, string password, string ldapUri, RadiusContext context)
-    {   
+    {
         if (string.IsNullOrEmpty(userName))
         {
             throw new ArgumentNullException(nameof(userName));
         }
-        
+
         if (string.IsNullOrEmpty(password))
         {
             _logger.LogError("Empty password provided for user '{user:l}'", userName);
-            return ;
+            return;
         }
-        
+
         if (string.IsNullOrEmpty(ldapUri))
         {
             throw new ArgumentNullException(nameof(ldapUri));
@@ -189,10 +202,10 @@ public class LdapService : ILdapService
         var formatter = new BindIdentityFormatter(context.Configuration);
         var bindDn = formatter.FormatIdentity(user, ldapUri);
         _logger.LogDebug(
-            "Verifying user '{user:l}' credential and status at '{ldapUri:l}'", 
+            "Verifying user '{user:l}' credential and status at '{ldapUri:l}'",
             bindDn,
             ldapUri);
-        
+
         using var connection = LdapConnectionAdapter.CreateAsync(
             ldapUri,
             user,
@@ -216,12 +229,16 @@ public class LdapService : ILdapService
         RadiusContext context)
     {
         var user = LdapIdentity.ParseUser(context.UserName);
-        
-        using var connection = await LdapConnectionAdapter.CreateAsTechnicalAccAsync(
+
+        using var connection = LdapConnectionAdapter.CreateAsTechnicalAccAsync(
             domain,
             context.Configuration,
             _loggerFactory.CreateLogger<LdapConnectionAdapter>());
-        
+
+        var formatter = new BindIdentityFormatter(context.Configuration);
+        var serviceUser = LdapIdentity.ParseUser(context.Configuration.ServiceAccountUser);
+        await connection.BindAsync(formatter.FormatIdentity(serviceUser, domain), context.Configuration.ServiceAccountPassword);
+
         var profile = await _profileLoader.LoadAsync(context.Configuration, connection, user);
         var request = BuildPasswordChangeRequest(profile.DistinguishedName, oldPassword, newPassword);
         var response = await connection.SendRequestAsync(request);
@@ -230,13 +247,16 @@ public class LdapService : ILdapService
             _logger.LogError($"Password change command error: {response.ErrorMessage}");
             return new PasswordChangeResponse() { Message = response.ErrorMessage, Success = false };
         }
+
         return new PasswordChangeResponse() { Success = true };
     }
 
     protected async Task<LdapIdentity> WhereAmI(string host, LdapConnection connection)
     {
-        var queryResult = await Query(connection, "", "(objectclass=*)", LdapSearchScope.LDAP_SCOPE_BASEOBJECT, "defaultNamingContext");
-        var result = queryResult.SingleOrDefault() ?? throw new InvalidOperationException($"Unable to query {host} for current user");
+        var queryResult = await Query(connection, "", "(objectclass=*)", LdapSearchScope.LDAP_SCOPE_BASEOBJECT,
+            "defaultNamingContext");
+        var result = queryResult.SingleOrDefault() ??
+                     throw new InvalidOperationException($"Unable to query {host} for current user");
         var defaultNamingContext = result.DirectoryAttributes["defaultNamingContext"].GetValue<string>();
 
         return new LdapIdentity(defaultNamingContext, IdentityType.DistinguishedName);
@@ -247,7 +267,8 @@ public class LdapService : ILdapService
         return profile.MemberOf.Any(g => g.ToLower() == group.ToLower().Trim());
     }
 
-    protected async Task<IList<LdapEntry>> Query(LdapConnection connection, string baseDn, string filter, LdapSearchScope scope, params string[] attributes)
+    protected async Task<IList<LdapEntry>> Query(LdapConnection connection, string baseDn, string filter,
+        LdapSearchScope scope, params string[] attributes)
     {
         var results = await connection.SearchAsync(baseDn, filter, attributes, scope);
         return results;
@@ -287,7 +308,7 @@ public class LdapService : ILdapService
 
         return null;
     }
-    
+
     private static async Task WaitTaskWithTimeout(Task targetTask, TimeSpan timeout)
     {
         using var timeoutCancellationTokenSource = new CancellationTokenSource();
@@ -321,7 +342,7 @@ public class LdapService : ILdapService
         };
 
         newPasswordAttribute.Add(Encoding.Unicode.GetBytes($"\"{newPassword}\""));
-        
-         return new ModifyRequest(dn, oldPasswordAttribute, newPasswordAttribute);
+
+        return new ModifyRequest(dn, oldPasswordAttribute, newPasswordAttribute);
     }
 }
