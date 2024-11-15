@@ -13,6 +13,7 @@ using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Models;
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Models.RadiusReply;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Net;
 using System.Text.RegularExpressions;
@@ -36,6 +37,13 @@ public class ClientConfigurationFactory
 
     public IClientConfiguration CreateConfig(string name, RadiusAdapterConfiguration configuration, IServiceConfiguration serviceConfig)
     {
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            throw new ArgumentException("Value cannot be null or whitespace.", nameof(name));
+        }
+        ArgumentNullException.ThrowIfNull(configuration);
+        ArgumentNullException.ThrowIfNull(serviceConfig);
+
         var appSettings = configuration.AppSettings;
 
         if (string.IsNullOrEmpty(appSettings.FirstFactorAuthenticationSource))
@@ -81,6 +89,11 @@ public class ClientConfigurationFactory
 
         builder.SetBypassSecondFactorWhenApiUnreachable(appSettings.BypassSecondFactorWhenApiUnreachable);
 
+        if (TimeSpan.TryParseExact(appSettings.LdapBindTimeout, @"hh\:mm\:ss", null, TimeSpanStyles.None, out var ldapBindTimeout))
+        {
+            builder.SetLdapBindTimeout(ldapBindTimeout);
+        }
+
         ReadPrivacyModeSetting(appSettings, builder);
         ReadInvalidCredDelaySetting(appSettings, builder, serviceConfig);
         ReadPreAuthModeSetting(appSettings, builder);
@@ -91,10 +104,12 @@ public class ClientConfigurationFactory
             case AuthenticationSource.Ldap:
                 ReadActiveDirectoryAuthenticationSourceSettings(builder, appSettings);
                 break;
+            
             case AuthenticationSource.Radius:
                 ReadRadiusAuthenticationSourceSettings(builder, appSettings);
                 ReadActiveDirectoryAuthenticationSourceSettings(builder, appSettings);
                 break;
+            
             case AuthenticationSource.None:
                 ReadActiveDirectoryAuthenticationSourceSettings(builder, appSettings);
                 break;
@@ -117,10 +132,10 @@ public class ClientConfigurationFactory
         ReadSignUpGroupsSettings(builder, appSettings);
         ReadAuthenticationCacheSettings(appSettings, builder);
 
-        var callindStationIdAttr = appSettings.CallingStationIdAttribute;
-        if (!string.IsNullOrWhiteSpace(callindStationIdAttr))
+        var callingStationIdAttr = appSettings.CallingStationIdAttribute;
+        if (!string.IsNullOrWhiteSpace(callingStationIdAttr))
         {
-            builder.SetCallingStationIdVendorAttribute(callindStationIdAttr);
+            builder.SetCallingStationIdVendorAttribute(callingStationIdAttr);
         }
 
         return builder;
@@ -429,7 +444,7 @@ public class ClientConfigurationFactory
             DictionaryAttribute.TYPE_INTEGER or DictionaryAttribute.TYPE_TAGGED_INTEGER => uint.Parse(value),
             DictionaryAttribute.TYPE_IPADDR => IPAddress.Parse(value),
             DictionaryAttribute.TYPE_OCTET => Utils.StringToByteArray(value),
-            _ => throw new Exception($"Unknown type {attribute.Type}"),
+            _ => throw new Exception($"Unknown type {attribute.Type}")
         };
     }
 }

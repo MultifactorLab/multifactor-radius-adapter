@@ -4,6 +4,8 @@ FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
 RUN apt-get update && apt-get install -y libldap-2.5-0
 RUN ln -s libldap-2.5.so.0 /usr/lib/x86_64-linux-gnu/libldap.so.2
 WORKDIR /app
+EXPOSE 80
+EXPOSE 443
 
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG BUILD_CONFIGURATION=Release
@@ -21,5 +23,4 @@ RUN dotnet publish "MultiFactor.Radius.Adapter.csproj" -c $BUILD_CONFIGURATION -
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
-
 ENTRYPOINT ["dotnet", "multifactor-radius-adapter.dll"]

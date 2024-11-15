@@ -4,6 +4,7 @@ using MultiFactor.Radius.Adapter.Core.Framework.Pipeline;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using MultiFactor.Radius.Adapter.Core.Framework.Exceptions;
 
 namespace MultiFactor.Radius.Adapter.Core.Framework;
 
@@ -47,18 +48,18 @@ internal class RadiusHostApplicationBuilder
                     return Task.CompletedTask;
                 }
 
-                TMiddleware middleware;
+                TMiddleware mw;
 
                 try
                 {
-                    middleware = context.RequestServices.GetRequiredService<TMiddleware>();
+                    mw = context.RequestServices.GetRequiredService<TMiddleware>();
                 }
                 catch (Exception ex)
                 {
-                    throw new InvalidOperationException($"Unable to create middleware {typeof(TMiddleware)}: {ex.Message}", ex);
+                    throw new RadiusPipelineException($"Unable to create middleware {typeof(TMiddleware)}: {ex.Message}", ex);
                 }
 
-                return middleware.InvokeAsync(context, next);
+                return mw.InvokeAsync(context, next);
             };
         }
 

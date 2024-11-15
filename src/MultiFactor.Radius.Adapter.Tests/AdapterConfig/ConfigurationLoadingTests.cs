@@ -944,4 +944,57 @@ public partial class ConfigurationLoadingTests
             .And
             .ContainSingle(x => x.Replace == data.ReplaceSecond && x.Match == data.MatchSecond);
     }
+    
+    [Fact]
+    [Trait("Category", "ldap-bind-timeout")]
+    public void LdapBindTimeout_ShouldSetLdapBindTimeout()
+    {
+        var host = TestHostFactory.CreateHost(builder =>
+        {
+            builder.Services.Configure<TestConfigProviderOptions>(x =>
+            {
+                x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-ldap-bind-timeout.config");
+            });
+        });
+
+        var conf = host.Service<IServiceConfiguration>();
+        var client = conf.GetClient(IPAddress.Parse("0.0.0.0"));
+        Assert.Equal(TimeSpan.FromSeconds(5), client.LdapBindTimeout);
+    }
+    
+    [Theory]
+    [InlineData("root-invalid-ldap-bind-timeout.config")]
+    [InlineData("root-zero-ldap-bind-timeout.config")]
+    [Trait("Category", "ldap-bind-timeout")]
+    public void InvalidLdapBindTimeout_ShouldSetDefault(string configFilePath)
+    {
+        var host = TestHostFactory.CreateHost(builder =>
+        {
+            builder.Services.Configure<TestConfigProviderOptions>(x =>
+            {
+                x.RootConfigFilePath = TestEnvironment.GetAssetPath(configFilePath);
+            });
+        });
+
+        var conf = host.Service<IServiceConfiguration>();
+        var client = conf.GetClient(IPAddress.Parse("0.0.0.0"));
+        Assert.Equal(TimeSpan.FromSeconds(30), client.LdapBindTimeout);
+    }
+    
+    [Fact]
+    [Trait("Category", "ldap-bind-timeout")]
+    public void LdapBindTimeoutIsNotSpecified_ShouldSetDefault()
+    {
+        var host = TestHostFactory.CreateHost(builder =>
+        {
+            builder.Services.Configure<TestConfigProviderOptions>(x =>
+            {
+                x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-no-ldap-bind-timeout.config");
+            });
+        });
+
+        var conf = host.Service<IServiceConfiguration>();
+        var client = conf.GetClient(IPAddress.Parse("0.0.0.0"));
+        Assert.Equal(TimeSpan.FromSeconds(30), client.LdapBindTimeout);
+    }
 }

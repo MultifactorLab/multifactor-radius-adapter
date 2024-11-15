@@ -50,18 +50,22 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.MembershipVerification
 
             var results = new List<MembershipVerificationResult>();
             LdapProfile profile = null;
+            var clientConfig = context.Configuration;
+            var user = LdapIdentity.ParseUser(userName);
+            var serviceUser = LdapIdentity.ParseUser(clientConfig.ServiceAccountUser);
+            var formatter = new BindIdentityFormatter(clientConfig);
             //trying to authenticate for each domain/forest
             foreach (var domain in context.Configuration.SplittedActiveDirectoryDomains)
             {
                 try
                 {
-                    var user = LdapIdentity.ParseUser(userName);
-
                     _logger.LogDebug("Verifying user '{user:l}' membership at '{domain:l}'", user.Name, domain);
-                    using var connAdapter = await LdapConnectionAdapter.CreateAsTechnicalAccAsync(domain, context.Configuration, _loggerFactory.CreateLogger<LdapConnectionAdapter>());
-                    profile ??= await _profileLoader.LoadAsync(context.Configuration, connAdapter, user);
+                    using var connAdapter = LdapConnectionAdapter.CreateAsTechnicalAccAsync(domain, clientConfig, _loggerFactory.CreateLogger<LdapConnectionAdapter>());
 
-                    var res = _membershipVerifier.VerifyMembership(context.Configuration, profile, domain, user);
+                    await connAdapter.BindAsync(formatter.FormatIdentity(serviceUser, domain), clientConfig.ServiceAccountPassword);
+                    profile ??= await _profileLoader.LoadAsync(clientConfig, connAdapter, user);
+
+                    var res = _membershipVerifier.VerifyMembership(clientConfig, profile, domain, user);
                     results.Add(res);
 
                     if (res.IsSuccess)
@@ -75,7 +79,6 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.MembershipVerification
                     results.Add(MembershipVerificationResult.Create(domain)
                         .SetSuccess(false)
                         .Build());
-                    continue;
                 }
             }
 
@@ -97,15 +100,17 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.MembershipVerification
                 throw new Exception($"Can't find User-Name in message id={context.RequestPacket.Header.Identifier} from {context.RemoteEndpoint.Address}:{context.RemoteEndpoint.Port}");
             }
             var user = LdapIdentity.ParseUser(transformedUserName);
-
             var clientConfig = context.Configuration;
+            var serviceUser = LdapIdentity.ParseUser(clientConfig.ServiceAccountUser);
+            var formatter = new BindIdentityFormatter(context.Configuration);
             foreach (var domain in clientConfig.SplittedActiveDirectoryDomains)
             {
                 var domainIdentity = LdapIdentity.FqdnToDn(domain);
 
                 try
                 {
-                    using var connAdapter = await LdapConnectionAdapter.CreateAsTechnicalAccAsync(domain, clientConfig, _loggerFactory.CreateLogger<LdapConnectionAdapter>());
+                    using var connAdapter = LdapConnectionAdapter.CreateAsTechnicalAccAsync(domain, clientConfig, _loggerFactory.CreateLogger<LdapConnectionAdapter>());
+                    await connAdapter.BindAsync(formatter.FormatIdentity(serviceUser, domain), context.Configuration.ServiceAccountPassword);
                     var attributes = await _profileLoader.LoadAttributesAsync(clientConfig, connAdapter, user, new[] { attr });
                     if (attributes.Keys.Count == 0)
                     {
@@ -122,7 +127,6 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.MembershipVerification
                 {
                     _logger.LogError(ex, "Loading attributes of user '{user:l}' at {domainIdentity} failed", context.UserName, domainIdentity);
                     _logger.LogInformation("Run MultiFactor.Raduis.Adapter as user with domain read permissions (basically any domain user)");
-                    continue;
                 }
             }
 

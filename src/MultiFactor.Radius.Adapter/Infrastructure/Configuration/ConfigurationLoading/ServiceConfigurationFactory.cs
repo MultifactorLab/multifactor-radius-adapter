@@ -38,11 +38,12 @@ public class ServiceConfigurationFactory
             throw new ArgumentNullException(nameof(rootConfiguration));
         }
 
-        var appsettings = rootConfiguration.AppSettings;
+        var appSettings = rootConfiguration.AppSettings;
 
-        var apiUrlSetting = appsettings.MultifactorApiUrl;
-        var apiProxySetting = appsettings.MultifactorApiProxy;
-        var apiTimeoutSetting = appsettings.MultifactorApiTimeout;
+        var apiUrlSetting = appSettings.MultifactorApiUrl;
+        var apiProxySetting = appSettings.MultifactorApiProxy;
+        var apiTimeoutSetting = appSettings.MultifactorApiTimeout;
+
 
         if (string.IsNullOrEmpty(apiUrlSetting))
         {
@@ -51,7 +52,7 @@ public class ServiceConfigurationFactory
                 RootConfigurationFile.ConfigName);
         }
 
-        IPEndPoint serviceServerEndpoint = ParseAdapterServerEndpoint(appsettings);
+        IPEndPoint serviceServerEndpoint = ParseAdapterServerEndpoint(appSettings);
         
         TimeSpan apiTimeout = ParseMultifactorApiTimeout(apiTimeoutSetting,out var forcedTimeout);
         
@@ -86,7 +87,7 @@ public class ServiceConfigurationFactory
             builder.SetApiProxy(apiProxySetting);
         }
 
-        ReadInvalidCredDelaySetting(appsettings, builder);
+        ReadInvalidCredDelaySetting(appSettings, builder);
 
         var clientConfigs = _clientConfigurationsProvider.GetClientConfigurations();
         if (clientConfigs.Length == 0)
@@ -99,7 +100,7 @@ public class ServiceConfigurationFactory
         foreach (var clientConfig in clientConfigs)
         {
             var source = _clientConfigurationsProvider.GetSource(clientConfig);
-            var client = _clientConfigFactory.CreateConfig(source.NameWithoutExtension, clientConfig, builder);
+            var client = _clientConfigFactory.CreateConfig(source.Name, clientConfig, builder);
 
             var clientSettings = clientConfig.AppSettings;
             var radiusClientNasIdentifierSetting = clientSettings.RadiusClientNasIdentifier;
@@ -170,11 +171,11 @@ public class ServiceConfigurationFactory
         return serviceServerEndpoint;
     }
 
-    private static void ReadInvalidCredDelaySetting(AppSettingsSection appsettings, ServiceConfiguration builder)
+    private static void ReadInvalidCredDelaySetting(AppSettingsSection appSettings, ServiceConfiguration builder)
     {
         try
         {
-            var waiterConfig = RandomWaiterConfig.Create(appsettings.InvalidCredentialDelay);
+            var waiterConfig = RandomWaiterConfig.Create(appSettings.InvalidCredentialDelay);
             builder.SetInvalidCredentialDelay(waiterConfig);
         }
         catch
