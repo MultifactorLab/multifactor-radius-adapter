@@ -1,4 +1,5 @@
 using System.Net;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -8,6 +9,7 @@ using MultiFactor.Radius.Adapter.Infrastructure.Configuration;
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration.ClientLevel;
 using MultiFactor.Radius.Adapter.Server;
 using MultiFactor.Radius.Adapter.Server.Pipeline.AccessChallenge;
+using MultiFactor.Radius.Adapter.Services;
 using MultiFactor.Radius.Adapter.Services.Ldap;
 using MultiFactor.Radius.Adapter.Services.MultiFactorApi;
 using MultiFactor.Radius.Adapter.Tests.Fixtures;
@@ -59,9 +61,11 @@ public class ChallengeProcessorProviderTests
     {
         var processors = new List<IChallengeProcessor>();
         var memCache = new Mock<IMemoryCache>();
+        var dataProtectionProviderMock = new Mock<IDataProtectionProvider>();
+        var dataProtectionServiceMock = new DataProtectionService(dataProtectionProviderMock.Object);
         var outVal = new object();
         memCache.Setup(m => m.TryGetValue(It.IsAny<object>(), out outVal)).Returns(true);
-        processors.Add(new ChangePasswordChallengeProcessor(memCache.Object, new Mock<ILdapService>().Object));
+        processors.Add(new ChangePasswordChallengeProcessor(memCache.Object, new Mock<ILdapService>().Object, dataProtectionServiceMock));
         processors.Add(new SecondFactorChallengeProcessor(new Mock<IMultifactorApiAdapter>().Object, new Mock<ILogger<SecondFactorChallengeProcessor>>().Object));
         
         var provider = new ChallengeProcessorProvider(processors);

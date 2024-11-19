@@ -1,7 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Extensions.Logging;
+using MultiFactor.Radius.Adapter.Core;
 using MultiFactor.Radius.Adapter.Core.Framework.Context;
 using MultiFactor.Radius.Adapter.Services;
 using MultiFactor.Radius.Adapter.Services.Ldap;
@@ -12,21 +12,25 @@ public class ChangePasswordChallengeProcessor : IChallengeProcessor
 {
     private readonly IMemoryCache _cache;
     private readonly ILdapService _ldapService;
+    private readonly DataProtectionService _dataProtectionService;
     public ChallengeType ChallengeType => ChallengeType.PasswordChange;
     
-    public ChangePasswordChallengeProcessor(IMemoryCache memoryCache, ILdapService ldapService)
+    public ChangePasswordChallengeProcessor(IMemoryCache memoryCache, ILdapService ldapService, DataProtectionService dataProtectionService)
     {
         _cache = memoryCache ?? throw new ArgumentNullException(nameof(memoryCache));
         _ldapService = ldapService ?? throw new ArgumentNullException(nameof(ldapService));
+        _dataProtectionService = dataProtectionService ?? throw new ArgumentNullException(nameof(dataProtectionService));
     }
     
     public ChallengeIdentifier AddChallengeContext(RadiusContext context)
     {
         if (context == null) throw new ArgumentNullException(nameof(context));
+        var encryptedPassword = _dataProtectionService.Protect(context.Passphrase.Password, Constants.PasswordProtector);
+        
         var passwordRequest = new PasswordChangeRequest()
         {
             Domain = context.MustChangePasswordDomain,
-            CurrentPasswordEncryptedData = DataProtectionService.Protect(context.Passphrase.Password)
+            CurrentPasswordEncryptedData = encryptedPassword
         };
         
         _cache.Set(passwordRequest.Id, passwordRequest, DateTimeOffset.UtcNow.AddMinutes(5));
@@ -58,18 +62,18 @@ public class ChangePasswordChallengeProcessor : IChallengeProcessor
         
         if (passwordChangeRequest.NewPasswordEncryptedData != null)
         {
-            var decryptedNewPassword = DataProtectionService.Unprotect(passwordChangeRequest.NewPasswordEncryptedData);
+            var decryptedNewPassword = _dataProtectionService.Unprotect(passwordChangeRequest.NewPasswordEncryptedData, Constants.PasswordProtector);
             if (decryptedNewPassword != context.Passphrase.Raw)
             {
                 return PasswordsNotMatchChallenge(context, passwordChangeRequest);
             }
 
-            var currentPassword = DataProtectionService.Unprotect(passwordChangeRequest.CurrentPasswordEncryptedData);
+            var currentPassword = _dataProtectionService.Unprotect(passwordChangeRequest.CurrentPasswordEncryptedData, Constants.PasswordProtector);
 
             var result = await _ldapService.ChangeUserPasswordAsync(
                 passwordChangeRequest.Domain,
-                currentPassword,
-                decryptedNewPassword,
+                oldPassword: currentPassword,
+                newPassword: decryptedNewPassword,
                 context);
             
             _cache.Remove(passwordChangeRequest.Id);
@@ -106,7 +110,7 @@ public class ChangePasswordChallengeProcessor : IChallengeProcessor
     
     private ChallengeCode RepeatPasswordChallenge(RadiusContext request, PasswordChangeRequest passwordChangeRequest)
     {
-        passwordChangeRequest.NewPasswordEncryptedData = DataProtectionService.Protect(request.Passphrase.Raw);
+        passwordChangeRequest.NewPasswordEncryptedData = _dataProtectionService.Protect(request.Passphrase.Raw, Constants.PasswordProtector);
 
         _cache.Set(passwordChangeRequest.Id, passwordChangeRequest, DateTimeOffset.UtcNow.AddMinutes(5));
 
