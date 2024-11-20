@@ -65,7 +65,7 @@ public class ChallengeProcessorProviderTests
         var dataProtectionServiceMock = new DataProtectionService(dataProtectionProviderMock.Object);
         var outVal = new object();
         memCache.Setup(m => m.TryGetValue(It.IsAny<object>(), out outVal)).Returns(true);
-        processors.Add(new ChangePasswordChallengeProcessor(memCache.Object, new Mock<ILdapService>().Object, dataProtectionServiceMock));
+        processors.Add(new ChangePasswordChallengeProcessor(memCache.Object, new Mock<ILdapService>().Object, dataProtectionServiceMock, new Mock<ILogger<ChangePasswordChallengeProcessor>>().Object));
         processors.Add(new SecondFactorChallengeProcessor(new Mock<IMultifactorApiAdapter>().Object, new Mock<ILogger<SecondFactorChallengeProcessor>>().Object));
         
         var provider = new ChallengeProcessorProvider(processors);

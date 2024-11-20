@@ -20,11 +20,7 @@ public class LdapErrorReasonInfo
 
     public static LdapErrorReasonInfo Create(string serverErrorMessage)
     {
-        if (string.IsNullOrWhiteSpace(serverErrorMessage))
-        {
-            throw new ArgumentException($"'{nameof(serverErrorMessage)}' cannot be null or whitespace.",
-                nameof(serverErrorMessage));
-        }
+        ArgumentException.ThrowIfNullOrWhiteSpace(serverErrorMessage, nameof(serverErrorMessage));
 
         var reason = GetErrorReason(serverErrorMessage);
         var flags = GetErrorFlags(reason);
@@ -72,7 +68,7 @@ public class LdapErrorReasonInfo
             case LdapErrorReason.UserMustChangePassword:
                 return LdapErrorFlag.MustChangePassword;
             default:
-                return LdapErrorFlag.Empty;
+                return LdapErrorFlag.None;
         }
     }
 
@@ -86,29 +82,38 @@ public class LdapErrorReasonInfo
 
 public enum LdapErrorReason
 {
-    [Description("525")] UserNotFound,
+    [Description("525")]
+    UserNotFound,
+    
+    [Description("52e")]
+    InvalidCredentials,
 
-    [Description("52e")] InvalidCredentials,
+    [Description("530")]
+    NotPermittedToLogonAtThisTime,
 
-    [Description("530")] NotPermittedToLogonAtThisTime,
+    [Description("531")]
+    NotPermittedToLogonAtThisWorkstation​,
 
-    [Description("531")] NotPermittedToLogonAtThisWorkstation​,
+    [Description("532")]
+    PasswordExpired,
 
-    [Description("532")] PasswordExpired,
+    [Description("533")]
+    AccountDisabled,
 
-    [Description("533")] AccountDisabled,
+    [Description("701")]
+    AccountExpired,
 
-    [Description("701")] AccountExpired,
+    [Description("773")]
+    UserMustChangePassword,
 
-    [Description("773")] UserMustChangePassword,
-
-    [Description("775")] UserAccountLocked,
+    [Description("775")]
+    UserAccountLocked,
 
     UnknownError
 }
 
 public enum LdapErrorFlag
 {
+    None = 0,
     MustChangePassword = 1,
-    Empty = 2
 }

@@ -45,6 +45,10 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.AccessChallenge
                     context.Header.Identifier,
                     context.RemoteEndpoint.Address,
                     context.RemoteEndpoint.Port);
+                
+                context.Authentication.SetSecondFactor(AuthenticationCode.Reject);
+                context.SetMessageState(identifier.RequestId);
+                
                 return ChallengeCode.Reject;
             }
 
@@ -61,6 +65,10 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.AccessChallenge
                             context.Header.Identifier, 
                             context.RemoteEndpoint.Address, 
                             context.RemoteEndpoint.Port);
+                        
+                        context.Authentication.SetSecondFactor(AuthenticationCode.Reject);
+                        context.SetMessageState(identifier.RequestId);
+                        
                         return ChallengeCode.Reject;
                     }
 
@@ -75,6 +83,10 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.AccessChallenge
                             context.Header.Identifier, 
                             context.RemoteEndpoint.Address,
                             context.RemoteEndpoint.Port);
+                        
+                        context.Authentication.SetSecondFactor(AuthenticationCode.Reject);
+                        context.SetMessageState(identifier.RequestId);
+                        
                         return ChallengeCode.Reject;
                     }
 
@@ -90,6 +102,10 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.AccessChallenge
                         context.RemoteEndpoint.Address,
                         context.RemoteEndpoint.Port,
                         context.RequestPacket.AuthenticationType);
+                    
+                    context.Authentication.SetSecondFactor(AuthenticationCode.Reject);
+                    context.SetMessageState(identifier.RequestId);
+                    
                     return ChallengeCode.Reject;
             }
 
@@ -113,6 +129,8 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.AccessChallenge
                         context.RemoteEndpoint.Address,
                         context.RemoteEndpoint.Port, 
                         response.Code);
+                    
+                    context.Authentication.SetSecondFactor(AuthenticationCode.Accept);
                     return ChallengeCode.Accept;
 
                 case AuthenticationCode.Reject:
@@ -123,9 +141,15 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.AccessChallenge
                         context.RemoteEndpoint.Address,
                         context.RemoteEndpoint.Port, 
                         response.Code);
+                    
+                    context.Authentication.SetSecondFactor(AuthenticationCode.Reject);
+                    context.SetMessageState(identifier.RequestId);
+                    
                     return ChallengeCode.Reject;
             }
-
+            
+            context.SetMessageState(identifier.RequestId);
+            
             return ChallengeCode.InProcess;
         }
 

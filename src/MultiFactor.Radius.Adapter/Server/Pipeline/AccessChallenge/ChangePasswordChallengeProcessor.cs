@@ -1,6 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Logging;
 using MultiFactor.Radius.Adapter.Core;
 using MultiFactor.Radius.Adapter.Core.Framework.Context;
 using MultiFactor.Radius.Adapter.Services;
@@ -13,13 +14,15 @@ public class ChangePasswordChallengeProcessor : IChallengeProcessor
     private readonly IMemoryCache _cache;
     private readonly ILdapService _ldapService;
     private readonly DataProtectionService _dataProtectionService;
+    private readonly ILogger<ChangePasswordChallengeProcessor> _logger;
     public ChallengeType ChallengeType => ChallengeType.PasswordChange;
     
-    public ChangePasswordChallengeProcessor(IMemoryCache memoryCache, ILdapService ldapService, DataProtectionService dataProtectionService)
+    public ChangePasswordChallengeProcessor(IMemoryCache memoryCache, ILdapService ldapService, DataProtectionService dataProtectionService, ILogger<ChangePasswordChallengeProcessor> logger)
     {
-        _cache = memoryCache ?? throw new ArgumentNullException(nameof(memoryCache));
-        _ldapService = ldapService ?? throw new ArgumentNullException(nameof(ldapService));
-        _dataProtectionService = dataProtectionService ?? throw new ArgumentNullException(nameof(dataProtectionService));
+        _cache = memoryCache;
+        _ldapService = ldapService;
+        _dataProtectionService = dataProtectionService;
+        _logger = logger;
     }
     
     public ChallengeIdentifier AddChallengeContext(RadiusContext context)
@@ -34,7 +37,7 @@ public class ChangePasswordChallengeProcessor : IChallengeProcessor
         };
         
         _cache.Set(passwordRequest.Id, passwordRequest, DateTimeOffset.UtcNow.AddMinutes(5));
-
+        _logger.LogInformation($"Password change state: \"{passwordRequest.Id}\"");
         context.SetMessageState(passwordRequest.Id);
         context.SetReplyMessage("Please change password to continue. Enter new password: ");
         return new ChallengeIdentifier(context.Configuration.Name, context.State);
@@ -57,6 +60,8 @@ public class ChangePasswordChallengeProcessor : IChallengeProcessor
         
         if (string.IsNullOrEmpty(context.Passphrase.Raw))
         {
+            context.SetReplyMessage("Password is empty");
+            context.SetFirstFactorAuth(AuthenticationCode.Reject);
             return ChallengeCode.Reject;
         }
         
@@ -83,8 +88,8 @@ public class ChangePasswordChallengeProcessor : IChallengeProcessor
             {
                 return ChallengeCode.Accept;
             }
-            
-            context.SetReplyMessage(result.Message);
+
+            context.SetFirstFactorAuth(AuthenticationCode.Reject);
 
             return ChallengeCode.Reject;
         }
@@ -105,6 +110,7 @@ public class ChangePasswordChallengeProcessor : IChallengeProcessor
 
         request.SetMessageState(passwordChangeRequest.Id);
         request.SetReplyMessage("Passwords not match. Please enter new password: ");
+        
         return ChallengeCode.InProcess;
     }
     
@@ -116,6 +122,7 @@ public class ChangePasswordChallengeProcessor : IChallengeProcessor
 
         request.SetMessageState(passwordChangeRequest.Id);
         request.SetReplyMessage("Please repeat new password: ");
+
         return ChallengeCode.InProcess;
     }
 }

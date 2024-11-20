@@ -228,26 +228,34 @@ public class LdapService : ILdapService
         string newPassword,
         RadiusContext context)
     {
-        var user = LdapIdentity.ParseUser(context.UserName);
-
-        using var connection = LdapConnectionAdapter.CreateAsTechnicalAccAsync(
-            domain,
-            context.Configuration,
-            _loggerFactory.CreateLogger<LdapConnectionAdapter>());
-
-        var formatter = new BindIdentityFormatter(context.Configuration);
-        var serviceUser = LdapIdentity.ParseUser(context.Configuration.ServiceAccountUser);
-        await connection.BindAsync(formatter.FormatIdentity(serviceUser, domain), context.Configuration.ServiceAccountPassword);
-
-        var profile = await _profileLoader.LoadAsync(context.Configuration, connection, user);
-        var request = BuildPasswordChangeRequest(profile.DistinguishedName, oldPassword, newPassword);
-        var response = await connection.SendRequestAsync(request);
-        if (response.ResultCode != ResultCode.Success)
+        try
         {
-            _logger.LogError($"Password change command error: {response.ErrorMessage}");
-            return new PasswordChangeResponse() { Message = response.ErrorMessage, Success = false };
-        }
+            var user = LdapIdentity.ParseUser(context.UserName);
+            using var connection = LdapConnectionAdapter.CreateAsTechnicalAccAsync(
+                domain,
+                context.Configuration,
+                _loggerFactory.CreateLogger<LdapConnectionAdapter>());
 
+            var formatter = new BindIdentityFormatter(context.Configuration);
+            var serviceUser = LdapIdentity.ParseUser(context.Configuration.ServiceAccountUser);
+            await connection.BindAsync(formatter.FormatIdentity(serviceUser, domain), context.Configuration.ServiceAccountPassword);
+           
+            var profile = await _profileLoader.LoadAsync(context.Configuration, connection, user);
+            var request = BuildPasswordChangeRequest(profile.DistinguishedName, oldPassword, newPassword);
+            var response = await connection.SendRequestAsync(request);
+            
+            if (response.ResultCode != ResultCode.Success)
+            {
+                _logger.LogError($"Password change command error: {response.ErrorMessage}");
+                return new PasswordChangeResponse() { Success = false, Message = response.ErrorMessage };
+            }
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e.Message);
+            return new PasswordChangeResponse() { Success = false, Message = e.Message };
+        }
+        
         return new PasswordChangeResponse() { Success = true };
     }
 

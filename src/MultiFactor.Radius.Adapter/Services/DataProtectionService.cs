@@ -8,12 +8,13 @@ public class DataProtectionService
     private readonly IDataProtectionProvider _protectionProvider;
     public DataProtectionService(IDataProtectionProvider dataProtectionProvider)
     {
-        _protectionProvider = dataProtectionProvider ?? throw new ArgumentNullException(nameof(dataProtectionProvider));
+        _protectionProvider = dataProtectionProvider;
     }
     
     public string Protect(string data, string protectionProviderName)
     {
-        if (string.IsNullOrEmpty(data)) throw new ArgumentNullException(data);
+        ArgumentException.ThrowIfNullOrWhiteSpace(data, nameof(data));
+
         var protector = _protectionProvider.CreateProtector(protectionProviderName);
         var encrypted =  protector.Protect(data);
         
@@ -22,7 +23,8 @@ public class DataProtectionService
 
     public string Unprotect(string data, string protectionProviderName)
     {
-        if (string.IsNullOrEmpty(data)) throw new ArgumentNullException(data);
+        ArgumentException.ThrowIfNullOrWhiteSpace(data, nameof(data));
+        
         var protector = _protectionProvider.CreateProtector(protectionProviderName);
         var decrypted = protector.Unprotect(data);
         

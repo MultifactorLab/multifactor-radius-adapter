@@ -10,7 +10,7 @@ public class ChallengeProcessorProvider : IChallengeProcessorProvider
     
     public ChallengeProcessorProvider(IEnumerable<IChallengeProcessor> challengeProcessors)
     {
-        _challengeProcessors = challengeProcessors ?? throw new ArgumentNullException(nameof(challengeProcessors));
+        _challengeProcessors = challengeProcessors;
     }
 
     public IChallengeProcessor GetChallengeProcessorForIdentifier(ChallengeIdentifier identifier)

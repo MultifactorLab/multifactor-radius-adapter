@@ -36,25 +36,21 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.AccessChallenge
                 return;
             }
 
-            var resultCode = await challengeProcessor.ProcessChallengeAsync(identifier, context);
-            switch (resultCode)
+            var result = await challengeProcessor.ProcessChallengeAsync(identifier, context);
+            
+            switch (result)
             {
                 case ChallengeCode.Accept:
-                    context.Authentication.SetSecondFactor(AuthenticationCode.Accept);
                     await next(context);
                     break;
 
                 case ChallengeCode.Reject:
-                    context.Authentication.SetSecondFactor(AuthenticationCode.Reject);
-                    context.SetMessageState(identifier.RequestId);
-                    return;
-
                 case ChallengeCode.InProcess:
-                    context.SetMessageState(identifier.RequestId);
+                    context.Flags.Terminate();
                     return;
 
                 default:
-                    throw new NotImplementedException($"Unexpected challenge result: {resultCode}");
+                    throw new NotImplementedException($"Unexpected challenge result: {result}");
 
             }
         }

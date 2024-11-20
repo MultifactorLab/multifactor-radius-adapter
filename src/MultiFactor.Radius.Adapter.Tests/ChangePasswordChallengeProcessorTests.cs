@@ -2,6 +2,7 @@ using System.Net;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Moq;
 using MultiFactor.Radius.Adapter.Core;
 using MultiFactor.Radius.Adapter.Core.Framework.Context;
@@ -45,7 +46,7 @@ public class ChangePasswordChallengeProcessorTests
         dataProtectionProviderMock.Setup(x => x.CreateProtector(It.IsAny<string>())).Returns(Mock.Of<IDataProtector>());
         
         var dataProtectionServiceMock = new DataProtectionService(dataProtectionProviderMock.Object);
-        var processor = new ChangePasswordChallengeProcessor(mockMemoryCache.Object, ldapService.Object, dataProtectionServiceMock);
+        var processor = new ChangePasswordChallengeProcessor(mockMemoryCache.Object, ldapService.Object, dataProtectionServiceMock, new Mock<ILogger<ChangePasswordChallengeProcessor>>().Object);
 
         processor.AddChallengeContext(context);
 
@@ -69,7 +70,7 @@ public class ChangePasswordChallengeProcessorTests
         var ldapService = new Mock<ILdapService>();
         var dataProtectionProvider = host.Service<IDataProtectionProvider>();
         var dataProtectionService = new DataProtectionService(dataProtectionProvider);
-        var processor = new ChangePasswordChallengeProcessor(memoryCache, ldapService.Object, dataProtectionService);
+        var processor = new ChangePasswordChallengeProcessor(memoryCache, ldapService.Object, dataProtectionService, new Mock<ILogger<ChangePasswordChallengeProcessor>>().Object);
 
         var request = RadiusPacketFactory.AccessRequest();
         request.AddAttribute("User-Password", "password");
@@ -100,7 +101,7 @@ public class ChangePasswordChallengeProcessorTests
         var dataProtectionProvider = host.Service<IDataProtectionProvider>();
         var dataProtectionService = new DataProtectionService(dataProtectionProvider);
         
-        var processor = new ChangePasswordChallengeProcessor(memoryCache, ldapService.Object, dataProtectionService);
+        var processor = new ChangePasswordChallengeProcessor(memoryCache, ldapService.Object, dataProtectionService, new Mock<ILogger<ChangePasswordChallengeProcessor>>().Object);
 
         var identifier = new ChallengeIdentifier("test", "test");
 
@@ -122,7 +123,7 @@ public class ChangePasswordChallengeProcessorTests
         var ldapService = new Mock<ILdapService>();
         var dataProtectionProvider = host.Service<IDataProtectionProvider>();
         var dataProtectionService = new DataProtectionService(dataProtectionProvider);
-        var processor = new ChangePasswordChallengeProcessor(memoryCache, ldapService.Object, dataProtectionService);
+        var processor = new ChangePasswordChallengeProcessor(memoryCache, ldapService.Object, dataProtectionService, new Mock<ILogger<ChangePasswordChallengeProcessor>>().Object);
 
         var request = RadiusPacketFactory.AccessRequest();
         request.AddAttribute("User-Password", "password");
@@ -167,7 +168,7 @@ public class ChangePasswordChallengeProcessorTests
         var ldapService = new Mock<ILdapService>();
         var dataProtectionProviderMock = new Mock<IDataProtectionProvider>();
         var dataProtectionServiceMock = new DataProtectionService(dataProtectionProviderMock.Object);
-        var processor = new ChangePasswordChallengeProcessor(mockMemoryCache.Object, ldapService.Object, dataProtectionServiceMock);
+        var processor = new ChangePasswordChallengeProcessor(mockMemoryCache.Object, ldapService.Object, dataProtectionServiceMock, new Mock<ILogger<ChangePasswordChallengeProcessor>>().Object);
 
         var resultCode = await processor.ProcessChallengeAsync(identifier, context);
 
@@ -203,7 +204,7 @@ public class ChangePasswordChallengeProcessorTests
         var dataProtectionProviderMock = new Mock<IDataProtectionProvider>();
         dataProtectionProviderMock.Setup(x => x.CreateProtector(It.IsAny<string>())).Returns(Mock.Of<IDataProtector>());
         var dataProtectionServiceMock = new DataProtectionService(dataProtectionProviderMock.Object);
-        var processor = new ChangePasswordChallengeProcessor(mockMemoryCache.Object, ldapService.Object, dataProtectionServiceMock);
+        var processor = new ChangePasswordChallengeProcessor(mockMemoryCache.Object, ldapService.Object, dataProtectionServiceMock, new Mock<ILogger<ChangePasswordChallengeProcessor>>().Object);
 
         var result = await processor.ProcessChallengeAsync(identifier, context);
 
@@ -253,7 +254,7 @@ public class ChangePasswordChallengeProcessorTests
 
         context.SetMessageState("oldState");
         var identifier = new ChallengeIdentifier("test", passwordChangeRequestId);
-        var processor = new ChangePasswordChallengeProcessor(mockMemoryCache.Object, ldapService.Object, dataProtectionService);
+        var processor = new ChangePasswordChallengeProcessor(mockMemoryCache.Object, ldapService.Object, dataProtectionService, host.Service<ILogger<ChangePasswordChallengeProcessor>>());
 
         var result = await processor.ProcessChallengeAsync(identifier, context);
 
@@ -308,7 +309,7 @@ public class ChangePasswordChallengeProcessorTests
         context.SetMessageState(passwordChangeRequestId);
         var identifier = new ChallengeIdentifier("test", passwordChangeRequestId);
 
-        var processor = new ChangePasswordChallengeProcessor(mockMemoryCache.Object, ldapService.Object, dataProtectionService);
+        var processor = new ChangePasswordChallengeProcessor(mockMemoryCache.Object, ldapService.Object, dataProtectionService, host.Service<ILogger<ChangePasswordChallengeProcessor>>());
 
         var result = await processor.ProcessChallengeAsync(identifier, context);
 
@@ -362,7 +363,7 @@ public class ChangePasswordChallengeProcessorTests
 
         context.SetMessageState(passwordChangeRequestId);
         var identifier = new ChallengeIdentifier("test", passwordChangeRequestId);
-        var processor = new ChangePasswordChallengeProcessor(mockMemoryCache.Object, ldapService.Object, dataProtectionService);
+        var processor = new ChangePasswordChallengeProcessor(mockMemoryCache.Object, ldapService.Object, dataProtectionService, new Mock<ILogger<ChangePasswordChallengeProcessor>>().Object);
 
         var result = await processor.ProcessChallengeAsync(identifier, context);
 

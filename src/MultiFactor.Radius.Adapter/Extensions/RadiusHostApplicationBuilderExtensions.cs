@@ -53,7 +53,6 @@ internal static class RadiusHostApplicationBuilderExtensions
         builder.Services.AddHttpServices();
         builder.Services
             .AddDataProtection()
-            .UseEphemeralDataProtectionProvider()
             .SetApplicationName("MultiFactor.Radius");
 
         configureServices?.Invoke(builder.Services);
