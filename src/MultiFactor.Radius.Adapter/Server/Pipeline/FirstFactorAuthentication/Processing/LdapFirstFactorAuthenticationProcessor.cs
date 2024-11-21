@@ -26,8 +26,8 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.FirstFactorAuthentication.P
             ILdapService ldapService,
             ILogger<LdapFirstFactorAuthenticationProcessor> logger)
         {
-            _ldapService = ldapService ?? throw new ArgumentNullException(nameof(ldapService));
-            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _ldapService = ldapService;
+            _logger = logger;
         }
 
         public AuthenticationSource AuthenticationSource => AuthenticationSource.ActiveDirectory | AuthenticationSource.Ldap;

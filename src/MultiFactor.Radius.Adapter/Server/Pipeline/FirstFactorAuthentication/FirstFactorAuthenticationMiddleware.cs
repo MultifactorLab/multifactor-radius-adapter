@@ -19,8 +19,8 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.FirstFactorAuthentication
 
         public FirstFactorAuthenticationMiddleware(IFirstFactorAuthenticationProcessorProvider firstAuthFactorProcessorProvider, IChallengeProcessorProvider challengeProcessorProvider)
         {
-            _firstAuthFactorProcessorProvider = firstAuthFactorProcessorProvider ?? throw new ArgumentNullException(nameof(firstAuthFactorProcessorProvider));
-            _challengeProcessorProvider = challengeProcessorProvider ?? throw new ArgumentNullException(nameof(challengeProcessorProvider));
+            _firstAuthFactorProcessorProvider = firstAuthFactorProcessorProvider;
+            _challengeProcessorProvider = challengeProcessorProvider;
         }
 
         public async Task InvokeAsync(RadiusContext context, RadiusRequestDelegate next)

@@ -27,7 +27,7 @@ public class ChangePasswordChallengeProcessor : IChallengeProcessor
     
     public ChallengeIdentifier AddChallengeContext(RadiusContext context)
     {
-        if (context == null) throw new ArgumentNullException(nameof(context));
+        ArgumentNullException.ThrowIfNull(context);
         var encryptedPassword = _dataProtectionService.Protect(context.Passphrase.Password, Constants.PasswordProtector);
         
         var passwordRequest = new PasswordChangeRequest()
@@ -50,8 +50,7 @@ public class ChangePasswordChallengeProcessor : IChallengeProcessor
 
     public async Task<ChallengeCode> ProcessChallengeAsync(ChallengeIdentifier identifier, RadiusContext context)
     {
-        if (context == null) throw new ArgumentNullException(nameof(context));
-        
+        ArgumentNullException.ThrowIfNull(context);
         var passwordChangeRequest = GetPasswordChangeRequest(identifier.RequestId);
         if (passwordChangeRequest == null)
         {

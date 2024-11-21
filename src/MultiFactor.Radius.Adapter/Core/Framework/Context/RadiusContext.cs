@@ -148,10 +148,7 @@ namespace MultiFactor.Radius.Adapter.Core.Framework.Context
 
         public void SetMustChangePassword(string domain)
         {
-            if (string.IsNullOrWhiteSpace(domain))
-            {
-                throw new ArgumentException($"'{nameof(domain)}' cannot be null or whitespace.", nameof(domain));
-            }
+            ArgumentException.ThrowIfNullOrWhiteSpace(domain, nameof(domain));
             
             MustChangePasswordDomain = domain;
         }

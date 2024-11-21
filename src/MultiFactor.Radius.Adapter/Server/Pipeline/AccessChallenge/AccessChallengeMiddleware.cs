@@ -15,7 +15,7 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.AccessChallenge
 
         public AccessChallengeMiddleware(IChallengeProcessorProvider challengeProcessorProvider)
         {
-            _challengeProcessorProvider = challengeProcessorProvider ?? throw new ArgumentNullException(nameof(challengeProcessorProvider));
+            _challengeProcessorProvider = challengeProcessorProvider;
         }
 
         public async Task InvokeAsync(RadiusContext context, RadiusRequestDelegate next)

@@ -15,11 +15,7 @@ public class ChallengeProcessorProvider : IChallengeProcessorProvider
 
     public IChallengeProcessor GetChallengeProcessorForIdentifier(ChallengeIdentifier identifier)
     {
-        if (identifier == null)
-        {
-            throw new ArgumentNullException(nameof(identifier));
-        }
-
+        ArgumentNullException.ThrowIfNull(identifier);
         return _challengeProcessors.FirstOrDefault(x => x.HasChallengeContext(identifier));
     }
     
