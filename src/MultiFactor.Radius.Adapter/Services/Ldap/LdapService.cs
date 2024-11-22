@@ -16,6 +16,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using MultiFactor.Radius.Adapter.Infrastructure.Configuration;
 using static LdapForNet.Native.Native;
 
 namespace MultiFactor.Radius.Adapter.Services.Ldap;
@@ -241,7 +242,8 @@ public class LdapService : ILdapService
             await connection.BindAsync(formatter.FormatIdentity(serviceUser, domain), context.Configuration.ServiceAccountPassword);
            
             var profile = await _profileLoader.LoadAsync(context.Configuration, connection, user);
-            var request = BuildPasswordChangeRequest(profile.DistinguishedName, oldPassword, newPassword);
+            var isFreeIpa = context.Configuration.IsFreeIpa && context.Configuration.FirstFactorAuthenticationSource != AuthenticationSource.ActiveDirectory;
+            var request = BuildPasswordChangeRequest(profile.DistinguishedName, oldPassword, newPassword, isFreeIpa);
             var response = await connection.SendRequestAsync(request);
             
             if (response.ResultCode != ResultCode.Success)
@@ -333,23 +335,32 @@ public class LdapService : ILdapService
         }
     }
 
-    private ModifyRequest BuildPasswordChangeRequest(string dn, string oldPassword, string newPassword)
+    private ModifyRequest BuildPasswordChangeRequest(string dn, string oldPassword, string newPassword, bool isFreeIpa)
     {
+        var attrName = isFreeIpa ? "userpassword" : "unicodePwd";
+        
         var oldPasswordAttribute = new DirectoryModificationAttribute
         {
-            Name = "unicodePwd",
+            Name = attrName,
             LdapModOperation = LdapModOperation.LDAP_MOD_DELETE
         };
-
-        oldPasswordAttribute.Add(Encoding.Unicode.GetBytes($"\"{oldPassword}\""));
-
+        
         var newPasswordAttribute = new DirectoryModificationAttribute
         {
-            Name = "unicodePwd",
+            Name = attrName,
             LdapModOperation = LdapModOperation.LDAP_MOD_ADD
         };
-
-        newPasswordAttribute.Add(Encoding.Unicode.GetBytes($"\"{newPassword}\""));
+        
+        if (isFreeIpa)
+        {
+            oldPasswordAttribute.Add(oldPassword);
+            newPasswordAttribute.Add(newPassword);
+        }
+        else
+        {
+            oldPasswordAttribute.Add(Encoding.Unicode.GetBytes($"\"{oldPassword}\""));
+            newPasswordAttribute.Add(Encoding.Unicode.GetBytes($"\"{newPassword}\""));
+        }
 
         return new ModifyRequest(dn, oldPasswordAttribute, newPasswordAttribute);
     }

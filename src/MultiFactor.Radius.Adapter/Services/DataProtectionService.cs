@@ -1,33 +1,43 @@
 using System;
-using Microsoft.AspNetCore.DataProtection;
+using System.Text;
 
 namespace MultiFactor.Radius.Adapter.Services;
 
 public class DataProtectionService
 {
-    private readonly IDataProtectionProvider _protectionProvider;
-    public DataProtectionService(IDataProtectionProvider dataProtectionProvider)
+    public string Protect(string data)
     {
-        _protectionProvider = dataProtectionProvider;
+        ArgumentException.ThrowIfNullOrWhiteSpace(data, nameof(data));
+
+        byte[] bytes = StringToBytes(data);
+        return ToBase64(bytes);
+    }
+
+    public string Unprotect(string data)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(data, nameof(data));
+        
+        byte[] bytes = FromBase64(data);
+        return BytesToString(bytes);
     }
     
-    public string Protect(string data, string protectionProviderName)
+    private static byte[] StringToBytes(string s)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(data, nameof(data));
-
-        var protector = _protectionProvider.CreateProtector(protectionProviderName);
-        var encrypted =  protector.Protect(data);
-        
-        return encrypted;
+        return Encoding.UTF8.GetBytes(s);
     }
 
-    public string Unprotect(string data, string protectionProviderName)
+    private static string BytesToString(byte[] b)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(data, nameof(data));
-        
-        var protector = _protectionProvider.CreateProtector(protectionProviderName);
-        var decrypted = protector.Unprotect(data);
-        
-        return decrypted;
+        return Encoding.UTF8.GetString(b);
+    }
+
+    private static string ToBase64(byte[] data)
+    {
+        return Convert.ToBase64String(data);
+    }
+
+    private static byte[] FromBase64(string text)
+    {
+        return Convert.FromBase64String(text);
     }
 }

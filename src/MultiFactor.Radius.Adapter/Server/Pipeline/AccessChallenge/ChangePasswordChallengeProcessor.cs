@@ -28,7 +28,7 @@ public class ChangePasswordChallengeProcessor : IChallengeProcessor
     public ChallengeIdentifier AddChallengeContext(RadiusContext context)
     {
         ArgumentNullException.ThrowIfNull(context);
-        var encryptedPassword = _dataProtectionService.Protect(context.Passphrase.Password, Constants.PasswordProtector);
+        var encryptedPassword = _dataProtectionService.Protect(context.Passphrase.Password);
         
         var passwordRequest = new PasswordChangeRequest()
         {
@@ -66,13 +66,13 @@ public class ChangePasswordChallengeProcessor : IChallengeProcessor
         
         if (passwordChangeRequest.NewPasswordEncryptedData != null)
         {
-            var decryptedNewPassword = _dataProtectionService.Unprotect(passwordChangeRequest.NewPasswordEncryptedData, Constants.PasswordProtector);
+            var decryptedNewPassword = _dataProtectionService.Unprotect(passwordChangeRequest.NewPasswordEncryptedData);
             if (decryptedNewPassword != context.Passphrase.Raw)
             {
                 return PasswordsNotMatchChallenge(context, passwordChangeRequest);
             }
 
-            var currentPassword = _dataProtectionService.Unprotect(passwordChangeRequest.CurrentPasswordEncryptedData, Constants.PasswordProtector);
+            var currentPassword = _dataProtectionService.Unprotect(passwordChangeRequest.CurrentPasswordEncryptedData);
 
             var result = await _ldapService.ChangeUserPasswordAsync(
                 passwordChangeRequest.Domain,
@@ -115,7 +115,7 @@ public class ChangePasswordChallengeProcessor : IChallengeProcessor
     
     private ChallengeCode RepeatPasswordChallenge(RadiusContext request, PasswordChangeRequest passwordChangeRequest)
     {
-        passwordChangeRequest.NewPasswordEncryptedData = _dataProtectionService.Protect(request.Passphrase.Raw, Constants.PasswordProtector);
+        passwordChangeRequest.NewPasswordEncryptedData = _dataProtectionService.Protect(request.Passphrase.Raw);
 
         _cache.Set(passwordChangeRequest.Id, passwordChangeRequest, DateTimeOffset.UtcNow.AddMinutes(5));
 

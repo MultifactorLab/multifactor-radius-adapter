@@ -12,9 +12,6 @@ using MultiFactor.Radius.Adapter.Services.Ldap.UserGroupsReading;
 using MultiFactor.Radius.Adapter.Services.MultiFactorApi;
 using Serilog;
 using System;
-using System.IO;
-using Microsoft.AspNetCore.DataProtection;
-using MultiFactor.Radius.Adapter.Core;
 
 namespace MultiFactor.Radius.Adapter.Extensions;
 
@@ -51,10 +48,6 @@ internal static class RadiusHostApplicationBuilderExtensions
         builder.Services.AddSingleton<DataProtectionService>();
 
         builder.Services.AddHttpServices();
-        builder.Services
-            .AddDataProtection()
-            .SetApplicationName("MultiFactor.Radius");
-
         configureServices?.Invoke(builder.Services);
     }
 
