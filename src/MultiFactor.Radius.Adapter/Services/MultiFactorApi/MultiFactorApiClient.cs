@@ -8,6 +8,8 @@ using MultiFactor.Radius.Adapter.Infrastructure.Http;
 using MultiFactor.Radius.Adapter.Services.MultiFactorApi.Dto;
 using System;
 using System.Collections.Generic;
+using System.Net;
+using System.Net.Http;
 using System.Threading.Tasks;
 
 namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi
@@ -18,9 +20,9 @@ namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi
     internal class MultifactorApiClient : IMultifactorApiClient
     {
         private readonly ILogger<MultifactorApiClient> _logger;
-        private readonly HttpClientAdapter _httpClientAdapter;
+        private readonly IHttpClientAdapter _httpClientAdapter;
 
-        public MultifactorApiClient(ILogger<MultifactorApiClient> logger, HttpClientAdapter httpClientAdapter)
+        public MultifactorApiClient(ILogger<MultifactorApiClient> logger, IHttpClientAdapter httpClientAdapter)
         {
             _logger = logger;
             _httpClientAdapter = httpClientAdapter;
@@ -75,6 +77,20 @@ namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi
                 }
 
                 return response.Model;
+            }
+            catch (HttpRequestException ex)
+            {
+                if (ex.StatusCode != HttpStatusCode.TooManyRequests)
+                {
+                    throw new MultifactorApiUnreachableException($"Multifactor API host unreachable: {url}. Reason: {ex.Message}", ex);
+                }
+
+                _logger.LogWarning("Unsuccessful api response: '{message:l}'",ex.Message);
+                return new AccessRequestDto()
+                {
+                    Status = RequestStatus.Denied,
+                    ReplyMessage = "Too Many Requests"
+                };
             }
             catch (TaskCanceledException tce)
             {
