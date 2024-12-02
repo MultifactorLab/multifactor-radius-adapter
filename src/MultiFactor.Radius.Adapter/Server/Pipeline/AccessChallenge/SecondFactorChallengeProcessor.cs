@@ -14,12 +14,13 @@ using System.Threading.Tasks;
 
 namespace MultiFactor.Radius.Adapter.Server.Pipeline.AccessChallenge
 {
-    public class SecondFactorChallengeProcessor : ISecondFactorChallengeProcessor
+    public class SecondFactorChallengeProcessor : IChallengeProcessor
     {
         private readonly ConcurrentDictionary<ChallengeIdentifier, RadiusContext> _challengeContexts = new();
         private readonly IMultifactorApiAdapter _apiAdapter;
         private readonly ILogger<SecondFactorChallengeProcessor> _logger;
-
+        public ChallengeType ChallengeType => ChallengeType.SecondFactor;
+        
         public SecondFactorChallengeProcessor(IMultifactorApiAdapter apiAdapter, ILogger<SecondFactorChallengeProcessor> logger)
         {
             _apiAdapter = apiAdapter ?? throw new ArgumentNullException(nameof(apiAdapter));
@@ -44,6 +45,10 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.AccessChallenge
                     context.Header.Identifier,
                     context.RemoteEndpoint.Address,
                     context.RemoteEndpoint.Port);
+                
+                context.Authentication.SetSecondFactor(AuthenticationCode.Reject);
+                context.SetMessageState(identifier.RequestId);
+                
                 return ChallengeCode.Reject;
             }
 
@@ -60,6 +65,10 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.AccessChallenge
                             context.Header.Identifier, 
                             context.RemoteEndpoint.Address, 
                             context.RemoteEndpoint.Port);
+                        
+                        context.Authentication.SetSecondFactor(AuthenticationCode.Reject);
+                        context.SetMessageState(identifier.RequestId);
+                        
                         return ChallengeCode.Reject;
                     }
 
@@ -74,6 +83,10 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.AccessChallenge
                             context.Header.Identifier, 
                             context.RemoteEndpoint.Address,
                             context.RemoteEndpoint.Port);
+                        
+                        context.Authentication.SetSecondFactor(AuthenticationCode.Reject);
+                        context.SetMessageState(identifier.RequestId);
+                        
                         return ChallengeCode.Reject;
                     }
 
@@ -89,6 +102,10 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.AccessChallenge
                         context.RemoteEndpoint.Address,
                         context.RemoteEndpoint.Port,
                         context.RequestPacket.AuthenticationType);
+                    
+                    context.Authentication.SetSecondFactor(AuthenticationCode.Reject);
+                    context.SetMessageState(identifier.RequestId);
+                    
                     return ChallengeCode.Reject;
             }
 
@@ -112,6 +129,8 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.AccessChallenge
                         context.RemoteEndpoint.Address,
                         context.RemoteEndpoint.Port, 
                         response.Code);
+                    
+                    context.Authentication.SetSecondFactor(AuthenticationCode.Accept);
                     return ChallengeCode.Accept;
 
                 case AuthenticationCode.Reject:
@@ -122,9 +141,15 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.AccessChallenge
                         context.RemoteEndpoint.Address,
                         context.RemoteEndpoint.Port, 
                         response.Code);
+                    
+                    context.Authentication.SetSecondFactor(AuthenticationCode.Reject);
+                    context.SetMessageState(identifier.RequestId);
+                    
                     return ChallengeCode.Reject;
             }
-
+            
+            context.SetMessageState(identifier.RequestId);
+            
             return ChallengeCode.InProcess;
         }
 

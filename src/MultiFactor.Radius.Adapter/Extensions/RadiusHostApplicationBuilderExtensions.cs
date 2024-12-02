@@ -26,9 +26,11 @@ internal static class RadiusHostApplicationBuilderExtensions
 
         builder.Services.AddSingleton<IMultifactorApiAdapter, MultifactorApiAdapter>();
         builder.Services.AddSingleton<IMultifactorApiClient, MultifactorApiClient>();
-
-        builder.Services.AddSingleton<ISecondFactorChallengeProcessor, SecondFactorChallengeProcessor>();
-
+        
+        builder.Services.AddSingleton<IChallengeProcessor, SecondFactorChallengeProcessor>();
+        builder.Services.AddSingleton<IChallengeProcessor, ChangePasswordChallengeProcessor>();
+        builder.Services.AddSingleton<IChallengeProcessorProvider, ChallengeProcessorProvider>();
+        
         builder.Services.AddFirstAuthFactorProcessing();
 
         builder.Services.AddSingleton<UserGroupsGetterProvider>();
@@ -37,14 +39,15 @@ internal static class RadiusHostApplicationBuilderExtensions
         builder.Services.AddSingleton<IUserGroupsGetter, DefaultUserGroupsGetter>();
 
         builder.Services.AddSingleton<ProfileLoader>();
-        builder.Services.AddSingleton<LdapService>();
+        builder.Services.AddSingleton<ILdapService, LdapService>();
         builder.Services.AddSingleton<MembershipVerifier>();
         builder.Services.AddSingleton<MembershipProcessor>();
 
         builder.Services.AddSingleton<IAuthenticatedClientCache, AuthenticatedClientCache>();
 
-        builder.Services.AddHttpServices();
+        builder.Services.AddSingleton<DataProtectionService>();
 
+        builder.Services.AddHttpServices();
         configureServices?.Invoke(builder.Services);
     }
 

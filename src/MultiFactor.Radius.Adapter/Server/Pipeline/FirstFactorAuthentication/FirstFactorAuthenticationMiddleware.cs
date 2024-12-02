@@ -8,16 +8,19 @@ using MultiFactor.Radius.Adapter.Core.Radius;
 using MultiFactor.Radius.Adapter.Server.Pipeline.FirstFactorAuthentication.Processing;
 using System;
 using System.Threading.Tasks;
+using MultiFactor.Radius.Adapter.Server.Pipeline.AccessChallenge;
 
 namespace MultiFactor.Radius.Adapter.Server.Pipeline.FirstFactorAuthentication
 {
     public class FirstFactorAuthenticationMiddleware : IRadiusMiddleware
     {
         private readonly IFirstFactorAuthenticationProcessorProvider _firstAuthFactorProcessorProvider;
+        private readonly IChallengeProcessorProvider _challengeProcessorProvider;
 
-        public FirstFactorAuthenticationMiddleware(IFirstFactorAuthenticationProcessorProvider firstAuthFactorProcessorProvider)
+        public FirstFactorAuthenticationMiddleware(IFirstFactorAuthenticationProcessorProvider firstAuthFactorProcessorProvider, IChallengeProcessorProvider challengeProcessorProvider)
         {
-            _firstAuthFactorProcessorProvider = firstAuthFactorProcessorProvider ?? throw new ArgumentNullException(nameof(firstAuthFactorProcessorProvider));
+            _firstAuthFactorProcessorProvider = firstAuthFactorProcessorProvider;
+            _challengeProcessorProvider = challengeProcessorProvider;
         }
 
         public async Task InvokeAsync(RadiusContext context, RadiusRequestDelegate next)
@@ -34,6 +37,13 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.FirstFactorAuthentication
             {
                 context.Authentication.SetFirstFactor(AuthenticationCode.Accept);
                 await next(context);
+                return;
+            }
+
+            if (!string.IsNullOrWhiteSpace(context.MustChangePasswordDomain))
+            {
+                var challengeProcessor = _challengeProcessorProvider.GetChallengeProcessorByType(ChallengeType.PasswordChange);
+                challengeProcessor.AddChallengeContext(context);
                 return;
             }
 
