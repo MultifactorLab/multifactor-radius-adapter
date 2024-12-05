@@ -9,7 +9,12 @@ using System.Threading.Tasks;
 
 namespace MultiFactor.Radius.Adapter.Infrastructure.Http
 {
-    internal class HttpClientAdapter
+    public interface IHttpClientAdapter
+    {
+        Task<T> PostAsync<T>(string endpoint, object body, IReadOnlyDictionary<string, string> headers = null);
+    }
+
+    internal class HttpClientAdapter : IHttpClientAdapter
     {
         private readonly IHttpClientFactory _factory;
         private readonly ILogger<HttpClientAdapter> _logger;

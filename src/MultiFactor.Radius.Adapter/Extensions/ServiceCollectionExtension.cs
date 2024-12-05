@@ -21,7 +21,7 @@ public static class ServiceCollectionExtension
 
     public static void AddHttpServices(this IServiceCollection services)
     {
-        services.TryAddSingleton<HttpClientAdapter>();
+        services.TryAddSingleton<IHttpClientAdapter, HttpClientAdapter>();
 
         services.AddHttpClient(nameof(HttpClientAdapter), (prov, client) =>
         {
