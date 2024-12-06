@@ -22,12 +22,6 @@ The component is a part of <a href="https://multifactor.pro/" target="_blank">Mu
 * [Installation and configuration](#installation-and-configuration)
 * [License](#license)
 
-## RADIUS
-
-Remote Authentication Dial-In User Service (RADIUS) &mdash; is a networking protocol primarily used for remote user authentication.
-
-The protocol has been around for a long time and is supported by major network devices and services vendors.
-
 ## Component Features
 
 Key features:
