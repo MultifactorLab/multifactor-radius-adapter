@@ -7,10 +7,10 @@ using MultiFactor.Radius.Adapter.Server.Pipeline.FirstFactorAuthentication;
 using MultiFactor.Radius.Adapter.Server.Pipeline.PreSecondFactorAuthentication;
 using MultiFactor.Radius.Adapter.Server.Pipeline.SecondFactorAuthentication;
 using MultiFactor.Radius.Adapter.Server.Pipeline.StatusServer;
-using Serilog;
 using System;
 using System.Text;
 using System.Threading.Tasks;
+using MultiFactor.Radius.Adapter.Infrastructure.Logging;
 
 IHost host = null;
 
@@ -27,16 +27,16 @@ try
     builder.UseMiddleware<PreSecondFactorAuthenticationMiddleware>();
     builder.UseMiddleware<FirstFactorAuthenticationMiddleware>();
     builder.UseMiddleware<SecondFactorAuthenticationMiddleware>();
-
     host = builder.Build();
     host.Run();
 }
 catch (Exception ex)
 {
     var errorMessage = FlattenException(ex);
-
-    Log.Logger.Error(ex, "Unable to start: {Message:l}", errorMessage);
-
+    StartupLogger.Error(ex, "Unable to start: {Message:l}", errorMessage);
+}
+finally
+{
     await (host?.StopAsync() ?? Task.CompletedTask);
 }
 
