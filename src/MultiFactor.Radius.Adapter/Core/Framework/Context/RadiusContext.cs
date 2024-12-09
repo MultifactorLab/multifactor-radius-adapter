@@ -75,6 +75,8 @@ namespace MultiFactor.Radius.Adapter.Core.Framework.Context
         /// </summary>
         public ReadOnlyCollection<string> UserGroups => Profile.MemberOf;
 
+        public string MustChangePasswordDomain { get; private set; }
+
         public IServiceProvider RequestServices { get; }
 
         /// <summary>
@@ -93,7 +95,7 @@ namespace MultiFactor.Radius.Adapter.Core.Framework.Context
 
         /// <inheritdoc cref="AuthenticationState.SetSecondFactor(AuthenticationCode)"/>
         public void SetSecondFactorAuth(AuthenticationCode code) => Authentication.SetSecondFactor(code);
-
+        
         /// <summary>
         /// Current user LDAP profile.
         /// </summary>
@@ -142,6 +144,13 @@ namespace MultiFactor.Radius.Adapter.Core.Framework.Context
             Profile.UpdateAttributes(context.Profile.Attributes);
             Authentication = context.Authentication;
             Passphrase = context.Passphrase;
+        }
+
+        public void SetMustChangePassword(string domain)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(domain, nameof(domain));
+            
+            MustChangePasswordDomain = domain;
         }
     }
 }

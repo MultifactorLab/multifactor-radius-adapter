@@ -7,7 +7,7 @@ namespace MultiFactor.Radius.Adapter.Core.Framework.Context
     public class RadiusContextFlags
     {
         /// <summary>
-        /// Indicates that the radius response response will not be generated.
+        /// Indicates that the radius response will not be generated.
         /// </summary>
         public bool SkipResponseFlag { get; private set; }
 
@@ -22,7 +22,7 @@ namespace MultiFactor.Radius.Adapter.Core.Framework.Context
         public void SkipResponse() => SkipResponseFlag = true;
 
         /// <summary>
-        /// Immediately terminates the pipeline execution and skips all the remaining user difined middlewares.
+        /// Immediately terminates the pipeline execution and skips all the remaining user defined middlewares.
         /// </summary>
         public void Terminate() => TerminateFlag = true;
     }

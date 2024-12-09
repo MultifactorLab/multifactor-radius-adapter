@@ -193,7 +193,7 @@ public class SecondFactorAuthenticationMiddlewareTests
     [Fact]
     public async Task Invoke_ApiShouldReturnChallengeRequest_ShouldInvokeAddState()
     {
-        var chProc = new Mock<ISecondFactorChallengeProcessor>();
+        var chProc = new Mock<IChallengeProcessor>();
         chProc.Setup(x => x.HasChallengeContext(It.IsAny<ChallengeIdentifier>()))
             .Returns(false);
 
@@ -208,8 +208,11 @@ public class SecondFactorAuthenticationMiddlewareTests
             adapter.Setup(x => x.CreateSecondFactorRequestAsync(It.IsAny<RadiusContext>()))
                 .ReturnsAsync(new Services.MultiFactorApi.Models.SecondFactorResponse(AuthenticationCode.Awaiting));
             builder.Services.ReplaceService(adapter.Object);
-
-            builder.Services.ReplaceService(chProc.Object);
+            var provider = new Mock<IChallengeProcessorProvider>();
+            provider.Setup(x => x.GetChallengeProcessorByType(It.IsAny<ChallengeType>())).Returns(chProc.Object);
+            
+            builder.Services.ReplaceService(provider.Object);
+            
             builder.UseMiddleware<SecondFactorAuthenticationMiddleware>();
         });
 
@@ -221,7 +224,6 @@ public class SecondFactorAuthenticationMiddlewareTests
             x.RemoteEndpoint = new IPEndPoint(IPAddress.Any, 636);
         });
         context.SetMessageState("Qwerty123");
-        var expectedIdentifier = new ChallengeIdentifier(config.Clients[0].Name, "Qwerty123");
 
         await host.InvokePipeline(context);
 

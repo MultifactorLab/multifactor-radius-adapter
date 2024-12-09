@@ -10,6 +10,7 @@ using MultiFactor.Radius.Adapter.Infrastructure.Configuration;
 using MultiFactor.Radius.Adapter.Services.Ldap;
 using System;
 using System.Threading.Tasks;
+using LdapForNet;
 
 namespace MultiFactor.Radius.Adapter.Server.Pipeline.FirstFactorAuthentication.Processing
 {
@@ -18,15 +19,15 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.FirstFactorAuthentication.P
     /// </summary>
     public class LdapFirstFactorAuthenticationProcessor : IFirstFactorAuthenticationProcessor
     {
-        private readonly LdapService _ldapService;
+        private readonly ILdapService _ldapService;
         private readonly ILogger<LdapFirstFactorAuthenticationProcessor> _logger;
 
         public LdapFirstFactorAuthenticationProcessor(
-            LdapService ldapService,
+            ILdapService ldapService,
             ILogger<LdapFirstFactorAuthenticationProcessor> logger)
         {
-            _ldapService = ldapService ?? throw new ArgumentNullException(nameof(ldapService));
-            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _ldapService = ldapService;
+            _logger = logger;
         }
 
         public AuthenticationSource AuthenticationSource => AuthenticationSource.ActiveDirectory | AuthenticationSource.Ldap;
@@ -61,9 +62,32 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.FirstFactorAuthentication.P
                         return PacketCode.AccessAccept;
                     }
                 }
+                catch (LdapException lex)
+                {
+                    if (lex.Message != null)
+                    {
+                        var reason = LdapErrorReasonInfo.Create(lex.Message);
+                        if (reason.Flags.HasFlag(LdapErrorFlag.MustChangePassword))
+                        {
+                            context.SetMustChangePassword(ldapUri);
+                        }
+                
+                        if (reason.Reason != LdapErrorReason.UnknownError)
+                        {
+                            _logger.LogWarning(lex, "Verification user '{user:l}' at {ldapUri:l} failed: {dataReason:l}", userName, ldapUri, reason.ReasonText);
+                        }
+                    }
+
+                    _logger.LogError(lex, "Verification user '{user:l}' at {ldapUri:l} failed", userName, ldapUri);
+                }
                 catch (Exception ex)
                 {
                     _logger.LogError("Verification user '{user:l}' at {ldapUri:l} failed: {message:l}", userName, ldapUri, ex.Message);
+                }
+
+                if (!string.IsNullOrWhiteSpace(context.MustChangePasswordDomain))
+                {
+                    return PacketCode.AccessReject;
                 }
             }
 

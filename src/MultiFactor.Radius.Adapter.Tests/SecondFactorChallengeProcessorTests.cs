@@ -16,7 +16,7 @@ using MultiFactor.Radius.Adapter.Infrastructure.Configuration.ClientLevel;
 namespace MultiFactor.Radius.Adapter.Tests
 {
     [Trait("Category", "Challenge")]
-    public class ChallengeProcessorTests
+    public class SecondFactorChallengeProcessorTests
     {
         [Fact]
         public void AddState_ShouldHasState()
@@ -59,8 +59,10 @@ namespace MultiFactor.Radius.Adapter.Tests
             processor.AddChallengeContext(context);
 
             var result = await processor.ProcessChallengeAsync(identifier, context);
-
+            
             Assert.Equal(ChallengeCode.Reject, result);
+            Assert.Equal(reqId, context.State);
+            Assert.Equal(AuthenticationCode.Reject, context.Authentication.SecondFactor);
         }
         
         [Fact]
@@ -87,8 +89,10 @@ namespace MultiFactor.Radius.Adapter.Tests
             processor.AddChallengeContext(context);
 
             var result = await processor.ProcessChallengeAsync(identifier, context);
-
+            
             Assert.Equal(ChallengeCode.Reject, result);
+            Assert.Equal(reqId, context.State);
+            Assert.Equal(AuthenticationCode.Reject, context.Authentication.SecondFactor);
         }
         
         [Fact]
@@ -114,8 +118,10 @@ namespace MultiFactor.Radius.Adapter.Tests
             processor.AddChallengeContext(context);
 
             var result = await processor.ProcessChallengeAsync(identifier, context);
-
+            
             Assert.Equal(ChallengeCode.Reject, result);
+            Assert.Equal(reqId, context.State);
+            Assert.Equal(AuthenticationCode.Reject, context.Authentication.SecondFactor);
         }
         
         [Theory]
@@ -143,8 +149,10 @@ namespace MultiFactor.Radius.Adapter.Tests
             processor.AddChallengeContext(context);
 
             var result = await processor.ProcessChallengeAsync(identifier, context);
-
+            
             Assert.Equal(ChallengeCode.Reject, result);
+            Assert.Equal(reqId, context.State);
+            Assert.Equal(AuthenticationCode.Reject, context.Authentication.SecondFactor);
         }
 
         [Fact]
@@ -187,7 +195,7 @@ namespace MultiFactor.Radius.Adapter.Tests
             };
 
             var result = await processor.ProcessChallengeAsync(new ChallengeIdentifier(client.Name, reqId), newContext);
-
+            
             Assert.Equal(ChallengeCode.Accept, result);
 
             newContext.UserGroups.Should().BeEquivalentTo(context.UserGroups);
