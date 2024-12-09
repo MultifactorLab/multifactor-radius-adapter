@@ -74,6 +74,11 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.FirstFactorAuthentication.P
                 
                 var identity = UserNameTransformation.Transform(context.UserName, context.Configuration.UserNameTransformRules.BeforeFirstFactor);
                 var requestPacket = context.RequestPacket.Clone().UpdateAttribute("User-Name", identity);
+                if (!string.IsNullOrWhiteSpace(context.Passphrase.Password))
+                {
+                    requestPacket.UpdateAttribute("User-Password", context.Passphrase.Password);
+                }
+
                 var requestBytes = _packetParser.GetBytes(requestPacket);
                 var response = await client.SendPacketAsync(requestPacket.Header.Identifier, requestBytes, context.Configuration.NpsServerEndpoint, TimeSpan.FromSeconds(5));
 
