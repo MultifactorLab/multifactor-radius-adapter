@@ -12,16 +12,16 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.PreSecondFactorAuthenticati
 {
     public class PreSecondFactorAuthenticationMiddleware : IRadiusMiddleware
     {
-        private readonly ISecondFactorChallengeProcessor _challengeProcessor;
+        private readonly IChallengeProcessorProvider _challengeProcessorProvider;
         private readonly IMultifactorApiAdapter _apiAdapter;
         private readonly ILogger<PreSecondFactorAuthenticationMiddleware> _logger;
 
         public PreSecondFactorAuthenticationMiddleware(
-            ISecondFactorChallengeProcessor challengeProcessor,
+            IChallengeProcessorProvider challengeProcessorProvider,
             IMultifactorApiAdapter apiAdapter,
             ILogger<PreSecondFactorAuthenticationMiddleware> logger)
         {
-            _challengeProcessor = challengeProcessor;
+            _challengeProcessorProvider = challengeProcessorProvider;
             _apiAdapter = apiAdapter;
             _logger = logger;
         }
@@ -95,7 +95,9 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.PreSecondFactorAuthenticati
 
                     if (response.Code == AuthenticationCode.Awaiting)
                     {
-                        _challengeProcessor.AddChallengeContext(context);
+                        var challengeProcessor =
+                            _challengeProcessorProvider.GetChallengeProcessorByType(ChallengeType.SecondFactor);
+                        challengeProcessor.AddChallengeContext(context);
                         return;
                     }
 
