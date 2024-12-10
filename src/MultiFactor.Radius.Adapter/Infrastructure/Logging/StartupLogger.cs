@@ -11,7 +11,7 @@ public static class StartupLogger
 {
     private const string LogDirectory = "logs";
     private const string StartupLogFile = "startup.log";
-    private const long FileSizeLimitBytes = 1024 * 1024 * 5;
+    private const long FileSizeLimitBytes = 1024 * 1024 * 20;
     private const string FileLogTemplate = "[{Timestamp:yyyy-MM-dd HH:mm:ss.fff}|{Level:u3}|{SourceContext:l}] {Message:lj}{NewLine}{Exception}{Properties}{NewLine}";
     private const string ConsoleLogTemplate = "[{Timestamp:yyyy-MM-dd HH:mm:ss.fff}|{Level:u3}|{SourceContext:l}] {Message:lj}{NewLine}{Exception}{Properties}{NewLine}";
 
