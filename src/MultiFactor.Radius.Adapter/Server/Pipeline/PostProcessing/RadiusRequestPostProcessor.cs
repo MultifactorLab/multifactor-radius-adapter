@@ -10,6 +10,7 @@ using MultiFactor.Radius.Adapter.Infrastructure.Configuration;
 using MultiFactor.Radius.Adapter.Services;
 using System;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration.RootLevel;
 
@@ -112,6 +113,14 @@ public class RadiusRequestPostProcessor : IRadiusRequestPostProcessor
             {
                 responsePacket.Attributes.Add("Proxy-State", requestPacket.Attributes.SingleOrDefault(o => o.Key == "Proxy-State").Value);
             }
+        }
+        
+        // page 12  https://fortinetweb.s3.amazonaws.com/docs.fortinet.com/v2/attachments/51019988-746d-11ef-8355-fa163e15d75b/fortios-v7.2.10-release-notes.pdf
+        if (!responsePacket.Attributes.ContainsKey("Message-Authenticator"))
+        {
+            var placeholder = new byte[16];
+            var placeholderStr = Encoding.Default.GetString(placeholder);
+            responsePacket.AddAttribute("Message-Authenticator", placeholderStr);
         }
 
         var debugLog = context.RequestPacket.Header.Code == PacketCode.StatusServer;

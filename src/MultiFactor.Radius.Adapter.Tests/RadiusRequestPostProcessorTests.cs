@@ -52,9 +52,11 @@ namespace MultiFactor.Radius.Adapter.Tests
 
             var reply = sentPacket.GetAttribute<string>("Reply-Message");
             var state = sentPacket.GetAttribute<string>("State");
-
+            var messageAuthenticator = sentPacket.GetAttribute<string>("Message-Authenticator");
             Assert.Equal("My Message", reply);
             Assert.Equal("My State", state);
+            Assert.NotNull(messageAuthenticator);
+            Assert.Equal(16, messageAuthenticator.Length);
         }
         
         [Fact]
