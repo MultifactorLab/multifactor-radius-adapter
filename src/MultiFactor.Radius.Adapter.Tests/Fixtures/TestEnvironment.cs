@@ -3,7 +3,8 @@
 internal enum TestAssetLocation
 {
     RootDirectory,
-    ClientsDirectory
+    ClientsDirectory,
+    E2E
 }
 
 internal static class TestEnvironment
@@ -22,6 +23,7 @@ internal static class TestEnvironment
         return location switch
         {
             TestAssetLocation.ClientsDirectory => $"{_assetsFolder}{Path.DirectorySeparatorChar}clients",
+            TestAssetLocation.E2E => $"{_assetsFolder}{Path.DirectorySeparatorChar}E2E",
             _ => _assetsFolder,
         };
     }
