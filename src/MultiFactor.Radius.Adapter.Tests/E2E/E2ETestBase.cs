@@ -1,7 +1,14 @@
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 using MultiFactor.Radius.Adapter.Core.Framework;
 using MultiFactor.Radius.Adapter.Core.Radius;
+using MultiFactor.Radius.Adapter.Extensions;
+using MultiFactor.Radius.Adapter.Infrastructure.Configuration;
+using MultiFactor.Radius.Adapter.Infrastructure.Configuration.ConfigurationLoading;
 using MultiFactor.Radius.Adapter.Tests.E2E.Udp;
+using MultiFactor.Radius.Adapter.Tests.Fixtures;
+using MultiFactor.Radius.Adapter.Tests.Fixtures.ConfigLoading;
 using MultiFactor.Radius.Adapter.Tests.Fixtures.Radius;
 
 namespace MultiFactor.Radius.Adapter.Tests.E2E;
@@ -13,7 +20,7 @@ public abstract class E2ETestBase : IDisposable
     private readonly RadiusPacketParser _packetParser;
     private readonly SharedSecret _secret;
     private readonly UdpSocket _udpSocket;
-    
+
     protected E2ETestBase(RadiusFixtures radiusFixtures)
     {
         _radiusHostApplicationBuilder = RadiusHost.CreateApplicationBuilder(new[] { "--environment", "Test" });
@@ -21,12 +28,39 @@ public abstract class E2ETestBase : IDisposable
         _secret = radiusFixtures.SharedSecret;
         _udpSocket = radiusFixtures.UdpSocket;
     }
-    
-    private protected async Task StartHostAsync(Action<RadiusHostApplicationBuilder>? configure = null)
+
+    private protected async Task StartHostAsync(
+        string rootConfigName,
+        string[] clientConfigFileNames = null,
+        Action<RadiusHostApplicationBuilder>? configure = null)
     {
+        _radiusHostApplicationBuilder.AddLogging();
+
+        _radiusHostApplicationBuilder.Services.AddOptions<TestConfigProviderOptions>();
+        _radiusHostApplicationBuilder.Services.ReplaceService(prov =>
+        {
+            var opt = prov.GetRequiredService<IOptions<TestConfigProviderOptions>>().Value;
+            var rootConfig = TestRootConfigProvider.GetRootConfiguration(opt);
+            var factory = prov.GetRequiredService<ServiceConfigurationFactory>();
+
+            var config = factory.CreateConfig(rootConfig);
+            config.Validate();
+
+            return config;
+        });
+
+        _radiusHostApplicationBuilder.Services
+            .ReplaceService<IClientConfigurationsProvider, TestClientConfigsProvider>();
+
+        _radiusHostApplicationBuilder.AddMiddlewares();
+
+        _radiusHostApplicationBuilder.ConfigureApplication();
+
+        ReplaceRadiusConfigs(rootConfigName, clientConfigFileNames);
+        
         configure?.Invoke(_radiusHostApplicationBuilder);
         _host = _radiusHostApplicationBuilder.Build();
-        
+
         await _host.StartAsync();
     }
 
@@ -39,43 +73,55 @@ public abstract class E2ETestBase : IDisposable
 
         var packetBytes = _packetParser.GetBytes(radiusPacket);
         _udpSocket.Send(packetBytes);
-        
+
         var data = _udpSocket.Receive();
         var parsed = _packetParser.Parse(data.GetBytes(), _secret);
-        
+
         return parsed;
     }
 
-    protected IRadiusPacket CreateRadiusPacket(PacketCode packetCode, Dictionary<string,string> additionalAttributes = null)
+    protected IRadiusPacket CreateRadiusPacket(PacketCode packetCode, SharedSecret secret = null)
     {
         IRadiusPacket packet = null;
         switch (packetCode)
         {
             case PacketCode.AccessRequest:
-                packet = RadiusPacketFactory.AccessRequest();
+                packet = RadiusPacketFactory.AccessRequest(secret ?? _secret);
                 break;
             case PacketCode.StatusServer:
-                packet = RadiusPacketFactory.StatusServer();
+                packet = RadiusPacketFactory.StatusServer(secret ?? _secret);
                 break;
             case PacketCode.AccessChallenge:
-                packet = RadiusPacketFactory.AccessChallenge();
+                packet = RadiusPacketFactory.AccessChallenge(secret ?? _secret);
                 break;
             case PacketCode.AccessReject:
-                packet = RadiusPacketFactory.AccessReject();
+                packet = RadiusPacketFactory.AccessReject(secret ?? _secret);
                 break;
             default:
                 throw new NotImplementedException();
         }
 
-        if (additionalAttributes?.Count > 0)
-        {
-            foreach (var attribute in additionalAttributes)
-            {
-                packet.AddAttribute(attribute.Key, attribute.Value);
-            }
-        }
-        
         return packet;
+    }
+
+    private void ReplaceRadiusConfigs(
+        string rootConfigName,
+        string[] clientConfigFileNames = null)
+    {
+        if (string.IsNullOrEmpty(rootConfigName))
+            throw new ArgumentException("Empty config path");
+
+        var clientConfigs = clientConfigFileNames?
+            .Select(configPath => TestEnvironment.GetAssetPath(TestAssetLocation.E2E, configPath))
+            .ToArray() ?? Array.Empty<string>();
+
+        var rootConfig = TestEnvironment.GetAssetPath(TestAssetLocation.E2E, rootConfigName);
+
+        _radiusHostApplicationBuilder.Services.Configure<TestConfigProviderOptions>(x =>
+        {
+            x.RootConfigFilePath = rootConfig;
+            x.ClientConfigFilePaths = clientConfigs;
+        });
     }
 
     public void Dispose()
