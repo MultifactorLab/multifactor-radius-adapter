@@ -115,7 +115,7 @@ public class ClientConfigurationFactory
                 break;
         }
 
-        if (builder.CheckMembership && string.IsNullOrEmpty(builder.ActiveDirectoryDomain))
+        if (builder.ShouldLoadUserGroups && string.IsNullOrEmpty(builder.ActiveDirectoryDomain))
         {
             throw InvalidConfigurationException.For(x => x.AppSettings.ActiveDirectoryDomain,
                 "Membership verification impossible: '{prop}' element not found. Config name: '{0}'",

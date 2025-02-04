@@ -64,7 +64,7 @@ public class ProfileLoader
         _logger.LogDebug("User '{User:l}' profile loaded: {DistinguishedName:l} (upn={Upn:l})", 
             user, profile.DistinguishedName, profile.Upn);
 
-        if (clientConfig.ShouldLoadUserGroups())
+        if (clientConfig.ShouldLoadUserGroups)
         {
             var additionalGroups = await _userGroupsSource.GetUserGroupsAsync(clientConfig, adapter, entry.Dn);
             userGroupsCn.AddRange(additionalGroups);
@@ -75,7 +75,7 @@ public class ProfileLoader
 
     private static string[] GetQueryAttributes(IClientConfiguration clientConfig)
     {
-        var queryAttributes = new List<string> { "DistinguishedName", "displayName", "mail", "memberOf", "userPrincipalName" };
+        var queryAttributes = new List<string> { "DistinguishedName", "displayName", "mail", "email", "memberOf", "userPrincipalName" };
         if (clientConfig.UseIdentityAttribute)
         {
             queryAttributes.Add(clientConfig.TwoFAIdentityAttribute);

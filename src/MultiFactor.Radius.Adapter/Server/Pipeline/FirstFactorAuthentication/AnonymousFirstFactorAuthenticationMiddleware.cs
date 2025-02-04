@@ -43,7 +43,7 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.FirstFactorAuthentication
                 return;
             }
 
-            if (context.Configuration.CheckMembership)
+            if (context.Configuration.ShouldLoadUserProfile || context.Configuration.ShouldLoadUserGroups)
             {
                 var result = await _membershipProcessor.ProcessMembershipAsync(context);
                 var handler = new MembershipProcessingResultHandler(result);

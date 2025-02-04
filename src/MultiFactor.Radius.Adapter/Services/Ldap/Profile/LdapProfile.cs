@@ -32,7 +32,7 @@ public class LdapProfile
 
     public string SecondFactorIdentity => string.IsNullOrWhiteSpace(_secondFactorIdentityAttr) ? null : Attributes.GetValue(_secondFactorIdentityAttr);
     public string DisplayName => Attributes.GetValue("displayname");
-    public string Email => Attributes.GetValue("mail");
+    public string Email => Attributes.GetValue("mail") ?? Attributes.GetValue("email");
 
     private string _phone = string.Empty;
     public string Phone

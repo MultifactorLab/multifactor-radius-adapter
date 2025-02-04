@@ -14,7 +14,7 @@ namespace MultiFactor.Radius.Adapter.Infrastructure.Configuration.ClientLevel;
 public class ClientConfiguration : IClientConfiguration
 {
     private string _nestedGroupsBaseDn;
-    
+
     public ClientConfiguration(string name,
         string rdsSharedSecret,
         AuthenticationSource firstFactorAuthSource,
@@ -25,7 +25,8 @@ public class ClientConfiguration : IClientConfiguration
             throw new ArgumentException($"'{nameof(name)}' cannot be null or whitespace.", nameof(name));
 
         if (string.IsNullOrWhiteSpace(rdsSharedSecret))
-            throw new ArgumentException($"'{nameof(rdsSharedSecret)}' cannot be null or whitespace.", nameof(rdsSharedSecret));
+            throw new ArgumentException($"'{nameof(rdsSharedSecret)}' cannot be null or whitespace.",
+                nameof(rdsSharedSecret));
 
         if (string.IsNullOrWhiteSpace(apiKey))
             throw new ArgumentException($"'{nameof(apiKey)}' cannot be null or whitespace.", nameof(apiKey));
@@ -59,22 +60,20 @@ public class ClientConfiguration : IClientConfiguration
 
     public ApiCredential ApiCredential { get; }
 
-    /// <summary>
-    /// Load user profile from AD and check group membership and 
-    /// </summary>
-    public bool CheckMembership
+    public bool ShouldLoadUserProfile => ActiveDirectoryDomain != null;
+
+    public bool ShouldLoadUserGroups
     {
         get
         {
-            return ActiveDirectoryDomain != null &&
-                (ActiveDirectoryGroups.Any() ||
-                ActiveDirectory2FaGroup.Any() ||
-                ActiveDirectory2FaBypassGroup.Any() ||
-                PhoneAttributes.Any() ||
-                RadiusReplyAttributes
-                    .Values
-                    .SelectMany(attr => attr)
-                    .Any(attr => attr.FromLdap || attr.IsMemberOf || attr.UserGroupCondition != null));
+            return ActiveDirectoryGroups.Any() ||
+                   ActiveDirectory2FaGroup.Any() ||
+                   ActiveDirectory2FaBypassGroup.Any() ||
+                   PhoneAttributes.Any() ||
+                   RadiusReplyAttributes
+                       .Values
+                       .SelectMany(attr => attr)
+                       .Any(attr => attr.FromLdap || attr.IsMemberOf || attr.UserGroupCondition != null);
         }
     }
 
@@ -87,7 +86,7 @@ public class ClientConfiguration : IClientConfiguration
     /// Bypass second factor when MultiFactor API is unreachable
     /// </summary>
     public bool BypassSecondFactorWhenApiUnreachable { get; private set; }
-    
+
     public string[] SplittedNestedGroupsBaseDn => _nestedGroupsBaseDn
         ?.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
         .Distinct(StringComparer.OrdinalIgnoreCase)
@@ -106,8 +105,9 @@ public class ClientConfiguration : IClientConfiguration
     public string LdapBindDn { get; private set; }
 
     private TimeSpan _ldapTimeout = new TimeSpan(0, 0, 30);
-    
+
     private readonly List<string> _activeDirectoryGroups = new();
+
     /// <summary>
     /// Only members of this group allowed to access (Optional)
     /// </summary>
@@ -115,6 +115,7 @@ public class ClientConfiguration : IClientConfiguration
 
 
     private readonly List<string> _activeDirectory2FaGroup = new();
+
     /// <summary>
     /// Only members of this group required to pass 2fa to access (Optional)
     /// </summary>
@@ -122,6 +123,7 @@ public class ClientConfiguration : IClientConfiguration
 
 
     private readonly List<string> _activeDirectory2FaBypassGroup = new();
+
     /// <summary>
     /// Members of this group should not pass 2fa to access (Optional)
     /// </summary>
@@ -129,6 +131,7 @@ public class ClientConfiguration : IClientConfiguration
 
 
     private readonly List<string> _phoneAttrs = new();
+
     /// <summary>
     /// AD attribute name(s) where to search phone number
     /// </summary>
@@ -145,6 +148,7 @@ public class ClientConfiguration : IClientConfiguration
     /// This service RADIUS UDP Client endpoint
     /// </summary>
     public IPEndPoint ServiceClientEndpoint { get; private set; }
+
     /// <summary>
     /// Network Policy Service RADIUS UDP Server endpoint
     /// </summary>
@@ -163,7 +167,8 @@ public class ClientConfiguration : IClientConfiguration
     /// </summary>
     public string SignUpGroups { get; private set; }
 
-    public AuthenticatedClientCacheConfig AuthenticationCacheLifetime { get; private set; } = AuthenticatedClientCacheConfig.Default;
+    public AuthenticatedClientCacheConfig AuthenticationCacheLifetime { get; private set; } =
+        AuthenticatedClientCacheConfig.Default;
 
     private readonly Dictionary<string, RadiusReplyAttributeValue[]> _radiusReplyAttributes = new();
 
@@ -176,6 +181,7 @@ public class ClientConfiguration : IClientConfiguration
     /// Username transform rules
     /// </summary>
     public UserNameTransformRules UserNameTransformRules { get; private set; } = new();
+
     public ClientConfiguration SetUserNameTransformRules(UserNameTransformRules val)
     {
         UserNameTransformRules = val;
@@ -183,18 +189,6 @@ public class ClientConfiguration : IClientConfiguration
     }
 
     public string CallingStationIdVendorAttribute { get; private set; }
-
-    public bool ShouldLoadUserGroups()
-    {
-        return
-            ActiveDirectoryGroups.Any() ||
-            ActiveDirectory2FaGroup.Any() ||
-            ActiveDirectory2FaBypassGroup.Any() ||
-            RadiusReplyAttributes
-                .Values
-                .SelectMany(attr => attr)
-                .Any(attr => attr.IsMemberOf || attr.UserGroupCondition != null);
-    }
 
     public RandomWaiterConfig InvalidCredentialDelay { get; private set; }
     public PreAuthModeDescriptor PreAuthnMode { get; private set; } = PreAuthModeDescriptor.Default;
@@ -328,7 +322,7 @@ public class ClientConfiguration : IClientConfiguration
         LoadActiveDirectoryNestedGroups = val;
         return this;
     }
-    
+
     public ClientConfiguration SetNestedGroupsBaseDn(string val)
     {
         _nestedGroupsBaseDn = val;
