@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Options;
+﻿using System.Text.RegularExpressions;
+using Microsoft.Extensions.Options;
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration;
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration.ConfigurationLoading;
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Models;
@@ -8,7 +9,7 @@ namespace MultiFactor.Radius.Adapter.Tests.Fixtures.ConfigLoading;
 
 internal class TestClientConfigsProvider : IClientConfigurationsProvider
 {
-    private Dictionary<RadiusConfigurationFile, RadiusAdapterConfiguration> _dict = new();
+    private Dictionary<RadiusConfigurationSource, RadiusAdapterConfiguration> _dict = new();
     private readonly TestConfigProviderOptions _options;
 
     public TestClientConfigsProvider(IOptions<TestConfigProviderOptions> options)
@@ -23,11 +24,23 @@ internal class TestClientConfigsProvider : IClientConfigurationsProvider
         {
             return Array.Empty<RadiusAdapterConfiguration>();
         }
-
-        _dict = clientConfigFiles
-            .Select(x => new RadiusConfigurationFile(x))
-            .ToDictionary(k => k, v => RadiusAdapterConfigurationFactory.Create(v, v.Name));
-
+        var fileSources = clientConfigFiles.Select(x => new RadiusConfigurationFile(x)).ToArray();
+        foreach (var file in fileSources)
+        {
+            var config = RadiusAdapterConfigurationFactory.Create(file, file.Name);
+            _dict.Add(file, config);
+        }
+        
+        var envVarSources = GetEnvVarClients()
+            .Select(x => new RadiusConfigurationEnvironmentVariable(x))
+            .ExceptBy(fileSources.Select(x => RadiusConfigurationSource.TransformName(x.Name)), x => x.Name);
+        
+        foreach (var envVarClient in envVarSources)
+        {
+            var config = RadiusAdapterConfigurationFactory.Create(envVarClient);
+            _dict.Add(envVarClient, config);
+        }
+        
         return _dict.Select(x => x.Value).ToArray();
     }
 
@@ -64,6 +77,33 @@ internal class TestClientConfigsProvider : IClientConfigurationsProvider
         foreach (var f in Directory.GetFiles(_options.ClientConfigsFolderPath, "*.config"))
         {
             yield return f;
+        }
+    }
+    
+    private static IEnumerable<string> GetEnvVarClients()
+    {
+        var patterns = RadiusAdapterConfiguration.KnownSectionNames
+            .Select(x => $"^(?i){ConfigurationBuilderExtensions.BasePrefix}(?<cli>[a-zA-Z_]+[a-zA-Z0-9_]*)_{x}")
+            .ToArray();
+        
+        var keys = Environment.GetEnvironmentVariables().Keys
+            .Cast<string>()
+            .Where(x => x.StartsWith(ConfigurationBuilderExtensions.BasePrefix, StringComparison.OrdinalIgnoreCase));
+        
+        foreach (var key in keys)
+        {
+            var groupCollection = patterns.Select(x => Regex.Match(key, x).Groups).FirstOrDefault(x => x.Count != 0);
+            if (groupCollection is null)
+            {
+                continue;
+            }
+
+            if (!groupCollection.TryGetValue("cli", out var cli))
+            {
+                continue;
+            }
+
+            yield return cli.Value;
         }
     }
 }

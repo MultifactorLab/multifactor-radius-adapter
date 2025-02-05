@@ -20,10 +20,14 @@ public abstract class E2ETestBase : IDisposable
     private readonly RadiusPacketParser _packetParser;
     private readonly SharedSecret _secret;
     private readonly UdpSocket _udpSocket;
+    private Dictionary<string, string> _environmentVariables;
 
     protected E2ETestBase(RadiusFixtures radiusFixtures)
     {
-        _radiusHostApplicationBuilder = RadiusHost.CreateApplicationBuilder(new[] { "--environment", "Test" });
+        _radiusHostApplicationBuilder = RadiusHost.CreateApplicationBuilder(new[]
+        {
+            "--environment", "Test"
+        });
         _packetParser = radiusFixtures.Parser;
         _secret = radiusFixtures.SharedSecret;
         _udpSocket = radiusFixtures.UdpSocket;
@@ -32,6 +36,7 @@ public abstract class E2ETestBase : IDisposable
     private protected async Task StartHostAsync(
         string rootConfigName,
         string[] clientConfigFileNames = null,
+        Dictionary<string, string> environmentVariables = null,
         Action<RadiusHostApplicationBuilder>? configure = null)
     {
         _radiusHostApplicationBuilder.AddLogging();
@@ -57,8 +62,13 @@ public abstract class E2ETestBase : IDisposable
         _radiusHostApplicationBuilder.ConfigureApplication();
 
         ReplaceRadiusConfigs(rootConfigName, clientConfigFileNames);
-        
+
         configure?.Invoke(_radiusHostApplicationBuilder);
+
+        _radiusHostApplicationBuilder.InternalHostApplicationBuilder.Configuration.AddRadiusEnvironmentVariables();
+
+        SetEnvironmentVariables(environmentVariables);
+
         _host = _radiusHostApplicationBuilder.Build();
 
         await _host.StartAsync();
@@ -75,7 +85,7 @@ public abstract class E2ETestBase : IDisposable
         _udpSocket.Send(packetBytes);
 
         var data = _udpSocket.Receive();
-        var parsed = _packetParser.Parse(data.GetBytes(), _secret);
+        var parsed = _packetParser.Parse(data.GetBytes(), _secret, radiusPacket.Authenticator.Value);
 
         return parsed;
     }
@@ -112,10 +122,10 @@ public abstract class E2ETestBase : IDisposable
             throw new ArgumentException("Empty config path");
 
         var clientConfigs = clientConfigFileNames?
-            .Select(configPath => TestEnvironment.GetAssetPath(TestAssetLocation.E2E, configPath))
+            .Select(fileName => TestEnvironment.GetAssetPath(TestAssetLocation.E2EBaseConfigs, fileName))
             .ToArray() ?? Array.Empty<string>();
 
-        var rootConfig = TestEnvironment.GetAssetPath(TestAssetLocation.E2E, rootConfigName);
+        var rootConfig = TestEnvironment.GetAssetPath(TestAssetLocation.E2EBaseConfigs, rootConfigName);
 
         _radiusHostApplicationBuilder.Services.Configure<TestConfigProviderOptions>(x =>
         {
@@ -124,9 +134,31 @@ public abstract class E2ETestBase : IDisposable
         });
     }
 
+    private void SetEnvironmentVariables(Dictionary<string, string> environmentVariables)
+    {
+        if (environmentVariables?.Any() != true)
+            return;
+        _environmentVariables = environmentVariables;
+        foreach (var variable in environmentVariables)
+        {
+            Environment.SetEnvironmentVariable(variable.Key, variable.Value);
+        }
+    }
+
+    private void UnsetEnvironmentVariables()
+    {
+        if (_environmentVariables?.Any() != true)
+            return;
+        foreach (var variable in _environmentVariables)
+        {
+            Environment.SetEnvironmentVariable(variable.Key, null);
+        }
+    }
+
     public void Dispose()
     {
         _host?.StopAsync();
         _host?.Dispose();
+        UnsetEnvironmentVariables();
     }
 }

@@ -1,0 +1,28 @@
+{
+  "E2ETestSensitiveSettings":
+  {
+    "User":
+    {
+      "UserName": "name",
+      "Password": "password"
+    },
+
+    "TechUser":
+    {
+      "UserName": "name",
+      "Password": "password"
+    },
+
+    "CatalogSettings":
+    {
+      "Hosts": "ldap://localhost:389",
+      "Groups": ""
+    },
+
+    "MultifactorApiSettings":
+    {
+      "NasIdentifier": "nas",
+      "SharedSecret": "secret"
+    }
+  }
+}
