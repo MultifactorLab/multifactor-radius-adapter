@@ -28,6 +28,23 @@ internal class TestEnvironmentVariables
             Environment.SetEnvironmentVariable(name, null);
         }
     }
+    
+    public static async Task With(Func<TestEnvironmentVariables, Task> action)
+    {
+        if (action is null)
+        {
+            throw new ArgumentNullException(nameof(action));
+        }
+
+        var names = new HashSet<string>();
+
+        await action(new TestEnvironmentVariables(names));
+
+        foreach (var name in names)
+        {
+            Environment.SetEnvironmentVariable(name, null);
+        }
+    }
 
     public TestEnvironmentVariables SetEnvironmentVariable(string name, string value)
     {
@@ -39,6 +56,16 @@ internal class TestEnvironmentVariables
         _names.Add(name);
         Environment.SetEnvironmentVariable(name, value);
 
+        return this;
+    }
+
+    public TestEnvironmentVariables SetEnvironmentVariables(Dictionary<string, string> dictionary)
+    {
+        foreach (var env in dictionary)
+        {
+            SetEnvironmentVariable(env.Key, env.Value);
+        }
+        
         return this;
     }
 }

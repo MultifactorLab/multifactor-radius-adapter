@@ -23,7 +23,10 @@ public abstract class E2ETestBase : IDisposable
 
     protected E2ETestBase(RadiusFixtures radiusFixtures)
     {
-        _radiusHostApplicationBuilder = RadiusHost.CreateApplicationBuilder(new[] { "--environment", "Test" });
+        _radiusHostApplicationBuilder = RadiusHost.CreateApplicationBuilder(new[]
+        {
+            "--environment", "Test"
+        });
         _packetParser = radiusFixtures.Parser;
         _secret = radiusFixtures.SharedSecret;
         _udpSocket = radiusFixtures.UdpSocket;
@@ -32,6 +35,7 @@ public abstract class E2ETestBase : IDisposable
     private protected async Task StartHostAsync(
         string rootConfigName,
         string[] clientConfigFileNames = null,
+        string envPrefix = null,
         Action<RadiusHostApplicationBuilder>? configure = null)
     {
         _radiusHostApplicationBuilder.AddLogging();
@@ -56,9 +60,10 @@ public abstract class E2ETestBase : IDisposable
 
         _radiusHostApplicationBuilder.ConfigureApplication();
 
-        ReplaceRadiusConfigs(rootConfigName, clientConfigFileNames);
-        
+        ReplaceRadiusConfigs(rootConfigName, clientConfigFileNames, envPrefix: envPrefix);
+
         configure?.Invoke(_radiusHostApplicationBuilder);
+
         _host = _radiusHostApplicationBuilder.Build();
 
         await _host.StartAsync();
@@ -75,7 +80,7 @@ public abstract class E2ETestBase : IDisposable
         _udpSocket.Send(packetBytes);
 
         var data = _udpSocket.Receive();
-        var parsed = _packetParser.Parse(data.GetBytes(), _secret);
+        var parsed = _packetParser.Parse(data.GetBytes(), _secret, radiusPacket.Authenticator.Value);
 
         return parsed;
     }
@@ -106,21 +111,23 @@ public abstract class E2ETestBase : IDisposable
 
     private void ReplaceRadiusConfigs(
         string rootConfigName,
-        string[] clientConfigFileNames = null)
+        string[] clientConfigFileNames = null,
+        string envPrefix = null)
     {
         if (string.IsNullOrEmpty(rootConfigName))
             throw new ArgumentException("Empty config path");
 
         var clientConfigs = clientConfigFileNames?
-            .Select(configPath => TestEnvironment.GetAssetPath(TestAssetLocation.E2E, configPath))
+            .Select(fileName => TestEnvironment.GetAssetPath(TestAssetLocation.E2EBaseConfigs, fileName))
             .ToArray() ?? Array.Empty<string>();
 
-        var rootConfig = TestEnvironment.GetAssetPath(TestAssetLocation.E2E, rootConfigName);
+        var rootConfig = TestEnvironment.GetAssetPath(TestAssetLocation.E2EBaseConfigs, rootConfigName);
 
         _radiusHostApplicationBuilder.Services.Configure<TestConfigProviderOptions>(x =>
         {
             x.RootConfigFilePath = rootConfig;
             x.ClientConfigFilePaths = clientConfigs;
+            x.EnvironmentVariablePrefix = envPrefix;
         });
     }
 
