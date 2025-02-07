@@ -1,5 +1,4 @@
-﻿using System.Text.RegularExpressions;
-using Microsoft.Extensions.Options;
+﻿using Microsoft.Extensions.Options;
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration;
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration.ConfigurationLoading;
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Models;
@@ -27,17 +26,17 @@ internal class TestClientConfigsProvider : IClientConfigurationsProvider
         var fileSources = clientConfigFiles.Select(x => new RadiusConfigurationFile(x)).ToArray();
         foreach (var file in fileSources)
         {
-            var config = RadiusAdapterConfigurationFactory.Create(file, file.Name);
+            var config = RadiusAdapterConfigurationFactory.Create(file, file.Name, _options.EnvironmentVariablePrefix);
             _dict.Add(file, config);
         }
         
-        var envVarSources = GetEnvVarClients()
+        var envVarSources = DefaultClientConfigurationsProvider.GetEnvVarClients()
             .Select(x => new RadiusConfigurationEnvironmentVariable(x))
             .ExceptBy(fileSources.Select(x => RadiusConfigurationSource.TransformName(x.Name)), x => x.Name);
         
         foreach (var envVarClient in envVarSources)
         {
-            var config = RadiusAdapterConfigurationFactory.Create(envVarClient);
+            var config = RadiusAdapterConfigurationFactory.Create(envVarClient, _options.EnvironmentVariablePrefix);
             _dict.Add(envVarClient, config);
         }
         
@@ -77,33 +76,6 @@ internal class TestClientConfigsProvider : IClientConfigurationsProvider
         foreach (var f in Directory.GetFiles(_options.ClientConfigsFolderPath, "*.config"))
         {
             yield return f;
-        }
-    }
-    
-    private static IEnumerable<string> GetEnvVarClients()
-    {
-        var patterns = RadiusAdapterConfiguration.KnownSectionNames
-            .Select(x => $"^(?i){ConfigurationBuilderExtensions.BasePrefix}(?<cli>[a-zA-Z_]+[a-zA-Z0-9_]*)_{x}")
-            .ToArray();
-        
-        var keys = Environment.GetEnvironmentVariables().Keys
-            .Cast<string>()
-            .Where(x => x.StartsWith(ConfigurationBuilderExtensions.BasePrefix, StringComparison.OrdinalIgnoreCase));
-        
-        foreach (var key in keys)
-        {
-            var groupCollection = patterns.Select(x => Regex.Match(key, x).Groups).FirstOrDefault(x => x.Count != 0);
-            if (groupCollection is null)
-            {
-                continue;
-            }
-
-            if (!groupCollection.TryGetValue("cli", out var cli))
-            {
-                continue;
-            }
-
-            yield return cli.Value;
         }
     }
 }

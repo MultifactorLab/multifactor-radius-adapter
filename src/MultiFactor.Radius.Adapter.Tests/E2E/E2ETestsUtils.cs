@@ -39,4 +39,27 @@ internal static class E2ETestsUtils
         var sensitiveData = config.GetRequiredSection(sectionName).Get<T>();
         return sensitiveData;
     }
+
+    internal static Dictionary<string, string> GetSensitiveData(string fileName)
+    {
+        var envs = new Dictionary<string, string>();
+        var sensitiveDataPath = TestEnvironment.GetAssetPath(TestAssetLocation.E2ESensitiveData, fileName);
+
+        var lines = File.ReadLines(sensitiveDataPath);
+        foreach (var line in lines)
+        {
+            var parts = line.Split('=');
+            envs.Add(parts[0].Trim(), parts[1].Trim());
+        }
+
+        return envs;
+    }
+
+    internal static string GetEnvPrefix(string envKey)
+    {
+        if (string.IsNullOrWhiteSpace(envKey))
+            throw new ArgumentNullException(nameof(envKey));
+        var parts = envKey.Split('_');
+        return parts[0] + "_";
+    }
 }

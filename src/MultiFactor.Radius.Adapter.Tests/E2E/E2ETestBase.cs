@@ -20,7 +20,6 @@ public abstract class E2ETestBase : IDisposable
     private readonly RadiusPacketParser _packetParser;
     private readonly SharedSecret _secret;
     private readonly UdpSocket _udpSocket;
-    private Dictionary<string, string> _environmentVariables;
 
     protected E2ETestBase(RadiusFixtures radiusFixtures)
     {
@@ -36,7 +35,7 @@ public abstract class E2ETestBase : IDisposable
     private protected async Task StartHostAsync(
         string rootConfigName,
         string[] clientConfigFileNames = null,
-        Dictionary<string, string> environmentVariables = null,
+        string envPrefix = null,
         Action<RadiusHostApplicationBuilder>? configure = null)
     {
         _radiusHostApplicationBuilder.AddLogging();
@@ -61,13 +60,9 @@ public abstract class E2ETestBase : IDisposable
 
         _radiusHostApplicationBuilder.ConfigureApplication();
 
-        ReplaceRadiusConfigs(rootConfigName, clientConfigFileNames);
+        ReplaceRadiusConfigs(rootConfigName, clientConfigFileNames, envPrefix: envPrefix);
 
         configure?.Invoke(_radiusHostApplicationBuilder);
-
-        _radiusHostApplicationBuilder.InternalHostApplicationBuilder.Configuration.AddRadiusEnvironmentVariables();
-
-        SetEnvironmentVariables(environmentVariables);
 
         _host = _radiusHostApplicationBuilder.Build();
 
@@ -116,7 +111,8 @@ public abstract class E2ETestBase : IDisposable
 
     private void ReplaceRadiusConfigs(
         string rootConfigName,
-        string[] clientConfigFileNames = null)
+        string[] clientConfigFileNames = null,
+        string envPrefix = null)
     {
         if (string.IsNullOrEmpty(rootConfigName))
             throw new ArgumentException("Empty config path");
@@ -131,34 +127,13 @@ public abstract class E2ETestBase : IDisposable
         {
             x.RootConfigFilePath = rootConfig;
             x.ClientConfigFilePaths = clientConfigs;
+            x.EnvironmentVariablePrefix = envPrefix;
         });
-    }
-
-    private void SetEnvironmentVariables(Dictionary<string, string> environmentVariables)
-    {
-        if (environmentVariables?.Any() != true)
-            return;
-        _environmentVariables = environmentVariables;
-        foreach (var variable in environmentVariables)
-        {
-            Environment.SetEnvironmentVariable(variable.Key, variable.Value);
-        }
-    }
-
-    private void UnsetEnvironmentVariables()
-    {
-        if (_environmentVariables?.Any() != true)
-            return;
-        foreach (var variable in _environmentVariables)
-        {
-            Environment.SetEnvironmentVariable(variable.Key, null);
-        }
     }
 
     public void Dispose()
     {
         _host?.StopAsync();
         _host?.Dispose();
-        UnsetEnvironmentVariables();
     }
 }
