@@ -54,22 +54,5 @@ public sealed class RadiusConfigurationFile : RadiusConfigurationSource
         return path?.Path ?? throw new InvalidCastException("Unable to cast NULL ConfigPath to STRING");
     }
 
-    public static implicit operator RadiusConfigurationFile(string path)
-    {
-        if (path == null)
-        {
-            throw new InvalidCastException("Unable cast NULL to ConfigPath");
-        }
-
-        try
-        {
-            return new RadiusConfigurationFile(path);
-        }
-        catch (Exception ex)
-        {
-            throw new InvalidCastException("Invalid configuration path", ex);
-        }
-    }
-
     public override string ToString() => FileName;
 }
