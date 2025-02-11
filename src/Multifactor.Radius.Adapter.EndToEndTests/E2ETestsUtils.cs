@@ -1,13 +1,12 @@
 using System.Net;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging.Abstractions;
 using MultiFactor.Radius.Adapter.Core;
 using MultiFactor.Radius.Adapter.Core.Radius;
 using MultiFactor.Radius.Adapter.Core.Radius.Attributes;
-using MultiFactor.Radius.Adapter.Tests.E2E.Udp;
-using MultiFactor.Radius.Adapter.Tests.Fixtures;
+using Multifactor.Radius.Adapter.EndToEndTests.Fixtures;
+using Multifactor.Radius.Adapter.EndToEndTests.Udp;
 
-namespace MultiFactor.Radius.Adapter.Tests.E2E;
+namespace Multifactor.Radius.Adapter.EndToEndTests;
 
 internal static class E2ETestsUtils
 {
@@ -26,18 +25,6 @@ internal static class E2ETestsUtils
     internal static UdpSocket GetUdpSocket(string ip, int port)
     {
         return new UdpSocket(IPAddress.Parse(ip), port);
-    }
-
-    internal static T GetSensitiveData<T>(string fileName, string sectionName)
-    {
-        var sensitiveDataPath = TestEnvironment.GetAssetPath(TestAssetLocation.E2ESensitiveData, fileName);
-
-        IConfigurationRoot config = new ConfigurationBuilder()
-            .AddJsonFile(sensitiveDataPath, optional: false, reloadOnChange: true)
-            .Build();
-
-        var sensitiveData = config.GetRequiredSection(sectionName).Get<T>();
-        return sensitiveData;
     }
 
     internal static Dictionary<string, string> GetSensitiveData(string fileName)
@@ -60,6 +47,11 @@ internal static class E2ETestsUtils
         if (string.IsNullOrWhiteSpace(envKey))
             throw new ArgumentNullException(nameof(envKey));
         var parts = envKey.Split('_');
-        return parts[0] + "_";
+        if (parts?.Length > 0)
+        {
+            return parts[0] + "_";
+        }
+        
+        throw new ArgumentException($"Invalid env key: {envKey}");
     }
 }

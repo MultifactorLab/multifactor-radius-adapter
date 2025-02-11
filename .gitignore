@@ -341,4 +341,4 @@ healthchecksdb
 src/Properties/launchSettings.json
 
 # E2E sensitive data folder
-src\MultiFactor.Radius.Adapter.Tests\Assets\E2E\SensitiveData
+src\MultiFactor.Radius.Adapter.EndToEndTests\Assets\SensitiveData

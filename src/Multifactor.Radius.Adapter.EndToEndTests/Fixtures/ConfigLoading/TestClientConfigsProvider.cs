@@ -4,24 +4,19 @@ using MultiFactor.Radius.Adapter.Infrastructure.Configuration.ConfigurationLoadi
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Models;
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration.XmlAppConfiguration;
 
-namespace MultiFactor.Radius.Adapter.Tests.Fixtures.ConfigLoading;
+namespace Multifactor.Radius.Adapter.EndToEndTests.Fixtures.ConfigLoading;
 
-internal class TestClientConfigsProvider : IClientConfigurationsProvider
+internal class TestClientConfigsProvider(IOptions<TestConfigProviderOptions> options) : IClientConfigurationsProvider
 {
-    private Dictionary<RadiusConfigurationSource, RadiusAdapterConfiguration> _dict = new();
-    private readonly TestConfigProviderOptions _options;
-
-    public TestClientConfigsProvider(IOptions<TestConfigProviderOptions> options)
-    {
-        _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
-    }
+    private readonly Dictionary<RadiusConfigurationSource, RadiusAdapterConfiguration> _dict = new();
+    private readonly TestConfigProviderOptions _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
 
     public RadiusAdapterConfiguration[] GetClientConfigurations()
     {
         var clientConfigFiles = GetFiles().ToArray();
         if (clientConfigFiles.Length == 0)
         {
-            return Array.Empty<RadiusAdapterConfiguration>();
+            return [];
         }
         var fileSources = clientConfigFiles.Select(x => new RadiusConfigurationFile(x)).ToArray();
         foreach (var file in fileSources)
@@ -50,7 +45,7 @@ internal class TestClientConfigsProvider : IClientConfigurationsProvider
 
     private IEnumerable<string> GetFiles()
     {
-        if (_options.ClientConfigFilePaths?.Length > 0)
+        if (_options.ClientConfigFilePaths.Length > 0)
         {
             foreach (var f in _options.ClientConfigFilePaths)
             {

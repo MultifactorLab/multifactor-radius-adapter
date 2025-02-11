@@ -2,7 +2,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 
-namespace MultiFactor.Radius.Adapter.Tests.E2E.Udp;
+namespace Multifactor.Radius.Adapter.EndToEndTests.Udp;
 
 public class UdpSocket : IDisposable
 {

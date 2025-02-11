@@ -29,7 +29,7 @@ internal class TestHost
     /// <param name="clientConfig">If defined, the client config will be specified. Othervise the client config will be getted from the first element of <see cref="IServiceConfiguration.Clients"/>.</param>
     /// <param name="setupContext">Setup context action.</param>
     /// <returns><see cref="RadiusContext"/></returns>
-    public RadiusContext CreateContext(IRadiusPacket requestPacket, 
+    public RadiusContext CreateContext(IRadiusPacket? requestPacket, 
         IClientConfiguration? clientConfig = null, 
         Action<RadiusContext>? setupContext = null)
     {

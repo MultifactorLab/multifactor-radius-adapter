@@ -1,4 +1,4 @@
-﻿namespace MultiFactor.Radius.Adapter.Tests.Fixtures.ConfigLoading;
+﻿namespace Multifactor.Radius.Adapter.EndToEndTests.Fixtures.ConfigLoading;
 
 internal class TestConfigProviderOptions
 {

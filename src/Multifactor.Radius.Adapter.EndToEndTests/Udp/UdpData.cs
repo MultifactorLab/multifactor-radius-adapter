@@ -1,6 +1,6 @@
 using System.Text;
 
-namespace MultiFactor.Radius.Adapter.Tests.E2E.Udp;
+namespace Multifactor.Radius.Adapter.EndToEndTests.Udp;
 
 public record UdpData
 {
