@@ -10,7 +10,7 @@ using MultiFactor.Radius.Adapter.Services.MultiFactorApi.Models;
 namespace Multifactor.Radius.Adapter.EndToEndTests.Tests;
 
 [Collection("Radius e2e")]
-public class ActiveDirectoryGroupTests(RadiusFixtures radiusFixtures) : E2ETestBase(radiusFixtures)
+public class SingleActiveDirectoryGroupTests(RadiusFixtures radiusFixtures) : E2ETestBase(radiusFixtures)
 {
     [Theory]
     [InlineData("ad-root-conf.env")]
@@ -52,6 +52,7 @@ public class ActiveDirectoryGroupTests(RadiusFixtures radiusFixtures) : E2ETestB
             var response = SendPacketAsync(accessRequest);
 
             Assert.NotNull(response);
+            Assert.Single(secondFactorMock.Invocations);
             Assert.Equal(PacketCode.AccessAccept, response.Header.Code);
         });
     }
@@ -96,39 +97,8 @@ public class ActiveDirectoryGroupTests(RadiusFixtures radiusFixtures) : E2ETestB
             var response = SendPacketAsync(accessRequest);
 
             Assert.NotNull(response);
+            Assert.Empty(secondFactorMock.Invocations);
             Assert.Equal(PacketCode.AccessReject, response.Header.Code);
         });
-    }
-
-    [Fact]
-    public async Task BST009_ShouldReject()
-    {
-        var secondFactorMock = new Mock<IMultifactorApiAdapter>();
-
-        secondFactorMock
-            .Setup(x => x.CreateSecondFactorRequestAsync(It.IsAny<RadiusContext>()))
-            .ReturnsAsync(new SecondFactorResponse(AuthenticationCode.Accept));
-
-        var hostConfiguration = (RadiusHostApplicationBuilder builder) =>
-        {
-            builder.Services.ReplaceService(secondFactorMock.Object);
-        };
-
-        await StartHostAsync(
-            "root-active-directory-group.config",
-            configure: hostConfiguration);
-
-        var accessRequest = CreateRadiusPacket(PacketCode.AccessRequest);
-        accessRequest!.AddAttributes(new Dictionary<string, object>()
-        {
-            { "NAS-Identifier", RadiusAdapterConstants.DefaultNasIdentifier },
-            { "User-Name", RadiusAdapterConstants.BindUserName },
-            { "User-Password", RadiusAdapterConstants.BindUserPassword }
-        });
-
-        var response = SendPacketAsync(accessRequest);
-
-        Assert.NotNull(response);
-        Assert.Equal(PacketCode.AccessReject, response.Header.Code);
     }
 }

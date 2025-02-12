@@ -43,6 +43,7 @@ public class BypassWhenApiUnreachableTests(RadiusFixtures radiusFixtures) : E2ET
         var response = SendPacketAsync(accessRequest);
 
         Assert.NotNull(response);
+        Assert.Single(secondFactorMock.Invocations);
         Assert.Equal(PacketCode.AccessAccept, response.Header.Code);
     }
 
@@ -76,6 +77,7 @@ public class BypassWhenApiUnreachableTests(RadiusFixtures radiusFixtures) : E2ET
         var response = SendPacketAsync(accessRequest);
 
         Assert.NotNull(response);
+        Assert.Single(secondFactorMock.Invocations);
         Assert.Equal(PacketCode.AccessAccept, response.Header.Code);
     }
 
@@ -109,6 +111,7 @@ public class BypassWhenApiUnreachableTests(RadiusFixtures radiusFixtures) : E2ET
         var response = SendPacketAsync(accessRequest);
 
         Assert.NotNull(response);
+        Assert.Single(secondFactorMock.Invocations);
         Assert.Equal(PacketCode.AccessAccept, response.Header.Code);
     }
 
@@ -141,6 +144,7 @@ public class BypassWhenApiUnreachableTests(RadiusFixtures radiusFixtures) : E2ET
         var response = SendPacketAsync(accessRequest);
 
         Assert.NotNull(response);
+        Assert.Single(secondFactorMock.Invocations);
         Assert.Equal(PacketCode.AccessReject, response.Header.Code);
     }
 
@@ -174,6 +178,7 @@ public class BypassWhenApiUnreachableTests(RadiusFixtures radiusFixtures) : E2ET
         var response = SendPacketAsync(accessRequest);
 
         Assert.NotNull(response);
+        Assert.Single(secondFactorMock.Invocations);
         Assert.Equal(PacketCode.AccessAccept, response.Header.Code);
     }
 
@@ -206,6 +211,7 @@ public class BypassWhenApiUnreachableTests(RadiusFixtures radiusFixtures) : E2ET
         var response = SendPacketAsync(accessRequest);
 
         Assert.NotNull(response);
+        Assert.Single(secondFactorMock.Invocations);
         Assert.Equal(PacketCode.AccessAccept, response.Header.Code);
     }
 }
