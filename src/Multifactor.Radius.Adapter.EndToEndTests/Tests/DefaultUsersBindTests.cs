@@ -1,23 +1,19 @@
 using MultiFactor.Radius.Adapter.Core.Radius;
-using MultiFactor.Radius.Adapter.Tests.E2E.Constants;
-using MultiFactor.Radius.Adapter.Tests.Fixtures;
+using Multifactor.Radius.Adapter.EndToEndTests.Constants;
+using Multifactor.Radius.Adapter.EndToEndTests.Fixtures;
 
-namespace MultiFactor.Radius.Adapter.Tests.E2E.Tests;
+namespace Multifactor.Radius.Adapter.EndToEndTests.Tests;
 
 [Collection("Radius e2e")]
-public class AccessRequestTests : E2ETestBase
+public class DefaultUsersBindTests(RadiusFixtures radiusFixtures) : E2ETestBase(radiusFixtures)
 {
-    public AccessRequestTests(RadiusFixtures radiusFixtures) : base(radiusFixtures)
-    {
-    }
-
     [Fact]
     public async Task SendAuthRequestWithoutCredentials_ShouldReject()
     {
-        await StartHostAsync(RadiusAdapterConfigs.RootConfig, new[] { RadiusAdapterConfigs.AccessRequestConfig });
+        await StartHostAsync(RadiusAdapterConfigs.RootConfig, [RadiusAdapterConfigs.AccessRequestConfig]);
 
         var accessRequest = CreateRadiusPacket(PacketCode.AccessRequest);
-        accessRequest.AddAttributes(new Dictionary<string, object>()
+        accessRequest!.AddAttributes(new Dictionary<string, object>()
             { { "NAS-Identifier", RadiusAdapterConstants.DefaultNasIdentifier } });
 
         var response = SendPacketAsync(accessRequest);
@@ -41,11 +37,11 @@ public class AccessRequestTests : E2ETestBase
             
             await StartHostAsync(
                 RadiusAdapterConfigs.RootConfig,
-                new[] { RadiusAdapterConfigs.AccessRequestConfig },
+                [RadiusAdapterConfigs.AccessRequestConfig],
                 envPrefix: prefix);
 
             var accessRequest = CreateRadiusPacket(PacketCode.AccessRequest);
-            accessRequest.AddAttributes(new Dictionary<string, object>()
+            accessRequest!.AddAttributes(new Dictionary<string, object>()
             {
                 { "NAS-Identifier", RadiusAdapterConstants.DefaultNasIdentifier },
                 { "User-Name", RadiusAdapterConstants.BindUserName },
@@ -74,11 +70,11 @@ public class AccessRequestTests : E2ETestBase
             
             await StartHostAsync(
                 RadiusAdapterConfigs.RootConfig,
-                new[] { RadiusAdapterConfigs.AccessRequestConfig },
+                [RadiusAdapterConfigs.AccessRequestConfig],
                 envPrefix: prefix);
 
             var accessRequest = CreateRadiusPacket(PacketCode.AccessRequest);
-            accessRequest.AddAttributes(new Dictionary<string, object>()
+            accessRequest!.AddAttributes(new Dictionary<string, object>()
             {
                 { "NAS-Identifier", RadiusAdapterConstants.DefaultNasIdentifier },
                 { "User-Name", RadiusAdapterConstants.AdminUserName },
@@ -107,11 +103,11 @@ public class AccessRequestTests : E2ETestBase
             
             await StartHostAsync(
                 RadiusAdapterConfigs.RootConfig,
-                new[] { RadiusAdapterConfigs.AccessRequestConfig },
+                [RadiusAdapterConfigs.AccessRequestConfig],
                 envPrefix: prefix);
 
             var accessRequest = CreateRadiusPacket(PacketCode.AccessRequest);
-            accessRequest.AddAttributes(new Dictionary<string, object>()
+            accessRequest!.AddAttributes(new Dictionary<string, object>()
             {
                 { "NAS-Identifier", RadiusAdapterConstants.DefaultNasIdentifier },
                 { "User-Name", RadiusAdapterConstants.ChangePasswordUserName },

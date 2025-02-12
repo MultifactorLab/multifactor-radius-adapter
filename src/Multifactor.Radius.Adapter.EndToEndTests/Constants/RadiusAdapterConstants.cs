@@ -1,4 +1,4 @@
-namespace MultiFactor.Radius.Adapter.Tests.E2E.Constants;
+namespace Multifactor.Radius.Adapter.EndToEndTests.Constants;
 
 internal static class RadiusAdapterConstants
 {

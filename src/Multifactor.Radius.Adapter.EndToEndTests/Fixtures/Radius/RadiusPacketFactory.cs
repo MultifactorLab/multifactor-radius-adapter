@@ -1,11 +1,11 @@
-﻿using MultiFactor.Radius.Adapter.Core.Radius;
-using System.Security.Cryptography;
+﻿using System.Security.Cryptography;
+using MultiFactor.Radius.Adapter.Core.Radius;
 
-namespace MultiFactor.Radius.Adapter.Tests.Fixtures.Radius;
+namespace Multifactor.Radius.Adapter.EndToEndTests.Fixtures.Radius;
 
 internal static class RadiusPacketFactory
 {
-    public static IRadiusPacket? AccessRequest(SharedSecret packetSecret = null)
+    public static IRadiusPacket? AccessRequest(SharedSecret? packetSecret = null)
     {
         var header = RadiusPacketHeader.Create(PacketCode.AccessRequest, 0);
         var sharedSecret = packetSecret ?? new SharedSecret(Convert.ToHexString(GenerateSecret()).ToLower());
@@ -13,7 +13,7 @@ internal static class RadiusPacketFactory
         return packet;
     }
     
-    public static IRadiusPacket? AccessChallenge(SharedSecret packetSecret = null)
+    public static IRadiusPacket? AccessChallenge(SharedSecret? packetSecret = null)
     {
         var header = RadiusPacketHeader.Create(PacketCode.AccessChallenge, 0);
         var sharedSecret = packetSecret ?? new SharedSecret(Convert.ToHexString(GenerateSecret()).ToLower());
@@ -21,7 +21,7 @@ internal static class RadiusPacketFactory
         return packet;
     }
     
-    public static IRadiusPacket? AccessReject(SharedSecret packetSecret = null)
+    public static IRadiusPacket? AccessReject(SharedSecret? packetSecret = null)
     {
         var header = RadiusPacketHeader.Create(PacketCode.AccessReject, 0);
         var sharedSecret = packetSecret ?? new SharedSecret(Convert.ToHexString(GenerateSecret()).ToLower());
@@ -29,7 +29,7 @@ internal static class RadiusPacketFactory
         return packet;
     }
     
-    public static IRadiusPacket? StatusServer(SharedSecret packetSecret = null)
+    public static IRadiusPacket? StatusServer(SharedSecret? packetSecret = null)
     {
         var header = RadiusPacketHeader.Create(PacketCode.StatusServer, 0);
         var sharedSecret = packetSecret ?? new SharedSecret(Convert.ToHexString(GenerateSecret()).ToLower());

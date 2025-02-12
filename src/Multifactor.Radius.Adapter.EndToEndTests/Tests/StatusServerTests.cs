@@ -1,23 +1,19 @@
 using MultiFactor.Radius.Adapter.Core.Radius;
-using MultiFactor.Radius.Adapter.Tests.E2E.Constants;
+using Multifactor.Radius.Adapter.EndToEndTests.Constants;
 
-namespace MultiFactor.Radius.Adapter.Tests.E2E.Tests;
+namespace Multifactor.Radius.Adapter.EndToEndTests.Tests;
 
 [Collection("Radius e2e")]
-public class StatusServerTests : E2ETestBase
+public class StatusServerTests(RadiusFixtures radiusFixtures) : E2ETestBase(radiusFixtures)
 {
-    public StatusServerTests(RadiusFixtures radiusFixtures) : base(radiusFixtures)
-    {
-    }
-
     [Fact]
     public async Task GetServerStatus_ShouldSuccess()
     {
-        await StartHostAsync(RadiusAdapterConfigs.RootConfig, new[] { RadiusAdapterConfigs.StatusServerConfig });
+        await StartHostAsync(RadiusAdapterConfigs.RootConfig, [RadiusAdapterConfigs.StatusServerConfig]);
 
         var serverStatusPacket = CreateRadiusPacket(PacketCode.StatusServer);
         
-        serverStatusPacket.AddAttributes(new Dictionary<string, object>() { { "NAS-Identifier", RadiusAdapterConstants.DefaultNasIdentifier } });
+        serverStatusPacket!.AddAttributes(new Dictionary<string, object>() { { "NAS-Identifier", RadiusAdapterConstants.DefaultNasIdentifier } });
 
         var response = SendPacketAsync(serverStatusPacket);
 
