@@ -17,7 +17,7 @@ public class MultipleActiveDirectory2FaGroupsTests(RadiusFixtures radiusFixtures
     public async Task BST012_ShouldAccept(string configName)
     {
         var sensitiveData =
-            E2ETestsUtils.GetSensitiveData(configName);
+            E2ETestsUtils.GetEnvironmentVariables(configName);
 
         var prefix = E2ETestsUtils.GetEnvPrefix(sensitiveData.First().Key);
 
@@ -62,7 +62,7 @@ public class MultipleActiveDirectory2FaGroupsTests(RadiusFixtures radiusFixtures
     public async Task BST013_ShouldAccept(string configName)
     {
         var sensitiveData =
-            E2ETestsUtils.GetSensitiveData(configName);
+            E2ETestsUtils.GetEnvironmentVariables(configName);
 
         var prefix = E2ETestsUtils.GetEnvPrefix(sensitiveData.First().Key);
 
