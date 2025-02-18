@@ -18,7 +18,7 @@ public class FirstFactorTests(RadiusFixtures radiusFixtures) : E2ETestBase(radiu
     public async Task BST016_ShouldAccept(string configName)
     {
         var sensitiveData =
-            E2ETestsUtils.GetSensitiveData(configName);
+            E2ETestsUtils.GetEnvironmentVariables(configName);
 
         var prefix = E2ETestsUtils.GetEnvPrefix(sensitiveData.First().Key);
 
@@ -64,7 +64,7 @@ public class FirstFactorTests(RadiusFixtures radiusFixtures) : E2ETestBase(radiu
     public async Task BST017_ShouldAccept(string configName)
     {
         var sensitiveData =
-            E2ETestsUtils.GetSensitiveData(configName);
+            E2ETestsUtils.GetEnvironmentVariables(configName);
 
         var prefix = E2ETestsUtils.GetEnvPrefix(sensitiveData.First().Key);
 
