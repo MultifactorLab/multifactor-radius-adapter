@@ -43,8 +43,7 @@ public class ServiceConfigurationFactory
         var apiUrlSetting = appSettings.MultifactorApiUrl;
         var apiProxySetting = appSettings.MultifactorApiProxy;
         var apiTimeoutSetting = appSettings.MultifactorApiTimeout;
-
-
+        
         if (string.IsNullOrEmpty(apiUrlSetting))
         {
             throw InvalidConfigurationException.For(x => x.AppSettings.MultifactorApiUrl,

@@ -5,11 +5,13 @@ using MultiFactor.Radius.Adapter.Core.Framework;
 using MultiFactor.Radius.Adapter.Core.Radius;
 using Multifactor.Radius.Adapter.EndToEndTests.Fixtures;
 using Multifactor.Radius.Adapter.EndToEndTests.Fixtures.ConfigLoading;
+using Multifactor.Radius.Adapter.EndToEndTests.Fixtures.Models;
 using Multifactor.Radius.Adapter.EndToEndTests.Fixtures.Radius;
 using Multifactor.Radius.Adapter.EndToEndTests.Udp;
 using MultiFactor.Radius.Adapter.Extensions;
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration;
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration.ConfigurationLoading;
+using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Models;
 
 namespace Multifactor.Radius.Adapter.EndToEndTests;
 
@@ -52,6 +54,38 @@ public abstract class E2ETestBase(RadiusFixtures radiusFixtures) : IDisposable
         _radiusHostApplicationBuilder.ConfigureApplication();
 
         ReplaceRadiusConfigs(rootConfigName, clientConfigFileNames, envPrefix: envPrefix);
+
+        configure?.Invoke(_radiusHostApplicationBuilder);
+
+        _host = _radiusHostApplicationBuilder.Build();
+
+        await _host.StartAsync();
+    }
+    
+    private protected async Task StartHostAsync(
+        RadiusAdapterConfiguration rootConfig,
+        Dictionary<string, RadiusAdapterConfiguration>? clientConfigs = null,
+        Action<RadiusHostApplicationBuilder>? configure = null)
+    {
+        _radiusHostApplicationBuilder.AddLogging();
+
+        _radiusHostApplicationBuilder.Services.ReplaceService(prov =>
+        {
+            var factory = prov.GetRequiredService<ServiceConfigurationFactory>();
+
+            var config = factory.CreateConfig(rootConfig);
+            config.Validate();
+
+            return config;
+        });
+        
+        var clientConfigsProvider = new E2EClientConfigurationsProvider(clientConfigs);
+        
+        _radiusHostApplicationBuilder.Services.ReplaceService<IClientConfigurationsProvider>(clientConfigsProvider);
+
+        _radiusHostApplicationBuilder.AddMiddlewares();
+
+        _radiusHostApplicationBuilder.ConfigureApplication();
 
         configure?.Invoke(_radiusHostApplicationBuilder);
 

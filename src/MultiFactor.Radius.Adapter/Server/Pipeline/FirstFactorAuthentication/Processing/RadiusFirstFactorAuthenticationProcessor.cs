@@ -100,7 +100,6 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.FirstFactorAuthentication.P
                 else
                 {
                     _logger.LogWarning("Remote Radius Server did not respond on message with id={id}", requestPacket.Header.Identifier);
-                    context.Flags.SkipResponse();
                     return PacketCode.AccessReject;
                 }
             }

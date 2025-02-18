@@ -10,34 +10,35 @@ using MultiFactor.Radius.Adapter.Services.MultiFactorApi.Models;
 namespace Multifactor.Radius.Adapter.EndToEndTests.Tests;
 
 [Collection("Radius e2e")]
-public class MultipleActiveDirectory2FaGroupsTests(RadiusFixtures radiusFixtures) : E2ETestBase(radiusFixtures)
+public class FirstFactorTests(RadiusFixtures radiusFixtures) : E2ETestBase(radiusFixtures)
 {
     [Theory]
     [InlineData("ad-root-conf.env")]
-    public async Task BST012_ShouldAccept(string configName)
+    [InlineData("radius-root-conf.env")]
+    public async Task BST016_ShouldAccept(string configName)
     {
         var sensitiveData =
             E2ETestsUtils.GetEnvironmentVariables(configName);
 
         var prefix = E2ETestsUtils.GetEnvPrefix(sensitiveData.First().Key);
 
-        var secondFactorMock = new Mock<IMultifactorApiAdapter>();
+        var mfAPiMock = new Mock<IMultifactorApiAdapter>();
 
-        secondFactorMock
+        mfAPiMock
             .Setup(x => x.CreateSecondFactorRequestAsync(It.IsAny<RadiusContext>()))
             .ReturnsAsync(new SecondFactorResponse(AuthenticationCode.Accept));
 
         var hostConfiguration = (RadiusHostApplicationBuilder builder) =>
         {
-            builder.Services.ReplaceService(secondFactorMock.Object);
+            builder.Services.ReplaceService(mfAPiMock.Object);
         };
-
+        
         await TestEnvironmentVariables.With(async env =>
         {
             env.SetEnvironmentVariables(sensitiveData);
 
             await StartHostAsync(
-                "root-multiple-active-directory-2fa-groups.config",
+                "root-first-factor.config",
                 envPrefix: prefix,
                 configure: hostConfiguration);
 
@@ -52,37 +53,38 @@ public class MultipleActiveDirectory2FaGroupsTests(RadiusFixtures radiusFixtures
             var response = SendPacketAsync(accessRequest);
 
             Assert.NotNull(response);
-            Assert.Single(secondFactorMock.Invocations);
+            Assert.Single(mfAPiMock.Invocations);
             Assert.Equal(PacketCode.AccessAccept, response.Header.Code);
         });
     }
     
     [Theory]
     [InlineData("ad-root-conf.env")]
-    public async Task BST013_ShouldAccept(string configName)
+    [InlineData("radius-root-conf.env")]
+    public async Task BST017_ShouldAccept(string configName)
     {
         var sensitiveData =
             E2ETestsUtils.GetEnvironmentVariables(configName);
 
         var prefix = E2ETestsUtils.GetEnvPrefix(sensitiveData.First().Key);
 
-        var secondFactorMock = new Mock<IMultifactorApiAdapter>();
+        var mfApiMock = new Mock<IMultifactorApiAdapter>();
 
-        secondFactorMock
+        mfApiMock
             .Setup(x => x.CreateSecondFactorRequestAsync(It.IsAny<RadiusContext>()))
             .ReturnsAsync(new SecondFactorResponse(AuthenticationCode.Accept));
 
         var hostConfiguration = (RadiusHostApplicationBuilder builder) =>
         {
-            builder.Services.ReplaceService(secondFactorMock.Object);
+            builder.Services.ReplaceService(mfApiMock.Object);
         };
-
+        
         await TestEnvironmentVariables.With(async env =>
         {
             env.SetEnvironmentVariables(sensitiveData);
 
             await StartHostAsync(
-                "root-multiple-not-existed-active-directory-2fa-groups.config",
+                "root-first-factor.config",
                 envPrefix: prefix,
                 configure: hostConfiguration);
 
@@ -91,14 +93,14 @@ public class MultipleActiveDirectory2FaGroupsTests(RadiusFixtures radiusFixtures
             {
                 { "NAS-Identifier", RadiusAdapterConstants.DefaultNasIdentifier },
                 { "User-Name", RadiusAdapterConstants.BindUserName },
-                { "User-Password", RadiusAdapterConstants.BindUserPassword }
+                { "User-Password", "Bad-Password" }
             });
 
             var response = SendPacketAsync(accessRequest);
 
             Assert.NotNull(response);
-            Assert.Empty(secondFactorMock.Invocations);
-            Assert.Equal(PacketCode.AccessAccept, response.Header.Code);
+            Assert.Empty(mfApiMock.Invocations);
+            Assert.Equal(PacketCode.AccessReject, response.Header.Code);
         });
     }
 }

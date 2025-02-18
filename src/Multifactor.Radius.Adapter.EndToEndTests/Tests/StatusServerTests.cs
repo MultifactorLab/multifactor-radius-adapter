@@ -1,5 +1,7 @@
 using MultiFactor.Radius.Adapter.Core.Radius;
 using Multifactor.Radius.Adapter.EndToEndTests.Constants;
+using Multifactor.Radius.Adapter.EndToEndTests.Fixtures.Models;
+using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Models;
 
 namespace Multifactor.Radius.Adapter.EndToEndTests.Tests;
 
@@ -9,7 +11,23 @@ public class StatusServerTests(RadiusFixtures radiusFixtures) : E2ETestBase(radi
     [Fact]
     public async Task GetServerStatus_ShouldSuccess()
     {
-        await StartHostAsync(RadiusAdapterConfigs.RootConfig, [RadiusAdapterConfigs.StatusServerConfig]);
+        var rootConfig = new RadiusAdapterConfiguration()
+        {
+            AppSettings = new AppSettingsSection()
+            {
+                AdapterServerEndpoint = "0.0.0.0:1812",
+                MultifactorApiUrl = "https://api.multifactor.dev",
+                LoggingLevel = "Debug",
+                RadiusSharedSecret = RadiusAdapterConstants.DefaultSharedSecret,
+                RadiusClientNasIdentifier = RadiusAdapterConstants.DefaultNasIdentifier,
+                BypassSecondFactorWhenApiUnreachable = true,
+                MultifactorNasIdentifier = "nas-identifier",
+                MultifactorSharedSecret = "shared-secret",
+                FirstFactorAuthenticationSource = "None"
+            }
+        };
+        
+        await StartHostAsync(rootConfig);
 
         var serverStatusPacket = CreateRadiusPacket(PacketCode.StatusServer);
         

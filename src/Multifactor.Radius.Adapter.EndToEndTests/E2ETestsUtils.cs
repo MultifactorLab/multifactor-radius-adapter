@@ -4,6 +4,7 @@ using MultiFactor.Radius.Adapter.Core;
 using MultiFactor.Radius.Adapter.Core.Radius;
 using MultiFactor.Radius.Adapter.Core.Radius.Attributes;
 using Multifactor.Radius.Adapter.EndToEndTests.Fixtures;
+using Multifactor.Radius.Adapter.EndToEndTests.Fixtures.Models;
 using Multifactor.Radius.Adapter.EndToEndTests.Udp;
 
 namespace Multifactor.Radius.Adapter.EndToEndTests;
@@ -27,7 +28,7 @@ internal static class E2ETestsUtils
         return new UdpSocket(IPAddress.Parse(ip), port);
     }
 
-    internal static Dictionary<string, string> GetSensitiveData(string fileName)
+    internal static Dictionary<string, string> GetEnvironmentVariables(string fileName)
     {
         var envs = new Dictionary<string, string>();
         var sensitiveDataPath = TestEnvironment.GetAssetPath(TestAssetLocation.E2ESensitiveData, fileName);
@@ -40,6 +41,32 @@ internal static class E2ETestsUtils
         }
 
         return envs;
+    }
+    
+    internal static ConfigSensitiveData[] GetConfigSensitiveData(string fileName)
+    {
+        var sensitiveDataPath = TestEnvironment.GetAssetPath(TestAssetLocation.E2ESensitiveData, fileName);
+
+        var lines = File.ReadLines(sensitiveDataPath);
+        var sensitiveData = new List<ConfigSensitiveData>();
+        
+        foreach (var line in lines)
+        {
+            var parts = line.Split('_');
+            var data = sensitiveData.FirstOrDefault(x => x.ConfigName == parts[0].Trim());
+            if (data != null)
+            {
+                data.AddConfigValue(parts[1].Trim(), parts[2].Trim());
+            }
+            else
+            {
+                var newElement = new ConfigSensitiveData(parts[0].Trim());
+                newElement.AddConfigValue(parts[1].Trim(), parts[2].Trim());
+                sensitiveData.Add(newElement);
+            }
+        }
+
+        return sensitiveData.ToArray();
     }
 
     internal static string GetEnvPrefix(string envKey)

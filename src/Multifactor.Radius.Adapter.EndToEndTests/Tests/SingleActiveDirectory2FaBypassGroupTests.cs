@@ -10,11 +10,11 @@ using MultiFactor.Radius.Adapter.Services.MultiFactorApi.Models;
 namespace Multifactor.Radius.Adapter.EndToEndTests.Tests;
 
 [Collection("Radius e2e")]
-public class MultipleActiveDirectory2FaGroupsTests(RadiusFixtures radiusFixtures) : E2ETestBase(radiusFixtures)
+public class SingleActiveDirectory2FaBypassGroupTests(RadiusFixtures radiusFixtures) : E2ETestBase(radiusFixtures)
 {
     [Theory]
     [InlineData("ad-root-conf.env")]
-    public async Task BST012_ShouldAccept(string configName)
+    public async Task BST014_ShouldAccept(string configName)
     {
         var sensitiveData =
             E2ETestsUtils.GetEnvironmentVariables(configName);
@@ -37,52 +37,7 @@ public class MultipleActiveDirectory2FaGroupsTests(RadiusFixtures radiusFixtures
             env.SetEnvironmentVariables(sensitiveData);
 
             await StartHostAsync(
-                "root-multiple-active-directory-2fa-groups.config",
-                envPrefix: prefix,
-                configure: hostConfiguration);
-
-            var accessRequest = CreateRadiusPacket(PacketCode.AccessRequest);
-            accessRequest!.AddAttributes(new Dictionary<string, object>()
-            {
-                { "NAS-Identifier", RadiusAdapterConstants.DefaultNasIdentifier },
-                { "User-Name", RadiusAdapterConstants.BindUserName },
-                { "User-Password", RadiusAdapterConstants.BindUserPassword }
-            });
-
-            var response = SendPacketAsync(accessRequest);
-
-            Assert.NotNull(response);
-            Assert.Single(secondFactorMock.Invocations);
-            Assert.Equal(PacketCode.AccessAccept, response.Header.Code);
-        });
-    }
-    
-    [Theory]
-    [InlineData("ad-root-conf.env")]
-    public async Task BST013_ShouldAccept(string configName)
-    {
-        var sensitiveData =
-            E2ETestsUtils.GetEnvironmentVariables(configName);
-
-        var prefix = E2ETestsUtils.GetEnvPrefix(sensitiveData.First().Key);
-
-        var secondFactorMock = new Mock<IMultifactorApiAdapter>();
-
-        secondFactorMock
-            .Setup(x => x.CreateSecondFactorRequestAsync(It.IsAny<RadiusContext>()))
-            .ReturnsAsync(new SecondFactorResponse(AuthenticationCode.Accept));
-
-        var hostConfiguration = (RadiusHostApplicationBuilder builder) =>
-        {
-            builder.Services.ReplaceService(secondFactorMock.Object);
-        };
-
-        await TestEnvironmentVariables.With(async env =>
-        {
-            env.SetEnvironmentVariables(sensitiveData);
-
-            await StartHostAsync(
-                "root-multiple-not-existed-active-directory-2fa-groups.config",
+                "root-single-active-directory-2fa-bypass-group.config",
                 envPrefix: prefix,
                 configure: hostConfiguration);
 
@@ -98,6 +53,51 @@ public class MultipleActiveDirectory2FaGroupsTests(RadiusFixtures radiusFixtures
 
             Assert.NotNull(response);
             Assert.Empty(secondFactorMock.Invocations);
+            Assert.Equal(PacketCode.AccessAccept, response.Header.Code);
+        });
+    }
+    
+    [Theory]
+    [InlineData("ad-root-conf.env")]
+    public async Task BST015_ShouldAccept(string configName)
+    {
+        var sensitiveData =
+            E2ETestsUtils.GetEnvironmentVariables(configName);
+
+        var prefix = E2ETestsUtils.GetEnvPrefix(sensitiveData.First().Key);
+
+        var secondFactorMock = new Mock<IMultifactorApiAdapter>();
+
+        secondFactorMock
+            .Setup(x => x.CreateSecondFactorRequestAsync(It.IsAny<RadiusContext>()))
+            .ReturnsAsync(new SecondFactorResponse(AuthenticationCode.Accept));
+
+        var hostConfiguration = (RadiusHostApplicationBuilder builder) =>
+        {
+            builder.Services.ReplaceService(secondFactorMock.Object);
+        };
+
+        await TestEnvironmentVariables.With(async env =>
+        {
+            env.SetEnvironmentVariables(sensitiveData);
+
+            await StartHostAsync(
+                "root-single-not-existed-active-directory-2fa-bypass-group.config",
+                envPrefix: prefix,
+                configure: hostConfiguration);
+
+            var accessRequest = CreateRadiusPacket(PacketCode.AccessRequest);
+            accessRequest!.AddAttributes(new Dictionary<string, object>()
+            {
+                { "NAS-Identifier", RadiusAdapterConstants.DefaultNasIdentifier },
+                { "User-Name", RadiusAdapterConstants.BindUserName },
+                { "User-Password", RadiusAdapterConstants.BindUserPassword }
+            });
+
+            var response = SendPacketAsync(accessRequest);
+
+            Assert.NotNull(response);
+            Assert.Single(secondFactorMock.Invocations);
             Assert.Equal(PacketCode.AccessAccept, response.Header.Code);
         });
     }
