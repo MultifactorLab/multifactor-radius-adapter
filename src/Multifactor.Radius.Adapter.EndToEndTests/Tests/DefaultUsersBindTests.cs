@@ -1,16 +1,54 @@
 using MultiFactor.Radius.Adapter.Core.Radius;
 using Multifactor.Radius.Adapter.EndToEndTests.Constants;
-using Multifactor.Radius.Adapter.EndToEndTests.Fixtures;
+using Multifactor.Radius.Adapter.EndToEndTests.Fixtures.Models;
+using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Models;
 
 namespace Multifactor.Radius.Adapter.EndToEndTests.Tests;
 
 [Collection("Radius e2e")]
 public class DefaultUsersBindTests(RadiusFixtures radiusFixtures) : E2ETestBase(radiusFixtures)
 {
-    [Fact]
-    public async Task SendAuthRequestWithoutCredentials_ShouldReject()
+    [Theory]
+    [InlineData("root.ad.env")]
+    [InlineData("root.radius.env")]
+    public async Task SendAuthRequestWithoutCredentials_RootConfig_ShouldReject(string configName)
     {
-        await StartHostAsync(RadiusAdapterConfigs.RootConfig, [RadiusAdapterConfigs.AccessRequestConfig]);
+        var sensitiveData =
+            E2ETestsUtils.GetConfigSensitiveData(configName);
+        
+        var clientConfigName = "root";
+        var rootConfig = new RadiusAdapterConfiguration()
+        {
+            AppSettings = new AppSettingsSection()
+            {
+                AdapterServerEndpoint = "0.0.0.0:1812",
+                MultifactorApiUrl = "https://api.multifactor.dev",
+                LoggingLevel = "Debug",
+                RadiusSharedSecret = RadiusAdapterConstants.DefaultSharedSecret,
+                RadiusClientNasIdentifier = RadiusAdapterConstants.DefaultNasIdentifier,
+                BypassSecondFactorWhenApiUnreachable = true,
+                MultifactorNasIdentifier = "nas-identifier",
+                MultifactorSharedSecret = "shared-secret",
+                        
+                ActiveDirectoryDomain = sensitiveData.GetConfigValue(
+                    clientConfigName,
+                    nameof(AppSettingsSection.ActiveDirectoryDomain)),
+                        
+                NpsServerEndpoint = sensitiveData.GetConfigValue(
+                    clientConfigName,
+                    nameof(AppSettingsSection.NpsServerEndpoint)),
+                        
+                AdapterClientEndpoint = sensitiveData.GetConfigValue(
+                    clientConfigName,
+                    nameof(AppSettingsSection.AdapterClientEndpoint)),
+                        
+                FirstFactorAuthenticationSource = sensitiveData.GetConfigValue(
+                    clientConfigName,
+                    nameof(AppSettingsSection.FirstFactorAuthenticationSource))
+            }
+        };
+        
+        await StartHostAsync(new E2ERadiusConfiguration(rootConfig));
 
         var accessRequest = CreateRadiusPacket(PacketCode.AccessRequest);
         accessRequest!.AddAttributes(new Dictionary<string, object>()
@@ -23,101 +61,177 @@ public class DefaultUsersBindTests(RadiusFixtures radiusFixtures) : E2ETestBase(
     }
     
     [Theory]
-    [InlineData("ad.env")]
-    public async Task SendAuthRequestWithBindUser_ShouldAccept(string configName)
+    [InlineData("root.ad.env")]
+    [InlineData("root.radius.env")]
+    public async Task SendAuthRequest_RootConfig_ShouldAccept(string configName)
     {
         var sensitiveData =
-            E2ETestsUtils.GetSensitiveData(configName);
+            E2ETestsUtils.GetConfigSensitiveData(configName);
         
-        var prefix = E2ETestsUtils.GetEnvPrefix(sensitiveData.First().Key);
-        
-        await TestEnvironmentVariables.With(async env =>
+        var clientConfigName = "root";
+        var rootConfig = new RadiusAdapterConfiguration()
         {
-            env.SetEnvironmentVariables(sensitiveData);
-            
-            await StartHostAsync(
-                RadiusAdapterConfigs.RootConfig,
-                [RadiusAdapterConfigs.AccessRequestConfig],
-                envPrefix: prefix);
-
-            var accessRequest = CreateRadiusPacket(PacketCode.AccessRequest);
-            accessRequest!.AddAttributes(new Dictionary<string, object>()
+            AppSettings = new AppSettingsSection()
             {
-                { "NAS-Identifier", RadiusAdapterConstants.DefaultNasIdentifier },
-                { "User-Name", RadiusAdapterConstants.BindUserName },
-                { "User-Password", RadiusAdapterConstants.BindUserPassword }
-            });
+                AdapterServerEndpoint = "0.0.0.0:1812",
+                MultifactorApiUrl = "https://api.multifactor.dev",
+                LoggingLevel = "Debug",
+                RadiusSharedSecret = RadiusAdapterConstants.DefaultSharedSecret,
+                RadiusClientNasIdentifier = RadiusAdapterConstants.DefaultNasIdentifier,
+                BypassSecondFactorWhenApiUnreachable = true,
+                MultifactorNasIdentifier = "nas-identifier",
+                MultifactorSharedSecret = "shared-secret",
+                        
+                ActiveDirectoryDomain = sensitiveData.GetConfigValue(
+                    clientConfigName,
+                    nameof(AppSettingsSection.ActiveDirectoryDomain)),
+                        
+                NpsServerEndpoint = sensitiveData.GetConfigValue(
+                    clientConfigName,
+                    nameof(AppSettingsSection.NpsServerEndpoint)),
+                        
+                AdapterClientEndpoint = sensitiveData.GetConfigValue(
+                    clientConfigName,
+                    nameof(AppSettingsSection.AdapterClientEndpoint)),
+                        
+                FirstFactorAuthenticationSource = sensitiveData.GetConfigValue(
+                    clientConfigName,
+                    nameof(AppSettingsSection.FirstFactorAuthenticationSource))
+            }
+        };
+        
+        await StartHostAsync(new E2ERadiusConfiguration(rootConfig));
 
-            var response = SendPacketAsync(accessRequest);
-
-            Assert.NotNull(response);
-            Assert.Equal(PacketCode.AccessAccept, response.Header.Code);
+        var accessRequest = CreateRadiusPacket(PacketCode.AccessRequest);
+        
+        accessRequest!.AddAttributes(new Dictionary<string, object>()
+        {
+            { "NAS-Identifier", RadiusAdapterConstants.DefaultNasIdentifier },
+            { "User-Name", RadiusAdapterConstants.BindUserName },
+            { "User-Password", RadiusAdapterConstants.BindUserPassword }
         });
+
+        var response = SendPacketAsync(accessRequest);
+
+        Assert.NotNull(response);
+        Assert.Equal(PacketCode.AccessAccept, response.Header.Code);
     }
-    
+
     [Theory]
-    [InlineData("ad.env")]
-    public async Task SendAuthRequestWithAdminUser_ShouldAccept(string configName)
+    [InlineData("client.ad.env")]
+    [InlineData("client.radius.env")]
+    public async Task SendAuthRequestWithBindUser_ClientConfig_ShouldAccept(string configName)
     {
-        var sensitiveData =
-            E2ETestsUtils.GetSensitiveData(configName);
-        
-        var prefix = E2ETestsUtils.GetEnvPrefix(sensitiveData.First().Key);
-        
-        await TestEnvironmentVariables.With(async env =>
+        var config = CreateRadiusConfiguration(configName);
+        await StartHostAsync(config);
+
+        var accessRequest = CreateRadiusPacket(PacketCode.AccessRequest);
+        accessRequest!.AddAttributes(new Dictionary<string, object>()
         {
-            env.SetEnvironmentVariables(sensitiveData);
-            
-            await StartHostAsync(
-                RadiusAdapterConfigs.RootConfig,
-                [RadiusAdapterConfigs.AccessRequestConfig],
-                envPrefix: prefix);
-
-            var accessRequest = CreateRadiusPacket(PacketCode.AccessRequest);
-            accessRequest!.AddAttributes(new Dictionary<string, object>()
-            {
-                { "NAS-Identifier", RadiusAdapterConstants.DefaultNasIdentifier },
-                { "User-Name", RadiusAdapterConstants.AdminUserName },
-                { "User-Password", RadiusAdapterConstants.AdminUserPassword }
-            });
-
-            var response = SendPacketAsync(accessRequest);
-
-            Assert.NotNull(response);
-            Assert.Equal(PacketCode.AccessAccept, response.Header.Code);
+            { "NAS-Identifier", RadiusAdapterConstants.DefaultNasIdentifier },
+            { "User-Name", RadiusAdapterConstants.BindUserName },
+            { "User-Password", RadiusAdapterConstants.BindUserPassword }
         });
+
+        var response = SendPacketAsync(accessRequest);
+
+        Assert.NotNull(response);
+        Assert.Equal(PacketCode.AccessAccept, response.Header.Code);
     }
-    
+
     [Theory]
-    [InlineData("ad.env")]
-    public async Task SendAuthRequestWithPasswordUser_ShouldAccept(string configName)
+    [InlineData("client.ad.env")]
+    [InlineData("client.radius.env")]
+    public async Task SendAuthRequestWithAdminUser_ClientConfig_ShouldAccept(string configName)
+    {
+        var config = CreateRadiusConfiguration(configName);
+        await StartHostAsync(config);
+
+        var accessRequest = CreateRadiusPacket(PacketCode.AccessRequest);
+        accessRequest!.AddAttributes(new Dictionary<string, object>()
+        {
+            { "NAS-Identifier", RadiusAdapterConstants.DefaultNasIdentifier },
+            { "User-Name", RadiusAdapterConstants.AdminUserName },
+            { "User-Password", RadiusAdapterConstants.AdminUserPassword }
+        });
+
+        var response = SendPacketAsync(accessRequest);
+
+        Assert.NotNull(response);
+        Assert.Equal(PacketCode.AccessAccept, response.Header.Code);
+    }
+
+    [Theory]
+    [InlineData("client.ad.env")]
+    [InlineData("client.radius.env")]
+    public async Task SendAuthRequestWithPasswordUser_ClientConfig_ShouldAccept(string configName)
+    {
+        var config = CreateRadiusConfiguration(configName);
+        await StartHostAsync(config);
+
+        var accessRequest = CreateRadiusPacket(PacketCode.AccessRequest);
+        accessRequest!.AddAttributes(new Dictionary<string, object>()
+        {
+            { "NAS-Identifier", RadiusAdapterConstants.DefaultNasIdentifier },
+            { "User-Name", RadiusAdapterConstants.ChangePasswordUserName },
+            { "User-Password", RadiusAdapterConstants.ChangePasswordUserPassword }
+        });
+
+        var response = SendPacketAsync(accessRequest);
+
+        Assert.NotNull(response);
+        Assert.Equal(PacketCode.AccessAccept, response.Header.Code);
+    }
+
+    private E2ERadiusConfiguration CreateRadiusConfiguration(string configName)
     {
         var sensitiveData =
-            E2ETestsUtils.GetSensitiveData(configName);
-        
-        var prefix = E2ETestsUtils.GetEnvPrefix(sensitiveData.First().Key);
-        
-        await TestEnvironmentVariables.With(async env =>
+            E2ETestsUtils.GetConfigSensitiveData(configName);
+
+        var rootConfig = new RadiusAdapterConfiguration()
         {
-            env.SetEnvironmentVariables(sensitiveData);
-            
-            await StartHostAsync(
-                RadiusAdapterConfigs.RootConfig,
-                [RadiusAdapterConfigs.AccessRequestConfig],
-                envPrefix: prefix);
-
-            var accessRequest = CreateRadiusPacket(PacketCode.AccessRequest);
-            accessRequest!.AddAttributes(new Dictionary<string, object>()
+            AppSettings = new AppSettingsSection()
             {
-                { "NAS-Identifier", RadiusAdapterConstants.DefaultNasIdentifier },
-                { "User-Name", RadiusAdapterConstants.ChangePasswordUserName },
-                { "User-Password", RadiusAdapterConstants.ChangePasswordUserPassword }
-            });
+                AdapterServerEndpoint = "0.0.0.0:1812",
+                MultifactorApiUrl = "https://api.multifactor.dev",
+                LoggingLevel = "Debug"
+            }
+        };
 
-            var response = SendPacketAsync(accessRequest);
+        var clientConfigName = "client";
+        var clientConfigs = new Dictionary<string, RadiusAdapterConfiguration>()
+        {
+            {
+                clientConfigName, new RadiusAdapterConfiguration()
+                {
+                    AppSettings = new AppSettingsSection()
+                    {
+                        RadiusSharedSecret = RadiusAdapterConstants.DefaultSharedSecret,
+                        RadiusClientNasIdentifier = RadiusAdapterConstants.DefaultNasIdentifier,
+                        BypassSecondFactorWhenApiUnreachable = true,
+                        MultifactorNasIdentifier = "nas-identifier",
+                        MultifactorSharedSecret = "shared-secret",
+                        
+                        ActiveDirectoryDomain = sensitiveData.GetConfigValue(
+                            clientConfigName,
+                            nameof(AppSettingsSection.ActiveDirectoryDomain)),
+                        
+                        NpsServerEndpoint = sensitiveData.GetConfigValue(
+                            clientConfigName,
+                            nameof(AppSettingsSection.NpsServerEndpoint)),
+                        
+                        AdapterClientEndpoint = sensitiveData.GetConfigValue(
+                            clientConfigName,
+                            nameof(AppSettingsSection.AdapterClientEndpoint)),
+                        
+                        FirstFactorAuthenticationSource = sensitiveData.GetConfigValue(
+                            clientConfigName,
+                            nameof(AppSettingsSection.FirstFactorAuthenticationSource))
+                    }
+                }
+            }
+        };
 
-            Assert.NotNull(response);
-            Assert.Equal(PacketCode.AccessAccept, response.Header.Code);
-        });
+        return new E2ERadiusConfiguration(rootConfig, clientConfigs);
     }
 }
