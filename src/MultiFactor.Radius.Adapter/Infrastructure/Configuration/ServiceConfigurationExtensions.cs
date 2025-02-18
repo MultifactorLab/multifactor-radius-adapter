@@ -12,7 +12,7 @@ public static class ServiceConfigurationExtensions
 
         foreach (var client in serviceConfiguration.Clients)
         {
-            if (!sources.Contains(client.FirstFactorAuthenticationSource) || !client.CheckMembership)
+            if (!sources.Contains(client.FirstFactorAuthenticationSource) || (!client.ShouldLoadUserGroups && !client.ShouldLoadUserProfile))
             {
                 continue;
             }

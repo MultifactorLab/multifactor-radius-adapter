@@ -19,7 +19,6 @@ public interface IClientConfiguration
     AuthenticatedClientCacheConfig AuthenticationCacheLifetime { get; }
     bool BypassSecondFactorWhenApiUnreachable { get; }
     string CallingStationIdVendorAttribute { get; }
-    bool CheckMembership { get; }
     AuthenticationSource FirstFactorAuthenticationSource { get; }
     string LdapBindDn { get; }
     bool LoadActiveDirectoryNestedGroups { get; }
@@ -39,9 +38,10 @@ public interface IClientConfiguration
     UserNameTransformRules UserNameTransformRules { get; }
     public string TwoFAIdentityAttribute { get; }
     public bool UseIdentityAttribute => !string.IsNullOrEmpty(TwoFAIdentityAttribute);
-    bool ShouldLoadUserGroups();
     RandomWaiterConfig InvalidCredentialDelay { get; }
     PreAuthModeDescriptor PreAuthnMode { get; }
     bool IsFreeIpa { get; }
     public TimeSpan LdapBindTimeout { get; }
+    public bool ShouldLoadUserProfile { get; }
+    public bool ShouldLoadUserGroups { get; }
 }
