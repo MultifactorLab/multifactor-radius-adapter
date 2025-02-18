@@ -11,6 +11,7 @@ using Multifactor.Radius.Adapter.EndToEndTests.Udp;
 using MultiFactor.Radius.Adapter.Extensions;
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration;
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration.ConfigurationLoading;
+using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Models;
 
 namespace Multifactor.Radius.Adapter.EndToEndTests;
 
@@ -62,7 +63,8 @@ public abstract class E2ETestBase(RadiusFixtures radiusFixtures) : IDisposable
     }
     
     private protected async Task StartHostAsync(
-        E2ERadiusConfiguration radiusConfiguration,
+        RadiusAdapterConfiguration rootConfig,
+        Dictionary<string, RadiusAdapterConfiguration>? clientConfigs = null,
         Action<RadiusHostApplicationBuilder>? configure = null)
     {
         _radiusHostApplicationBuilder.AddLogging();
@@ -71,13 +73,13 @@ public abstract class E2ETestBase(RadiusFixtures radiusFixtures) : IDisposable
         {
             var factory = prov.GetRequiredService<ServiceConfigurationFactory>();
 
-            var config = factory.CreateConfig(radiusConfiguration.RootConfiguration);
+            var config = factory.CreateConfig(rootConfig);
             config.Validate();
 
             return config;
         });
         
-        var clientConfigsProvider = new E2EClientConfigurationsProvider(radiusConfiguration.ClientConfigs);
+        var clientConfigsProvider = new E2EClientConfigurationsProvider(clientConfigs);
         
         _radiusHostApplicationBuilder.Services.ReplaceService<IClientConfigurationsProvider>(clientConfigsProvider);
 

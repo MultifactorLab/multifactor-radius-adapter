@@ -27,7 +27,7 @@ public class StatusServerTests(RadiusFixtures radiusFixtures) : E2ETestBase(radi
             }
         };
         
-        await StartHostAsync(new E2ERadiusConfiguration(rootConfig));
+        await StartHostAsync(rootConfig);
 
         var serverStatusPacket = CreateRadiusPacket(PacketCode.StatusServer);
         

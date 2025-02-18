@@ -48,7 +48,7 @@ public class DefaultUsersBindTests(RadiusFixtures radiusFixtures) : E2ETestBase(
             }
         };
         
-        await StartHostAsync(new E2ERadiusConfiguration(rootConfig));
+        await StartHostAsync(rootConfig);
 
         var accessRequest = CreateRadiusPacket(PacketCode.AccessRequest);
         accessRequest!.AddAttributes(new Dictionary<string, object>()
@@ -100,7 +100,7 @@ public class DefaultUsersBindTests(RadiusFixtures radiusFixtures) : E2ETestBase(
             }
         };
         
-        await StartHostAsync(new E2ERadiusConfiguration(rootConfig));
+        await StartHostAsync(rootConfig);
 
         var accessRequest = CreateRadiusPacket(PacketCode.AccessRequest);
         
@@ -123,7 +123,7 @@ public class DefaultUsersBindTests(RadiusFixtures radiusFixtures) : E2ETestBase(
     public async Task SendAuthRequestWithBindUser_ClientConfig_ShouldAccept(string configName)
     {
         var config = CreateRadiusConfiguration(configName);
-        await StartHostAsync(config);
+        await StartHostAsync(config.RootConfiguration, config.ClientConfigs);
 
         var accessRequest = CreateRadiusPacket(PacketCode.AccessRequest);
         accessRequest!.AddAttributes(new Dictionary<string, object>()
@@ -145,7 +145,7 @@ public class DefaultUsersBindTests(RadiusFixtures radiusFixtures) : E2ETestBase(
     public async Task SendAuthRequestWithAdminUser_ClientConfig_ShouldAccept(string configName)
     {
         var config = CreateRadiusConfiguration(configName);
-        await StartHostAsync(config);
+        await StartHostAsync(config.RootConfiguration, config.ClientConfigs);
 
         var accessRequest = CreateRadiusPacket(PacketCode.AccessRequest);
         accessRequest!.AddAttributes(new Dictionary<string, object>()
@@ -167,7 +167,7 @@ public class DefaultUsersBindTests(RadiusFixtures radiusFixtures) : E2ETestBase(
     public async Task SendAuthRequestWithPasswordUser_ClientConfig_ShouldAccept(string configName)
     {
         var config = CreateRadiusConfiguration(configName);
-        await StartHostAsync(config);
+        await StartHostAsync(config.RootConfiguration, config.ClientConfigs);
 
         var accessRequest = CreateRadiusPacket(PacketCode.AccessRequest);
         accessRequest!.AddAttributes(new Dictionary<string, object>()
