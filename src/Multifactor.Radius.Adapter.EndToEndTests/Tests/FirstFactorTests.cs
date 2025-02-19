@@ -4,6 +4,8 @@ using MultiFactor.Radius.Adapter.Core.Framework.Context;
 using MultiFactor.Radius.Adapter.Core.Radius;
 using Multifactor.Radius.Adapter.EndToEndTests.Constants;
 using Multifactor.Radius.Adapter.EndToEndTests.Fixtures;
+using Multifactor.Radius.Adapter.EndToEndTests.Fixtures.Models;
+using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Models;
 using MultiFactor.Radius.Adapter.Services.MultiFactorApi;
 using MultiFactor.Radius.Adapter.Services.MultiFactorApi.Models;
 
@@ -18,9 +20,7 @@ public class FirstFactorTests(RadiusFixtures radiusFixtures) : E2ETestBase(radiu
     public async Task BST016_ShouldAccept(string configName)
     {
         var sensitiveData =
-            E2ETestsUtils.GetEnvironmentVariables(configName);
-
-        var prefix = E2ETestsUtils.GetEnvPrefix(sensitiveData.First().Key);
+            E2ETestsUtils.GetConfigSensitiveData(configName);
 
         var mfAPiMock = new Mock<IMultifactorApiAdapter>();
 
@@ -32,41 +32,35 @@ public class FirstFactorTests(RadiusFixtures radiusFixtures) : E2ETestBase(radiu
         {
             builder.Services.ReplaceService(mfAPiMock.Object);
         };
-        
-        await TestEnvironmentVariables.With(async env =>
+
+        var rootConfig = CreateRadiusConfiguration(sensitiveData);
+
+        await StartHostAsync(
+            rootConfig,
+            configure: hostConfiguration);
+
+        var accessRequest = CreateRadiusPacket(PacketCode.AccessRequest);
+        accessRequest!.AddAttributes(new Dictionary<string, object>()
         {
-            env.SetEnvironmentVariables(sensitiveData);
-
-            await StartHostAsync(
-                "root-first-factor.config",
-                envPrefix: prefix,
-                configure: hostConfiguration);
-
-            var accessRequest = CreateRadiusPacket(PacketCode.AccessRequest);
-            accessRequest!.AddAttributes(new Dictionary<string, object>()
-            {
-                { "NAS-Identifier", RadiusAdapterConstants.DefaultNasIdentifier },
-                { "User-Name", RadiusAdapterConstants.BindUserName },
-                { "User-Password", RadiusAdapterConstants.BindUserPassword }
-            });
-
-            var response = SendPacketAsync(accessRequest);
-
-            Assert.NotNull(response);
-            Assert.Single(mfAPiMock.Invocations);
-            Assert.Equal(PacketCode.AccessAccept, response.Header.Code);
+            { "NAS-Identifier", RadiusAdapterConstants.DefaultNasIdentifier },
+            { "User-Name", RadiusAdapterConstants.BindUserName },
+            { "User-Password", RadiusAdapterConstants.BindUserPassword }
         });
+
+        var response = SendPacketAsync(accessRequest);
+
+        Assert.NotNull(response);
+        Assert.Single(mfAPiMock.Invocations);
+        Assert.Equal(PacketCode.AccessAccept, response.Header.Code);
     }
-    
+
     [Theory]
     [InlineData("ad-root-conf.env")]
     [InlineData("radius-root-conf.env")]
     public async Task BST017_ShouldAccept(string configName)
     {
         var sensitiveData =
-            E2ETestsUtils.GetEnvironmentVariables(configName);
-
-        var prefix = E2ETestsUtils.GetEnvPrefix(sensitiveData.First().Key);
+            E2ETestsUtils.GetConfigSensitiveData(configName);
 
         var mfApiMock = new Mock<IMultifactorApiAdapter>();
 
@@ -78,29 +72,62 @@ public class FirstFactorTests(RadiusFixtures radiusFixtures) : E2ETestBase(radiu
         {
             builder.Services.ReplaceService(mfApiMock.Object);
         };
-        
-        await TestEnvironmentVariables.With(async env =>
+
+        var rootConfig = CreateRadiusConfiguration(sensitiveData);
+
+        await StartHostAsync(
+            rootConfig,
+            configure: hostConfiguration);
+
+        var accessRequest = CreateRadiusPacket(PacketCode.AccessRequest);
+        accessRequest!.AddAttributes(new Dictionary<string, object>()
         {
-            env.SetEnvironmentVariables(sensitiveData);
-
-            await StartHostAsync(
-                "root-first-factor.config",
-                envPrefix: prefix,
-                configure: hostConfiguration);
-
-            var accessRequest = CreateRadiusPacket(PacketCode.AccessRequest);
-            accessRequest!.AddAttributes(new Dictionary<string, object>()
-            {
-                { "NAS-Identifier", RadiusAdapterConstants.DefaultNasIdentifier },
-                { "User-Name", RadiusAdapterConstants.BindUserName },
-                { "User-Password", "Bad-Password" }
-            });
-
-            var response = SendPacketAsync(accessRequest);
-
-            Assert.NotNull(response);
-            Assert.Empty(mfApiMock.Invocations);
-            Assert.Equal(PacketCode.AccessReject, response.Header.Code);
+            { "NAS-Identifier", RadiusAdapterConstants.DefaultNasIdentifier },
+            { "User-Name", RadiusAdapterConstants.BindUserName },
+            { "User-Password", "Bad-Password" }
         });
+
+        var response = SendPacketAsync(accessRequest);
+
+        Assert.NotNull(response);
+        Assert.Empty(mfApiMock.Invocations);
+        Assert.Equal(PacketCode.AccessReject, response.Header.Code);
+    }
+
+    private RadiusAdapterConfiguration CreateRadiusConfiguration(ConfigSensitiveData[] sensitiveData)
+    {
+        var configName = "root";
+        var rootConfig = new RadiusAdapterConfiguration()
+        {
+            AppSettings = new AppSettingsSection()
+            {
+                AdapterServerEndpoint = "0.0.0.0:1812",
+                MultifactorApiUrl = "https://api.multifactor.dev",
+                LoggingLevel = "Debug",
+                RadiusSharedSecret = RadiusAdapterConstants.DefaultSharedSecret,
+                RadiusClientNasIdentifier = RadiusAdapterConstants.DefaultNasIdentifier,
+                BypassSecondFactorWhenApiUnreachable = true,
+                MultifactorNasIdentifier = "nas-identifier",
+                MultifactorSharedSecret = "shared-secret",
+
+                ActiveDirectoryDomain = sensitiveData.GetConfigValue(
+                    configName,
+                    nameof(AppSettingsSection.ActiveDirectoryDomain)),
+
+                NpsServerEndpoint = sensitiveData.GetConfigValue(
+                    configName,
+                    nameof(AppSettingsSection.NpsServerEndpoint)),
+
+                AdapterClientEndpoint = sensitiveData.GetConfigValue(
+                    configName,
+                    nameof(AppSettingsSection.AdapterClientEndpoint)),
+
+                FirstFactorAuthenticationSource = sensitiveData.GetConfigValue(
+                    configName,
+                    nameof(AppSettingsSection.FirstFactorAuthenticationSource))
+            }
+        };
+
+        return rootConfig;
     }
 }

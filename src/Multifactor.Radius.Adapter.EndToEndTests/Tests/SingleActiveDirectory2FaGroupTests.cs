@@ -4,6 +4,8 @@ using MultiFactor.Radius.Adapter.Core.Framework.Context;
 using MultiFactor.Radius.Adapter.Core.Radius;
 using Multifactor.Radius.Adapter.EndToEndTests.Constants;
 using Multifactor.Radius.Adapter.EndToEndTests.Fixtures;
+using Multifactor.Radius.Adapter.EndToEndTests.Fixtures.Models;
+using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Models;
 using MultiFactor.Radius.Adapter.Services.MultiFactorApi;
 using MultiFactor.Radius.Adapter.Services.MultiFactorApi.Models;
 
@@ -17,10 +19,8 @@ public class SingleActiveDirectory2FaGroupTests(RadiusFixtures radiusFixtures) :
     public async Task BST011_ShouldAccept(string configName)
     {
         var sensitiveData =
-            E2ETestsUtils.GetEnvironmentVariables(configName);
-
-        var prefix = E2ETestsUtils.GetEnvPrefix(sensitiveData.First().Key);
-
+            E2ETestsUtils.GetConfigSensitiveData(configName);
+        
         var secondFactorMock = new Mock<IMultifactorApiAdapter>();
 
         secondFactorMock
@@ -31,29 +31,58 @@ public class SingleActiveDirectory2FaGroupTests(RadiusFixtures radiusFixtures) :
         {
             builder.Services.ReplaceService(secondFactorMock.Object);
         };
+        
+        var rootConfig = CreateRadiusConfiguration(sensitiveData, "E2E");
+        
+        await StartHostAsync(
+            rootConfig,
+            configure: hostConfiguration);
 
-        await TestEnvironmentVariables.With(async env =>
+        var accessRequest = CreateRadiusPacket(PacketCode.AccessRequest);
+        accessRequest!.AddAttributes(new Dictionary<string, object>()
         {
-            env.SetEnvironmentVariables(sensitiveData);
-
-            await StartHostAsync(
-                "root-single-active-directory-2fa-group.config",
-                envPrefix: prefix,
-                configure: hostConfiguration);
-
-            var accessRequest = CreateRadiusPacket(PacketCode.AccessRequest);
-            accessRequest!.AddAttributes(new Dictionary<string, object>()
-            {
-                { "NAS-Identifier", RadiusAdapterConstants.DefaultNasIdentifier },
-                { "User-Name", RadiusAdapterConstants.BindUserName },
-                { "User-Password", RadiusAdapterConstants.BindUserPassword }
-            });
-
-            var response = SendPacketAsync(accessRequest);
-
-            Assert.NotNull(response);
-            Assert.Single(secondFactorMock.Invocations);
-            Assert.Equal(PacketCode.AccessAccept, response.Header.Code);
+            { "NAS-Identifier", RadiusAdapterConstants.DefaultNasIdentifier },
+            { "User-Name", RadiusAdapterConstants.BindUserName },
+            { "User-Password", RadiusAdapterConstants.BindUserPassword }
         });
+
+        var response = SendPacketAsync(accessRequest);
+
+        Assert.NotNull(response);
+        Assert.Single(secondFactorMock.Invocations);
+        Assert.Equal(PacketCode.AccessAccept, response.Header.Code);
+    }
+
+    private RadiusAdapterConfiguration CreateRadiusConfiguration(
+        ConfigSensitiveData[] sensitiveData,
+        string groups)
+    {
+        var configName = "root";
+        var rootConfig = new RadiusAdapterConfiguration()
+        {
+            AppSettings = new AppSettingsSection()
+            {
+                AdapterServerEndpoint = "0.0.0.0:1812",
+                MultifactorApiUrl = "https://api.multifactor.dev",
+                LoggingLevel = "Debug",
+                RadiusSharedSecret = RadiusAdapterConstants.DefaultSharedSecret,
+                RadiusClientNasIdentifier = RadiusAdapterConstants.DefaultNasIdentifier,
+                BypassSecondFactorWhenApiUnreachable = true,
+                MultifactorNasIdentifier = "nas-identifier",
+                MultifactorSharedSecret = "shared-secret",
+
+                ActiveDirectoryDomain = sensitiveData.GetConfigValue(
+                    configName,
+                    nameof(AppSettingsSection.ActiveDirectoryDomain)),
+
+                FirstFactorAuthenticationSource = sensitiveData.GetConfigValue(
+                    configName,
+                    nameof(AppSettingsSection.FirstFactorAuthenticationSource)),
+
+                ActiveDirectory2faGroup = groups
+            }
+        };
+
+        return rootConfig;
     }
 }

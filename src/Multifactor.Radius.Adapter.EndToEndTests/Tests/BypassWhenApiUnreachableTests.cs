@@ -4,6 +4,7 @@ using MultiFactor.Radius.Adapter.Core.Framework.Context;
 using MultiFactor.Radius.Adapter.Core.Radius;
 using Multifactor.Radius.Adapter.EndToEndTests.Constants;
 using Multifactor.Radius.Adapter.EndToEndTests.Fixtures;
+using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Models;
 using MultiFactor.Radius.Adapter.Infrastructure.Http;
 using MultiFactor.Radius.Adapter.Services.MultiFactorApi;
 using MultiFactor.Radius.Adapter.Services.MultiFactorApi.Dto;
@@ -28,9 +29,9 @@ public class BypassWhenApiUnreachableTests(RadiusFixtures radiusFixtures) : E2ET
             builder.Services.ReplaceService(secondFactorMock.Object);
         };
 
-        await StartHostAsync(
-            "root-no-bypass-when-api-unreachable.config",
-            configure: hostConfiguration);
+        var rootConfig = CreateRootConfig();
+
+        await StartHostAsync(rootConfig, configure: hostConfiguration);
 
         var accessRequest = CreateRadiusPacket(PacketCode.AccessRequest);
         accessRequest!.AddAttributes(new Dictionary<string, object>()
@@ -61,9 +62,10 @@ public class BypassWhenApiUnreachableTests(RadiusFixtures radiusFixtures) : E2ET
             builder.Services.ReplaceService(secondFactorMock.Object);
         };
 
-
+        var rootConfig = CreateRootConfig(true);
+        
         await StartHostAsync(
-            "root-bypass-true-when-api-unreachable.config",
+            rootConfig,
             configure: hostConfiguration);
 
         var accessRequest = CreateRadiusPacket(PacketCode.AccessRequest);
@@ -95,9 +97,10 @@ public class BypassWhenApiUnreachableTests(RadiusFixtures radiusFixtures) : E2ET
             builder.Services.ReplaceService(secondFactorMock.Object);
         };
 
-
+        var rootConfig = CreateRootConfig();
+        
         await StartHostAsync(
-            "root-no-bypass-when-api-unreachable.config",
+            rootConfig,
             configure: hostConfiguration);
 
         var accessRequest = CreateRadiusPacket(PacketCode.AccessRequest);
@@ -129,8 +132,10 @@ public class BypassWhenApiUnreachableTests(RadiusFixtures radiusFixtures) : E2ET
             builder.Services.ReplaceService(secondFactorMock.Object);
         };
 
+        var rootConfig = CreateRootConfig(false);
+        
         await StartHostAsync(
-            "root-bypass-false-when-api-unreachable.config",
+            rootConfig,
             configure: hostConfiguration);
 
         var accessRequest = CreateRadiusPacket(PacketCode.AccessRequest);
@@ -162,9 +167,10 @@ public class BypassWhenApiUnreachableTests(RadiusFixtures radiusFixtures) : E2ET
             builder.Services.ReplaceService(secondFactorMock.Object);
         };
 
-
+        var rootConfig = CreateRootConfig(true);
+        
         await StartHostAsync(
-            "root-bypass-true-when-api-unreachable.config",
+            rootConfig,
             configure: hostConfiguration);
 
         var accessRequest = CreateRadiusPacket(PacketCode.AccessRequest);
@@ -196,8 +202,10 @@ public class BypassWhenApiUnreachableTests(RadiusFixtures radiusFixtures) : E2ET
             builder.Services.ReplaceService(secondFactorMock.Object);
         };
 
+        var rootConfig = CreateRootConfig(false);
+        
         await StartHostAsync(
-            "root-bypass-false-when-api-unreachable.config",
+            rootConfig,
             configure: hostConfiguration);
 
         var accessRequest = CreateRadiusPacket(PacketCode.AccessRequest);
@@ -213,5 +221,24 @@ public class BypassWhenApiUnreachableTests(RadiusFixtures radiusFixtures) : E2ET
         Assert.NotNull(response);
         Assert.Single(secondFactorMock.Invocations);
         Assert.Equal(PacketCode.AccessAccept, response.Header.Code);
+    }
+
+    private RadiusAdapterConfiguration CreateRootConfig(bool? bypassSecondFactorWhenApiUnreachable = null)
+    {
+        return new RadiusAdapterConfiguration()
+        {
+            AppSettings = new AppSettingsSection()
+            {
+                AdapterServerEndpoint = "0.0.0.0:1812",
+                MultifactorApiUrl = "https://api.multifactor.dev",
+                LoggingLevel = "Debug",
+                RadiusSharedSecret = RadiusAdapterConstants.DefaultSharedSecret,
+                RadiusClientNasIdentifier = RadiusAdapterConstants.DefaultNasIdentifier,
+                MultifactorNasIdentifier = "nas-identifier",
+                MultifactorSharedSecret = "shared-secret",
+                FirstFactorAuthenticationSource = "None",
+                BypassSecondFactorWhenApiUnreachable = bypassSecondFactorWhenApiUnreachable ?? true
+            }
+        };
     }
 }
