@@ -26,25 +26,6 @@ public class RadiusConfigurationFileTests
         Assert.Equal(path, file.Path);
     }
     
-    [Theory]
-    [InlineData(null)]
-    [InlineData("")]
-    [InlineData("file")]
-    [InlineData("file.conf")]
-    public void Cast_ToRadConfFileFromIncorrectPathString_ShouldThrow(string path)
-    {
-        Assert.Throws<InvalidCastException>(() => (RadiusConfigurationFile)path);
-    }
-    
-    [Theory]
-    [InlineData("file.config")]
-    [InlineData("dir/file.config")]
-    public void Cast_ToRadConfFileFromCorrectPathString_ShouldSuccess(string path)
-    {
-        var file = (RadiusConfigurationFile)path;
-        Assert.Equal(path, file.Path);
-    }
-    
     [Fact]
     public void Cast_ToStringFromNullRadConfFile_ShouldThrow()
     {
