@@ -5,33 +5,33 @@ namespace Multifactor.Radius.Adapter.EndToEndTests.Fixtures.Radius;
 
 internal static class RadiusPacketFactory
 {
-    public static IRadiusPacket? AccessRequest(SharedSecret? packetSecret = null)
+    public static IRadiusPacket? AccessRequest(SharedSecret? packetSecret = null, byte identifier = 0)
     {
-        var header = RadiusPacketHeader.Create(PacketCode.AccessRequest, 0);
+        var header = RadiusPacketHeader.Create(PacketCode.AccessRequest, identifier);
         var sharedSecret = packetSecret ?? new SharedSecret(Convert.ToHexString(GenerateSecret()).ToLower());
         var packet = new RadiusPacket(header, new RadiusAuthenticator(), sharedSecret);
         return packet;
     }
     
-    public static IRadiusPacket? AccessChallenge(SharedSecret? packetSecret = null)
+    public static IRadiusPacket? AccessChallenge(SharedSecret? packetSecret = null, byte identifier = 0)
     {
-        var header = RadiusPacketHeader.Create(PacketCode.AccessChallenge, 0);
+        var header = RadiusPacketHeader.Create(PacketCode.AccessChallenge, identifier);
         var sharedSecret = packetSecret ?? new SharedSecret(Convert.ToHexString(GenerateSecret()).ToLower());
         var packet = new RadiusPacket(header, new RadiusAuthenticator(), sharedSecret);
         return packet;
     }
     
-    public static IRadiusPacket? AccessReject(SharedSecret? packetSecret = null)
+    public static IRadiusPacket? AccessReject(SharedSecret? packetSecret = null, byte identifier = 0)
     {
-        var header = RadiusPacketHeader.Create(PacketCode.AccessReject, 0);
+        var header = RadiusPacketHeader.Create(PacketCode.AccessReject, identifier);
         var sharedSecret = packetSecret ?? new SharedSecret(Convert.ToHexString(GenerateSecret()).ToLower());
         var packet = new RadiusPacket(header, new RadiusAuthenticator(), sharedSecret);
         return packet;
     }
     
-    public static IRadiusPacket? StatusServer(SharedSecret? packetSecret = null)
+    public static IRadiusPacket? StatusServer(SharedSecret? packetSecret = null, byte identifier = 0)
     {
-        var header = RadiusPacketHeader.Create(PacketCode.StatusServer, 0);
+        var header = RadiusPacketHeader.Create(PacketCode.StatusServer, identifier);
         var sharedSecret = packetSecret ?? new SharedSecret(Convert.ToHexString(GenerateSecret()).ToLower());
         var packet = new RadiusPacket(header, new RadiusAuthenticator(), sharedSecret);
         return packet;

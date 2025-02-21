@@ -1,23 +1,34 @@
+using System.Text;
+using LdapForNet;
+using LdapForNet.Native;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using MultiFactor.Radius.Adapter.Core.Framework;
 using MultiFactor.Radius.Adapter.Core.Radius;
 using Multifactor.Radius.Adapter.EndToEndTests.Fixtures;
 using Multifactor.Radius.Adapter.EndToEndTests.Fixtures.ConfigLoading;
-using Multifactor.Radius.Adapter.EndToEndTests.Fixtures.Models;
 using Multifactor.Radius.Adapter.EndToEndTests.Fixtures.Radius;
 using Multifactor.Radius.Adapter.EndToEndTests.Udp;
 using MultiFactor.Radius.Adapter.Extensions;
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration;
+using MultiFactor.Radius.Adapter.Infrastructure.Configuration.ClientLevel;
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration.ConfigurationLoading;
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Models;
+using MultiFactor.Radius.Adapter.Infrastructure.Configuration.RootLevel;
+using MultiFactor.Radius.Adapter.Services.Ldap;
+using MultiFactor.Radius.Adapter.Services.Ldap.Connection;
+using MultiFactor.Radius.Adapter.Services.Ldap.Profile;
 
 namespace Multifactor.Radius.Adapter.EndToEndTests;
 
 public abstract class E2ETestBase(RadiusFixtures radiusFixtures) : IDisposable
 {
     private IHost? _host;
+    private ProfileLoader? _profileLoader;
+    private ClientConfigurationFactory _clientConfigurationFactory;
+    
     private readonly RadiusHostApplicationBuilder _radiusHostApplicationBuilder = RadiusHost.CreateApplicationBuilder([
         "--environment", "Test"
     ]);
@@ -58,7 +69,10 @@ public abstract class E2ETestBase(RadiusFixtures radiusFixtures) : IDisposable
         configure?.Invoke(_radiusHostApplicationBuilder);
 
         _host = _radiusHostApplicationBuilder.Build();
-
+        
+        _profileLoader = _host.Services.GetService<ProfileLoader>();
+        _clientConfigurationFactory = _host.Services.GetService<ClientConfigurationFactory>();
+        
         await _host.StartAsync();
     }
     
@@ -90,7 +104,10 @@ public abstract class E2ETestBase(RadiusFixtures radiusFixtures) : IDisposable
         configure?.Invoke(_radiusHostApplicationBuilder);
 
         _host = _radiusHostApplicationBuilder.Build();
-
+        
+        _profileLoader = _host.Services.GetService<ProfileLoader>();
+        _clientConfigurationFactory = _host.Services.GetService<ClientConfigurationFactory>();
+        
         await _host.StartAsync();
     }
 
@@ -110,22 +127,22 @@ public abstract class E2ETestBase(RadiusFixtures radiusFixtures) : IDisposable
         return parsed;
     }
 
-    protected IRadiusPacket? CreateRadiusPacket(PacketCode packetCode, SharedSecret? secret = null)
+    protected IRadiusPacket? CreateRadiusPacket(PacketCode packetCode, SharedSecret? secret = null, byte identifier = 0)
     {
         IRadiusPacket? packet;
         switch (packetCode)
         {
             case PacketCode.AccessRequest:
-                packet = RadiusPacketFactory.AccessRequest(secret ?? _secret);
+                packet = RadiusPacketFactory.AccessRequest(secret ?? _secret, identifier);
                 break;
             case PacketCode.StatusServer:
-                packet = RadiusPacketFactory.StatusServer(secret ?? _secret);
+                packet = RadiusPacketFactory.StatusServer(secret ?? _secret, identifier);
                 break;
             case PacketCode.AccessChallenge:
-                packet = RadiusPacketFactory.AccessChallenge(secret ?? _secret);
+                packet = RadiusPacketFactory.AccessChallenge(secret ?? _secret, identifier);
                 break;
             case PacketCode.AccessReject:
-                packet = RadiusPacketFactory.AccessReject(secret ?? _secret);
+                packet = RadiusPacketFactory.AccessReject(secret ?? _secret, identifier);
                 break;
             default:
                 throw new NotImplementedException();
@@ -133,7 +150,66 @@ public abstract class E2ETestBase(RadiusFixtures radiusFixtures) : IDisposable
 
         return packet;
     }
+    
+    protected async Task SetAttributeForUserInCatalogAsync(
+        string userName,
+        RadiusAdapterConfiguration config,
+        string attributeName,
+        object attributeValue)
+    {
+        var clientConfiguration = CreateClientConfiguration(config);
+        
+        var user = LdapIdentity.ParseUser(userName);
+        using var connection = LdapConnectionAdapter.CreateAsTechnicalAccAsync(
+            clientConfiguration.ActiveDirectoryDomain,
+            clientConfiguration,
+            NullLogger<LdapConnectionAdapter>.Instance);
 
+        var formatter = new BindIdentityFormatter(clientConfiguration);
+        var serviceUser = LdapIdentity.ParseUser(clientConfiguration.ServiceAccountUser);
+        await connection.BindAsync(formatter.FormatIdentity(serviceUser, clientConfiguration.ActiveDirectoryDomain), clientConfiguration.ServiceAccountPassword);
+           
+        var profile = await _profileLoader.LoadAsync(clientConfiguration, connection, user);
+        var isFreeIpa = clientConfiguration.IsFreeIpa && clientConfiguration.FirstFactorAuthenticationSource != AuthenticationSource.ActiveDirectory;
+        var request = BuildModifyRequest(profile.DistinguishedName, attributeName, attributeValue, isFreeIpa);
+        var response = await connection.SendRequestAsync(request);
+
+        if (response.ResultCode != Native.ResultCode.Success)
+        {
+            throw new Exception($"Failed to set attribute: {response.ResultCode}");
+        }
+    }
+    
+    protected IClientConfiguration CreateClientConfiguration(RadiusAdapterConfiguration configuration)
+    {
+        var serviceConfig = _host.Services.GetService<IServiceConfiguration>();
+        return _clientConfigurationFactory.CreateConfig("e2e", configuration, serviceConfig);
+    }
+    
+    private ModifyRequest BuildModifyRequest(
+        string dn,
+        string attributeName,
+        object attributeValue,
+        bool isFreeIpa)
+    {
+        var attrName = attributeName;
+        
+        var attribute = new DirectoryModificationAttribute
+        {
+            Name = attrName,
+            LdapModOperation = Native.LdapModOperation.LDAP_MOD_REPLACE
+        };
+        
+        var bytes = Encoding.UTF8.GetBytes(attributeValue.ToString());
+        if (isFreeIpa)
+            attribute.Add(bytes);
+        else
+            attribute.Add(bytes);
+        
+
+        return new ModifyRequest(dn, attribute);
+    }
+    
     private void ReplaceRadiusConfigs(
         string rootConfigName,
         string[]? clientConfigFileNames = null,
