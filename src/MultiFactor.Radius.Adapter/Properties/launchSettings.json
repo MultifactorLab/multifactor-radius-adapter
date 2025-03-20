@@ -2,7 +2,6 @@
   "profiles": {
     "MultiFactor.Radius.Adapter": {
       "commandName": "Project",
-      "launchBrowser": false,
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       },
@@ -12,8 +11,7 @@
       "commandName": "Docker",
       "launchUrl": "{Scheme}://{ServiceHost}:{ServicePort}",
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "localhost",
-        "LD_DEBUG": "libs"
+        "ASPNETCORE_ENVIRONMENT": "localhost"
       },
       "publishAllPorts": true,
       "useSSL": false

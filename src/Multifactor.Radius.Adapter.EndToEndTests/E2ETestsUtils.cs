@@ -43,7 +43,7 @@ internal static class E2ETestsUtils
         return envs;
     }
     
-    internal static ConfigSensitiveData[] GetConfigSensitiveData(string fileName)
+    internal static ConfigSensitiveData[] GetConfigSensitiveData(string fileName, string separator = "_")
     {
         var sensitiveDataPath = TestEnvironment.GetAssetPath(TestAssetLocation.E2ESensitiveData, fileName);
 
@@ -52,7 +52,7 @@ internal static class E2ETestsUtils
         
         foreach (var line in lines)
         {
-            var parts = line.Split('_');
+            var parts = line.Split(separator);
             var data = sensitiveData.FirstOrDefault(x => x.ConfigName == parts[0].Trim());
             if (data != null)
             {
