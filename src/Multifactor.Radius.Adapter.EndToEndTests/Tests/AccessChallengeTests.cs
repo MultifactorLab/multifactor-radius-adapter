@@ -105,7 +105,7 @@ public class AccessChallengeTests(RadiusFixtures radiusFixtures) : E2ETestBase(r
     [InlineData("radius-root-conf.env")]
     public async Task BST019_ShouldAccept(string configName)
     {
-        var state = "BST018_ShouldAccept";
+        var state = "BST019_ShouldAccept";
         var challenge1 = "challenge-1";
         
         var sensitiveData =
