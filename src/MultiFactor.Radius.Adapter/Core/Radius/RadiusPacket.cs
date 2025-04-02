@@ -276,6 +276,14 @@ namespace MultiFactor.Radius.Adapter.Core.Radius
             AddAttributeObject(name, value);
         }
 
+        public void AddAttributes(IDictionary<string, object> attributes)
+        {
+            foreach (var attr in attributes)
+            {
+                AddAttributeObject(attr.Key, attr.Value);
+            }
+        }
+
         public IRadiusPacket UpdateAttribute(string name, string value)
         {
             if (Attributes.ContainsKey(name))

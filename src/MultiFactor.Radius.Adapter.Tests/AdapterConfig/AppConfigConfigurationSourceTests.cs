@@ -13,7 +13,7 @@ public class AppConfigConfigurationSourceTests
     public void Load_ShouldLoadAndTransformNames()
     {
         var path = TestEnvironment.GetAssetPath("root-all-appsettings-items.config");
-        var source = new TestableAppConfigConfigurationSource(path);
+        var source = new TestableAppConfigConfigurationSource(new RadiusConfigurationFile(path));
 
         source.Load();
 
@@ -67,7 +67,7 @@ public class AppConfigConfigurationSourceTests
         var path = TestEnvironment.GetAssetPath("root-minimal-multi.config");
 
         var config = new ConfigurationBuilder()
-            .Add(new XmlAppConfigurationSource(path))
+            .Add(new XmlAppConfigurationSource(new RadiusConfigurationFile(path)))
             .Build();
 
         var bound = config.BindRadiusAdapterConfig();
@@ -88,7 +88,7 @@ public class AppConfigConfigurationSourceTests
         var path = TestEnvironment.GetAssetPath(TestAssetLocation.ClientsDirectory, "radius-reply-join.config");
 
         var config = new ConfigurationBuilder()
-            .Add(new XmlAppConfigurationSource(path))
+            .Add(new XmlAppConfigurationSource(new RadiusConfigurationFile(path)))
             .Build();
 
         var bound = config.BindRadiusAdapterConfig();
@@ -119,7 +119,7 @@ public class AppConfigConfigurationSourceTests
         var path = TestEnvironment.GetAssetPath(TestAssetLocation.ClientsDirectory, "radius-reply-single.config");
 
         var config = new ConfigurationBuilder()
-            .Add(new XmlAppConfigurationSource(path))
+            .Add(new XmlAppConfigurationSource(new RadiusConfigurationFile(path)))
             .Build();
 
         var bound = config.BindRadiusAdapterConfig();
@@ -138,7 +138,7 @@ public class AppConfigConfigurationSourceTests
         var path = TestEnvironment.GetAssetPath(TestAssetLocation.ClientsDirectory, "user-name-transform-rules.config");
 
         var config = new ConfigurationBuilder()
-            .Add(new XmlAppConfigurationSource(path))
+            .Add(new XmlAppConfigurationSource(new RadiusConfigurationFile(path)))
             .Build();
 
         var bound = config.BindRadiusAdapterConfig();
@@ -167,7 +167,7 @@ public class AppConfigConfigurationSourceTests
         var path = TestEnvironment.GetAssetPath(TestAssetLocation.ClientsDirectory, "user-name-transform-single-rule.config");
 
         var config = new ConfigurationBuilder()
-            .Add(new XmlAppConfigurationSource(path))
+            .Add(new XmlAppConfigurationSource(new RadiusConfigurationFile(path)))
             .Build();
 
         var bound = config.BindRadiusAdapterConfig();
@@ -185,7 +185,7 @@ public class AppConfigConfigurationSourceTests
         var path = TestEnvironment.GetAssetPath(TestAssetLocation.ClientsDirectory, "user-name-transform-rules.config");
 
         var config = new ConfigurationBuilder()
-            .Add(new XmlAppConfigurationSource(path))
+            .Add(new XmlAppConfigurationSource(new RadiusConfigurationFile(path)))
             .Build();
 
         var bound = config.BindRadiusAdapterConfig();

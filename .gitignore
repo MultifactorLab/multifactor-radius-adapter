@@ -339,3 +339,6 @@ ASALocalRun/
 # BeatPulse healthcheck temp database
 healthchecksdb
 src/Properties/launchSettings.json
+
+# E2E sensitive data folder
+src\MultiFactor.Radius.Adapter.EndToEndTests\Assets\SensitiveData

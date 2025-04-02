@@ -8,7 +8,7 @@ namespace MultiFactor.Radius.Adapter.Tests.Fixtures.ConfigLoading;
 
 internal class TestClientConfigsProvider : IClientConfigurationsProvider
 {
-    private Dictionary<RadiusConfigurationFile, RadiusAdapterConfiguration> _dict = new();
+    private Dictionary<RadiusConfigurationSource, RadiusAdapterConfiguration> _dict = new();
     private readonly TestConfigProviderOptions _options;
 
     public TestClientConfigsProvider(IOptions<TestConfigProviderOptions> options)
@@ -23,11 +23,23 @@ internal class TestClientConfigsProvider : IClientConfigurationsProvider
         {
             return Array.Empty<RadiusAdapterConfiguration>();
         }
-
-        _dict = clientConfigFiles
-            .Select(x => new RadiusConfigurationFile(x))
-            .ToDictionary(k => k, v => RadiusAdapterConfigurationFactory.Create(v, v.Name));
-
+        var fileSources = clientConfigFiles.Select(x => new RadiusConfigurationFile(x)).ToArray();
+        foreach (var file in fileSources)
+        {
+            var config = RadiusAdapterConfigurationFactory.Create(file, file.Name, _options.EnvironmentVariablePrefix);
+            _dict.Add(file, config);
+        }
+        
+        var envVarSources = DefaultClientConfigurationsProvider.GetEnvVarClients()
+            .Select(x => new RadiusConfigurationEnvironmentVariable(x))
+            .ExceptBy(fileSources.Select(x => RadiusConfigurationSource.TransformName(x.Name)), x => x.Name);
+        
+        foreach (var envVarClient in envVarSources)
+        {
+            var config = RadiusAdapterConfigurationFactory.Create(envVarClient, _options.EnvironmentVariablePrefix);
+            _dict.Add(envVarClient, config);
+        }
+        
         return _dict.Select(x => x.Value).ToArray();
     }
 
@@ -38,7 +50,7 @@ internal class TestClientConfigsProvider : IClientConfigurationsProvider
 
     private IEnumerable<string> GetFiles()
     {
-        if (_options.ClientConfigFilePaths != null && _options.ClientConfigFilePaths.Length != 0)
+        if (_options.ClientConfigFilePaths?.Length > 0)
         {
             foreach (var f in _options.ClientConfigFilePaths)
             {
