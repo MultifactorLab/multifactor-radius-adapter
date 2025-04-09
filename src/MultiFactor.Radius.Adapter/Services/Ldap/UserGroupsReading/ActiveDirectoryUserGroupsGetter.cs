@@ -14,7 +14,7 @@ namespace MultiFactor.Radius.Adapter.Services.Ldap.UserGroupsReading
 {
     public class ActiveDirectoryUserGroupsGetter : IUserGroupsGetter
     {
-        public AuthenticationSource AuthenticationSource => AuthenticationSource.ActiveDirectory | AuthenticationSource.None;
+        public AuthenticationSource AuthenticationSource => AuthenticationSource.ActiveDirectory | AuthenticationSource.None | AuthenticationSource.Radius;
 
         public async Task<string[]> GetUserGroupsFromContainerAsync(ILdapConnectionAdapter adapter, string baseDn, string userDn, bool loadNestedGroup)
         {
