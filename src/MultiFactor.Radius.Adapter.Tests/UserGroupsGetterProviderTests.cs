@@ -13,6 +13,7 @@ public class UserGroupsGetterProviderTests
 {
     [Theory]
     [InlineData(AuthenticationSource.ActiveDirectory)]
+    [InlineData(AuthenticationSource.Radius)]
     [InlineData(AuthenticationSource.None)]
     public void Get_ActiveDirectoryOrNone_ShouldReturnADGetter(AuthenticationSource source)
     {
@@ -31,7 +32,6 @@ public class UserGroupsGetterProviderTests
     }
     
     [Theory]
-    [InlineData(AuthenticationSource.Radius)]
     [InlineData(AuthenticationSource.Ldap)]
     [InlineData((AuthenticationSource)(-1))]
     public void Get_LdapOrRadiusOrUnknown_ShouldReturnDefaultGetter(AuthenticationSource source)
