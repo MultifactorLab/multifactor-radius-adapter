@@ -1,4 +1,3 @@
-using Microsoft.Extensions.Configuration;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Features;
 
 namespace Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline;
@@ -13,7 +12,6 @@ public class PipelineStepsConfiguration : IPipelineStepsConfiguration
     public PreAuthMode PreAuthMode => _preAuthMode;
     public bool ShouldCheckMembership => _shouldCheckMembership;
     
-
     public PipelineStepsConfiguration(string configurationName, PreAuthMode preAuthMode, bool shouldCheckMembership)
     {
         if (string.IsNullOrWhiteSpace(configurationName))

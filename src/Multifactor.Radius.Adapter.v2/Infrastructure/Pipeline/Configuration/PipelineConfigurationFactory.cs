@@ -4,16 +4,16 @@ using Multifactor.Radius.Adapter.v2.Infrastructure.Features;
 
 namespace Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline;
 
-public class PipelineStepTypesFactory : IPipelineStepsTypeFactory
+public class PipelineConfigurationFactory : IPipelineConfigurationFactory
 {
     private readonly IMemoryCache _memoryCache;
 
-    public PipelineStepTypesFactory(IMemoryCache memoryCache)
+    public PipelineConfigurationFactory(IMemoryCache memoryCache)
     {
         _memoryCache = memoryCache;
     }
 
-    public Type[] GetPipelineStepTypes(IPipelineStepsConfiguration pipelineStepsConfiguration)
+    public PipelineConfiguration CreatePipelineConfiguration(IPipelineStepsConfiguration pipelineStepsConfiguration)
     {
         var existedPipeline = GetExistedPipeline(pipelineStepsConfiguration.ConfigurationName);
         if (existedPipeline != null)
@@ -21,14 +21,14 @@ public class PipelineStepTypesFactory : IPipelineStepsTypeFactory
             return existedPipeline;
         }
 
-        var newPipeline = BuildNewPipeline(pipelineStepsConfiguration);
+        PipelineConfiguration newPipeline = BuildNewPipeline(pipelineStepsConfiguration);
         _memoryCache.Set(pipelineStepsConfiguration.ConfigurationName, newPipeline);
         return newPipeline;
     }
 
-    private Type[]? GetExistedPipeline(string pipelineName)
+    private PipelineConfiguration? GetExistedPipeline(string pipelineName)
     {
-        if (!_memoryCache.TryGetValue(pipelineName, out Type[]? pipeline))
+        if (!_memoryCache.TryGetValue(pipelineName, out PipelineConfiguration? pipeline))
         {
             return null;
         }
@@ -36,7 +36,7 @@ public class PipelineStepTypesFactory : IPipelineStepsTypeFactory
         return pipeline;
     }
 
-    private Type[] BuildNewPipeline(IPipelineStepsConfiguration pipelineStepsConfiguration)
+    private PipelineConfiguration BuildNewPipeline(IPipelineStepsConfiguration pipelineStepsConfiguration)
     {
         var pipeline = new List<Type>();
 
@@ -70,6 +70,6 @@ public class PipelineStepTypesFactory : IPipelineStepsTypeFactory
 
         pipeline.Add(typeof(RequestPostProcessStep));
 
-        return pipeline.ToArray();
+        return new PipelineConfiguration(pipeline.ToArray());
     }
 }

@@ -1,36 +1,43 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline;
+using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Builder;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Steps;
 
 namespace Multifactor.Radius.Adapter.v2.Core.Extensions;
 
 public static class ServiceCollectionExtensions
 {
-    public static void AddPipelineSteps(this IServiceCollection services, string pipelineKey, Type[] pipelineStepTypes)
+    public static void AddPipeline(
+        this IServiceCollection services,
+        string pipelineKey,
+        PipelineConfiguration pipelineConfiguration)
     {
-        foreach (var stepType in pipelineStepTypes)
+        if (pipelineConfiguration is null)
+            throw new ArgumentNullException(nameof(pipelineConfiguration));
+
+        foreach (var stepType in pipelineConfiguration.PipelineStepsTypes)
         {
             if (!typeof(IRadiusPipelineStep).IsAssignableFrom(stepType))
             {
                 throw new ArgumentException(
                     $"The type {stepType.FullName} does not implement {nameof(IRadiusPipelineStep)}");
             }
-            
-            services.TryAddSingleton(stepType);
+
+            services.TryAddTransient(stepType);
         }
 
-        services.AddKeyedSingleton<IRadiusPipelineStep[]>(pipelineKey, (serviceProvider, x) =>
+        services.TryAddTransient<IPipelineBuilder, PipelineBuilder>();
+        services.AddKeyedSingleton<IRadiusPipeline>(pipelineKey, (serviceProvider, x) =>
         {
-            var pipelineSteps = new List<IRadiusPipelineStep>();
-            foreach (var type in pipelineStepTypes)
+            var pipelineBuilder = serviceProvider.GetRequiredService<IPipelineBuilder>();
+            foreach (var type in pipelineConfiguration.PipelineStepsTypes)
             {
-                var step = serviceProvider.GetRequiredService(type) as IRadiusPipelineStep;
-                if (step is null)
-                    throw new InvalidOperationException($"Type {type} does not implement IPipelineStep");
-                pipelineSteps.Add(step);
+                var step = (IRadiusPipelineStep)serviceProvider.GetRequiredService(type);
+                pipelineBuilder.AddPipelineStep(step);
             }
 
-            return pipelineSteps.ToArray();
+            return pipelineBuilder.Build()!;
         });
     }
 }

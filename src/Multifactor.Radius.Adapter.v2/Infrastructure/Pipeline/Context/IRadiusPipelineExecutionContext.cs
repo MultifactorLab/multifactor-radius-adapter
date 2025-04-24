@@ -1,3 +1,4 @@
+using Multifactor.Radius.Adapter.v2.Core;
 using Multifactor.Radius.Adapter.v2.Core.Radius;
 using Multifactor.Radius.Adapter.v2.Ldap;
 
@@ -7,5 +8,7 @@ public interface IRadiusPipelineExecutionContext
 {
     IRadiusSettings Settings { get; }
     ILdapProfile UserLdapProfile { get; }
-    IRadiusPacket Packet { get; }
+    IRadiusPacket RequestPacket { get; }
+    IRadiusPacket ResponsePacket { get; }
+    IAuthenticationState AuthenticationState { get;  }
 }
