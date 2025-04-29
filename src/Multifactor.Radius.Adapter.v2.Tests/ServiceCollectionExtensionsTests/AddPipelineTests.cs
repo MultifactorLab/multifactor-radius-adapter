@@ -2,7 +2,7 @@
 
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Multifactor.Radius.Adapter.v2.Core.Extensions;
+using Multifactor.Radius.Adapter.v2.Extensions;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configuration.XmlAppConfiguration;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Steps;
