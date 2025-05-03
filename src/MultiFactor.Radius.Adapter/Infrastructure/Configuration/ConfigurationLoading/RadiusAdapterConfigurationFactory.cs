@@ -20,11 +20,12 @@ internal static class RadiusAdapterConfigurationFactory
     /// </summary>
     /// <param name="file">Configuration file path.</param>
     /// <param name="name">Configuration name.</param>
+    /// <param name="envPrefix">Custom env variable prefix.</param>
     /// <returns>Radius Adapter Configuration</returns>
     /// <exception cref="ArgumentNullException"></exception>
     /// <exception cref="FileNotFoundException"></exception>
     /// <exception cref="InvalidOperationException"></exception>
-    public static RadiusAdapterConfiguration Create(RadiusConfigurationFile file, string name = null)
+    public static RadiusAdapterConfiguration Create(RadiusConfigurationFile file, string name = null, string envPrefix = null)
     {
         if (file is null)
         {
@@ -38,7 +39,7 @@ internal static class RadiusAdapterConfigurationFactory
 
         var config = new ConfigurationBuilder()
             .AddRadiusConfigurationFile(file)
-            .AddRadiusEnvironmentVariables(name)
+            .AddRadiusEnvironmentVariables(name, customPrefix: envPrefix)
             .Build();
 
         var bounded = config.BindRadiusAdapterConfig();
@@ -57,7 +58,7 @@ internal static class RadiusAdapterConfigurationFactory
     /// <returns>Radius Adapter Configuration</returns>
     /// <exception cref="ArgumentNullException"></exception>
     /// <exception cref="InvalidOperationException"></exception>
-    public static RadiusAdapterConfiguration Create(RadiusConfigurationEnvironmentVariable environmentVariable)
+    public static RadiusAdapterConfiguration Create(RadiusConfigurationEnvironmentVariable environmentVariable, string envPrefix = null)
     {
         if (environmentVariable is null)
         {
@@ -65,7 +66,7 @@ internal static class RadiusAdapterConfigurationFactory
         }
         
         var config = new ConfigurationBuilder()
-            .AddRadiusEnvironmentVariables(environmentVariable.Name)
+            .AddRadiusEnvironmentVariables(environmentVariable.Name, customPrefix: envPrefix)
             .Build();
         
         var bounded = config.BindRadiusAdapterConfig();
@@ -82,10 +83,10 @@ internal static class RadiusAdapterConfigurationFactory
     /// </summary>
     /// <returns>Radius Adapter Configuration</returns>
     /// <exception cref="InvalidOperationException"></exception>
-    public static RadiusAdapterConfiguration Create()
+    public static RadiusAdapterConfiguration Create(string envPrefix = null)
     {
         var config = new ConfigurationBuilder()
-            .AddRadiusEnvironmentVariables()
+            .AddRadiusEnvironmentVariables(customPrefix: envPrefix)
             .Build();
         
         var bounded = config.BindRadiusAdapterConfig();

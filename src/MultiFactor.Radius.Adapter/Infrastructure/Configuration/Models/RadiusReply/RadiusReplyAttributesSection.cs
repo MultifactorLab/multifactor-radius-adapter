@@ -37,4 +37,14 @@ public class RadiusReplyAttributesSection
             return Array.Empty<RadiusReplyAttribute>();
         }
     }
+
+    public RadiusReplyAttributesSection()
+    {
+    }
+
+    public RadiusReplyAttributesSection(RadiusReplyAttribute singleElement = null, RadiusReplyAttribute[] elements = null)
+    {
+        _elements = elements;
+        _singleElement = singleElement;
+    }
 }

@@ -12,6 +12,11 @@ using MultiFactor.Radius.Adapter.Services.Ldap.UserGroupsReading;
 using MultiFactor.Radius.Adapter.Services.MultiFactorApi;
 using Serilog;
 using System;
+using MultiFactor.Radius.Adapter.Server.Pipeline.AccessRequestFilter;
+using MultiFactor.Radius.Adapter.Server.Pipeline.FirstFactorAuthentication;
+using MultiFactor.Radius.Adapter.Server.Pipeline.PreSecondFactorAuthentication;
+using MultiFactor.Radius.Adapter.Server.Pipeline.SecondFactorAuthentication;
+using MultiFactor.Radius.Adapter.Server.Pipeline.StatusServer;
 
 namespace MultiFactor.Radius.Adapter.Extensions;
 
@@ -59,5 +64,16 @@ internal static class RadiusHostApplicationBuilderExtensions
 
         builder.InternalHostApplicationBuilder.Logging.ClearProviders();
         builder.InternalHostApplicationBuilder.Logging.AddSerilog(logger);
+    }
+
+    public static void AddMiddlewares(this RadiusHostApplicationBuilder builder)
+    {
+        builder.UseMiddleware<StatusServerMiddleware>();
+        builder.UseMiddleware<AccessRequestFilterMiddleware>();
+        builder.UseMiddleware<AccessChallengeMiddleware>();
+        builder.UseMiddleware<AnonymousFirstFactorAuthenticationMiddleware>();
+        builder.UseMiddleware<PreSecondFactorAuthenticationMiddleware>();
+        builder.UseMiddleware<FirstFactorAuthenticationMiddleware>();
+        builder.UseMiddleware<SecondFactorAuthenticationMiddleware>();
     }
 }

@@ -69,7 +69,7 @@ public class DefaultClientConfigurationsProvider : IClientConfigurationsProvider
         return dict;
     }
 
-    private static IEnumerable<string> GetEnvVarClients()
+    internal static IEnumerable<string> GetEnvVarClients()
     {
         var patterns = RadiusAdapterConfiguration.KnownSectionNames
             .Select(x => $"^(?i){ConfigurationBuilderExtensions.BasePrefix}(?<cli>[a-zA-Z_]+[a-zA-Z0-9_]*)_{x}")
