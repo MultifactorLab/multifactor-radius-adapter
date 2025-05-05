@@ -9,7 +9,7 @@ namespace Multifactor.Radius.Adapter.v2.Core.Configuration.Client;
 
 public interface IClientConfiguration
 {
-    IReadOnlyList<LdapServerConfiguration> LdapServers { get; }
+    IReadOnlyList<ILdapServerConfiguration> LdapServers { get; }
     AuthenticatedClientCacheConfig AuthenticationCacheLifetime { get; }
     bool BypassSecondFactorWhenApiUnreachable { get; }
     string CallingStationIdVendorAttribute { get; }

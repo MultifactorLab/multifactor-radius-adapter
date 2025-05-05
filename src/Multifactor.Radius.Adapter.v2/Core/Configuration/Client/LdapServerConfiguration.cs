@@ -1,6 +1,6 @@
 namespace Multifactor.Radius.Adapter.v2.Core.Configuration.Client;
 
-public class LdapServerConfiguration
+public class LdapServerConfiguration : ILdapServerConfiguration
 {
     private string? _identity;
     private bool _loadNestedGroups;

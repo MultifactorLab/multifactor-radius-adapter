@@ -11,7 +11,7 @@ namespace Multifactor.Radius.Adapter.v2.Core.Pipeline;
 public class PipelineExecutionSettings : IPipelineExecutionSettings
 {
     private readonly IClientConfiguration _configuration;
-    public IReadOnlyList<LdapServerConfiguration> LdapServers => _configuration.LdapServers;
+    public IReadOnlyList<ILdapServerConfiguration> LdapServers => _configuration.LdapServers;
     public AuthenticatedClientCacheConfig AuthenticationCacheLifetime => _configuration.AuthenticationCacheLifetime;
     public bool BypassSecondFactorWhenApiUnreachable => _configuration.BypassSecondFactorWhenApiUnreachable;
     public AuthenticationSource FirstFactorAuthenticationSource => _configuration.FirstFactorAuthenticationSource;

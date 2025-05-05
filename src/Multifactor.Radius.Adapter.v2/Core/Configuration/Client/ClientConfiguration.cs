@@ -9,9 +9,9 @@ namespace Multifactor.Radius.Adapter.v2.Core.Configuration.Client;
 
 public class ClientConfiguration : IClientConfiguration
 {
-    private List<LdapServerConfiguration> _ldapServers = new();
+    private List<ILdapServerConfiguration> _ldapServers = new();
 
-    public IReadOnlyList<LdapServerConfiguration> LdapServers => _ldapServers;
+    public IReadOnlyList<ILdapServerConfiguration> LdapServers => _ldapServers;
 
     public ClientConfiguration(string name,
         string rdsSharedSecret,
@@ -184,7 +184,7 @@ public class ClientConfiguration : IClientConfiguration
         return this;
     }
 
-    public ClientConfiguration AddLdapServers(params LdapServerConfiguration[] ldapServers)
+    public ClientConfiguration AddLdapServers(params ILdapServerConfiguration[] ldapServers)
     {
         if (ldapServers?.Length > 0)
             _ldapServers.AddRange(ldapServers);
