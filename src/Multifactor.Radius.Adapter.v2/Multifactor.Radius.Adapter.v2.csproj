@@ -52,7 +52,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="Infrastructure\Features\PreAuthMode\" />
+      <Folder Include="Core\Configuration\" />
     </ItemGroup>
 
 </Project>

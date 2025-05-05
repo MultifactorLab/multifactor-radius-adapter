@@ -1,6 +1,6 @@
 using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Steps;
 using Microsoft.Extensions.Caching.Memory;
-using Multifactor.Radius.Adapter.v2.Infrastructure.Features;
+using Multifactor.Radius.Adapter.v2.Core.Auth.PreAuthMode;
 
 namespace Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline;
 

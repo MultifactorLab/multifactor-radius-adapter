@@ -1,13 +1,14 @@
 using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Context;
+using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Steps;
 
 namespace Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline;
 
 public class RadiusPipeline : IRadiusPipeline
 {
-    private readonly Func<IRadiusPipelineExecutionContext, Task> _currentStep;
-    private readonly Func<IRadiusPipelineExecutionContext, Task> _nextStep;
-    
-    public RadiusPipeline(Func<IRadiusPipelineExecutionContext, Task> currentStep, Func<IRadiusPipelineExecutionContext, Task> nextStep)
+    private readonly IRadiusPipelineStep? _currentStep;
+    private readonly IRadiusPipeline? _nextStep;
+
+    public RadiusPipeline(IRadiusPipelineStep? currentStep = null, IRadiusPipeline? nextStep = null)
     {
         _currentStep = currentStep;
         _nextStep = nextStep;
@@ -15,7 +16,9 @@ public class RadiusPipeline : IRadiusPipeline
 
     public async Task ExecuteAsync(IRadiusPipelineExecutionContext context)
     {
-        await _currentStep(context);
-        await _nextStep(context);
+        if (_currentStep is not null)
+            await _currentStep.ExecuteAsync(context);
+        if (_nextStep is not null)
+            await _nextStep.ExecuteAsync(context);
     }
 }

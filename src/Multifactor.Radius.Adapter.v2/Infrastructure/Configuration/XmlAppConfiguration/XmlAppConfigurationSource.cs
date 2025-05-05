@@ -4,7 +4,7 @@
 
 using System.Xml.Linq;
 using Microsoft.Extensions.Configuration;
-using Multifactor.Radius.Adapter.v2.Core.Extensions;
+using Multifactor.Radius.Adapter.v2.Extensions;
 
 namespace Multifactor.Radius.Adapter.v2.Infrastructure.Configuration.XmlAppConfiguration;
 

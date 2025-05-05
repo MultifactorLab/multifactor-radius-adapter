@@ -15,15 +15,15 @@ public class PipelineBuilder : IPipelineBuilder
 
     public IRadiusPipeline Build()
     {
-        var nextStep = (IRadiusPipelineExecutionContext c) => Task.CompletedTask;
+        var nextStep = new RadiusPipeline();
         if (_pipelineSteps.Count == 0)
-            return new RadiusPipeline(nextStep, nextStep);
-        
+            return nextStep;
+
         RadiusPipeline? pipeline = null;
         for (int i = _pipelineSteps.Count - 1; i >= 0; i--)
         {
-            pipeline = new RadiusPipeline(currentStep: _pipelineSteps[i].ExecuteAsync, nextStep: nextStep);
-            nextStep = pipeline.ExecuteAsync;
+            pipeline = new RadiusPipeline(currentStep: _pipelineSteps[i], nextStep: nextStep);
+            nextStep = pipeline;
         }
 
         return pipeline!;

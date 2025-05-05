@@ -1,6 +1,5 @@
 using Microsoft.Extensions.Configuration;
-using Multifactor.Radius.Adapter.v2.Infrastructure.Configuration.ConfigurationLoading;
-using Multifactor.Radius.Adapter.v2.Infrastructure.Configuration.Sections.LdapServer;
+using Multifactor.Radius.Adapter.v2.Infrastructure.Configuration;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configuration.XmlAppConfiguration;
 
 namespace Multifactor.Radius.Adapter.v2.Tests.ConfigurationTests;
@@ -37,7 +36,7 @@ public class LoadXmlConfigurationTests
                 x.LoadNestedGroups == false &&
                 x.NestedGroupsBaseDn == "nested-groups-base-dn" &&
                 x.PhoneAttributes == "phone-attributes" &&
-                x.AttributesAsIdentity == "attributes-as-identity";
+                x.IdentityAttribute == "identity-attribute";
         });
 
         Assert.Contains(config.LdapServers.LdapServer, x =>
@@ -53,7 +52,7 @@ public class LoadXmlConfigurationTests
                 x.LoadNestedGroups == true &&
                 x.NestedGroupsBaseDn == "nested-groups-base-dn" &&
                 x.PhoneAttributes == "phone-attributes" &&
-                x.AttributesAsIdentity == "attributes-as-identity";
+                x.IdentityAttribute == "identity-attribute";
         });
     }
 
