@@ -53,8 +53,22 @@ namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi
             var email = context.Profile.Email;
             var userPhone = context.Profile.Phone;
             var callingStationId = context.RequestPacket.CallingStationId;
+            
+            // CallingStationId may contain hostname. For IP policy to work correctly in MF cloud we need IP instead of hostname
+            var callingStationIdForApiRequest = IPAddress.TryParse(callingStationId ?? string.Empty, out _) ? callingStationId : context.RemoteEndpoint.Address.ToString();
             var calledStationId = context.RequestPacket.CalledStationId; //only for winlogon yet
-
+            
+            //try to get authenticated client to bypass second factor if configured
+            if (_authenticatedClientCache.TryHitCache(callingStationId, identity, context.Configuration))
+            {
+                _logger.LogInformation("Bypass second factor for user '{user:l}' with calling-station-id {csi:l} from {host:l}:{port}",
+                    identity,
+                    callingStationId,
+                    context.RemoteEndpoint.Address,
+                    context.RemoteEndpoint.Port);
+                return new SecondFactorResponse(AuthenticationCode.Bypass);
+            }
+            
             //remove user information for privacy
             switch (context.Configuration.PrivacyMode.Mode)
             {
@@ -62,7 +76,7 @@ namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi
                     displayName = null;
                     email = null;
                     userPhone = null;
-                    callingStationId = "";
+                    callingStationIdForApiRequest = "";
                     calledStationId = null;
                     break;
 
@@ -84,23 +98,12 @@ namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi
 
                     if (!context.Configuration.PrivacyMode.HasField("RemoteHost"))
                     {
-                        callingStationId = "";
+                        callingStationIdForApiRequest = "";
                     }
 
                     calledStationId = null;
 
                     break;
-            }
-
-            //try to get authenticated client to bypass second factor if configured
-            if (_authenticatedClientCache.TryHitCache(context.RequestPacket.CallingStationId, identity, context.Configuration))
-            {
-                _logger.LogInformation("Bypass second factor for user '{user:l}' with calling-station-id {csi:l} from {host:l}:{port}",
-                    identity,
-                    context.RequestPacket.CallingStationId,
-                    context.RemoteEndpoint.Address,
-                    context.RemoteEndpoint.Port);
-                return new SecondFactorResponse(AuthenticationCode.Bypass);
             }
 
             var payload = new CreateRequestDto
@@ -110,7 +113,7 @@ namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi
                 Email = email,
                 Phone = userPhone,
                 PassCode = GetPassCodeOrNull(context),
-                CallingStationId = callingStationId,
+                CallingStationId = callingStationIdForApiRequest,
                 CalledStationId = calledStationId,
                 Capabilities = new CapabilitiesDto
                 {
@@ -132,7 +135,7 @@ namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi
                 if (responseCode == AuthenticationCode.Accept && !response.Bypassed)
                 {
                     LogGrantedInfo(identity, response, context);
-                    _authenticatedClientCache.SetCache(context.RequestPacket.CallingStationId, identity, context.Configuration);
+                    _authenticatedClientCache.SetCache(callingStationId, identity, context.Configuration);
                 }
 
                 if (responseCode == AuthenticationCode.Reject)
