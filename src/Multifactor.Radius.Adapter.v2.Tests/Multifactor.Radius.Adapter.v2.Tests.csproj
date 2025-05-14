@@ -38,4 +38,10 @@
         </Content>
     </ItemGroup>
     
+    <ItemGroup>
+      <None Update="Assets\content\radius.dictionary">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
+    </ItemGroup>
+    
 </Project>
