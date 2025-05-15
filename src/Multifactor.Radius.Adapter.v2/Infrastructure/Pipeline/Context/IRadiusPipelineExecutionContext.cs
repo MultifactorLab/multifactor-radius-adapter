@@ -12,4 +12,6 @@ public interface IRadiusPipelineExecutionContext
     IRadiusPacket RequestPacket { get; }
     IRadiusPacket ResponsePacket { get; }
     IAuthenticationState AuthenticationState { get;  }
+    IResponseInformation ResponseInformation { get; }
+    IExecutionState ExecutionState { get; }
 }
