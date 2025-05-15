@@ -18,6 +18,10 @@ public class RadiusPipeline : IRadiusPipeline
     {
         if (_currentStep is not null)
             await _currentStep.ExecuteAsync(context);
+        
+        if (context.ExecutionState.IsTerminated)
+            return;
+        
         if (_nextStep is not null)
             await _nextStep.ExecuteAsync(context);
     }

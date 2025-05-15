@@ -12,4 +12,6 @@ public class RadiusPipelineExecutionContext : IRadiusPipelineExecutionContext
     public IRadiusPacket RequestPacket { get; }
     public IRadiusPacket ResponsePacket { get; }
     public IAuthenticationState AuthenticationState { get; }
+    public IResponseInformation ResponseInformation { get; }
+    public IExecutionState ExecutionState { get; }
 }

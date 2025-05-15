@@ -4,5 +4,5 @@ namespace Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Steps;
 
 public interface IRadiusPipelineStep
 {
-    public Task ExecuteAsync(IRadiusPipelineExecutionContext context);
+    Task ExecuteAsync(IRadiusPipelineExecutionContext context);
 }
