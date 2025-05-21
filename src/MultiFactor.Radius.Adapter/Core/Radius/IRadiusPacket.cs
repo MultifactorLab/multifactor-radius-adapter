@@ -62,6 +62,9 @@ namespace MultiFactor.Radius.Adapter.Core.Radius
         void AddAttribute(string name, uint value);
         void AddAttribute(string name, IPAddress value);
         void AddAttribute(string name, byte[] value);
+        
+        void AddAttributes(IDictionary<string, object> attributes);
+        
         IRadiusPacket UpdateAttribute(string name, string value);
         void CopyTo(IRadiusPacket packet);
         IRadiusPacket Clone();

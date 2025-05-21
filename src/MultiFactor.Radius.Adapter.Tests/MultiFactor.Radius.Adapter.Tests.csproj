@@ -343,4 +343,10 @@
         </None>
     </ItemGroup>
 
+    <ItemGroup>
+        <None Update="Assets\E2E\**">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
+    </ItemGroup>
+
 </Project>

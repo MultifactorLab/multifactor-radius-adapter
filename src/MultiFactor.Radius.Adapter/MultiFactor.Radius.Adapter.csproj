@@ -76,6 +76,7 @@
 	<ItemGroup>
 		<Folder Include="clients\" />
         <InternalsVisibleTo Include="MultiFactor.Radius.Adapter.Tests" />
+		<InternalsVisibleTo Include="MultiFactor.Radius.Adapter.EndToEndTests" />
 		<InternalsVisibleTo Include="DynamicProxyGenAssembly2" />
     </ItemGroup>
 
