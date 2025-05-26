@@ -53,6 +53,7 @@
 
     <ItemGroup>
       <Folder Include="Core\Configuration\" />
+      <Folder Include="Services\Utils\" />
     </ItemGroup>
 
 </Project>

@@ -1,4 +1,5 @@
 using Moq;
+using Multifactor.Radius.Adapter.v2.Core.Pipeline;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Builder;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Context;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Steps;
@@ -13,8 +14,9 @@ public class PipelineExecutionTests
         var pipelineBuilder = new PipelineBuilder();
         
         var pipeline = pipelineBuilder.Build();
-        
-        var context = new Mock<IRadiusPipelineExecutionContext>().Object;
+        var contextMock = new Mock<IRadiusPipelineExecutionContext>();
+        contextMock.Setup(x => x.ExecutionState).Returns(new ExecutionState());
+        var context = contextMock.Object;
         await pipeline!.ExecuteAsync(context);
     }
     
@@ -30,7 +32,9 @@ public class PipelineExecutionTests
         
         var pipeline = pipelineBuilder.Build();
         
-        var context = new Mock<IRadiusPipelineExecutionContext>().Object;
+        var contextMock = new Mock<IRadiusPipelineExecutionContext>();
+        contextMock.Setup(x => x.ExecutionState).Returns(new ExecutionState());
+        var context = contextMock.Object;
         await pipeline!.ExecuteAsync(context);
         
         Assert.Equal(3, executionChain.Count);
