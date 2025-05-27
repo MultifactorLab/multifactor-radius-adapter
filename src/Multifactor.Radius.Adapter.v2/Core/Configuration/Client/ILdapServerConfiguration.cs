@@ -1,3 +1,5 @@
+using Multifactor.Core.Ldap.Schema;
+
 namespace Multifactor.Radius.Adapter.v2.Core.Configuration.Client;
 
 public interface ILdapServerConfiguration
@@ -13,4 +15,6 @@ public interface ILdapServerConfiguration
     public IReadOnlyList<string> SecondFaBypassGroups { get; }
     public IReadOnlyList<string> NestedGroupsBaseDns { get; }
     public IReadOnlyList<string> PhoneAttributes { get; }
+    public ILdapSchema LdapSchema { get; }
+    public IDomainPermissionRules DomainPermissionRules { get; }
 }

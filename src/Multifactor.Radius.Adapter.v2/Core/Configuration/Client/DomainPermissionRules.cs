@@ -1,8 +1,8 @@
 using Multifactor.Core.Ldap.LangFeatures;
 
-namespace Multifactor.Radius.Adapter.v2.Services.LdapForest;
+namespace Multifactor.Radius.Adapter.v2.Core.Configuration.Client;
 
-public class DomainPermissionRules
+public class DomainPermissionRules : IDomainPermissionRules
 {
     /// <summary>
     /// Use only these domains within forest(s)

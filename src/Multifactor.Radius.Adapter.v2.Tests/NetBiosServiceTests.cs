@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Multifactor.Core.Ldap;
 using Multifactor.Core.Ldap.Connection;
 using Multifactor.Core.Ldap.Connection.LdapConnectionFactory;
+using Multifactor.Core.Ldap.Name;
 using Multifactor.Radius.Adapter.v2.Core.Ldap.Identity;
 using Multifactor.Radius.Adapter.v2.Services.LdapForest;
 using Multifactor.Radius.Adapter.v2.Services.NetBios;
@@ -30,7 +31,7 @@ public class NetBiosServiceTests
         var service = new NetBiosService(cache, connection, new NullLogger<NetBiosService>());
         var clientKey = "clientKey";
         var identity = new UserIdentity(sensitiveData["TargetUser"]);
-        var result = service.GetDomainByIdentityAsync(clientKey, sensitiveData["Server"], identity);
+        var result = service.GetDomainByIdentityAsync(clientKey, new DistinguishedName(sensitiveData["Server"]), identity);
         Assert.Equal(sensitiveData["Result"], result.StringRepresentation.ToLower());
     }
 
@@ -52,7 +53,7 @@ public class NetBiosServiceTests
         var service = new NetBiosService(cache, connection, new NullLogger<NetBiosService>());
         var clientKey = "clientKey";
         var identity = new UserIdentity(sensitiveData["TargetUser2"]);
-        var result = service.GetDomainByIdentityAsync(clientKey, sensitiveData["Server2"], identity);
+        var result = service.GetDomainByIdentityAsync(clientKey, new DistinguishedName(sensitiveData["Server2"]), identity);
         Assert.Equal(sensitiveData["Result2"], result.StringRepresentation.ToLower());
     }
 

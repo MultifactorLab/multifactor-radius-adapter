@@ -1,4 +1,5 @@
 using System.DirectoryServices.Protocols;
+using Microsoft.Extensions.Logging.Abstractions;
 using Multifactor.Core.Ldap;
 using Multifactor.Core.Ldap.Connection;
 using Multifactor.Core.Ldap.Connection.LdapConnectionFactory;
@@ -24,7 +25,7 @@ public class LdapForestLoaderTests
 
         var connection = factory.CreateConnection(options);
 
-        var loader = new ForestSchemaLoader(connection);
+        var loader = new ForestSchemaLoader(connection, NullLogger.Instance);
         var result = loader.Load(new DistinguishedName(sensitiveData["Dn"]));
         Assert.NotNull(result);
         Assert.NotEmpty(result.DomainNameSuffixes);

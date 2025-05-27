@@ -1,11 +1,11 @@
 ﻿using System.DirectoryServices.Protocols;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
 using Multifactor.Core.Ldap.Connection;
 using Multifactor.Core.Ldap.Entry;
 using Multifactor.Core.Ldap.Extensions;
 using Multifactor.Core.Ldap.LangFeatures;
 using Multifactor.Core.Ldap.Name;
+using Multifactor.Radius.Adapter.v2.Core.Configuration.Client;
 using Multifactor.Radius.Adapter.v2.Core.Ldap;
 using Multifactor.Radius.Adapter.v2.Core.Ldap.Forest;
 
@@ -13,18 +13,20 @@ namespace Multifactor.Radius.Adapter.v2.Services.LdapForest
 {
     public class ForestSchemaLoader : IForestSchemaLoader
     {
-        private readonly DomainPermissionRules? _permissionRules;
+        private readonly IDomainPermissionRules? _permissionRules;
         private readonly ILogger _logger;
         private readonly ILdapConnection _connection;
 
         private const string CommonNameAttribute = "cn";
         private const string UpnSuffixesAttribute = "uPNSuffixes";
 
-        public ForestSchemaLoader(ILdapConnection connection, ILogger? logger = null, DomainPermissionRules? permissionRules = null)
+        public ForestSchemaLoader(ILdapConnection connection, ILogger logger, IDomainPermissionRules? permissionRules = null)
         {
             Throw.IfNull(connection, nameof(connection));
+            Throw.IfNull(logger, nameof(logger));
+            
             _permissionRules = permissionRules;
-            _logger = logger ?? NullLogger.Instance;
+            _logger = logger;
             _connection = connection;
         }
 

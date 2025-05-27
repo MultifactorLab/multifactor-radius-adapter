@@ -1,3 +1,6 @@
+using Multifactor.Core.Ldap.LangFeatures;
+using Multifactor.Core.Ldap.Schema;
+
 namespace Multifactor.Radius.Adapter.v2.Core.Configuration.Client;
 
 public class LdapServerConfiguration : ILdapServerConfiguration
@@ -10,7 +13,9 @@ public class LdapServerConfiguration : ILdapServerConfiguration
     private readonly List<string> _2FaBypassGroups = new List<string>();
     private readonly List<string> _baseDns = new List<string>();
     private readonly List<string> _phones = new List<string>();
-
+    private ILdapSchema _ldapSchema;
+    private DomainPermissionRules _domainPermissionRules;
+    
     public string ConnectionString { get; }
     public string UserName { get; }
     public string Password { get; }
@@ -22,6 +27,8 @@ public class LdapServerConfiguration : ILdapServerConfiguration
     public IReadOnlyList<string> SecondFaBypassGroups => _2FaBypassGroups;
     public IReadOnlyList<string> NestedGroupsBaseDns => _baseDns;
     public IReadOnlyList<string> PhoneAttributes => _phones;
+    public ILdapSchema LdapSchema => _ldapSchema;
+    public IDomainPermissionRules DomainPermissionRules => _domainPermissionRules;
 
     public LdapServerConfiguration(string? connectionString, string? userName, string? password)
     {
@@ -35,6 +42,19 @@ public class LdapServerConfiguration : ILdapServerConfiguration
         ConnectionString = connectionString;
         UserName = userName;
         Password = password;
+    }
+
+    public LdapServerConfiguration SetDomainPermissionRules(DomainPermissionRules rules)
+    {
+        _domainPermissionRules = rules;
+        return this;
+    }
+
+    public LdapServerConfiguration SetLdapSchema(ILdapSchema ldapSchema)
+    {
+        Throw.IfNull(ldapSchema, nameof(ldapSchema));
+        _ldapSchema = ldapSchema;
+        return this;
     }
 
     public LdapServerConfiguration SetBindTimeoutInSeconds(int seconds)

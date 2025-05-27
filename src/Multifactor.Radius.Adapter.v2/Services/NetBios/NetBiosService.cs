@@ -2,6 +2,7 @@ using Microsoft.Extensions.Logging;
 using Multifactor.Core.Ldap.Connection;
 using Multifactor.Core.Ldap.LangFeatures;
 using Multifactor.Core.Ldap.Name;
+using Multifactor.Radius.Adapter.v2.Core.Configuration.Client;
 using Multifactor.Radius.Adapter.v2.Core.Interop;
 using Multifactor.Radius.Adapter.v2.Core.Ldap;
 using Multifactor.Radius.Adapter.v2.Core.Ldap.Forest;
@@ -12,12 +13,12 @@ namespace Multifactor.Radius.Adapter.v2.Services.NetBios;
 
 public class NetBiosService : INetBiosService
 {
-    private readonly ILogger<NetBiosService> _logger;
+    private readonly ILogger _logger;
     private readonly IForestMetadataCache _forestMetadataCache;
     private readonly ILdapConnection _ldapConnection;
-    private readonly DomainPermissionRules _domainPermissionRules;
+    private readonly IDomainPermissionRules _domainPermissionRules;
 
-    public NetBiosService(IForestMetadataCache forestMetadataCache, ILdapConnection connection, ILogger<NetBiosService> logger, DomainPermissionRules domainPermissionRules = null )
+    public NetBiosService(IForestMetadataCache forestMetadataCache, ILdapConnection connection, ILogger logger, IDomainPermissionRules domainPermissionRules = null )
     {
         _logger = logger;
         _forestMetadataCache = forestMetadataCache;
@@ -25,18 +26,26 @@ public class NetBiosService : INetBiosService
         _domainPermissionRules = domainPermissionRules;
     }
 
-    public DistinguishedName GetDomainByIdentityAsync(string clientKey, string possibleDomain, UserIdentity identity)
+    public string ConvertNetBiosToUpn(string clientKey, UserIdentity identity, DistinguishedName domain)
+    {
+        var netBiosParts = new NetBiosParts(identity.Identity);
+        var foundDomain = GetDomainByIdentityAsync(clientKey, domain, identity);
+        var fqdn = LdapNamesUtils.DnToFqdn(foundDomain);
+        return $"{netBiosParts.UserName}@{fqdn}";
+    }
+
+    public DistinguishedName GetDomainByIdentityAsync(string clientKey, DistinguishedName domain, UserIdentity identity)
     {
         if (identity?.Format != UserIdentityFormat.NetBiosName)
             throw new ArgumentException("Invalid identity");
 
-        Throw.IfNullOrWhiteSpace(possibleDomain, nameof(possibleDomain));
-
+        Throw.IfNull(domain, nameof(domain));
+        var fqdn = LdapNamesUtils.DnToFqdn(domain);
         _logger.LogInformation("Trying to resolve domain by user: {UserName:l}.", identity.Identity);
 
         try
         {
-            return TryStrictResolving(possibleDomain, identity);
+            return TryStrictResolving(fqdn, identity);
         }
         catch (Exception e)
         {
@@ -45,7 +54,7 @@ public class NetBiosService : INetBiosService
 
         try
         {
-            return TryFindSuitableSuffix(clientKey, possibleDomain, identity);
+            return TryFindSuitableSuffix(clientKey, fqdn, identity);
         }
         catch (Exception e)
         {
