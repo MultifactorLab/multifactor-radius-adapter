@@ -23,4 +23,5 @@ public interface IPipelineExecutionSettings
     UserNameTransformRules UserNameTransformRules { get; }
     RandomWaiterConfig InvalidCredentialDelay { get; }
     PreAuthModeDescriptor PreAuthnMode { get; }
+    string ClientConfigurationName { get; }
 }

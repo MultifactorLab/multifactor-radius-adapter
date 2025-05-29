@@ -2,6 +2,7 @@
 
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Multifactor.Radius.Adapter.v2.Core;
 using Multifactor.Radius.Adapter.v2.Extensions;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configuration.XmlAppConfiguration;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline;
@@ -16,6 +17,7 @@ public class AddPipelineTests
     {
         var pipelineKey = "MyPipeline";
         var host = Host.CreateApplicationBuilder();
+        host.Services.AddSingleton(new ApplicationVariables());
         var configuration = new PipelineConfiguration([typeof(StatusServerFilteringStep), typeof(AccessRequestFilteringStep)]);
         host.Services.AddPipeline(pipelineKey, configuration);
         var app = host.Build();
@@ -33,7 +35,7 @@ public class AddPipelineTests
         
         var configuration1 = new PipelineConfiguration([typeof(StatusServerFilteringStep), typeof(AccessRequestFilteringStep)]);
         var configuration2 = new PipelineConfiguration([typeof(CheckingMembershipStep), typeof(RequestPostProcessStep), typeof(AccessRequestFilteringStep)]);
-        
+        host.Services.AddSingleton(new ApplicationVariables());
         host.Services.AddPipeline(pipelineKey1, configuration1);
         host.Services.AddPipeline(pipelineKey2, configuration2);
         var app = host.Build();

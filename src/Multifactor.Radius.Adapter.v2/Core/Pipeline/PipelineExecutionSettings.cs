@@ -24,6 +24,7 @@ public class PipelineExecutionSettings : IPipelineExecutionSettings
     public UserNameTransformRules UserNameTransformRules => _configuration.UserNameTransformRules;
     public RandomWaiterConfig InvalidCredentialDelay => _configuration.InvalidCredentialDelay;
     public PreAuthModeDescriptor PreAuthnMode => _configuration.PreAuthnMode;
+    public string ClientConfigurationName => _configuration.Name;
 
     public PipelineExecutionSettings(IClientConfiguration clientConfiguration)
     {
