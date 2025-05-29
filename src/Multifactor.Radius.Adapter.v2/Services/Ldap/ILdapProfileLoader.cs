@@ -9,5 +9,5 @@ public interface ILdapProfileLoader
     public ILdapProfile? LoadLdapProfile(
         string filter,
         SearchScope scope = SearchScope.Subtree,
-        LdapAttributeName[]? attributeNames = null);
+        params LdapAttributeName[] attributeNames);
 }

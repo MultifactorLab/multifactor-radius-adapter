@@ -61,7 +61,7 @@ public class LdapProfileService : ILdapProfileService
 
         var filter = GetFilter(identityToSearch);
         var loader = new LdapProfileLoader(domain, connection, _ldapServerConfiguration.LdapSchema);
-        var profile = loader.LoadLdapProfile(filter, attributeNames: attributeNames);
+        var profile = loader.LoadLdapProfile(filter, attributeNames: attributeNames ?? []);
         return profile;
     }
 

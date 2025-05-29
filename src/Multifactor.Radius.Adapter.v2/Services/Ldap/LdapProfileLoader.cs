@@ -28,10 +28,10 @@ public class LdapProfileLoader : ILdapProfileLoader
     public ILdapProfile? LoadLdapProfile(
         string filter,
         SearchScope scope = SearchScope.Subtree,
-        LdapAttributeName[]? attributeNames = null)
+        params LdapAttributeName[] attributeNames)
     {
         Throw.IfNullOrWhiteSpace(filter, nameof(filter));
-        var result = _ldapConnection.Find(_searchBase, filter, scope, attributes: attributeNames ?? []);
+        var result = _ldapConnection.Find(_searchBase, filter, scope, attributes: attributeNames);
         var entry = result.FirstOrDefault();
         return entry is null ? null : new LdapProfile(entry, _ldapSchema);
     }

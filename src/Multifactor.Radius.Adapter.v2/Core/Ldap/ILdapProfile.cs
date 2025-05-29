@@ -5,7 +5,7 @@ namespace Multifactor.Radius.Adapter.v2.Core.Ldap;
 
 public interface ILdapProfile
 {
-    public DistinguishedName? Dn { get; }
+    public DistinguishedName Dn { get; }
 
     public string? Upn { get; }
 
@@ -16,6 +16,4 @@ public interface ILdapProfile
     public IReadOnlyCollection<DistinguishedName> MemberOf { get; }
     
     public IReadOnlyCollection<LdapAttribute> Attributes { get; }
-
-    public LdapAttribute? GetAttribute(LdapAttributeName attributeName);
 }

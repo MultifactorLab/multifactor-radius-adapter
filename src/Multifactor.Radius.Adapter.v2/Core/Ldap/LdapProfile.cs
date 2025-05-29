@@ -17,21 +17,16 @@ public class LdapProfile : ILdapProfile
 
         MemberOf = _ldapEntry.Attributes["memberOf"]?.GetNotEmptyValues().Select(n => new DistinguishedName(n, schema)).ToList() ?? [];
         Dn = ldapEntry.Dn;
-        Upn = GetAttribute(new LdapAttributeName("userPrincipalName"))?.GetNotEmptyValues().FirstOrDefault();
-        Phone = GetAttribute(new LdapAttributeName("phone"))?.GetNotEmptyValues().FirstOrDefault();
-        Email = GetAttribute(new LdapAttributeName("mail"))?.GetNotEmptyValues().FirstOrDefault() ?? GetAttribute(new LdapAttributeName("email"))?.GetNotEmptyValues().FirstOrDefault();
+        Upn = _ldapEntry.Attributes["userPrincipalName"]?.GetNotEmptyValues().FirstOrDefault();
+        Phone = _ldapEntry.Attributes["phone"]?.GetNotEmptyValues().FirstOrDefault();
+        Email = _ldapEntry.Attributes["mail"]?.GetNotEmptyValues().FirstOrDefault() ?? _ldapEntry.Attributes["email"]?.GetNotEmptyValues().FirstOrDefault();
         Attributes = _ldapEntry.Attributes?.ToList() ?? [];
     }
     
-    public DistinguishedName? Dn { get; }
+    public DistinguishedName Dn { get; }
     public string? Upn { get; }
     public string? Phone { get; }
     public string? Email { get; }
     public IReadOnlyCollection<DistinguishedName> MemberOf { get; }
     public IReadOnlyCollection<LdapAttribute> Attributes { get; }
-
-    public LdapAttribute? GetAttribute(LdapAttributeName attributeName)
-    {
-        return _ldapEntry.Attributes[attributeName];
-    }
 }
