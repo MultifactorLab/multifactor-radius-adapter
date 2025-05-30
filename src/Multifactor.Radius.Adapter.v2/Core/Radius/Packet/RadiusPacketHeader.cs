@@ -1,4 +1,5 @@
 using System.Security.Cryptography;
+using Multifactor.Core.Ldap.LangFeatures;
 using Multifactor.Radius.Adapter.v2.Core.Radius.Metadata;
 
 namespace Multifactor.Radius.Adapter.v2.Core.Radius.Packet
@@ -13,11 +14,20 @@ namespace Multifactor.Radius.Adapter.v2.Core.Radius.Packet
         public byte Identifier { get; }
         public RadiusAuthenticator Authenticator { get; }
         
-        private RadiusPacketHeader(PacketCode code, byte identifier, byte[] authenticator)
+        public RadiusPacketHeader(PacketCode code, byte identifier, byte[] authenticator)
         {
+            Throw.IfNull(authenticator, nameof(authenticator));
+            
             Code = code;
             Identifier = identifier;
             Authenticator = new RadiusAuthenticator(authenticator);
+        }
+        
+        public RadiusPacketHeader(PacketCode code, byte identifier, RadiusAuthenticator authenticator)
+        {
+            Code = code;
+            Identifier = identifier;
+            Authenticator = authenticator;
         }
 
         public static RadiusPacketHeader Parse(byte[] packet)

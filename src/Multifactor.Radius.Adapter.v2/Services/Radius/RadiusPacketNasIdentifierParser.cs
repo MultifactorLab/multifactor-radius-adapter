@@ -1,6 +1,6 @@
 using System.Text;
 
-namespace Multifactor.Radius.Adapter.v2.Core.Radius
+namespace Multifactor.Radius.Adapter.v2.Services.Radius
 {
     // Simple radius parser to extract NAS-Identifier attrbute
     public static class RadiusPacketNasIdentifierParser
