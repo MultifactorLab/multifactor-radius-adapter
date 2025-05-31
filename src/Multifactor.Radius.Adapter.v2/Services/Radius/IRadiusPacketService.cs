@@ -1,6 +1,7 @@
+using Multifactor.Radius.Adapter.v2.Core.Radius;
 using Multifactor.Radius.Adapter.v2.Core.Radius.Packet;
 
-namespace Multifactor.Radius.Adapter.v2.Core.Radius;
+namespace Multifactor.Radius.Adapter.v2.Services.Radius;
 
 public interface IRadiusPacketService
 {

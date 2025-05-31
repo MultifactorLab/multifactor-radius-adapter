@@ -149,7 +149,7 @@ public class LoadXmlConfigurationTests
         {
             return x.Match == "^([^@]*)$" &&
                    x.Replace == "$1@domain.local" &&
-                   x.Count == null;
+                   x.Count == 0;
         });
     }
 }

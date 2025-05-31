@@ -2,11 +2,13 @@ using System.Net;
 using System.Security.Cryptography;
 using System.Text;
 using Microsoft.Extensions.Logging;
+using Multifactor.Radius.Adapter.v2.Core;
+using Multifactor.Radius.Adapter.v2.Core.Radius;
 using Multifactor.Radius.Adapter.v2.Core.Radius.Attributes;
 using Multifactor.Radius.Adapter.v2.Core.Radius.Metadata;
 using Multifactor.Radius.Adapter.v2.Core.Radius.Packet;
 
-namespace Multifactor.Radius.Adapter.v2.Core.Radius;
+namespace Multifactor.Radius.Adapter.v2.Services.Radius;
 
 // See https://datatracker.ietf.org/doc/html/rfc2865#section-3
 public class RadiusPacketService : IRadiusPacketService
