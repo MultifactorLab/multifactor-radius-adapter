@@ -19,8 +19,9 @@ public class AccessRequestFilteringStep : IRadiusPipelineStep
             await Task.CompletedTask;
             return;
         }
-        
-        _logger.LogWarning("Unprocessable packet type: {code}", context.RequestPacket.Code);
+
+        var client = context.ProxyEndpoint?.Address ?? context.RemoteEndpoint.Address;
+        _logger.LogWarning("Unprocessable packet type: {code:l}, from {client:l}", context.RequestPacket.Code.ToString(), client.ToString());
         context.ExecutionState.Terminate();
         context.ExecutionState.SkipResponse();
     }

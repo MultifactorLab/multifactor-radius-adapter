@@ -6,6 +6,6 @@ public class CheckingMembershipStep : IRadiusPipelineStep
 {
     public Task ExecuteAsync(IRadiusPipelineExecutionContext context)
     {
-        throw new NotImplementedException();
+        return Task.CompletedTask;
     }
 }

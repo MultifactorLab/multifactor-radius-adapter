@@ -49,8 +49,7 @@ public class PipelineConfigurationFactoryTests
             e => Assert.True(typeof(AccessChallengeStep).IsAssignableFrom(e)),
             e => Assert.True(typeof(FirstFactorStep).IsAssignableFrom(e)),
             e => Assert.True(typeof(CheckingMembershipStep).IsAssignableFrom(e)),
-            e => Assert.True(typeof(SecondFactorStep).IsAssignableFrom(e)),
-            e => Assert.True(typeof(RequestPostProcessStep).IsAssignableFrom(e)));
+            e => Assert.True(typeof(SecondFactorStep).IsAssignableFrom(e)));
     }
     
     [Theory]
@@ -77,8 +76,7 @@ public class PipelineConfigurationFactoryTests
             e => Assert.True(typeof(AccessChallengeStep).IsAssignableFrom(e)),
             e => Assert.True(typeof(SecondFactorStep).IsAssignableFrom(e)),
             e => Assert.True(typeof(FirstFactorStep).IsAssignableFrom(e)),
-            e => Assert.True(typeof(CheckingMembershipStep).IsAssignableFrom(e)),
-            e => Assert.True(typeof(RequestPostProcessStep).IsAssignableFrom(e)));
+            e => Assert.True(typeof(CheckingMembershipStep).IsAssignableFrom(e)));
     }
     
     [Fact]
@@ -101,8 +99,7 @@ public class PipelineConfigurationFactoryTests
             e => Assert.True(typeof(ProfileLoadingStep).IsAssignableFrom(e)),
             e => Assert.True(typeof(AccessChallengeStep).IsAssignableFrom(e)),
             e => Assert.True(typeof(FirstFactorStep).IsAssignableFrom(e)),
-            e => Assert.True(typeof(SecondFactorStep).IsAssignableFrom(e)),
-            e => Assert.True(typeof(RequestPostProcessStep).IsAssignableFrom(e)));
+            e => Assert.True(typeof(SecondFactorStep).IsAssignableFrom(e)));
     }
 
     public class Entry : ICacheEntry

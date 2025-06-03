@@ -29,7 +29,7 @@ public class LdapSettingsTests
             },
             LdapServers = new LdapServersSection()
             {
-                LdapServer = new[]
+                LdapServers = new[]
                 {
                     new LdapServerConfiguration()
                     {
@@ -87,7 +87,7 @@ public class LdapSettingsTests
             },
             LdapServers = new LdapServersSection()
             {
-                LdapServer = new[]
+                LdapServers = new[]
                 {
                     new LdapServerConfiguration()
                     {
@@ -162,7 +162,7 @@ public class LdapSettingsTests
             },
             LdapServers = new LdapServersSection()
             {
-                LdapServer = new[]
+                LdapServers = new[]
                 {
                     ldapConfig,
                     ldapConfig

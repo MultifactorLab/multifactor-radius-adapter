@@ -1,8 +1,4 @@
-﻿//Copyright(c) 2020 MultiFactor
-//Please see licence at 
-//https://github.com/MultifactorLab/multifactor-radius-adapter/blob/main/LICENSE.md
-
-using System.Text.RegularExpressions;
+﻿using System.Text.RegularExpressions;
 using Microsoft.Extensions.Logging;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configuration;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configuration.RadiusAdapter;

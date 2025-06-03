@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<configuration>
+
+    <appSettings>
+        <add key="first-factor-authentication-source" value="Radius" />
+        <add key="radius-shared-secret" value="123" />
+        <add key="multifactor-nas-identifier" value="multifactor-nas-identifier" />
+        <add key="multifactor-shared-secret" value="multifactor-shared-secret" />
+        <add key="adapter-client-endpoint" value="0.0.0.0" />
+        <add key="nps-server-endpoint" value="127.0.0.1:1812" />
+        <!--<add key="radius-client-ip" value="radius-client-ip"/>-->
+        <add key="radius-client-nas-identifier" value="mvp" />
+        <add key="privacy-mode" value="none" />
+        <add key="pre-authentication-method" value="none" />
+        <!--<add key="authentication-cache-lifetime" value="authentication-cache-lifetime"/>-->
+        <!--<add key="authentication-cache-minimal-matching" value="true"/>-->
+        <!--<add key="invalid-credential-delay" value="invalid-credential-delay"/>-->
+        <!--<add key="calling-station-id-attribute" value="calling-station-id-attribute"/>-->
+        
+        <!--<add key="multifactor-api-proxy" value="multifactor-api-proxy"/>-->
+        <!--<add key="multifactor-api-timeout" value="multifactor-api-timeout"/>-->
+        <!--<add key="sign-up-groups" value="sign-up-groups"/>-->
+        <!--<add key="bypass-second-factor-when-api-unreachable" value="true"/>-->
+        <!--<add key="logging-format" value="logging-format"/>-->
+        <!--<add key="console-log-output-template" value="console-log-output-template"/>-->
+        <!--<add key="file-log-output-template" value="file-log-output-template"/>-->
+    </appSettings>
+
+    <ldapServers>
+        <ldapServer
+                connection-string="your.domain"
+                username="login"
+                password="pass"
+                bind-timeout-in-seconds="10" />
+     </ldapServers>
+ 
+     <RadiusReply>
+         <Attributes>
+             <add name="Fortinet-Group-Name" value="Users" when="UserGroup=VPN Users" sufficient="true" from="from" />
+             <add name="Fortinet-Group-Name" value="Admins" when="UserGroup=VPN Admins" from="from" />
+         </Attributes>
+     </RadiusReply>
+ 
+     <UserNameTransformRules>
+         <add match="^([^@]*)$" replace="$1@domain.local" count="3" />
+         <add match="^([^@]*)$" replace="$1@domain.local" />
+     </UserNameTransformRules>
+ 
+ </configuration>

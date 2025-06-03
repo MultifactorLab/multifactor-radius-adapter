@@ -1,15 +1,10 @@
-﻿//Copyright(c) 2020 MultiFactor
-//Please see licence at 
-//https://github.com/MultifactorLab/multifactor-radius-adapter/blob/main/LICENSE.md
-
-namespace Multifactor.Radius.Adapter.v2.Core.Auth
+﻿namespace Multifactor.Radius.Adapter.v2.Core.Auth
 {
     [Flags]
     public enum AuthenticationSource
     {
-        NotSpecified = 0,
-        None = 1,
-        Radius = 2,
-        Ldap = 4
+        None = 0,
+        Radius = 1,
+        Ldap = 2
     }
 }

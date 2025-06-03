@@ -9,7 +9,7 @@ namespace Multifactor.Radius.Adapter.v2.Core.Configuration.Client;
 
 public class ClientConfiguration : IClientConfiguration
 {
-    private List<ILdapServerConfiguration> _ldapServers = new();
+    private readonly List<ILdapServerConfiguration> _ldapServers = new();
 
     public IReadOnlyList<ILdapServerConfiguration> LdapServers => _ldapServers;
 

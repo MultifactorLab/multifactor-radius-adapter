@@ -1,8 +1,4 @@
-﻿//Copyright(c) 2020 MultiFactor
-//Please see licence at 
-//https://github.com/MultifactorLab/multifactor-radius-adapter/blob/main/LICENSE.md
-
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.Configuration;
 using System.Net;
 using Multifactor.Radius.Adapter.v2.Core.Configuration.Client;
@@ -25,7 +21,7 @@ public class ServiceConfiguration : IServiceConfiguration
     private readonly List<IClientConfiguration> _clients = new();
     public ReadOnlyCollection<IClientConfiguration> Clients => _clients.AsReadOnly();
 
-    public IClientConfiguration GetClient(string nasIdentifier)
+    public IClientConfiguration? GetClient(string nasIdentifier)
     {
         if (SingleClientMode)
         {
@@ -45,7 +41,7 @@ public class ServiceConfiguration : IServiceConfiguration
         return null;
     }
 
-    public IClientConfiguration GetClient(IPAddress ip)
+    public IClientConfiguration? GetClient(IPAddress ip)
     {
         if (SingleClientMode)
         {

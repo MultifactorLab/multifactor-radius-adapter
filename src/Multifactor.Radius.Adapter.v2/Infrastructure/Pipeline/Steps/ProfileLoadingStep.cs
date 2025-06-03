@@ -6,6 +6,6 @@ public class ProfileLoadingStep : IRadiusPipelineStep
 {
     public Task ExecuteAsync(IRadiusPipelineExecutionContext context)
     {
-        throw new NotImplementedException();
+        return Task.CompletedTask;
     }
 }

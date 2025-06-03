@@ -12,9 +12,9 @@ public class LdapServerConfiguration
     
     [ConfigurationKeyName("password")]
     public string? Password { get; init; }
-    
+
     [ConfigurationKeyName("bind-timeout-in-seconds")]
-    public int BindTimeoutInSeconds { get; init; }
+    public int BindTimeoutInSeconds { get; init; } = 30;
     
     [ConfigurationKeyName("access-groups")]
     public string? AccessGroups { get; init; }

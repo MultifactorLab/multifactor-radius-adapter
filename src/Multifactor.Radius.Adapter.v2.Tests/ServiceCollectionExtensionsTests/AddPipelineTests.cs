@@ -7,6 +7,7 @@ using Multifactor.Radius.Adapter.v2.Extensions;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configuration.XmlAppConfiguration;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Steps;
+using Multifactor.Radius.Adapter.v2.Services;
 
 namespace Multifactor.Radius.Adapter.v2.Tests.ServiceCollectionExtensionsTests;
 
@@ -34,7 +35,7 @@ public class AddPipelineTests
         var host = Host.CreateApplicationBuilder();
         
         var configuration1 = new PipelineConfiguration([typeof(StatusServerFilteringStep), typeof(AccessRequestFilteringStep)]);
-        var configuration2 = new PipelineConfiguration([typeof(CheckingMembershipStep), typeof(RequestPostProcessStep), typeof(AccessRequestFilteringStep)]);
+        var configuration2 = new PipelineConfiguration([typeof(CheckingMembershipStep), typeof(AdapterResponseSender), typeof(AccessRequestFilteringStep)]);
         host.Services.AddSingleton(new ApplicationVariables());
         host.Services.AddPipeline(pipelineKey1, configuration1);
         host.Services.AddPipeline(pipelineKey2, configuration2);

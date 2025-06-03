@@ -11,7 +11,7 @@ namespace Multifactor.Radius.Adapter.v2.Core.Pipeline.Settings;
 
 public interface IPipelineExecutionSettings
 {
-    ILdapServerConfiguration LdapServer { get; }
+    IReadOnlyCollection<ILdapServerConfiguration>  LdapServers { get; }
     AuthenticatedClientCacheConfig AuthenticationCacheLifetime { get; }
     bool BypassSecondFactorWhenApiUnreachable { get; }
     AuthenticationSource FirstFactorAuthenticationSource { get; }

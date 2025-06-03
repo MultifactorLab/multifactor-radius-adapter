@@ -40,12 +40,12 @@ public class RadiusFirstFactorProcessor : IFirstFactorProcessor
 
         try
         {
-            using var client = new RadiusClient(context.Settings.ServiceClientEndpoint, _logger);
-            _logger.LogDebug("Sending AccessRequest message with id={id} to Remote Radius Server {endpoint:l}", requestPacket.Identifier, context.Settings.NpsServerEndpoint);
             var transformedName = UserNameTransformation.Transform(requestPacket.UserName, context.Settings.UserNameTransformRules.BeforeFirstFactor);
             var authPacket = PreparePacket(requestPacket, transformedName, context.Settings.PreAuthnMode);
 
             var authBytes = _radiusPacketService.GetBytes(authPacket, context.Settings.RadiusSharedSecret);
+            using var client = new RadiusClient(context.Settings.ServiceClientEndpoint, _logger);
+            _logger.LogDebug("Sending AccessRequest message with id={id} to Remote Radius Server {endpoint:l}", requestPacket.Identifier, context.Settings.NpsServerEndpoint);
             var response = await client.SendPacketAsync(authPacket.Identifier, authBytes, context.Settings.NpsServerEndpoint, TimeSpan.FromSeconds(5));
 
             if (response is null)
@@ -81,9 +81,10 @@ public class RadiusFirstFactorProcessor : IFirstFactorProcessor
     {
         var authPacket = new RadiusPacket(new RadiusPacketHeader(radiusPacket.Code, radiusPacket.Identifier, radiusPacket.Authenticator));
 
-        foreach (var attr in radiusPacket.Attributes)
+        foreach (var attr in radiusPacket.Attributes.Values)
         {
-            authPacket.AddAttributeValue(attr.Key, attr.Value);
+            foreach (var attrValue in attr.Values)
+                authPacket.AddAttributeValue(attr.Name, attrValue);
         }
 
         authPacket.RemoveAttribute("Proxy-State");
