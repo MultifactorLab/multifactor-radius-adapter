@@ -12,8 +12,9 @@ namespace Multifactor.Radius.Adapter.v2.Core.Pipeline.Settings;
 
 public class PipelineExecutionSettings : IPipelineExecutionSettings
 {
-    private readonly IPipelineCommonSettings _configuration;
-    public ILdapServerConfiguration LdapServer { get; }
+    private readonly IClientConfiguration _configuration;
+    private readonly SharedSecret _sharedSecret;
+    public IReadOnlyCollection<ILdapServerConfiguration> LdapServers => _configuration.LdapServers;
     public AuthenticatedClientCacheConfig AuthenticationCacheLifetime => _configuration.AuthenticationCacheLifetime;
     public bool BypassSecondFactorWhenApiUnreachable => _configuration.BypassSecondFactorWhenApiUnreachable;
     public AuthenticationSource FirstFactorAuthenticationSource => _configuration.FirstFactorAuthenticationSource;
@@ -26,15 +27,14 @@ public class PipelineExecutionSettings : IPipelineExecutionSettings
     public UserNameTransformRules UserNameTransformRules => _configuration.UserNameTransformRules;
     public RandomWaiterConfig InvalidCredentialDelay => _configuration.InvalidCredentialDelay;
     public PreAuthModeDescriptor PreAuthnMode => _configuration.PreAuthnMode;
-    public SharedSecret RadiusSharedSecret => _configuration.RadiusSharedSecret;
-    public string ClientConfigurationName => _configuration.ClientConfigurationName;
+    public SharedSecret RadiusSharedSecret => _sharedSecret;
+    public string ClientConfigurationName => _configuration.Name;
     
-    public PipelineExecutionSettings(IPipelineCommonSettings commonConfiguration, ILdapServerConfiguration ldapServer)
+    public PipelineExecutionSettings(IClientConfiguration clientConfiguration)
     {
-        Throw.IfNull(commonConfiguration, nameof(commonConfiguration));
-        Throw.IfNull(ldapServer, nameof(ldapServer));
+        Throw.IfNull(clientConfiguration, nameof(clientConfiguration));
         
-        _configuration = commonConfiguration;
-        LdapServer = ldapServer;
+        _configuration = clientConfiguration;
+        _sharedSecret = new SharedSecret(clientConfiguration.RadiusSharedSecret);
     }
 }

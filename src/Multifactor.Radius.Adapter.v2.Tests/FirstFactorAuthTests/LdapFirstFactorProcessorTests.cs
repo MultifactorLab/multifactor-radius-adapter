@@ -33,7 +33,7 @@ public class LdapFirstFactorProcessorTests
         var serverSettings = new Mock<ILdapServerConfiguration>();
         serverSettings.Setup(x => x.ConnectionString).Returns(sensitiveData["ConnectionString"]);
         serverSettings.Setup(x => x.BindTimeoutInSeconds).Returns(30);
-        contextMock.Setup(x => x.Settings.LdapServer).Returns(serverSettings.Object);
+        contextMock.Setup(x => x.Settings.LdapServers).Returns(new[] { serverSettings.Object });
 
         var authState = new AuthenticationState();
         contextMock.Setup(x => x.AuthenticationState).Returns(authState);
@@ -46,12 +46,45 @@ public class LdapFirstFactorProcessorTests
         await processor.ProcessFirstFactor(contextMock.Object);
         Assert.Equal(AuthenticationStatus.Accept, authState.FirstFactorStatus);
     }
+    
+    [Fact]
+    public async Task LdapFirstFactorProcessor_CorrectCredentials_ShouldSaveServerConfiguration()
+    {
+        var sensitiveData = GetConfig();
+        var processor = new LdapFirstFactorProcessor(LdapConnectionFactory.Create(),
+            NullLogger<LdapFirstFactorProcessor>.Instance);
+
+        var contextMock = new Mock<IRadiusPipelineExecutionContext>();
+        contextMock.SetupProperty(x => x.FirstFactorLdapServerConfiguration);
+        var packetMock = new Mock<IRadiusPacket>();
+        packetMock.Setup(x => x.UserName).Returns(sensitiveData["UserName"]);
+        packetMock.Setup(x => x.TryGetUserPassword()).Returns(sensitiveData["Password"]);
+        contextMock.Setup(x => x.RequestPacket).Returns(packetMock.Object);
+
+        var serverSettings = new Mock<ILdapServerConfiguration>();
+        serverSettings.Setup(x => x.ConnectionString).Returns(sensitiveData["ConnectionString"]);
+        serverSettings.Setup(x => x.BindTimeoutInSeconds).Returns(30);
+        contextMock.Setup(x => x.Settings.LdapServers).Returns(new[] { serverSettings.Object });
+
+        var authState = new AuthenticationState();
+        contextMock.Setup(x => x.AuthenticationState).Returns(authState);
+
+        var transformRules = new UserNameTransformRules();
+        contextMock.Setup(x => x.Settings.UserNameTransformRules).Returns(transformRules);
+
+        contextMock.Setup(x => x.Settings.PreAuthnMode).Returns(PreAuthModeDescriptor.Default);
+        var context = contextMock.Object;
+        await processor.ProcessFirstFactor(context);
+        Assert.NotNull(context.FirstFactorLdapServerConfiguration);
+        Assert.Equal(sensitiveData["ConnectionString"], context.FirstFactorLdapServerConfiguration.ConnectionString);
+    }
 
     [Fact]
     public async Task LdapFirstFactorProcessor_IncorrectPassword_ShouldReject()
     {
         var sensitiveData = GetConfig();
-        var processor = new LdapFirstFactorProcessor(LdapConnectionFactory.Create(), NullLogger<LdapFirstFactorProcessor>.Instance);
+        var processor = new LdapFirstFactorProcessor(LdapConnectionFactory.Create(),
+            NullLogger<LdapFirstFactorProcessor>.Instance);
         var contextMock = new Mock<IRadiusPipelineExecutionContext>();
         var packetMock = new Mock<IRadiusPacket>();
         var serverSettings = new Mock<ILdapServerConfiguration>();
@@ -62,13 +95,39 @@ public class LdapFirstFactorProcessorTests
         contextMock.Setup(x => x.RequestPacket).Returns(packetMock.Object);
         serverSettings.Setup(x => x.ConnectionString).Returns(sensitiveData["ConnectionString"]);
         serverSettings.Setup(x => x.BindTimeoutInSeconds).Returns(30);
-        contextMock.Setup(x => x.Settings.LdapServer).Returns(serverSettings.Object);
+        contextMock.Setup(x => x.Settings.LdapServers).Returns(new[] { serverSettings.Object });
         contextMock.Setup(x => x.AuthenticationState).Returns(authState);
         contextMock.Setup(x => x.Settings.UserNameTransformRules).Returns(transformRules);
         contextMock.Setup(x => x.Settings.PreAuthnMode).Returns(PreAuthModeDescriptor.Default);
 
         await processor.ProcessFirstFactor(contextMock.Object);
         Assert.Equal(AuthenticationStatus.Reject, authState.FirstFactorStatus);
+    }
+    
+    [Fact]
+    public async Task LdapFirstFactorProcessor_IncorrectPassword_ShouldNotSaveLdapServerConfiguration()
+    {
+        var sensitiveData = GetConfig();
+        var processor = new LdapFirstFactorProcessor(LdapConnectionFactory.Create(),
+            NullLogger<LdapFirstFactorProcessor>.Instance);
+        var contextMock = new Mock<IRadiusPipelineExecutionContext>();
+        var packetMock = new Mock<IRadiusPacket>();
+        var serverSettings = new Mock<ILdapServerConfiguration>();
+        var authState = new AuthenticationState();
+        var transformRules = new UserNameTransformRules();
+        packetMock.Setup(x => x.UserName).Returns(sensitiveData["UserName"]);
+        packetMock.Setup(x => x.TryGetUserPassword()).Returns("pwd");
+        contextMock.Setup(x => x.RequestPacket).Returns(packetMock.Object);
+        serverSettings.Setup(x => x.ConnectionString).Returns(sensitiveData["ConnectionString"]);
+        serverSettings.Setup(x => x.BindTimeoutInSeconds).Returns(30);
+        contextMock.Setup(x => x.Settings.LdapServers).Returns(new[] { serverSettings.Object });
+        contextMock.Setup(x => x.AuthenticationState).Returns(authState);
+        contextMock.Setup(x => x.Settings.UserNameTransformRules).Returns(transformRules);
+        contextMock.Setup(x => x.Settings.PreAuthnMode).Returns(PreAuthModeDescriptor.Default);
+        contextMock.SetupProperty(x => x.FirstFactorLdapServerConfiguration);
+        var context = contextMock.Object;
+        await processor.ProcessFirstFactor(context);
+        Assert.Null(context.FirstFactorLdapServerConfiguration);
     }
 
     [Fact]
@@ -87,7 +146,7 @@ public class LdapFirstFactorProcessorTests
         contextMock.Setup(x => x.RequestPacket).Returns(packetMock.Object);
         serverSettings.Setup(x => x.ConnectionString).Returns(sensitiveData["ConnectionString"]);
         serverSettings.Setup(x => x.BindTimeoutInSeconds).Returns(30);
-        contextMock.Setup(x => x.Settings.LdapServer).Returns(serverSettings.Object);
+        contextMock.Setup(x => x.Settings.LdapServers).Returns(new[] { serverSettings.Object });
         contextMock.Setup(x => x.AuthenticationState).Returns(authState);
         contextMock.Setup(x => x.Settings.UserNameTransformRules).Returns(transformRules);
         contextMock.Setup(x => x.Settings.PreAuthnMode).Returns(PreAuthModeDescriptor.Default);
@@ -111,7 +170,7 @@ public class LdapFirstFactorProcessorTests
         packetMock.Setup(x => x.Identifier).Returns(0);
         contextMock.Setup(x => x.RequestPacket).Returns(packetMock.Object);
         contextMock.Setup(x => x.RemoteEndpoint).Returns(IPEndPoint.Parse("127.0.0.1:8080"));
-        contextMock.Setup(x => x.Settings.LdapServer).Returns(new Mock<ILdapServerConfiguration>().Object);
+        contextMock.Setup(x => x.Settings.LdapServers).Returns(new[] { new Mock<ILdapServerConfiguration>().Object });
         contextMock.Setup(x => x.AuthenticationState).Returns(authState);
         contextMock.Setup(x => x.Settings.UserNameTransformRules).Returns(transformRules);
         contextMock.Setup(x => x.Settings.PreAuthnMode).Returns(PreAuthModeDescriptor.Default);
@@ -135,7 +194,7 @@ public class LdapFirstFactorProcessorTests
         packetMock.Setup(x => x.Identifier).Returns(0);
         contextMock.Setup(x => x.RequestPacket).Returns(packetMock.Object);
         contextMock.Setup(x => x.RemoteEndpoint).Returns(IPEndPoint.Parse("127.0.0.1:8080"));
-        contextMock.Setup(x => x.Settings.LdapServer).Returns(new Mock<ILdapServerConfiguration>().Object);
+        contextMock.Setup(x => x.Settings.LdapServers).Returns(new[] { new Mock<ILdapServerConfiguration>().Object });
         contextMock.Setup(x => x.AuthenticationState).Returns(authState);
         contextMock.Setup(x => x.Settings.UserNameTransformRules).Returns(transformRules);
         contextMock.Setup(x => x.Settings.PreAuthnMode).Returns(PreAuthModeDescriptor.Default);
@@ -162,13 +221,13 @@ public class LdapFirstFactorProcessorTests
         contextMock.Setup(x => x.RequestPacket).Returns(packetMock.Object);
         serverSettings.Setup(x => x.ConnectionString).Returns("your.domain");
         serverSettings.Setup(x => x.BindTimeoutInSeconds).Returns(30);
-        contextMock.Setup(x => x.Settings.LdapServer).Returns(serverSettings.Object);
+        contextMock.Setup(x => x.Settings.LdapServers).Returns(new[] { serverSettings.Object });
         contextMock.Setup(x => x.AuthenticationState).Returns(authState);
         contextMock.Setup(x => x.Settings.UserNameTransformRules).Returns(transformRules);
         contextMock.Setup(x => x.Settings.PreAuthnMode).Returns(PreAuthModeDescriptor.Default);
         contextMock.SetupProperty(x => x.MustChangePasswordDomain);
         var context = contextMock.Object;
-        
+
         await processor.ProcessFirstFactor(context);
         Assert.Equal(AuthenticationStatus.Reject, authState.FirstFactorStatus);
         Assert.Equal("your.domain", context.MustChangePasswordDomain);
@@ -179,7 +238,7 @@ public class LdapFirstFactorProcessorTests
         var ex = new LdapException("data 773");
         return ex;
     }
-    
+
     private Dictionary<string, string> GetConfig()
     {
         return ConfigUtils.GetConfigSensitiveData("LdapFirstFactorProcessorTests.txt", "|");
