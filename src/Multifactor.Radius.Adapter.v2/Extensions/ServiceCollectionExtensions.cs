@@ -1,11 +1,13 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Multifactor.Core.Ldap.Schema;
 using Multifactor.Radius.Adapter.v2.Core.Configuration.Client.Build;
 using Multifactor.Radius.Adapter.v2.Core.Configuration.Service.Build;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configuration.RadiusAdapter.Build;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Builder;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Steps;
+using Multifactor.Radius.Adapter.v2.Services.Ldap;
 
 namespace Multifactor.Radius.Adapter.v2.Extensions;
 
@@ -60,5 +62,11 @@ public static class ServiceCollectionExtensions
 
             return config;
         });
+    }
+
+    public static void AddLdapSchemaLoader(this IServiceCollection services)
+    {
+        services.AddSingleton<LdapSchemaLoader>();
+        services.AddSingleton<ILdapSchemaLoader, CustomLdapSchemaLoader>();
     }
 }
