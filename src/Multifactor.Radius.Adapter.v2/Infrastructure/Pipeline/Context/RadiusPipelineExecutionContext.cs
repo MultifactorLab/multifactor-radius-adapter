@@ -1,5 +1,7 @@
 using System.Net;
+using Multifactor.Radius.Adapter.v2.Core;
 using Multifactor.Radius.Adapter.v2.Core.Auth;
+using Multifactor.Radius.Adapter.v2.Core.Configuration.Client;
 using Multifactor.Radius.Adapter.v2.Core.Ldap;
 using Multifactor.Radius.Adapter.v2.Core.Pipeline;
 using Multifactor.Radius.Adapter.v2.Core.Pipeline.Settings;
@@ -19,4 +21,6 @@ public class RadiusPipelineExecutionContext : IRadiusPipelineExecutionContext
     public string MustChangePasswordDomain { get; set; }
     public IPEndPoint RemoteEndpoint { get; set; }
     public IPEndPoint ProxyEndpoint { get; set; }
+    public ILdapServerConfiguration FirstFactorLdapServerConfiguration { get; set; }
+    public UserPassphrase Passphrase { get; set; }
 }
