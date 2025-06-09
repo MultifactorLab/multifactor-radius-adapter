@@ -1,5 +1,7 @@
 using System.Net;
+using Multifactor.Radius.Adapter.v2.Core;
 using Multifactor.Radius.Adapter.v2.Core.Auth;
+using Multifactor.Radius.Adapter.v2.Core.Configuration.Client;
 using Multifactor.Radius.Adapter.v2.Core.Ldap;
 using Multifactor.Radius.Adapter.v2.Core.Pipeline;
 using Multifactor.Radius.Adapter.v2.Core.Pipeline.Settings;
@@ -10,13 +12,16 @@ namespace Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Context;
 public class RadiusPipelineExecutionContext : IRadiusPipelineExecutionContext
 {
     public IPipelineExecutionSettings Settings { get; }
-    public ILdapProfile UserLdapProfile { get; }
+    public ILdapProfile UserLdapProfile { get; set; }
     public IRadiusPacket RequestPacket { get; }
     public IRadiusPacket ResponsePacket { get; set; }
-    public IAuthenticationState AuthenticationState { get; }
-    public IResponseInformation ResponseInformation { get; }
+    public IAuthenticationState AuthenticationState { get; set; }
+    public IResponseInformation ResponseInformation { get; set; } = new ResponseInformation();
     public IExecutionState ExecutionState { get; }
     public string MustChangePasswordDomain { get; set; }
     public IPEndPoint RemoteEndpoint { get; set; }
     public IPEndPoint ProxyEndpoint { get; set; }
+    public string State { get; set; }
+    public UserPassphrase Passphrase { get; set; }
+    public ILdapServerConfiguration FirstFactorLdapServerConfiguration { get; set; }
 }
