@@ -59,7 +59,7 @@ public class LdapServerConfiguration : ILdapServerConfiguration
 
     public LdapServerConfiguration SetBindTimeoutInSeconds(int seconds)
     {
-        if (seconds < 0)
+        if (seconds <= 0)
             throw new ArgumentOutOfRangeException(nameof(seconds));
 
         _timeout = seconds;
