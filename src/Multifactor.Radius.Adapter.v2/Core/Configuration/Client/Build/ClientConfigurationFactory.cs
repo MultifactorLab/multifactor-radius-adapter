@@ -1,8 +1,4 @@
-﻿//Copyright(c) 2020 MultiFactor
-//Please see licence at 
-//https://github.com/MultifactorLab/multifactor-radius-adapter/blob/main/LICENSE.md
-
-using System.Net;
+﻿using System.Net;
 using System.Text.RegularExpressions;
 using Multifactor.Radius.Adapter.v2.Core.Auth;
 using Multifactor.Radius.Adapter.v2.Core.Auth.PreAuthMode;
@@ -44,11 +40,11 @@ public class ClientConfigurationFactory : IClientConfigurationFactory
 
         var appSettings = configuration.AppSettings;
         ValidateAppSettings(appSettings, name);
-        
+
         var firstFactorAuthenticationSource = Enum.Parse<AuthenticationSource>(
             appSettings.FirstFactorAuthenticationSource,
             true);
-        
+
         var builder = new ClientConfiguration(
             name,
             appSettings.RadiusSharedSecret,
@@ -84,13 +80,13 @@ public class ClientConfigurationFactory : IClientConfigurationFactory
 
     private static void ReadLdapServersSettings(ClientConfiguration builder, LdapServersSection ldapServersSection)
     {
-        if (ldapServersSection?.LdapServer is null)
+        if (ldapServersSection?.Servers is null)
             throw InvalidConfigurationException.For(
                 x => x.LdapServers,
                 "Can't parse '{prop}' value. Config name: '{0}'",
                 builder.Name);
-
-        foreach (var ldapSettings in ldapServersSection.LdapServer)
+        
+        foreach (var ldapSettings in ldapServersSection.Servers)
         {
             var ldapConfig = new LdapServerConfiguration(
                 ldapSettings.ConnectionString,
@@ -104,7 +100,8 @@ public class ClientConfigurationFactory : IClientConfigurationFactory
                 .AddSecondFaBypassGroups(Utils.SplitString(ldapSettings.SecondFaBypassGroups))
                 .AddNestedGroupBaseDns(Utils.SplitString(ldapSettings.NestedGroupsBaseDn))
                 .SetIdentityAttribute(ldapSettings.IdentityAttribute)
-                .SetLoadNestedGroups(ldapSettings.LoadNestedGroups);
+                .SetLoadNestedGroups(ldapSettings.LoadNestedGroups)
+                .SetBindTimeoutInSeconds(ldapSettings.BindTimeoutInSeconds);
 
             builder.AddLdapServers(ldapConfig);
         }
@@ -348,17 +345,17 @@ public class ClientConfigurationFactory : IClientConfigurationFactory
         }
 
         var isDigit = int.TryParse(appSettings.FirstFactorAuthenticationSource, out _);
-        var isValidAuthSource = Enum.TryParse<AuthenticationSource>(
-            appSettings.FirstFactorAuthenticationSource,
-            true,
-            out _);
-
+        var isValidAuthSource =
+            Enum.TryParse<AuthenticationSource>(appSettings.FirstFactorAuthenticationSource, true, out _);
+        var authTypes = Enum.GetNames<AuthenticationSource>();
+        
         if (isDigit || !isValidAuthSource)
         {
             throw InvalidConfigurationException.For(
                 x => x.AppSettings.FirstFactorAuthenticationSource,
-                "Can't parse '{prop}' value. Must be one of: ActiveDirectory, Radius, None. Config name: '{0}'",
-                configName);
+                "Can't parse '{prop}' value. Must be one of: {1}. Config name: '{0}'",
+                configName,
+                string.Join(", ", authTypes));
         }
 
         if (string.IsNullOrEmpty(appSettings.RadiusSharedSecret))

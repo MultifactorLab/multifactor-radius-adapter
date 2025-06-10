@@ -176,7 +176,7 @@ public class ServiceConfigurationFactoryTests
         },
         LdapServers = new LdapServersSection()
         {
-            LdapServer = new[]
+            LdapServers = new[]
             {
                 new LdapServerConfiguration()
                 {

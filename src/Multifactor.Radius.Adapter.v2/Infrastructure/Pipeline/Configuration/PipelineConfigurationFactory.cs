@@ -68,8 +68,6 @@ public class PipelineConfigurationFactory : IPipelineConfigurationFactory
             pipeline.Add(typeof(SecondFactorStep));
         }
 
-        pipeline.Add(typeof(RequestPostProcessStep));
-
         return new PipelineConfiguration(pipeline.ToArray());
     }
 }

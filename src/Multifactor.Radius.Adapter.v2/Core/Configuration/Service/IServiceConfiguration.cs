@@ -1,8 +1,4 @@
-﻿//Copyright(c) 2020 MultiFactor
-//Please see licence at 
-//https://github.com/MultifactorLab/multifactor-radius-adapter/blob/main/LICENSE.md
-
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.Net;
 using Multifactor.Radius.Adapter.v2.Core.Configuration.Client;
 using Multifactor.Radius.Adapter.v2.Core.RandomWaiterFeature;
@@ -18,6 +14,6 @@ public interface IServiceConfiguration
     RandomWaiterConfig InvalidCredentialDelay { get; }
     IPEndPoint ServiceServerEndpoint { get; }
     bool SingleClientMode { get; }
-    IClientConfiguration GetClient(IPAddress ip);
-    IClientConfiguration GetClient(string nasIdentifier);
+    IClientConfiguration? GetClient(IPAddress ip);
+    IClientConfiguration? GetClient(string nasIdentifier);
 }

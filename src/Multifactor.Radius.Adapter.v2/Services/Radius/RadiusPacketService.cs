@@ -15,6 +15,7 @@ public class RadiusPacketService : IRadiusPacketService
 {
     private readonly ILogger _logger;
     private readonly IRadiusDictionary _radiusDictionary;
+    private const int NasIdentifierAttributeCode = 32;
 
     public RadiusPacketService(ILogger<RadiusPacketService> logger, IRadiusDictionary radiusDictionary)
     {
@@ -191,6 +192,43 @@ public class RadiusPacketService : IRadiusPacketService
         var header = RadiusPacketHeader.Create(responsePacketCode, radiusPacket.Identifier);
         var packet = new RadiusPacket(header, requestAuthenticator: radiusPacket.Authenticator);
         return packet;
+    }
+
+    public bool TryGetNasIdentifier(byte[] packetBytes, out string nasIdentifier)
+    {
+        nasIdentifier = string.Empty;
+
+        var packetLength = BitConverter.ToUInt16(packetBytes.Skip(2).Take(2).Reverse().ToArray(), 0);
+        if (packetBytes.Length != packetLength)
+        {
+            throw new InvalidOperationException($"Packet length does not match, expected: {packetLength}, actual: {packetBytes.Length}");
+        }
+
+        var position = 20;
+        while (position < packetBytes.Length)
+        {
+            var typecode = packetBytes[position];
+            var length = packetBytes[position + 1];
+
+            if (position + length > packetLength)
+            {
+                throw new ArgumentOutOfRangeException("Invalid packet length");
+            }
+
+            if (typecode == NasIdentifierAttributeCode)
+            {
+                var contentBytes = new byte[length - 2];
+                Buffer.BlockCopy(packetBytes, position + 2, contentBytes, 0, length - 2);
+
+                nasIdentifier = Encoding.UTF8.GetString(contentBytes);
+
+                return true;
+            }
+
+            position += length;
+        }
+
+        return false;
     }
 
     private void FillMessageAuthenticator(byte[] packetBytesArray, int messageAuthenticatorPosition, SharedSecret sharedSecret, RadiusAuthenticator? requestAuthenticator = null)
