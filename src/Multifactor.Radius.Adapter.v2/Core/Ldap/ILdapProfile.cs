@@ -12,6 +12,7 @@ public interface ILdapProfile
     public string? Phone { get; }
     
     public string? Email { get; }
+    public string? DisplayName { get; }
 
     public IReadOnlyCollection<DistinguishedName> MemberOf { get; }
     

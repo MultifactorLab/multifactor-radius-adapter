@@ -17,68 +17,79 @@ namespace Multifactor.Radius.Adapter.v2.Services.Ldap;
 public class LdapProfileService : ILdapProfileService
 {
     private readonly LdapConnectionFactory _ldapConnectionFactory;
-    private readonly ILdapServerConfiguration _ldapServerConfiguration;
     private readonly IForestMetadataCache _forestMetadataCache;
-    private readonly string _clientName;
     private readonly ILogger _logger;
 
-    public LdapProfileService(string clientName, ILdapServerConfiguration serverConfiguration, LdapConnectionFactory ldapConnectionFactory, IForestMetadataCache forestMetadataCache, ILogger logger)
+    public LdapProfileService(LdapConnectionFactory ldapConnectionFactory, IForestMetadataCache forestMetadataCache, ILogger logger)
     {
-        Throw.IfNullOrWhiteSpace(clientName, nameof(clientName));
-        Throw.IfNull(serverConfiguration, nameof(serverConfiguration));
         Throw.IfNull(ldapConnectionFactory, nameof(ldapConnectionFactory));
         Throw.IfNull(forestMetadataCache, nameof(forestMetadataCache));
         Throw.IfNull(logger, nameof(logger));
-
-        _clientName = clientName;
+        
         _ldapConnectionFactory = ldapConnectionFactory;
-        _ldapServerConfiguration = serverConfiguration;
         _forestMetadataCache = forestMetadataCache;
         _logger = logger;
     }
 
-    public ILdapProfile? LoadLdapProfile(DistinguishedName domain, UserIdentity userIdentity, LdapAttributeName[]? attributeNames = null)
+    public ILdapProfile? LoadLdapProfile(string clientName, ILdapServerConfiguration serverConfiguration, DistinguishedName searchBase, UserIdentity userIdentity, LdapAttributeName[]? attributeNames = null)
     {
-        Throw.IfNull(domain, nameof(domain));
+        Throw.IfNull(searchBase, nameof(searchBase));
         Throw.IfNull(userIdentity, nameof(userIdentity));
-        
-        var options = new LdapConnectionOptions(
-            new LdapConnectionString(_ldapServerConfiguration.ConnectionString),
-            AuthType.Basic,
-            _ldapServerConfiguration.UserName,
-            _ldapServerConfiguration.Password,
-            TimeSpan.FromSeconds(_ldapServerConfiguration.BindTimeoutInSeconds));
+
+        var options = GetLdapConnectionOptions(serverConfiguration);
 
         using var connection = _ldapConnectionFactory.CreateConnection(options);
 
         var identityToSearch = userIdentity;
         if (userIdentity.Format == UserIdentityFormat.NetBiosName)
         {
-            var netBiosService = new NetBiosService(_forestMetadataCache, connection, _logger, _ldapServerConfiguration.DomainPermissionRules);
-            var upn = netBiosService.ConvertNetBiosToUpn(_clientName, identityToSearch, domain);
+            var netBiosService = new NetBiosService(_forestMetadataCache, connection, _logger, serverConfiguration.DomainPermissionRules);
+            var upn = netBiosService.ConvertNetBiosToUpn(clientName, identityToSearch, searchBase);
             identityToSearch = new UserIdentity(upn);
         }
 
-        var filter = GetFilter(identityToSearch);
-        var loader = new LdapProfileLoader(domain, connection, _ldapServerConfiguration.LdapSchema);
+        var filter = GetFilter(identityToSearch, serverConfiguration);
+        var loader = new LdapProfileLoader(searchBase, connection, serverConfiguration.LdapSchema);
         var profile = loader.LoadLdapProfile(filter, attributeNames: attributeNames ?? []);
         return profile;
     }
 
-    private string GetFilter(UserIdentity identity)
+    public Task<PasswordChangeResponse> ChangeUserPasswordAsync(string newPassword, ILdapProfile ldapProfile, ILdapServerConfiguration serverConfiguration)
     {
-        var identityAttribute = GetIdentityAttribute(identity);
-        var objectClass = _ldapServerConfiguration.LdapSchema.ObjectClass;
-        var classValue = _ldapServerConfiguration.LdapSchema.UserObjectClass;
+        ArgumentException.ThrowIfNullOrWhiteSpace(newPassword, nameof(newPassword));
+        ArgumentNullException.ThrowIfNull(ldapProfile, nameof(ldapProfile));
+
+        var options = GetLdapConnectionOptions(serverConfiguration);
+        
+        using var connection = _ldapConnectionFactory.CreateConnection(options);
+        var passwordChanger = new LdapPasswordChanger(connection, serverConfiguration.LdapSchema);
+        return passwordChanger.ChangeUserPasswordAsync(newPassword, ldapProfile);
+    }
+
+    private string GetFilter(UserIdentity identity, ILdapServerConfiguration serverConfiguration)
+    {
+        var identityAttribute = GetIdentityAttribute(identity, serverConfiguration);
+        var objectClass = serverConfiguration.LdapSchema.ObjectClass;
+        var classValue = serverConfiguration.LdapSchema.UserObjectClass;
 
         return $"(&({objectClass}={classValue})({identityAttribute}={identity.Identity}))";
     }
 
-    private string GetIdentityAttribute(UserIdentity identity) => identity.Format switch
+    private string GetIdentityAttribute(UserIdentity identity, ILdapServerConfiguration serverConfiguration) => identity.Format switch
     {
         UserIdentityFormat.UserPrincipalName => "userPrincipalName",
-        UserIdentityFormat.DistinguishedName => _ldapServerConfiguration.LdapSchema.Dn,
-        UserIdentityFormat.SamAccountName => _ldapServerConfiguration.LdapSchema.Uid,
+        UserIdentityFormat.DistinguishedName => serverConfiguration.LdapSchema.Dn,
+        UserIdentityFormat.SamAccountName => serverConfiguration.LdapSchema.Uid,
         _ => throw new NotSupportedException("Unsupported user identity format")
     };
+
+    private LdapConnectionOptions GetLdapConnectionOptions(ILdapServerConfiguration serverConfiguration)
+    {
+        return new LdapConnectionOptions(
+            new LdapConnectionString(serverConfiguration.ConnectionString),
+            AuthType.Basic,
+            serverConfiguration.UserName,
+            serverConfiguration.Password,
+            TimeSpan.FromSeconds(serverConfiguration.BindTimeoutInSeconds));
+    }
 }
