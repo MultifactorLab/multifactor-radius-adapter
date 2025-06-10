@@ -1,5 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Multifactor.Core.Ldap.Schema;
 using Multifactor.Radius.Adapter.v2.Core.Configuration.Client.Build;
 using Multifactor.Radius.Adapter.v2.Core.Configuration.Service;
 using Multifactor.Radius.Adapter.v2.Core.Configuration.Service.Build;
@@ -10,6 +11,7 @@ using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Builder;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Steps;
 using Multifactor.Radius.Adapter.v2.Server.Udp;
+using Multifactor.Radius.Adapter.v2.Services.Ldap;
 
 namespace Multifactor.Radius.Adapter.v2.Extensions;
 
@@ -113,5 +115,11 @@ public static class ServiceCollectionExtensions
         services.AddTransient<ProfileLoadingStep>();
         services.AddTransient<SecondFactorStep>();
         services.AddTransient<StatusServerFilteringStep>();
+    }
+
+    public static void AddLdapSchemaLoader(this IServiceCollection services)
+    {
+        services.AddSingleton<LdapSchemaLoader>();
+        services.AddSingleton<ILdapSchemaLoader, CustomLdapSchemaLoader>();
     }
 }
