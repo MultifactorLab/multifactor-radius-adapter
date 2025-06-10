@@ -110,6 +110,7 @@ public class ProfileLoadingTests
         public string? Upn { get; }
         public string? Phone { get; }
         public string? Email { get; }
+        public string? DisplayName { get; }
         public IReadOnlyCollection<DistinguishedName> MemberOf { get; }
         public IReadOnlyCollection<LdapAttribute> Attributes { get; }
 

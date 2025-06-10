@@ -1,5 +1,6 @@
 using System.Net;
 using Multifactor.Core.Ldap.Schema;
+using Multifactor.Radius.Adapter.v2.Core;
 using Multifactor.Radius.Adapter.v2.Core.Auth;
 using Multifactor.Radius.Adapter.v2.Core.Configuration.Client;
 using Multifactor.Radius.Adapter.v2.Core.Ldap;
@@ -23,4 +24,5 @@ public interface IRadiusPipelineExecutionContext
     public IPEndPoint? ProxyEndpoint { get; set; }
     public ILdapSchema? LdapSchema { get; set; }
     ILdapServerConfiguration FirstFactorLdapServerConfiguration { get; set; }
+    UserPassphrase Passphrase { get; set; }
 }
