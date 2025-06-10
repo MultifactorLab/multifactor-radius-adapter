@@ -19,11 +19,11 @@ public class LoadXmlConfigurationTests
 
         Assert.NotNull(config);
         Assert.NotNull(config.LdapServers);
-        Assert.NotNull(config.LdapServers.LdapServer);
-        Assert.NotEmpty(config.LdapServers.LdapServer);
-        Assert.Equal(2, config.LdapServers.LdapServer.Length);
+        Assert.NotNull(config.LdapServers.Servers);
+        Assert.NotEmpty(config.LdapServers.Servers);
+        Assert.Equal(2, config.LdapServers.Servers.Length);
 
-        Assert.Contains(config.LdapServers.LdapServer, x =>
+        Assert.Contains(config.LdapServers.Servers, x =>
         {
             return
                 x.ConnectionString == "connection-string" &&
@@ -39,7 +39,7 @@ public class LoadXmlConfigurationTests
                 x.IdentityAttribute == "identity-attribute";
         });
 
-        Assert.Contains(config.LdapServers.LdapServer, x =>
+        Assert.Contains(config.LdapServers.Servers, x =>
         {
             return
                 x.ConnectionString == "connection-string" &&
