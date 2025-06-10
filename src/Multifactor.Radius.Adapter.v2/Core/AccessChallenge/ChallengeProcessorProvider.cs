@@ -9,7 +9,7 @@ public class ChallengeProcessorProvider : IChallengeProcessorProvider
         _challengeProcessors = challengeProcessors;
     }
     
-    public IChallengeProcessor? GetChallengeProcessorForIdentifier(ChallengeIdentifier identifier)
+    public IChallengeProcessor? GetChallengeProcessorByIdentifier(ChallengeIdentifier identifier)
     {
         ArgumentNullException.ThrowIfNull(identifier);
         return _challengeProcessors.FirstOrDefault(x => x.HasChallengeContext(identifier));

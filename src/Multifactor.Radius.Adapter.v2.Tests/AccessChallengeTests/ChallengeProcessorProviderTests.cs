@@ -27,7 +27,7 @@ public class ChallengeProcessorProviderTests
         processorMock.Setup(x => x.HasChallengeContext(It.IsAny<ChallengeIdentifier>())).Returns(true);
         var processor = processorMock.Object;
         var provider = new ChallengeProcessorProvider([processor]);
-        var actual = provider.GetChallengeProcessorForIdentifier(identifier);
+        var actual = provider.GetChallengeProcessorByIdentifier(identifier);
         
         Assert.NotNull(actual);
         Assert.Equal(processor, actual);
@@ -54,7 +54,7 @@ public class ChallengeProcessorProviderTests
         processorMock.Setup(x => x.HasChallengeContext(It.IsAny<ChallengeIdentifier>())).Returns(false);
         var processor = processorMock.Object;
         var provider = new ChallengeProcessorProvider([processor]);
-        var actual = provider.GetChallengeProcessorForIdentifier(identifier);
+        var actual = provider.GetChallengeProcessorByIdentifier(identifier);
         
         Assert.Null(actual);
     }

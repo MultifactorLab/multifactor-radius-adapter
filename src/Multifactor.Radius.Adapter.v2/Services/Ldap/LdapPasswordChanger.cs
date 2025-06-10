@@ -26,19 +26,13 @@ public class LdapPasswordChanger : ILdapPasswordChanger
         try
         {
             if (profile is null)
-            {
-                return Task.FromResult(new PasswordChangeResponse()
-                    { Success = false, Message = "No user profile. Cannot change password." });
-            }
+                return Task.FromResult(new PasswordChangeResponse() { Success = false, Message = "No user profile. Cannot change password." });
 
             var userDn = profile.Dn;
             var request = BuildPasswordChangeRequest(userDn, newPassword);
             var response = _ldapConnection.SendRequest(request);
             if (response.ResultCode != ResultCode.Success)
-            {
-                return Task.FromResult(
-                    new PasswordChangeResponse() { Success = false, Message = response.ErrorMessage });
-            }
+                return Task.FromResult(new PasswordChangeResponse() { Success = false, Message = response.ErrorMessage });
 
             return Task.FromResult(new PasswordChangeResponse() { Success = true });
         }

@@ -12,7 +12,6 @@ namespace Multifactor.Radius.Adapter.v2.Core.AccessChallenge;
 public class SecondFactorChallengeProcessor : IChallengeProcessor
 {
     private readonly ConcurrentDictionary<ChallengeIdentifier, IRadiusPipelineExecutionContext> _challengeContexts = new();
-
     private readonly IMultifactorApiService _apiService;
     private readonly ILogger<SecondFactorChallengeProcessor> _logger;
 
@@ -20,8 +19,8 @@ public class SecondFactorChallengeProcessor : IChallengeProcessor
 
     public SecondFactorChallengeProcessor(IMultifactorApiService apiAdapter, ILogger<SecondFactorChallengeProcessor> logger)
     {
-        _apiService = apiAdapter ?? throw new ArgumentNullException(nameof(apiAdapter));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _apiService = apiAdapter;
+        _logger = logger;
     }
 
     public ChallengeIdentifier AddChallengeContext(IRadiusPipelineExecutionContext context)
@@ -32,13 +31,11 @@ public class SecondFactorChallengeProcessor : IChallengeProcessor
         var id = new ChallengeIdentifier(context.Settings.ClientConfigurationName, context.ResponseInformation.State);
         if (_challengeContexts.TryAdd(id, context))
         {
-            _logger.LogInformation("Challenge {State:l} was added for message id={id}",
-                id.RequestId, context.RequestPacket.Identifier);
+            _logger.LogInformation("Challenge {State:l} was added for message id={id}", id.RequestId, context.RequestPacket.Identifier);
             return id;
         }
 
-        _logger.LogError("Unable to cache request id={id} for the '{cfg:l}' configuration",
-            context.RequestPacket.Identifier, context.Settings.ClientConfigurationName);
+        _logger.LogError("Unable to cache request id={id} for the '{cfg:l}' configuration", context.RequestPacket.Identifier, context.Settings.ClientConfigurationName);
         return ChallengeIdentifier.Empty;
     }
 
@@ -57,9 +54,7 @@ public class SecondFactorChallengeProcessor : IChallengeProcessor
 
         var userName = context.RequestPacket.UserName;
         if (string.IsNullOrWhiteSpace(userName))
-        {
             return ProcessEmptyName(context, identifier.RequestId);
-        }
 
         var passphrase = UserPassphrase.Parse(context.RequestPacket.TryGetUserPassword(), context.Settings.PreAuthnMode);
         var challengeStatus = ProcessAuthenticationType(context, passphrase, identifier.RequestId, out var userAnswer);
@@ -77,9 +72,7 @@ public class SecondFactorChallengeProcessor : IChallengeProcessor
     private IRadiusPipelineExecutionContext? GetChallengeContext(ChallengeIdentifier identifier)
     {
         if (_challengeContexts.TryGetValue(identifier, out IRadiusPipelineExecutionContext? request))
-        {
             return request;
-        }
 
         _logger.LogError("Unable to get cached request with state={identifier:l}", identifier);
         return null;

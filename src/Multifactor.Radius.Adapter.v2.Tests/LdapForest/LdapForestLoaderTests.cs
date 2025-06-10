@@ -23,7 +23,7 @@ public class LdapForestLoaderTests
             sensitiveData["Admin"],
             sensitiveData["AdminPwd"]);
 
-        var connection = factory.CreateConnection(options);
+        using var connection = factory.CreateConnection(options);
 
         var loader = new ForestSchemaLoader(connection, NullLogger.Instance);
         var result = loader.Load(new DistinguishedName(sensitiveData["Dn"]));

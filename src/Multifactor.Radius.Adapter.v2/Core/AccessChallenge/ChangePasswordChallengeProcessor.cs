@@ -58,9 +58,7 @@ public class ChangePasswordChallengeProcessor : IChallengeProcessor
         ArgumentNullException.ThrowIfNull(context);
         var passwordChangeRequest = GetPasswordChangeRequest(identifier.RequestId);
         if (passwordChangeRequest == null)
-        {
             return ChallengeStatus.Accept;
-        }
         
         if (string.IsNullOrWhiteSpace(context.Passphrase.Raw))
         {
@@ -68,37 +66,28 @@ public class ChangePasswordChallengeProcessor : IChallengeProcessor
             context.AuthenticationState.FirstFactorStatus = AuthenticationStatus.Reject;
             return ChallengeStatus.Reject;
         }
+
+        if (string.IsNullOrWhiteSpace(passwordChangeRequest.NewPasswordEncryptedData))
+            return RepeatPasswordChallenge(context, passwordChangeRequest);
         
-        if (!string.IsNullOrWhiteSpace(passwordChangeRequest.NewPasswordEncryptedData))
-        {
-            var decryptedNewPassword = _dataProtectionService.Unprotect(passwordChangeRequest.NewPasswordEncryptedData);
-            if (decryptedNewPassword != context.Passphrase.Raw)
-            {
-                return PasswordsNotMatchChallenge(context, passwordChangeRequest);
-            }
+        var decryptedNewPassword = _dataProtectionService.Unprotect(passwordChangeRequest.NewPasswordEncryptedData);
+        if (decryptedNewPassword != context.Passphrase.Raw)
+            return PasswordsNotMatchChallenge(context, passwordChangeRequest);
 
-            var result = await _ldapService.ChangeUserPasswordAsync(decryptedNewPassword, context.UserLdapProfile, context.FirstFactorLdapServerConfiguration);
+        var result = await _ldapService.ChangeUserPasswordAsync(decryptedNewPassword, context.UserLdapProfile, context.FirstFactorLdapServerConfiguration);
             
-            _cache.Remove(passwordChangeRequest.Id);
-            context.ResponseInformation.State = null;
+        _cache.Remove(passwordChangeRequest.Id);
+        context.ResponseInformation.State = null;
             
-            if(result.Success)
-            {
-                return ChallengeStatus.Accept;
-            }
+        if(result.Success)
+            return ChallengeStatus.Accept;
 
-            context.AuthenticationState.FirstFactorStatus = AuthenticationStatus.Reject;
+        context.AuthenticationState.FirstFactorStatus = AuthenticationStatus.Reject;
 
-            return ChallengeStatus.Reject;
-        }
-
-        return RepeatPasswordChallenge(context, passwordChangeRequest);
+        return ChallengeStatus.Reject;
     }
     
-    private PasswordChangeRequest? GetPasswordChangeRequest(string id)
-    {
-        return _cache.Get(id) as PasswordChangeRequest;
-    }
+    private PasswordChangeRequest? GetPasswordChangeRequest(string id) => _cache.Get(id) as PasswordChangeRequest;
     
     private ChallengeStatus PasswordsNotMatchChallenge(IRadiusPipelineExecutionContext request, PasswordChangeRequest passwordChangeRequest)
     {
