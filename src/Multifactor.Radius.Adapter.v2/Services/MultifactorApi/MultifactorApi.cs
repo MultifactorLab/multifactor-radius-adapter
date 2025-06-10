@@ -26,7 +26,7 @@ public class MultifactorApi : IMultifactorApi
         ArgumentNullException.ThrowIfNull(payload, nameof(payload));
         ArgumentNullException.ThrowIfNull(apiCredentials, nameof(apiCredentials));
 
-        return SendRequest("access/requests/ra", payload, apiCredentials);
+        return SendRequestAsync("access/requests/ra", payload, apiCredentials);
     }
 
     public Task<AccessRequestResponse> SendChallengeAsync(ChallengeRequest payload, ApiCredential apiCredentials)
@@ -34,10 +34,10 @@ public class MultifactorApi : IMultifactorApi
         ArgumentNullException.ThrowIfNull(payload, nameof(payload));
         ArgumentNullException.ThrowIfNull(apiCredentials, nameof(apiCredentials));
 
-        return SendRequest("access/requests/ra/challenge", payload, apiCredentials);
+        return SendRequestAsync("access/requests/ra/challenge", payload, apiCredentials);
     }
 
-    private async Task<AccessRequestResponse> SendRequest(string url, object payload, ApiCredential credentials)
+    private async Task<AccessRequestResponse> SendRequestAsync(string url, object payload, ApiCredential credentials)
     {
         var trace = $"rds-{Guid.NewGuid()}";
         using var scope = _logger.BeginScope(new Dictionary<string, object>(1) { { "mf-trace-id", trace } });
@@ -50,36 +50,11 @@ public class MultifactorApi : IMultifactorApi
 
         try
         {
-            var response = await _httpClient.PostAsync<MultiFactorApiResponse<AccessRequestResponse>>(url, payload, headers);
-            
-            if (response is null)
-                return new AccessRequestResponse()
-                {
-                    Status = RequestStatus.Denied,
-                    ReplyMessage = "Empty response",
-                };
-            
-            if (!response.Success)
-            {
-                _logger.LogWarning("Got unsuccessful response from API: {@response}", response);
-            }
-
-            return response.Model;
+            return await SendAsync(url, payload, headers);
         }
         catch (HttpRequestException ex)
         {
-            if (ex.StatusCode != HttpStatusCode.TooManyRequests)
-            {
-                throw new MultifactorApiUnreachableException(
-                    $"Multifactor API host unreachable: {url}. Reason: {ex.Message}", ex);
-            }
-
-            _logger.LogWarning("Unsuccessful api response: '{message:l}'", ex.Message);
-            return new AccessRequestResponse()
-            {
-                Status = RequestStatus.Denied,
-                ReplyMessage = "Too Many Requests"
-            };
+            return ProcessHttpRequestException(ex, url);
         }
         catch (TaskCanceledException tce)
         {
@@ -91,5 +66,40 @@ public class MultifactorApi : IMultifactorApi
             throw new MultifactorApiUnreachableException(
                 $"Multifactor API host unreachable: {url}. Reason: {ex.Message}", ex);
         }
+    }
+
+    private async Task<AccessRequestResponse> SendAsync(string url, object payload, Dictionary<string, string> headers)
+    {
+        var response = await _httpClient.PostAsync<MultiFactorApiResponse<AccessRequestResponse>>(url, payload, headers);
+            
+        if (response is null)
+            return new AccessRequestResponse()
+            {
+                Status = RequestStatus.Denied,
+                ReplyMessage = "Empty response",
+            };
+            
+        if (!response.Success)
+        {
+            _logger.LogWarning("Got unsuccessful response from API: {@response}", response);
+        }
+
+        return response.Model;
+    }
+
+    private AccessRequestResponse ProcessHttpRequestException(HttpRequestException ex, string url)
+    {
+        if (ex.StatusCode != HttpStatusCode.TooManyRequests)
+        {
+            throw new MultifactorApiUnreachableException(
+                $"Multifactor API host unreachable: {url}. Reason: {ex.Message}", ex);
+        }
+
+        _logger.LogWarning("Unsuccessful api response: '{message:l}'", ex.Message);
+        return new AccessRequestResponse()
+        {
+            Status = RequestStatus.Denied,
+            ReplyMessage = "Too Many Requests"
+        };
     }
 }
