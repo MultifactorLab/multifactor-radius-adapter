@@ -20,13 +20,8 @@ public class LdapServersSection
             {
                 return new[] { LdapServer };
             }
-            
-            if (LdapServers != null && LdapServers.All(x => !string.IsNullOrWhiteSpace(x.ConnectionString)))
-            {
-                return LdapServers;
-            }
 
-            return Array.Empty<LdapServerConfiguration>();
+            return LdapServers?.Where(x => x is not null)?.ToArray() ?? [];
         }
     }
 }

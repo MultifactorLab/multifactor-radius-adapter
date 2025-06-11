@@ -7,7 +7,7 @@ namespace Multifactor.Radius.Adapter.v2.Infrastructure.Configuration.Exceptions;
 /// <summary>
 /// The Radius adapter configuration is invalid.
 /// </summary>
-internal class InvalidConfigurationException : Exception
+public class InvalidConfigurationException : Exception
 {
     public InvalidConfigurationException(string message)
         : base($"Configuration error: {message}") { }
