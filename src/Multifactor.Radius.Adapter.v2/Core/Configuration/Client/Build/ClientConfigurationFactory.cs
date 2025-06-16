@@ -82,7 +82,7 @@ public class ClientConfigurationFactory : IClientConfigurationFactory
     {
         if (builder.FirstFactorAuthenticationSource == AuthenticationSource.Ldap)
         {
-            if (ldapServersSection?.Servers is null || ldapServersSection.Servers.Length == 0)
+            if (ldapServersSection.Servers.Length == 0)
                 throw InvalidConfigurationException.For(
                     x => x.LdapServers,
                     "Can't parse '{prop}' value. Config name: '{0}'",
@@ -90,7 +90,7 @@ public class ClientConfigurationFactory : IClientConfigurationFactory
         }
         else
         {
-            if (ldapServersSection?.Servers is null || ldapServersSection.Servers.Length == 0)
+            if (ldapServersSection.Servers.Length == 0)
                 return;
         }
 

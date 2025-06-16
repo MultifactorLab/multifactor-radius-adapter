@@ -7,15 +7,15 @@ public class LdapServerConfiguration
 {
     [ConfigurationKeyName("connection-string")]
     [Description("connection-string")]
-    public string? ConnectionString { get; init; }
+    public string ConnectionString { get; init; } = string.Empty;
     
     [ConfigurationKeyName("username")]
     [Description("username")]
-    public string? UserName { get; init; }
+    public string UserName { get; init; } = string.Empty;
     
     [ConfigurationKeyName("password")]
     [Description("password")]
-    public string? Password { get; init; }
+    public string Password { get; init; } = string.Empty;
 
     [ConfigurationKeyName("bind-timeout-in-seconds")]
     [Description("bind-timeout-in-seconds")]
@@ -23,15 +23,15 @@ public class LdapServerConfiguration
     
     [ConfigurationKeyName("access-groups")]
     [Description("access-groups")]
-    public string? AccessGroups { get; init; }
+    public string AccessGroups { get; init; } = string.Empty;
     
     [ConfigurationKeyName("second-fa-groups")]
     [Description("second-fa-groups")]
-    public string? SecondFaGroups { get; init; }
+    public string SecondFaGroups { get; init; } = string.Empty;
     
     [ConfigurationKeyName("second-fa-bypass-groups")]
     [Description("second-fa-bypass-groups")]
-    public string? SecondFaBypassGroups { get; init; }
+    public string SecondFaBypassGroups { get; init; } = string.Empty;
     
     [ConfigurationKeyName("load-nested-groups")]
     [Description("load-nested-groups")]
@@ -39,13 +39,13 @@ public class LdapServerConfiguration
     
     [ConfigurationKeyName("nested-groups-base-dn")]
     [Description("nested-groups-base-dn")]
-    public string? NestedGroupsBaseDn { get; init; }
+    public string NestedGroupsBaseDn { get; init; } = string.Empty;
     
     [ConfigurationKeyName("phone-attributes")]
     [Description("phone-attributes")]
-    public string? PhoneAttributes { get; init; }
+    public string PhoneAttributes { get; init; } = string.Empty;
     
     [ConfigurationKeyName("identity-attribute")]
     [Description("identity-attribute")]
-    public string? IdentityAttribute { get; init; }
+    public string IdentityAttribute { get; init; } = string.Empty;
 }

@@ -6,9 +6,9 @@ namespace Multifactor.Radius.Adapter.v2.Infrastructure.Configuration.RadiusAdapt
 
 public class RadiusReplyAttribute
 {
-    public string? Name { get; init; }
-    public string? Value { get; init; }
-    public string? When { get; init; }
-    public string? From { get; init; }
+    public string Name { get; init; } = string.Empty;
+    public string Value { get; init; } = string.Empty;
+    public string When { get; init; } = string.Empty;
+    public string From { get; init; } = string.Empty;
     public bool Sufficient { get; init; }
 }

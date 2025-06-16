@@ -14,7 +14,7 @@ public class LdapServerConfiguration : ILdapServerConfiguration
     private readonly List<string> _baseDns = new List<string>();
     private readonly List<string> _phones = new List<string>();
     private ILdapSchema _ldapSchema;
-    private DomainPermissionRules _domainPermissionRules;
+    private DomainPermissionRules? _domainPermissionRules;
     
     public string ConnectionString { get; }
     public string UserName { get; }
@@ -28,16 +28,13 @@ public class LdapServerConfiguration : ILdapServerConfiguration
     public IReadOnlyList<string> NestedGroupsBaseDns => _baseDns;
     public IReadOnlyList<string> PhoneAttributes => _phones;
     public ILdapSchema LdapSchema => _ldapSchema;
-    public IDomainPermissionRules DomainPermissionRules => _domainPermissionRules;
+    public IDomainPermissionRules? DomainPermissionRules => _domainPermissionRules;
 
-    public LdapServerConfiguration(string? connectionString, string? userName, string? password)
+    public LdapServerConfiguration(string connectionString, string userName, string password)
     {
-        if (string.IsNullOrWhiteSpace(connectionString))
-            throw new ArgumentNullException(nameof(connectionString));
-        if (string.IsNullOrWhiteSpace(userName))
-            throw new ArgumentNullException(nameof(userName));
-        if (string.IsNullOrWhiteSpace(password))
-            throw new ArgumentNullException(nameof(password));
+        ArgumentException.ThrowIfNullOrWhiteSpace(connectionString);
+        ArgumentException.ThrowIfNullOrWhiteSpace(userName);
+        ArgumentException.ThrowIfNullOrWhiteSpace(password);
 
         ConnectionString = connectionString;
         UserName = userName;

@@ -16,5 +16,5 @@ public interface ILdapServerConfiguration
     public IReadOnlyList<string> NestedGroupsBaseDns { get; }
     public IReadOnlyList<string> PhoneAttributes { get; }
     public ILdapSchema LdapSchema { get; }
-    public IDomainPermissionRules DomainPermissionRules { get; }
+    public IDomainPermissionRules? DomainPermissionRules { get; }
 }

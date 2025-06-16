@@ -66,7 +66,7 @@ public class LdapSettingsTests
         Assert.Empty(config.NestedGroupsBaseDns);
         Assert.Empty(config.PhoneAttributes);
         Assert.False(config.LoadNestedGroups);
-        Assert.Null(config.IdentityAttribute);
+        Assert.True(string.IsNullOrWhiteSpace(config.IdentityAttribute));
         Assert.Equal(30, config.BindTimeoutInSeconds);
     }
 
