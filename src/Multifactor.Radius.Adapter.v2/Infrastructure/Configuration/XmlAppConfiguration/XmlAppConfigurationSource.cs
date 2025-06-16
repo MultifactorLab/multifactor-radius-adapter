@@ -92,7 +92,7 @@ public class XmlAppConfigurationSource : ConfigurationProvider, IConfigurationSo
         {
             foreach (var attr in section.Attributes())
             {
-                var attrKey = $"{sectionKey}:{attr.Name}";
+                var attrKey = $"{sectionKey}:{attr.Name.LocalName.ToPascalCase()}";
                 Data[attrKey] = attr.Value;
             }
         }
