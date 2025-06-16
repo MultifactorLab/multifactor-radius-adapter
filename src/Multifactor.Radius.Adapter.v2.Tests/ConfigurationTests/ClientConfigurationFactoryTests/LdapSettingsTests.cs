@@ -65,7 +65,7 @@ public class LdapSettingsTests
         Assert.Empty(config.PhoneAttributes);
         Assert.False(config.LoadNestedGroups);
         Assert.Null(config.IdentityAttribute);
-        Assert.Equal(0, config.BindTimeoutInSeconds);
+        Assert.Equal(30, config.BindTimeoutInSeconds);
     }
 
     [Fact]
