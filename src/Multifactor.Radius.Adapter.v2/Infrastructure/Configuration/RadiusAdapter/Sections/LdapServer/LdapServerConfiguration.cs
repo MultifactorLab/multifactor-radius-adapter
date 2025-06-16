@@ -1,28 +1,39 @@
-using Microsoft.Extensions.Configuration;
+using System.ComponentModel;
 
 namespace Multifactor.Radius.Adapter.v2.Infrastructure.Configuration.RadiusAdapter.Sections.LdapServer;
 
 public class LdapServerConfiguration
 {
-    public string? ConnectionString { get; init; }
-    
-    public string? UserName { get; init; }
+    [Description("connection-string")]
+    public string ConnectionString { get; init; } = string.Empty;
 
-    public string? Password { get; init; }
+    [Description("username")]
+    public string UserName { get; init; } = string.Empty;
 
+    [Description("password")]
+    public string Password { get; init; } = string.Empty;
+
+    [Description("bind-timeout-in-seconds")]
     public int BindTimeoutInSeconds { get; init; } = 30;
 
-    public string? AccessGroups { get; init; }
+    [Description("access-groups")]
+    public string AccessGroups { get; init; } = string.Empty;
 
-    public string? SecondFaGroups { get; init; }
+    [Description("second-fa-groups")]
+    public string SecondFaGroups { get; init; } = string.Empty;
 
-    public string? SecondFaBypassGroups { get; init; }
+    [Description("second-fa-bypass-groups")]
+    public string SecondFaBypassGroups { get; init; } = string.Empty;
 
+    [Description("load-nested-groups")]
     public bool LoadNestedGroups { get; init; }
 
-    public string? NestedGroupsBaseDn { get; init; }
+    [Description("nested-groups-base-dn")]
+    public string NestedGroupsBaseDn { get; init; } = string.Empty;
 
-    public string? PhoneAttributes { get; init; }
+    [Description("phone-attributes")]
+    public string PhoneAttributes { get; init; } = string.Empty;
 
-    public string? IdentityAttribute { get; init; }
+    [Description("identity-attribute")]
+    public string IdentityAttribute { get; init; } = string.Empty;
 }

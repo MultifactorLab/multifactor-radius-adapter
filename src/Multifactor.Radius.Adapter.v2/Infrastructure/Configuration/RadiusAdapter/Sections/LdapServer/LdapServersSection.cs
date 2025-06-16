@@ -7,26 +7,29 @@ namespace Multifactor.Radius.Adapter.v2.Infrastructure.Configuration.RadiusAdapt
 public class LdapServersSection
 {
     [ConfigurationKeyName("LdapServer")]
-    public LdapServerConfiguration[]? LdapServers { get; set; }
-    
+    public LdapServerConfiguration?[] LdapServers { get; set; } = [];
+
     [ConfigurationKeyName("LdapServer")]
-    public LdapServerConfiguration? LdapServer { get; set; }
+    public LdapServerConfiguration? LdapServer { get; set; } = null;
 
     public LdapServerConfiguration[] Servers
     {
         get
         {
+            //because .net always binds empty object instead of null
             if (!string.IsNullOrWhiteSpace(LdapServer?.ConnectionString))
             {
-                return new[] { LdapServer };
-            }
-            
-            if (LdapServers != null && LdapServers.All(x => !string.IsNullOrWhiteSpace(x.ConnectionString)))
-            {
-                return LdapServers;
+                return [LdapServer];
             }
 
-            return Array.Empty<LdapServerConfiguration>();
+            var configs = new List<LdapServerConfiguration>();
+            foreach (var config in LdapServers)
+            {
+                if (config != null)
+                    configs.Add(config);
+            }
+
+            return configs.ToArray();
         }
     }
 }
