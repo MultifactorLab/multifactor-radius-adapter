@@ -147,9 +147,9 @@ public class MultifactorApiService : IMultifactorApiService
 
     private void LogGrantedInfo(string identity, AccessRequestResponse? response, IRadiusPipelineExecutionContext context)
     {
-        string countryValue = null;
-        string regionValue = null;
-        string cityValue = null;
+        string? countryValue = null;
+        string? regionValue = null;
+        string? cityValue = null;
         string? callingStationId = context?.RequestPacket?.CallingStationIdAttribute;
 
         if (response != null && IPAddress.TryParse(callingStationId, out var ip))
@@ -264,8 +264,7 @@ public class MultifactorApiService : IMultifactorApiService
     {
         return new AccessRequest
         {
-            Identity = UserNameTransformation.Transform(personalData.Identity,
-                context.Settings.UserNameTransformRules.BeforeSecondFactor),
+            Identity = UserNameTransformation.Transform(personalData.Identity, context.Settings.UserNameTransformRules.BeforeSecondFactor),
             Name = personalData.DisplayName,
             Email = personalData.Email,
             Phone = personalData.Phone,
