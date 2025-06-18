@@ -35,7 +35,7 @@ public class AddPipelineTests
         var host = Host.CreateApplicationBuilder();
         
         var configuration1 = new PipelineConfiguration([typeof(StatusServerFilteringStep), typeof(AccessRequestFilteringStep)]);
-        var configuration2 = new PipelineConfiguration([typeof(CheckingMembershipStep), typeof(AdapterResponseSender), typeof(AccessRequestFilteringStep)]);
+        var configuration2 = new PipelineConfiguration([typeof(CheckingMembershipStep), typeof(AccessRequestFilteringStep)]);
         host.Services.AddSingleton(new ApplicationVariables());
         host.Services.AddPipeline(pipelineKey1, configuration1);
         host.Services.AddPipeline(pipelineKey2, configuration2);

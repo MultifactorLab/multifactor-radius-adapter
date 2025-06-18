@@ -22,5 +22,5 @@ public interface IRadiusPipelineExecutionContext
     public IPEndPoint RemoteEndpoint { get; set; }
     public IPEndPoint ProxyEndpoint { get; set; }
     public ILdapSchema? LdapSchema { get; set; }
-    ILdapServerConfiguration FirstFactorLdapServerConfiguration { get; set; }
+    ILdapServerConfiguration FirstFactorLdapServerConfiguration { get; set; } //TODO remove
 }
