@@ -170,7 +170,7 @@ public class SecondFactorChallengeProcessorTests
     {
         var mfServiceMock = new Mock<IMultifactorApiService>();
         mfServiceMock
-            .Setup(x => x.SendChallengeAsync(It.IsAny<IRadiusPipelineExecutionContext>(), It.IsAny<string>(), It.IsAny<ChallengeIdentifier>()))
+            .Setup(x => x.SendChallengeAsync(It.IsAny<IRadiusPipelineExecutionContext>(), It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync(new MultifactorResponse(AuthenticationStatus.Accept));
         var mfService = mfServiceMock.Object;
         var processor = new SecondFactorChallengeProcessor(mfService, NullLogger<SecondFactorChallengeProcessor>.Instance);
@@ -201,7 +201,7 @@ public class SecondFactorChallengeProcessorTests
     {
         var mfServiceMock = new Mock<IMultifactorApiService>();
         mfServiceMock
-            .Setup(x => x.SendChallengeAsync(It.IsAny<IRadiusPipelineExecutionContext>(), It.IsAny<string>(), It.IsAny<ChallengeIdentifier>()))
+            .Setup(x => x.SendChallengeAsync(It.IsAny<IRadiusPipelineExecutionContext>(), It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync(new MultifactorResponse(AuthenticationStatus.Reject));
         var mfService = mfServiceMock.Object;
         var processor = new SecondFactorChallengeProcessor(mfService, NullLogger<SecondFactorChallengeProcessor>.Instance);
@@ -234,7 +234,7 @@ public class SecondFactorChallengeProcessorTests
     {
         var mfServiceMock = new Mock<IMultifactorApiService>();
         mfServiceMock
-            .Setup(x => x.SendChallengeAsync(It.IsAny<IRadiusPipelineExecutionContext>(), It.IsAny<string>(), It.IsAny<ChallengeIdentifier>()))
+            .Setup(x => x.SendChallengeAsync(It.IsAny<IRadiusPipelineExecutionContext>(), It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync(new MultifactorResponse(status));
         var mfService = mfServiceMock.Object;
         var processor = new SecondFactorChallengeProcessor(mfService, NullLogger<SecondFactorChallengeProcessor>.Instance);

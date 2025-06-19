@@ -20,7 +20,7 @@ public class LdapProfile : ILdapProfile
         Upn = _ldapEntry.Attributes["userPrincipalName"]?.GetNotEmptyValues().FirstOrDefault();
         Phone = _ldapEntry.Attributes["phone"]?.GetNotEmptyValues().FirstOrDefault();
         Email = _ldapEntry.Attributes["mail"]?.GetNotEmptyValues().FirstOrDefault() ?? _ldapEntry.Attributes["email"]?.GetNotEmptyValues().FirstOrDefault();
-        DisplayName = _ldapEntry.Attributes["displayname"]?.GetNotEmptyValues().FirstOrDefault();
+        DisplayName = _ldapEntry.Attributes["displayName"]?.GetNotEmptyValues().FirstOrDefault();
         Attributes = _ldapEntry.Attributes?.ToList() ?? [];
     }
     
