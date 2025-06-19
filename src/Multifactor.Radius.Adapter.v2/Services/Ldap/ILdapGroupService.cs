@@ -6,7 +6,8 @@ namespace Multifactor.Radius.Adapter.v2.Services.Ldap;
 
 public interface ILdapGroupService
 {
+    //TODO create request entity
     IReadOnlyList<string> LoadUserGroups(ILdapSchema ldapSchema, ILdapConnection connection, DistinguishedName userName, DistinguishedName? searchBase = null, int limit = int.MaxValue);
 
-    bool IsMemberOf(ILdapSchema ldapSchema, ILdapConnection connection, DistinguishedName userName, DistinguishedName[] groupNames, DistinguishedName? searchBase = null);
+    bool IsMemberOf(MembershipRequest request);
 }

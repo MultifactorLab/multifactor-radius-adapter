@@ -1,10 +1,5 @@
-using System.DirectoryServices.Protocols;
 using Microsoft.Extensions.Logging;
-using Multifactor.Core.Ldap;
-using Multifactor.Core.Ldap.Connection;
 using Multifactor.Core.Ldap.Name;
-using Multifactor.Radius.Adapter.v2.Core.Configuration.Client;
-using Multifactor.Radius.Adapter.v2.Core.Ldap;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Context;
 using Multifactor.Radius.Adapter.v2.Services.Ldap;
 
@@ -13,16 +8,13 @@ namespace Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Steps;
 public class AccessGroupsCheckingStep : IRadiusPipelineStep
 {
     private readonly ILdapGroupService _ldapGroupService;
-    private readonly ILdapConnectionFactory _ldapConnectionFactory;
     private readonly ILogger<AccessGroupsCheckingStep> _logger;
 
     public AccessGroupsCheckingStep(
         ILdapGroupService ldapGroupService,
-        ILdapConnectionFactory ldapConnectionFactory,
         ILogger<AccessGroupsCheckingStep> logger)
     {
         _ldapGroupService = ldapGroupService;
-        _ldapConnectionFactory = ldapConnectionFactory;
         _logger = logger;
     }
 
@@ -38,50 +30,27 @@ public class AccessGroupsCheckingStep : IRadiusPipelineStep
             return Task.CompletedTask;
 
         var accessGroupsDns = serverConfig.AccessGroups.Select(x => new DistinguishedName(x)).ToArray();
-        var isMemberOf = ProcessProfileGroups(context, accessGroupsDns);
-        if (isMemberOf)
-            return Task.CompletedTask;
-        
-        if (!context.Settings.LdapServerConfiguration.LoadNestedGroups)
-            return TerminatePipeline(context);
-
-        isMemberOf = ProcessNestedGroups(context, accessGroupsDns);
-        
-        return isMemberOf ? Task.CompletedTask : TerminatePipeline(context);
+        var request = GetMembershipRequest(context, accessGroupsDns);
+        var isMember = _ldapGroupService.IsMemberOf(request);
+            
+        return isMember ? Task.CompletedTask : TerminatePipeline(context);
     }
 
-    private bool ProcessProfileGroups(IRadiusPipelineExecutionContext context, DistinguishedName[] accessGroupsDns)
+    private MembershipRequest GetMembershipRequest(IRadiusPipelineExecutionContext context, DistinguishedName[] accessGroupNames)
     {
-        var intersection = context.UserLdapProfile.MemberOf.Intersect(accessGroupsDns);
-        return intersection.Any();
+        return new MembershipRequest(
+            context.UserLdapProfile.Dn,
+            context.UserLdapProfile.MemberOf.ToArray(),
+            context.Settings.LdapServerConfiguration.LoadNestedGroups,
+            context.Settings.LdapServerConfiguration.NestedGroupsBaseDns.Select(x => new DistinguishedName(x)).ToArray(),
+            context.Settings.LdapServerConfiguration.ConnectionString,
+            context.Settings.LdapServerConfiguration.UserName,
+            context.Settings.LdapServerConfiguration.Password,
+            context.Settings.LdapServerConfiguration.BindTimeoutInSeconds,
+            context.LdapSchema!,
+            accessGroupNames
+        );
     }
-
-    private bool ProcessNestedGroups(IRadiusPipelineExecutionContext context, DistinguishedName[] accessGroupsDns)
-    {
-        if (context.LdapSchema is null)
-            throw new InvalidOperationException("No LDAP schema configured.");
-        
-        using var connection = GetConnection(context.Settings.LdapServerConfiguration);
-        return IsMemberOfNestedGroups(context, connection, accessGroupsDns);
-    }
-
-    private ILdapConnection GetConnection(ILdapServerConfiguration serverConfiguration)
-    {
-        var options = new LdapConnectionOptions(
-            new LdapConnectionString(serverConfiguration.ConnectionString),
-            AuthType.Basic,
-            serverConfiguration.UserName,
-            serverConfiguration.Password,
-            TimeSpan.FromSeconds(serverConfiguration.BindTimeoutInSeconds));
-
-        return _ldapConnectionFactory.CreateConnection(options);
-    }
-
-    private bool IsMemberOfNestedGroups(IRadiusPipelineExecutionContext context, ILdapConnection connection, DistinguishedName[] accessGroupsDns) => context.Settings.LdapServerConfiguration.NestedGroupsBaseDns.Count > 0
-        ? context.Settings.LdapServerConfiguration.NestedGroupsBaseDns
-            .Select(x =>  _ldapGroupService.IsMemberOf(context.LdapSchema!, connection, context.UserLdapProfile.Dn, accessGroupsDns, new DistinguishedName(x)))
-            .Any(isMemberOf => isMemberOf)
-        : _ldapGroupService.IsMemberOf(context.LdapSchema!, connection, context.UserLdapProfile.Dn, accessGroupsDns);
 
     private Task TerminatePipeline(IRadiusPipelineExecutionContext context)
     {
