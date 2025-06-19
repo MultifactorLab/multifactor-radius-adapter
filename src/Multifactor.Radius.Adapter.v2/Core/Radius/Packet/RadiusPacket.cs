@@ -70,6 +70,7 @@ public class RadiusPacket : IRadiusPacket
     public string? MsRasClientNameAttribute => GetAttributeValueAsString("MS-RAS-Client-Name");
 
     public string? CallingStationIdAttribute => GetAttributeValueAsString("Calling-Station-Id");
+    public string? RemoteHostName => GetAttributeValueAsString("MS-Client-Machine-Account-Name") ?? GetAttributeValueAsString("MS-RAS-Client-Name");
 
     public string? CalledStationIdAttribute => GetAttributeValueAsString("Called-Station-Id");
 
