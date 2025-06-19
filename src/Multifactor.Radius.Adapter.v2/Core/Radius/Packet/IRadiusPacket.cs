@@ -17,6 +17,7 @@ public interface IRadiusPacket
     public string? MsClientMachineAccountNameAttribute { get; }
     public string? MsRasClientNameAttribute { get; }
     public string? CallingStationIdAttribute { get; }
+    public string? RemoteHostName { get; }
     public string? CalledStationIdAttribute { get; }
     public string? NasIdentifierAttribute { get; }
     public string? TryGetUserPassword();

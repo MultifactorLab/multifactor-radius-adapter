@@ -22,7 +22,7 @@ public class LdapProfileLoaderTests
             AuthType.Basic,
             sensitiveData["Admin"],
             sensitiveData["AdminPwd"]);
-        var connection = factory.CreateConnection(options);
+        using var connection = factory.CreateConnection(options);
         
         var searchBase = new DistinguishedName(sensitiveData["SearchBase"]);
         var schema =  LdapSchemaBuilder.Create();
