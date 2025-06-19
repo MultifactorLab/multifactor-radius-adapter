@@ -80,11 +80,21 @@ public class ClientConfigurationFactory : IClientConfigurationFactory
 
     private static void ReadLdapServersSettings(ClientConfiguration builder, LdapServersSection ldapServersSection)
     {
-        if (ldapServersSection?.Servers is null)
-            throw InvalidConfigurationException.For(
-                x => x.LdapServers,
-                "Can't parse '{prop}' value. Config name: '{0}'",
-                builder.Name);
+        if (builder.FirstFactorAuthenticationSource == AuthenticationSource.Ldap)
+        {
+            if (ldapServersSection.Servers.Length == 0)
+                throw InvalidConfigurationException.For(
+                    x => x.LdapServers,
+                    "Can't parse '{prop}' value. Config name: '{0}'",
+                    builder.Name);
+        }
+        else
+        {
+            if (ldapServersSection.Servers.Length == 0)
+                return;
+        }
+
+        ValidateLdapServers(ldapServersSection, builder.Name);
         
         foreach (var ldapSettings in ldapServersSection.Servers)
         {
@@ -195,7 +205,7 @@ public class ClientConfigurationFactory : IClientConfigurationFactory
 
     private static void ReadRadiusAuthenticationSourceSettings(ClientConfiguration builder, AppSettingsSection appSettings)
     {
-        if (string.IsNullOrEmpty(appSettings.AdapterClientEndpoint))
+        if (string.IsNullOrWhiteSpace(appSettings.AdapterClientEndpoint))
         {
             throw InvalidConfigurationException.For(
                 x => x.AppSettings.AdapterClientEndpoint,
@@ -203,7 +213,7 @@ public class ClientConfigurationFactory : IClientConfigurationFactory
                 builder.Name);
         }
 
-        if (string.IsNullOrEmpty(appSettings.NpsServerEndpoint))
+        if (string.IsNullOrWhiteSpace(appSettings.NpsServerEndpoint))
         {
             throw InvalidConfigurationException.For(
                 x => x.AppSettings.NpsServerEndpoint,
@@ -290,7 +300,7 @@ public class ClientConfigurationFactory : IClientConfigurationFactory
                     replyAttributes.Add(attribute.Name, new List<RadiusReplyAttributeValue>());
                 }
 
-                if (!string.IsNullOrEmpty(attribute.From))
+                if (!string.IsNullOrWhiteSpace(attribute.From))
                 {
                     replyAttributes[attribute.Name]
                         .Add(new RadiusReplyAttributeValue(attribute.From, attribute.Sufficient));
@@ -319,7 +329,7 @@ public class ClientConfigurationFactory : IClientConfigurationFactory
 
     private static object ParseRadiusReplyAttributeValue(DictionaryAttribute attribute, string value)
     {
-        if (string.IsNullOrEmpty(value))
+        if (string.IsNullOrWhiteSpace(value))
         {
             throw new Exception("Value must be specified");
         }
@@ -336,7 +346,7 @@ public class ClientConfigurationFactory : IClientConfigurationFactory
 
     private void ValidateAppSettings(AppSettingsSection appSettings, string configName)
     {
-        if (string.IsNullOrEmpty(appSettings.FirstFactorAuthenticationSource))
+        if (string.IsNullOrWhiteSpace(appSettings.FirstFactorAuthenticationSource))
         {
             throw InvalidConfigurationException.For(
                 x => x.AppSettings.FirstFactorAuthenticationSource,
@@ -358,7 +368,7 @@ public class ClientConfigurationFactory : IClientConfigurationFactory
                 string.Join(", ", authTypes));
         }
 
-        if (string.IsNullOrEmpty(appSettings.RadiusSharedSecret))
+        if (string.IsNullOrWhiteSpace(appSettings.RadiusSharedSecret))
         {
             throw InvalidConfigurationException.For(
                 x => x.AppSettings.RadiusSharedSecret,
@@ -366,7 +376,7 @@ public class ClientConfigurationFactory : IClientConfigurationFactory
                 configName);
         }
 
-        if (string.IsNullOrEmpty(appSettings.MultifactorNasIdentifier))
+        if (string.IsNullOrWhiteSpace(appSettings.MultifactorNasIdentifier))
         {
             throw InvalidConfigurationException.For(
                 x => x.AppSettings.MultifactorNasIdentifier,
@@ -374,12 +384,42 @@ public class ClientConfigurationFactory : IClientConfigurationFactory
                 configName);
         }
 
-        if (string.IsNullOrEmpty(appSettings.MultifactorSharedSecret))
+        if (string.IsNullOrWhiteSpace(appSettings.MultifactorSharedSecret))
         {
             throw InvalidConfigurationException.For(
                 x => x.AppSettings.MultifactorSharedSecret,
                 "'{prop}' element not found. Config name: '{0}'",
                 configName);
+        }
+    }
+
+    private static void ValidateLdapServers(LdapServersSection section, string configName)
+    {
+        foreach (var server in section.Servers)
+        {
+            if (string.IsNullOrWhiteSpace(server.ConnectionString))
+            {
+                throw InvalidConfigurationException.For(
+                    x => server.ConnectionString,
+                    "Can't parse '{prop}' value. Config name: '{0}'",
+                    configName);
+            }
+
+            if (string.IsNullOrWhiteSpace(server.Password))
+            {
+                throw InvalidConfigurationException.For(
+                    x => server.Password,
+                    "Can't parse '{prop}' value. Config name: '{0}'",
+                    configName);
+            }
+            
+            if (string.IsNullOrWhiteSpace(server.UserName))
+            {
+                throw InvalidConfigurationException.For(
+                    x => server.UserName,
+                    "Can't parse '{prop}' value. Config name: '{0}'",
+                    configName);
+            }
         }
     }
 }

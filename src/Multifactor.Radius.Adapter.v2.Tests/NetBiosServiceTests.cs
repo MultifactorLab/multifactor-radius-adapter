@@ -25,7 +25,7 @@ public class NetBiosServiceTests
             sensitiveData["Admin"],
             sensitiveData["AdminPwd"]);
 
-        var connection = factory.CreateConnection(options);
+        using var connection = factory.CreateConnection(options);
         var cache = new ForestMetadataCache();
 
         var service = new NetBiosService(cache, connection, new NullLogger<NetBiosService>());
@@ -47,7 +47,7 @@ public class NetBiosServiceTests
             sensitiveData["Admin"],
             sensitiveData["AdminPwd"]);
 
-        var connection = factory.CreateConnection(options);
+        using var connection = factory.CreateConnection(options);
         var cache = new ForestMetadataCache();
 
         var service = new NetBiosService(cache, connection, new NullLogger<NetBiosService>());

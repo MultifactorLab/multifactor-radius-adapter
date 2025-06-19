@@ -27,7 +27,7 @@ public class PrivacyModeDescriptor
         _fields = fields ?? throw new ArgumentNullException(nameof(fields));
     }
 
-    public static PrivacyModeDescriptor Create(string value)
+    public static PrivacyModeDescriptor Create(string? value)
     {
         if (string.IsNullOrWhiteSpace(value)) return new PrivacyModeDescriptor(PrivacyMode.None);
 
@@ -40,15 +40,20 @@ public class PrivacyModeDescriptor
 
     private static PrivacyMode GetMode(string value)
     {
+        if (int.TryParse(value, out _))
+            throw new Exception("Unexpected privacy-mode value");
+
         var index = value.IndexOf(':');
         if (index == -1)
         {
-            if (!Enum.TryParse<PrivacyMode>(value, true, out var parsed1)) throw new Exception("Unexpected privacy-mode value");
+            if (!Enum.TryParse<PrivacyMode>(value, true, out PrivacyMode parsed1))
+                throw new Exception("Unexpected privacy-mode value");
             return parsed1;
         }
 
         var sub = value[..index];
-        if (!Enum.TryParse<PrivacyMode>(sub, true, out var parsed2)) throw new Exception("Unexpected privacy-mode value");
+        if (!Enum.TryParse<PrivacyMode>(sub, true, out var parsed2))
+            throw new Exception("Unexpected privacy-mode value");
 
         return parsed2;
     }

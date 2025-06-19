@@ -39,7 +39,7 @@ public class ProfileLoadingStep : IRadiusPipelineStep
         var userIdentity = new UserIdentity(context.RequestPacket.UserName);
         var attributes = GetAttributes(context.Settings.RadiusReplyAttributes.Values.SelectMany(x => x)).ToArray();
         var domain = context.LdapSchema.NamingContext;
-        var profile = _ldapProfileService.LoadLdapProfile(domain, userIdentity, attributes);
+        var profile = _ldapProfileService.FindUserProfile(context.Settings.ClientConfigurationName, context.FirstFactorLdapServerConfiguration, domain, userIdentity, attributes);
         if (profile is null)
         {
             _logger.LogWarning("Unable to load profile for user '{user}' from '{domain}'", userIdentity.Identity, domain.StringRepresentation);

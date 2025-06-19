@@ -1,39 +1,39 @@
-using Microsoft.Extensions.Configuration;
+using System.ComponentModel;
 
 namespace Multifactor.Radius.Adapter.v2.Infrastructure.Configuration.RadiusAdapter.Sections.LdapServer;
 
 public class LdapServerConfiguration
 {
-    [ConfigurationKeyName("connection-string")]
-    public string? ConnectionString { get; init; }
-    
-    [ConfigurationKeyName("username")]
-    public string? UserName { get; init; }
-    
-    [ConfigurationKeyName("password")]
-    public string? Password { get; init; }
+    [Description("connection-string")]
+    public string ConnectionString { get; init; } = string.Empty;
 
-    [ConfigurationKeyName("bind-timeout-in-seconds")]
+    [Description("username")]
+    public string UserName { get; init; } = string.Empty;
+
+    [Description("password")]
+    public string Password { get; init; } = string.Empty;
+
+    [Description("bind-timeout-in-seconds")]
     public int BindTimeoutInSeconds { get; init; } = 30;
-    
-    [ConfigurationKeyName("access-groups")]
-    public string? AccessGroups { get; init; }
-    
-    [ConfigurationKeyName("second-fa-groups")]
-    public string? SecondFaGroups { get; init; }
-    
-    [ConfigurationKeyName("second-fa-bypass-groups")]
-    public string? SecondFaBypassGroups { get; init; }
-    
-    [ConfigurationKeyName("load-nested-groups")]
+
+    [Description("access-groups")]
+    public string AccessGroups { get; init; } = string.Empty;
+
+    [Description("second-fa-groups")]
+    public string SecondFaGroups { get; init; } = string.Empty;
+
+    [Description("second-fa-bypass-groups")]
+    public string SecondFaBypassGroups { get; init; } = string.Empty;
+
+    [Description("load-nested-groups")]
     public bool LoadNestedGroups { get; init; }
-    
-    [ConfigurationKeyName("nested-groups-base-dn")]
-    public string? NestedGroupsBaseDn { get; init; }
-    
-    [ConfigurationKeyName("phone-attributes")]
-    public string? PhoneAttributes { get; init; }
-    
-    [ConfigurationKeyName("identity-attribute")]
-    public string? IdentityAttribute { get; init; }
+
+    [Description("nested-groups-base-dn")]
+    public string NestedGroupsBaseDn { get; init; } = string.Empty;
+
+    [Description("phone-attributes")]
+    public string PhoneAttributes { get; init; } = string.Empty;
+
+    [Description("identity-attribute")]
+    public string IdentityAttribute { get; init; } = string.Empty;
 }

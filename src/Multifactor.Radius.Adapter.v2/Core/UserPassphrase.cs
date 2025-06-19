@@ -11,7 +11,7 @@ public class UserPassphrase
         /// <summary>
         /// User-Password attribute raw value.
         /// </summary>
-        public string Raw { get; }
+        public string? Raw { get; }
 
         /// <summary>
         /// User password.
@@ -38,7 +38,7 @@ public class UserPassphrase
         /// </summary>
         public bool IsEmpty => Password == null && Otp == null && ProviderCode == null;
 
-        private UserPassphrase(string raw, string? password, string? otp, string? providerCode)
+        private UserPassphrase(string? raw, string? password, string? otp, string? providerCode)
         {
             Raw = raw;
             Password = password;
@@ -46,9 +46,8 @@ public class UserPassphrase
             ProviderCode = providerCode;
         }
 
-        public static UserPassphrase Parse(string rawPwd, PreAuthModeDescriptor preAuthnMode)
+        public static UserPassphrase Parse(string? rawPwd, PreAuthModeDescriptor preAuthnMode)
         {
-            Throw.IfNullOrWhiteSpace(rawPwd, nameof(rawPwd));
             Throw.IfNull(preAuthnMode, nameof(preAuthnMode));
             
             var hasOtp = TryGetOtpCode(rawPwd, preAuthnMode, out var otp);
@@ -67,7 +66,7 @@ public class UserPassphrase
             return new UserPassphrase(rawPwd, pwd, otp, provCode);
         }
 
-        private static string GetPassword(string rawPwd, PreAuthModeDescriptor preAuthnMode, bool hasOtp)
+        private static string GetPassword(string? rawPwd, PreAuthModeDescriptor preAuthnMode, bool hasOtp)
         {
             var passwordAndOtp = rawPwd?.Trim() ?? string.Empty;
             switch (preAuthnMode.Mode)
@@ -93,7 +92,7 @@ public class UserPassphrase
             }
         }
 
-        private static bool TryGetOtpCode(string rawPwd, PreAuthModeDescriptor preAuthnMode, out string? code)
+        private static bool TryGetOtpCode(string? rawPwd, PreAuthModeDescriptor preAuthnMode, out string? code)
         {
             var passwordAndOtp = rawPwd?.Trim() ?? string.Empty;
             var length = preAuthnMode.Settings.OtpCodeLength;
