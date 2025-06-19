@@ -27,7 +27,6 @@ public class RadiusPipelineExecutionContext : IRadiusPipelineExecutionContext
     public string State { get; set; }
     public UserPassphrase Passphrase { get; set; }
     public ILdapServerConfiguration FirstFactorLdapServerConfiguration { get; set; }
-    public UserPassphrase Passphrase { get; set; }
 
     public RadiusPipelineExecutionContext(IPipelineExecutionSettings settings, IRadiusPacket requestPacket)
     {

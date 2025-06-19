@@ -62,7 +62,7 @@ public class SecondFactorChallengeProcessor : IChallengeProcessor
             return challengeStatus;
 
         var challengeContext = GetChallengeContext(identifier) ?? throw new InvalidOperationException($"Challenge context with identifier '{identifier}' was not found");
-        var response = await _apiService.SendChallengeAsync(challengeContext, userAnswer!, identifier);
+        var response = await _apiService.SendChallengeAsync(challengeContext, userAnswer!, identifier.RequestId);
         context.ResponseInformation.ReplyMessage = response.ReplyMessage;
 
         return ProcessResponseCode(context, challengeContext, response, identifier);
