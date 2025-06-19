@@ -1,6 +1,8 @@
+using Multifactor.Core.Ldap;
+
 namespace Multifactor.Radius.Adapter.v2.Core.AccessChallenge;
 
-public class ChallengeIdentifier
+public class ChallengeIdentifier : ValueObject
 {
     private readonly string _identifier;
 
@@ -28,18 +30,8 @@ public class ChallengeIdentifier
         return _identifier;
     }
 
-    public override bool Equals(object? obj)
+    protected override IEnumerable<object?> GetEqualityComponents()
     {
-        if (obj is null) return false;
-        if (obj == this) return true;
-
-        if (obj is not ChallengeIdentifier other) return false;
-        var isEmpty = string.IsNullOrWhiteSpace(_identifier);
-        return !isEmpty && _identifier == other._identifier;
-    }
-
-    public override int GetHashCode()
-    {
-        return 23 + _identifier.GetHashCode();
+        yield return _identifier;
     }
 }

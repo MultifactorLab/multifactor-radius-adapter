@@ -7,6 +7,7 @@ using Multifactor.Radius.Adapter.v2.Core.Auth;
 using Multifactor.Radius.Adapter.v2.Core.Auth.PreAuthMode;
 using Multifactor.Radius.Adapter.v2.Core.Configuration.Client;
 using Multifactor.Radius.Adapter.v2.Core.Ldap;
+using Multifactor.Radius.Adapter.v2.Core.MultifactorApi;
 using Multifactor.Radius.Adapter.v2.Core.Pipeline;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Context;
 using Multifactor.Radius.Adapter.v2.Services.DataProtection;
@@ -81,7 +82,7 @@ public class ChangePasswordChallengeProcessorTests
     {
         var service = new Mock<ILdapProfileService>();
         var dataProtectionServiceMock = new Mock<IDataProtectionService>();
-        dataProtectionServiceMock.Setup(x => x.Protect(It.IsAny<string>())).Returns("password");
+        dataProtectionServiceMock.Setup(x => x.Protect(It.IsAny<string>(), It.IsAny<string>())).Returns("password");
         var dataProtectionService = dataProtectionServiceMock.Object;
         var processor = new ChangePasswordChallengeProcessor(new CacheMock(), service.Object, dataProtectionService,
             NullLogger<ChangePasswordChallengeProcessor>.Instance);
@@ -90,6 +91,7 @@ public class ChangePasswordChallengeProcessorTests
         contextMock.Setup(x => x.Passphrase).Returns(passphrase);
         contextMock.Setup(x => x.Settings.ClientConfigurationName).Returns("name");
         contextMock.Setup(x => x.MustChangePasswordDomain).Returns("domain");
+        contextMock.Setup(x => x.Settings.ApiCredential).Returns(new ApiCredential("key", "secret"));
         contextMock.SetupProperty(x => x.ResponseInformation);
         var context = contextMock.Object;
         context.ResponseInformation = new ResponseInformation();
@@ -108,7 +110,7 @@ public class ChangePasswordChallengeProcessorTests
     {
         var service = new Mock<ILdapProfileService>();
         var dataProtectionServiceMock = new Mock<IDataProtectionService>();
-        dataProtectionServiceMock.Setup(x => x.Protect(It.IsAny<string>())).Returns("password");
+        dataProtectionServiceMock.Setup(x => x.Protect(It.IsAny<string>(), It.IsAny<string>())).Returns("password");
         var dataProtectionService = dataProtectionServiceMock.Object;
         var processor = new ChangePasswordChallengeProcessor(new CacheMock(), service.Object, dataProtectionService, NullLogger<ChangePasswordChallengeProcessor>.Instance);
         var id = new ChallengeIdentifier("1", "2");
@@ -121,7 +123,7 @@ public class ChangePasswordChallengeProcessorTests
     {
         var service = new Mock<ILdapProfileService>();
         var dataProtectionServiceMock = new Mock<IDataProtectionService>();
-        dataProtectionServiceMock.Setup(x => x.Protect(It.IsAny<string>())).Returns("password");
+        dataProtectionServiceMock.Setup(x => x.Protect(It.IsAny<string>(), It.IsAny<string>())).Returns("password");
         var dataProtectionService = dataProtectionServiceMock.Object;
         var processor = new ChangePasswordChallengeProcessor(new CacheMock(), service.Object, dataProtectionService,
             NullLogger<ChangePasswordChallengeProcessor>.Instance);
@@ -145,7 +147,7 @@ public class ChangePasswordChallengeProcessorTests
     {
         var service = new Mock<ILdapProfileService>();
         var dataProtectionServiceMock = new Mock<IDataProtectionService>();
-        dataProtectionServiceMock.Setup(x => x.Protect(It.IsAny<string>())).Returns("password");
+        dataProtectionServiceMock.Setup(x => x.Protect(It.IsAny<string>(), It.IsAny<string>())).Returns("password");
         var dataProtectionService = dataProtectionServiceMock.Object;
         var processor = new ChangePasswordChallengeProcessor(new CacheMock(new PasswordChangeRequest()), service.Object,
             dataProtectionService, NullLogger<ChangePasswordChallengeProcessor>.Instance);
@@ -172,7 +174,7 @@ public class ChangePasswordChallengeProcessorTests
     {
         var service = new Mock<ILdapProfileService>();
         var dataProtectionServiceMock = new Mock<IDataProtectionService>();
-        dataProtectionServiceMock.Setup(x => x.Protect(It.IsAny<string>())).Returns("password");
+        dataProtectionServiceMock.Setup(x => x.Protect(It.IsAny<string>(), It.IsAny<string>())).Returns("password");
         var dataProtectionService = dataProtectionServiceMock.Object;
         var processor = new ChangePasswordChallengeProcessor(
             new CacheMock(new PasswordChangeRequest()), service.Object,
@@ -182,6 +184,7 @@ public class ChangePasswordChallengeProcessorTests
         contextMock.Setup(x => x.Passphrase).Returns(passphrase);
         contextMock.Setup(x => x.Settings.ClientConfigurationName).Returns("name");
         contextMock.Setup(x => x.MustChangePasswordDomain).Returns("domain");
+        contextMock.Setup(x => x.Settings.ApiCredential).Returns(new ApiCredential("key", "secret"));
         contextMock.SetupProperty(x => x.ResponseInformation);
         contextMock.SetupProperty(x => x.AuthenticationState);
         var context = contextMock.Object;
@@ -200,7 +203,7 @@ public class ChangePasswordChallengeProcessorTests
     {
         var service = new Mock<ILdapProfileService>();
         var dataProtectionServiceMock = new Mock<IDataProtectionService>();
-        dataProtectionServiceMock.Setup(x => x.Protect(It.IsAny<string>())).Returns("password");
+        dataProtectionServiceMock.Setup(x => x.Protect(It.IsAny<string>(), It.IsAny<string>())).Returns("password");
         var dataProtectionService = dataProtectionServiceMock.Object;
         var processor = new ChangePasswordChallengeProcessor(
             new CacheMock(new PasswordChangeRequest() { NewPasswordEncryptedData = "password" }), service.Object,
@@ -210,6 +213,7 @@ public class ChangePasswordChallengeProcessorTests
         contextMock.Setup(x => x.Passphrase).Returns(passphrase);
         contextMock.Setup(x => x.Settings.ClientConfigurationName).Returns("name");
         contextMock.Setup(x => x.MustChangePasswordDomain).Returns("domain");
+        contextMock.Setup(x => x.Settings.ApiCredential).Returns(new ApiCredential("key", "secret"));
         contextMock.SetupProperty(x => x.ResponseInformation);
         contextMock.SetupProperty(x => x.AuthenticationState);
         var context = contextMock.Object;
@@ -234,8 +238,8 @@ public class ChangePasswordChallengeProcessorTests
             .ReturnsAsync(() => new PasswordChangeResponse() { Success = true });
 
         var dataProtectionServiceMock = new Mock<IDataProtectionService>();
-        dataProtectionServiceMock.Setup(x => x.Protect(It.IsAny<string>())).Returns("password");
-        dataProtectionServiceMock.Setup(x => x.Unprotect(It.IsAny<string>())).Returns("1234567");
+        dataProtectionServiceMock.Setup(x => x.Protect(It.IsAny<string>(), It.IsAny<string>())).Returns("password");
+        dataProtectionServiceMock.Setup(x => x.Unprotect(It.IsAny<string>(), It.IsAny<string>())).Returns("1234567");
         var dataProtectionService = dataProtectionServiceMock.Object;
         var processor = new ChangePasswordChallengeProcessor(
             new CacheMock(new PasswordChangeRequest() { NewPasswordEncryptedData = "1234567" }), service.Object,
@@ -245,6 +249,7 @@ public class ChangePasswordChallengeProcessorTests
         contextMock.Setup(x => x.Passphrase).Returns(passphrase);
         contextMock.Setup(x => x.Settings.ClientConfigurationName).Returns("name");
         contextMock.Setup(x => x.MustChangePasswordDomain).Returns("domain");
+        contextMock.Setup(x => x.Settings.ApiCredential).Returns(new ApiCredential("key", "secret"));
         contextMock.SetupProperty(x => x.ResponseInformation);
         contextMock.SetupProperty(x => x.AuthenticationState);
         var context = contextMock.Object;
@@ -269,8 +274,8 @@ public class ChangePasswordChallengeProcessorTests
             .ReturnsAsync(() => new PasswordChangeResponse() { Success = false });
 
         var dataProtectionServiceMock = new Mock<IDataProtectionService>();
-        dataProtectionServiceMock.Setup(x => x.Protect(It.IsAny<string>())).Returns("password");
-        dataProtectionServiceMock.Setup(x => x.Unprotect(It.IsAny<string>())).Returns("1234567");
+        dataProtectionServiceMock.Setup(x => x.Protect(It.IsAny<string>(), It.IsAny<string>())).Returns("password");
+        dataProtectionServiceMock.Setup(x => x.Unprotect(It.IsAny<string>(), It.IsAny<string>())).Returns("1234567");
         var dataProtectionService = dataProtectionServiceMock.Object;
         var processor = new ChangePasswordChallengeProcessor(
             new CacheMock(new PasswordChangeRequest() { NewPasswordEncryptedData = "1234567" }), service.Object,
@@ -280,6 +285,7 @@ public class ChangePasswordChallengeProcessorTests
         contextMock.Setup(x => x.Passphrase).Returns(passphrase);
         contextMock.Setup(x => x.Settings.ClientConfigurationName).Returns("name");
         contextMock.Setup(x => x.MustChangePasswordDomain).Returns("domain");
+        contextMock.Setup(x => x.Settings.ApiCredential).Returns(new ApiCredential("key", "secret"));
         contextMock.SetupProperty(x => x.ResponseInformation);
         contextMock.SetupProperty(x => x.AuthenticationState);
         var context = contextMock.Object;
@@ -293,7 +299,7 @@ public class ChangePasswordChallengeProcessorTests
         Assert.Equal(AuthenticationStatus.Reject, context.AuthenticationState.FirstFactorStatus);
         Assert.Null(context.ResponseInformation.State);
     }
-
+    
     private class CacheMock() : IMemoryCache
     {
         private object? _val;

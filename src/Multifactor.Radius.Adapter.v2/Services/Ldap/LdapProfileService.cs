@@ -31,7 +31,7 @@ public class LdapProfileService : ILdapProfileService
         _logger = logger;
     }
 
-    public ILdapProfile? LoadLdapProfile(string clientName, ILdapServerConfiguration serverConfiguration, DistinguishedName searchBase, UserIdentity userIdentity, LdapAttributeName[]? attributeNames = null)
+    public ILdapProfile? FindUserProfile(string clientName, ILdapServerConfiguration serverConfiguration, DistinguishedName searchBase, UserIdentity userIdentity, LdapAttributeName[]? attributeNames = null)
     {
         Throw.IfNull(searchBase, nameof(searchBase));
         Throw.IfNull(userIdentity, nameof(userIdentity));
@@ -50,8 +50,7 @@ public class LdapProfileService : ILdapProfileService
 
         var filter = GetFilter(identityToSearch, serverConfiguration);
         var loader = new LdapProfileLoader(searchBase, connection, serverConfiguration.LdapSchema);
-        var profile = loader.LoadLdapProfile(filter, attributeNames: attributeNames ?? []);
-        return profile;
+        return loader.LoadLdapProfile(filter, attributeNames: attributeNames ?? []);
     }
 
     public Task<PasswordChangeResponse> ChangeUserPasswordAsync(string newPassword, ILdapProfile ldapProfile, ILdapServerConfiguration serverConfiguration)

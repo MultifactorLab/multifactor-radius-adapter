@@ -8,7 +8,7 @@ namespace Multifactor.Radius.Adapter.v2.Services.Ldap;
 
 public interface ILdapProfileService
 {
-    ILdapProfile? LoadLdapProfile(string clientName, ILdapServerConfiguration serverConfiguration, DistinguishedName searchBase, UserIdentity userIdentity, LdapAttributeName[]? attributeNames = null);
+    ILdapProfile? FindUserProfile(string clientName, ILdapServerConfiguration serverConfiguration, DistinguishedName searchBase, UserIdentity userIdentity, LdapAttributeName[]? attributeNames = null);
 
     Task<PasswordChangeResponse> ChangeUserPasswordAsync(string newPassword, ILdapProfile ldapProfile, ILdapServerConfiguration serverConfiguration);
 }

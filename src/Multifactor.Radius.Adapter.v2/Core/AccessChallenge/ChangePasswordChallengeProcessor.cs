@@ -33,7 +33,7 @@ public class ChangePasswordChallengeProcessor : IChallengeProcessor
         if (string.IsNullOrWhiteSpace(context.MustChangePasswordDomain))
             throw new InvalidOperationException("Domain is required.");
         
-        var encryptedPassword = _dataProtectionService.Protect(context.Passphrase.Password);
+        var encryptedPassword = _dataProtectionService.Protect(context.Settings.ApiCredential.Pwd, context.Passphrase.Password);
 
         var passwordRequest = new PasswordChangeRequest()
         {
@@ -70,7 +70,7 @@ public class ChangePasswordChallengeProcessor : IChallengeProcessor
         if (string.IsNullOrWhiteSpace(passwordChangeRequest.NewPasswordEncryptedData))
             return RepeatPasswordChallenge(context, passwordChangeRequest);
         
-        var decryptedNewPassword = _dataProtectionService.Unprotect(passwordChangeRequest.NewPasswordEncryptedData);
+        var decryptedNewPassword = _dataProtectionService.Unprotect(context.Settings.ApiCredential.Pwd, passwordChangeRequest.NewPasswordEncryptedData);
         if (decryptedNewPassword != context.Passphrase.Raw)
             return PasswordsNotMatchChallenge(context, passwordChangeRequest);
 
@@ -101,14 +101,14 @@ public class ChangePasswordChallengeProcessor : IChallengeProcessor
         return ChallengeStatus.InProcess;
     }
     
-    private ChallengeStatus RepeatPasswordChallenge(IRadiusPipelineExecutionContext request, PasswordChangeRequest passwordChangeRequest)
+    private ChallengeStatus RepeatPasswordChallenge(IRadiusPipelineExecutionContext context, PasswordChangeRequest passwordChangeRequest)
     {
-        passwordChangeRequest.NewPasswordEncryptedData = _dataProtectionService.Protect(request.Passphrase.Raw!);
+        passwordChangeRequest.NewPasswordEncryptedData = _dataProtectionService.Protect(context.Settings.ApiCredential.Pwd, context.Passphrase.Raw!);
 
         _cache.Set(passwordChangeRequest.Id, passwordChangeRequest, DateTimeOffset.UtcNow.AddMinutes(5));
 
-        request.ResponseInformation.State = passwordChangeRequest.Id;
-        request.ResponseInformation.ReplyMessage = "Please repeat new password: ";
+        context.ResponseInformation.State = passwordChangeRequest.Id;
+        context.ResponseInformation.ReplyMessage = "Please repeat new password: ";
 
         return ChallengeStatus.InProcess;
     }

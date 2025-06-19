@@ -2,9 +2,9 @@ using System.Text;
 
 namespace Multifactor.Radius.Adapter.v2.Services.DataProtection;
 
-public class DataProtectionService : IDataProtectionService
+public class LinuxProtectionService : IDataProtectionService
 {
-    public string Protect(string data)
+    public string Protect(string secret, string data)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(data, nameof(data));
 
@@ -12,7 +12,7 @@ public class DataProtectionService : IDataProtectionService
         return ToBase64(bytes);
     }
 
-    public string Unprotect(string data)
+    public string Unprotect(string secret, string data)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(data, nameof(data));
         

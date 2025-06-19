@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Multifactor.Core.Ldap.Schema;
@@ -11,6 +12,7 @@ using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Builder;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Steps;
 using Multifactor.Radius.Adapter.v2.Server.Udp;
+using Multifactor.Radius.Adapter.v2.Services.DataProtection;
 using Multifactor.Radius.Adapter.v2.Services.Ldap;
 
 namespace Multifactor.Radius.Adapter.v2.Extensions;
@@ -121,5 +123,13 @@ public static class ServiceCollectionExtensions
     {
         services.AddSingleton<LdapSchemaLoader>();
         services.AddSingleton<ILdapSchemaLoader, CustomLdapSchemaLoader>();
+    }
+
+    public static void AddDataProtection(this IServiceCollection services)
+    {
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            services.AddTransient<IDataProtectionService, WindowsProtectionService>();
+        else
+            services.AddTransient<IDataProtectionService, LinuxProtectionService>();
     }
 }

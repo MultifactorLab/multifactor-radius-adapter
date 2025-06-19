@@ -22,7 +22,7 @@ public class ProfileLoadingTests
         var loaderMock = new Mock<ILdapProfileService>();
         var profile = new LdapProfileMock();
         loaderMock
-            .Setup(x => x.LoadLdapProfile(It.IsAny<string>(), It.IsAny<ILdapServerConfiguration>(), It.IsAny<DistinguishedName>(), It.IsAny<UserIdentity>(), It.IsAny<LdapAttributeName[]>()))
+            .Setup(x => x.FindUserProfile(It.IsAny<string>(), It.IsAny<ILdapServerConfiguration>(), It.IsAny<DistinguishedName>(), It.IsAny<UserIdentity>(), It.IsAny<LdapAttributeName[]>()))
             .Returns(profile);
         var schemaMock = new Mock<ILdapSchema>();
         schemaMock.Setup(x => x.NamingContext).Returns(new DistinguishedName("dc=test,dc=example,dc=com"));
@@ -47,7 +47,7 @@ public class ProfileLoadingTests
         var loaderMock = new Mock<ILdapProfileService>();
         var profile = new LdapProfileMock();
         loaderMock
-            .Setup(x => x.LoadLdapProfile(It.IsAny<string>(), It.IsAny<ILdapServerConfiguration>(), It.IsAny<DistinguishedName>(), It.IsAny<UserIdentity>(), It.IsAny<LdapAttributeName[]>()))
+            .Setup(x => x.FindUserProfile(It.IsAny<string>(), It.IsAny<ILdapServerConfiguration>(), It.IsAny<DistinguishedName>(), It.IsAny<UserIdentity>(), It.IsAny<LdapAttributeName[]>()))
             .Returns(profile);
         
         var contextMock = new Mock<IRadiusPipelineExecutionContext>();
@@ -67,7 +67,7 @@ public class ProfileLoadingTests
     {
         var loaderMock = new Mock<ILdapProfileService>();
         loaderMock
-            .Setup(x => x.LoadLdapProfile(It.IsAny<string>(), It.IsAny<ILdapServerConfiguration>(), It.IsAny<DistinguishedName>(), It.IsAny<UserIdentity>(), It.IsAny<LdapAttributeName[]>()))
+            .Setup(x => x.FindUserProfile(It.IsAny<string>(), It.IsAny<ILdapServerConfiguration>(), It.IsAny<DistinguishedName>(), It.IsAny<UserIdentity>(), It.IsAny<LdapAttributeName[]>()))
             .Returns(() => null);
         var schemaMock = new Mock<ILdapSchema>();
         schemaMock.Setup(x => x.NamingContext).Returns(new DistinguishedName("dc=test,dc=example,dc=com"));
@@ -89,7 +89,7 @@ public class ProfileLoadingTests
     {
         var loaderMock = new Mock<ILdapProfileService>();
         loaderMock
-            .Setup(x => x.LoadLdapProfile(It.IsAny<string>(), It.IsAny<ILdapServerConfiguration>(), It.IsAny<DistinguishedName>(), It.IsAny<UserIdentity>(), It.IsAny<LdapAttributeName[]>()))
+            .Setup(x => x.FindUserProfile(It.IsAny<string>(), It.IsAny<ILdapServerConfiguration>(), It.IsAny<DistinguishedName>(), It.IsAny<UserIdentity>(), It.IsAny<LdapAttributeName[]>()))
             .Returns(() => null);
         var contextMock = new Mock<IRadiusPipelineExecutionContext>();
         contextMock.Setup(x => x.RequestPacket.UserName).Returns("user@example.com");

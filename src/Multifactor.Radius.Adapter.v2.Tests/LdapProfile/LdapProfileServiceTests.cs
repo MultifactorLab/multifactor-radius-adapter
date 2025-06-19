@@ -24,7 +24,7 @@ public class LdapProfileServiceTests
         var serverConfig = GetServerConfig(sensitiveData);
         
         var service = new LdapProfileService(LdapConnectionFactory.Create(), cacheMock.Object, NullLogger.Instance);
-        var ldapProfile = service.LoadLdapProfile("clientKey", serverConfig, searchBase, targetUser);
+        var ldapProfile = service.FindUserProfile("clientKey", serverConfig, searchBase, targetUser);
         
         Assert.NotNull(ldapProfile);
         
@@ -44,7 +44,7 @@ public class LdapProfileServiceTests
         var serverConfig = GetServerConfig(sensitiveData);
         
         var service = new LdapProfileService(LdapConnectionFactory.Create(), cacheMock.Object, NullLogger.Instance);
-        var ldapProfile = service.LoadLdapProfile("clientKey", serverConfig, searchBase, targetUser);
+        var ldapProfile = service.FindUserProfile("clientKey", serverConfig, searchBase, targetUser);
         
         Assert.NotNull(ldapProfile);
         
@@ -64,7 +64,7 @@ public class LdapProfileServiceTests
         var serverConfig = GetServerConfig(sensitiveData);
         
         var service = new LdapProfileService(LdapConnectionFactory.Create(), cacheMock.Object, NullLogger.Instance);
-        var ldapProfile = service.LoadLdapProfile("clientKey", serverConfig,searchBase, targetUser);
+        var ldapProfile = service.FindUserProfile("clientKey", serverConfig,searchBase, targetUser);
         
         Assert.NotNull(ldapProfile);
         
@@ -84,7 +84,7 @@ public class LdapProfileServiceTests
         var serverConfig = GetServerConfig(sensitiveData);
         
         var service = new LdapProfileService(LdapConnectionFactory.Create(), cacheMock.Object, NullLogger.Instance);
-        var ldapProfile = service.LoadLdapProfile("clientKey", serverConfig,searchBase, targetUser);
+        var ldapProfile = service.FindUserProfile("clientKey", serverConfig,searchBase, targetUser);
         
         Assert.NotNull(ldapProfile);
         
