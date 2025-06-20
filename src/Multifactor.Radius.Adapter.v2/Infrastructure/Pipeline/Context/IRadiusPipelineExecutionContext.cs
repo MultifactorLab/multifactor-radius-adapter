@@ -23,6 +23,6 @@ public interface IRadiusPipelineExecutionContext
     IPEndPoint RemoteEndpoint { get; set; }
     IPEndPoint? ProxyEndpoint { get; set; }
     ILdapSchema? LdapSchema { get; set; }
-    ILdapServerConfiguration FirstFactorLdapServerConfiguration { get; set; }
+    ILdapServerConfiguration FirstFactorLdapServerConfiguration { get; set; } //TODO remove
     UserPassphrase Passphrase { get; set; }
 }

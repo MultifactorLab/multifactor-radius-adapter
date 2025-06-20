@@ -1,3 +1,4 @@
+using System.Net;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Multifactor.Radius.Adapter.v2.Core.Auth;
@@ -50,6 +51,7 @@ public class AccessRequestFilteringStepTests
         contextMock.Setup(x => x.AuthenticationState).Returns(authState);
         contextMock.Setup(x => x.ResponseInformation).Returns(responseInformation);
         contextMock.Setup(x => x.ExecutionState).Returns(execState);
+        contextMock.Setup(x => x.RemoteEndpoint).Returns(IPEndPoint.Parse("127.0.0.1"));
         return contextMock.Object;
     }
 }

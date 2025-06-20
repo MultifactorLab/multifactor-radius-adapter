@@ -72,6 +72,7 @@ public class UpdPacketHandler : IUdpPacketHandler
 
     private async Task StartPipeline(IClientConfiguration clientConfiguration, IRadiusPacket requestPacket, IPEndPoint remoteEndpoint, IPEndPoint? proxyEndpoint, IRadiusPipeline pipeline)
     {
+        // TODO iterate through all clientConfiguration.LdapServers
         var executionSetting = new PipelineExecutionSettings(clientConfiguration);
         var context = new RadiusPipelineExecutionContext(executionSetting, requestPacket)
         {
