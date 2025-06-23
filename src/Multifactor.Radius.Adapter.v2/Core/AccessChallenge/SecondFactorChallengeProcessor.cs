@@ -63,9 +63,8 @@ public class SecondFactorChallengeProcessor : IChallengeProcessor
 
         var challengeContext = GetChallengeContext(identifier) ?? throw new InvalidOperationException($"Challenge context with identifier '{identifier}' was not found");
         var response = await _apiService.SendChallengeAsync(challengeContext, userAnswer!, identifier.RequestId);
-        context.ResponseInformation.ReplyMessage = response.ReplyMessage;
 
-        return ProcessResponseCode(context, challengeContext, response, identifier);
+        return ProcessResponse(context, challengeContext, response, identifier);
     }
 
 
@@ -145,8 +144,9 @@ public class SecondFactorChallengeProcessor : IChallengeProcessor
         }
     }
 
-    private ChallengeStatus ProcessResponseCode(IRadiusPipelineExecutionContext context, IRadiusPipelineExecutionContext challengeContext, MultifactorResponse response, ChallengeIdentifier identifier)
+    private ChallengeStatus ProcessResponse(IRadiusPipelineExecutionContext context, IRadiusPipelineExecutionContext challengeContext, MultifactorResponse response, ChallengeIdentifier identifier)
     {
+        context.ResponseInformation.ReplyMessage = response.ReplyMessage;
         switch (response.Code)
         {
             case AuthenticationStatus.Accept:

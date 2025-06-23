@@ -15,6 +15,6 @@ public interface ILdapServerConfiguration
     public IReadOnlyList<string> SecondFaBypassGroups { get; }
     public IReadOnlyList<string> NestedGroupsBaseDns { get; }
     public IReadOnlyList<string> PhoneAttributes { get; }
-    public ILdapSchema LdapSchema { get; }
+    public ILdapSchema LdapSchema { get; } //TODO Same field in the pipeline context. Leave in one place
     public IDomainPermissionRules? DomainPermissionRules { get; }
 }
