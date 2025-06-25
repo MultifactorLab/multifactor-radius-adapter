@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Multifactor.Radius.Adapter.v2.Core;
 using Multifactor.Radius.Adapter.v2.Core.Auth;
@@ -14,7 +15,7 @@ public class StatusServerFilteringStepTests
     public async Task Execute_StatusServerPacket_ShouldExecuteStep()
     {
         var context = GetContextMock(PacketCode.StatusServer);
-        var statusServerFilteringStep = new StatusServerFilteringStep(new ApplicationVariables());
+        var statusServerFilteringStep = new StatusServerFilteringStep(new ApplicationVariables(), NullLogger<StatusServerFilteringStep>.Instance);
         await statusServerFilteringStep.ExecuteAsync(context);
         
         Assert.StartsWith("Server up", context.ResponseInformation.ReplyMessage);
@@ -27,7 +28,7 @@ public class StatusServerFilteringStepTests
     public async Task Execute_NotStatusServer_ShouldSkipStep()
     {
         var context = GetContextMock(PacketCode.CoaAck);
-        var statusServerFilteringStep = new StatusServerFilteringStep(new ApplicationVariables());
+        var statusServerFilteringStep = new StatusServerFilteringStep(new ApplicationVariables(), NullLogger<StatusServerFilteringStep>.Instance);
         await statusServerFilteringStep.ExecuteAsync(context);
         
         Assert.Null(context.ResponseInformation.ReplyMessage);

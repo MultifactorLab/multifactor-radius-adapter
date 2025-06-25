@@ -3,6 +3,7 @@ using System.Net.Sockets;
 using System.Text;
 using Microsoft.Extensions.Logging;
 using Multifactor.Core.Ldap.LangFeatures;
+using Multifactor.Radius.Adapter.v2.Core;
 using Multifactor.Radius.Adapter.v2.Core.Configuration.Client;
 using Multifactor.Radius.Adapter.v2.Core.Configuration.Service;
 using Multifactor.Radius.Adapter.v2.Core.Pipeline;
@@ -16,7 +17,7 @@ using Multifactor.Radius.Adapter.v2.Services.Radius;
 
 namespace Multifactor.Radius.Adapter.v2.Server;
 
-public class UpdPacketHandler : IUdpPacketHandler
+public class UdpPacketHandler : IUdpPacketHandler
 {
     private readonly ILogger<IUdpPacketHandler> _logger;
     private readonly IServiceConfiguration _serviceConfiguration;
@@ -24,8 +25,12 @@ public class UpdPacketHandler : IUdpPacketHandler
     private readonly IPipelineProvider _pipelineProvider;
     private readonly IResponseSender _responseSender;
 
-    public UpdPacketHandler(IServiceConfiguration serviceConfiguration, IRadiusPacketService packetService,
-        IPipelineProvider pipelineProvider, IResponseSender responseSender, ILogger<IUdpPacketHandler> logger)
+    public UdpPacketHandler(
+        IServiceConfiguration serviceConfiguration,
+        IRadiusPacketService packetService,
+        IPipelineProvider pipelineProvider,
+        IResponseSender responseSender,
+        ILogger<IUdpPacketHandler> logger)
     {
         Throw.IfNull(serviceConfiguration, nameof(serviceConfiguration));
         Throw.IfNull(packetService, nameof(packetService));
@@ -72,16 +77,28 @@ public class UpdPacketHandler : IUdpPacketHandler
 
     private async Task StartPipeline(IClientConfiguration clientConfiguration, IRadiusPacket requestPacket, IPEndPoint remoteEndpoint, IPEndPoint? proxyEndpoint, IRadiusPipeline pipeline)
     {
-        // TODO iterate through all clientConfiguration.LdapServers
-        var executionSetting = new PipelineExecutionSettings(clientConfiguration);
-        var context = new RadiusPipelineExecutionContext(executionSetting, requestPacket)
+        foreach (var serverConfig in clientConfiguration.LdapServers)
         {
-            ProxyEndpoint = proxyEndpoint,
-            RemoteEndpoint = remoteEndpoint
-        };
-        _logger.LogDebug("Start executing pipeline for '{name}'", clientConfiguration.Name);
-        await pipeline.ExecuteAsync(context);
-        await _responseSender.SendResponse(context);
+            var executionSetting = new PipelineExecutionSettings(clientConfiguration, serverConfig);
+            var context = new RadiusPipelineExecutionContext(executionSetting, requestPacket)
+            {
+                ProxyEndpoint = proxyEndpoint,
+                RemoteEndpoint = remoteEndpoint,
+                Passphrase = UserPassphrase.Parse(requestPacket.TryGetUserPassword(), clientConfiguration.PreAuthnMode)
+            };
+            
+            _logger.LogDebug("Start executing pipeline for '{name}'", clientConfiguration.Name);
+            
+            try
+            {
+                await pipeline.ExecuteAsync(context);
+                await _responseSender.SendResponse(context);
+            }
+            catch (Exception e)
+            {
+                _logger.LogWarning(exception: e, "Failed to execute pipeline for {name}", serverConfig.ConnectionString);
+            }
+        }
     }
 
     private bool IsProxyProtocol(byte[] request, out IPEndPoint sourceEndpoint, out byte[] requestWithoutProxyHeader)

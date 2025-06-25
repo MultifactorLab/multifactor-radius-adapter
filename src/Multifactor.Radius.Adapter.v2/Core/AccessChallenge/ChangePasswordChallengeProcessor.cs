@@ -74,12 +74,18 @@ public class ChangePasswordChallengeProcessor : IChallengeProcessor
         if (decryptedNewPassword != context.Passphrase.Raw)
             return PasswordsNotMatchChallenge(context, passwordChangeRequest);
 
-        var result = await _ldapService.ChangeUserPasswordAsync(decryptedNewPassword, context.UserLdapProfile, context.FirstFactorLdapServerConfiguration);
+        var request = new ChangeUserPasswordRequest(
+            decryptedNewPassword,
+            context.UserLdapProfile,
+            context.Settings.LdapServerConfiguration,
+            context.LdapSchema!);
+        
+        var result = await _ldapService.ChangeUserPasswordAsync(request);
             
         _cache.Remove(passwordChangeRequest.Id);
         context.ResponseInformation.State = null;
             
-        if(result.Success)
+        if (result.Success)
             return ChallengeStatus.Accept;
 
         context.AuthenticationState.FirstFactorStatus = AuthenticationStatus.Reject;

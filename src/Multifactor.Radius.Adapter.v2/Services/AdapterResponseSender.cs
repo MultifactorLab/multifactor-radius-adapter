@@ -37,7 +37,7 @@ public class AdapterResponseSender : IResponseSender
         AddProxyAttribute(requestPacket, responsePacket);
         AddMessageAuthenticator(responsePacket);
         AddReplyAttributes(responsePacket);
-        responsePacket.ReplaceAttribute("Reply-Message", context.ResponseInformation.ReplyMessage ?? "This is MVP response. Congratulations!");
+        responsePacket.ReplaceAttribute("Reply-Message", context.ResponseInformation.ReplyMessage ?? "This is MVP v2 response. Congratulations!");
         
         var bytes = _radiusPacketService.GetBytes(responsePacket, context.Settings.RadiusSharedSecret);
         var endpoint = context.ProxyEndpoint ?? context.RemoteEndpoint;

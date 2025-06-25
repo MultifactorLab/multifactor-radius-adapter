@@ -231,11 +231,11 @@ public class MultifactorApiService : IMultifactorApiService
 
     private string? GetSecondFactorIdentity(IRadiusPipelineExecutionContext context)
     {
-        if (string.IsNullOrWhiteSpace(context.FirstFactorLdapServerConfiguration?.IdentityAttribute))
+        if (string.IsNullOrWhiteSpace(context.Settings.LdapServerConfiguration.IdentityAttribute))
             return context.RequestPacket.UserName;
 
         return context.UserLdapProfile?.Attributes
-            .FirstOrDefault(x => x.Name == context.FirstFactorLdapServerConfiguration.IdentityAttribute)?.Values
+            .FirstOrDefault(x => x.Name == context.Settings.LdapServerConfiguration.IdentityAttribute)?.Values
             .FirstOrDefault();
     }
 

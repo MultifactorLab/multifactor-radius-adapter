@@ -43,8 +43,12 @@ public class PipelineConfigurationFactory : IPipelineConfigurationFactory
         pipeline.Add(typeof(StatusServerFilteringStep));
 
         pipeline.Add(typeof(AccessRequestFilteringStep));
+        
+        pipeline.Add(typeof(LdapSchemaLoadingStep));
 
         pipeline.Add(typeof(ProfileLoadingStep));
+        
+        pipeline.Add(typeof(AccessGroupsCheckingStep));
 
         pipeline.Add(typeof(AccessChallengeStep));
 
@@ -52,19 +56,10 @@ public class PipelineConfigurationFactory : IPipelineConfigurationFactory
         {
             pipeline.Add(typeof(SecondFactorStep));
             pipeline.Add(typeof(FirstFactorStep));
-            if (pipelineStepsConfiguration.ShouldCheckMembership)
-            {
-                pipeline.Add(typeof(CheckingMembershipStep));
-            }
         }
         else
         {
             pipeline.Add(typeof(FirstFactorStep));
-            if (pipelineStepsConfiguration.ShouldCheckMembership)
-            {
-                pipeline.Add(typeof(CheckingMembershipStep));
-            }
-
             pipeline.Add(typeof(SecondFactorStep));
         }
 

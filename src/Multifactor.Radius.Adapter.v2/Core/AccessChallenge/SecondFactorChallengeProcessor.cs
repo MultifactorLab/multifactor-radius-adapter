@@ -56,8 +56,7 @@ public class SecondFactorChallengeProcessor : IChallengeProcessor
         if (string.IsNullOrWhiteSpace(userName))
             return ProcessEmptyName(context, identifier.RequestId);
 
-        var passphrase = UserPassphrase.Parse(context.RequestPacket.TryGetUserPassword(), context.Settings.PreAuthnMode);
-        var challengeStatus = ProcessAuthenticationType(context, passphrase, identifier.RequestId, out var userAnswer);
+        var challengeStatus = ProcessAuthenticationType(context, context.Passphrase, identifier.RequestId, out var userAnswer);
         if (challengeStatus == ChallengeStatus.Reject)
             return challengeStatus;
 
@@ -82,7 +81,7 @@ public class SecondFactorChallengeProcessor : IChallengeProcessor
         _challengeContexts.TryRemove(identifier, out _);
     }
 
-    private ChallengeStatus ProcessAuthenticationType(IRadiusPipelineExecutionContext context, UserPassphrase passphrase, string requestId, out string userAnswer)
+    private ChallengeStatus ProcessAuthenticationType(IRadiusPipelineExecutionContext context, UserPassphrase passphrase, string requestId, out string? userAnswer)
     {
         userAnswer = string.Empty;
         switch (context.RequestPacket.AuthenticationType)
@@ -107,7 +106,7 @@ public class SecondFactorChallengeProcessor : IChallengeProcessor
 
                 return ChallengeStatus.InProcess;
             case AuthenticationType.MSCHAP2:
-                var msChapResponse = context.RequestPacket.GetAttribute<byte[]>("MS-CHAP2-Response");
+                var msChapResponse = context.RequestPacket.GetAttribute<byte[]?>("MS-CHAP2-Response");
 
                 if (msChapResponse == null)
                 {
@@ -150,13 +149,14 @@ public class SecondFactorChallengeProcessor : IChallengeProcessor
         switch (response.Code)
         {
             case AuthenticationStatus.Accept:
-                //update context
                 context.ResponsePacket = challengeContext.ResponsePacket;
                 context.UserLdapProfile = challengeContext.UserLdapProfile;
                 context.AuthenticationState.FirstFactorStatus = challengeContext.AuthenticationState.FirstFactorStatus;
+                context.AuthenticationState.SecondFactorStatus = AuthenticationStatus.Accept;
                 context.Passphrase = challengeContext.Passphrase;
 
                 RemoveChallengeContext(identifier);
+                
                 _logger.LogDebug(
                     "Challenge {State:l} was processed for message id={id} from {host:l}:{port} with result '{Result}'",
                     identifier.RequestId,
@@ -165,7 +165,6 @@ public class SecondFactorChallengeProcessor : IChallengeProcessor
                     context.RemoteEndpoint.Port,
                     response.Code);
 
-                context.AuthenticationState.SecondFactorStatus = AuthenticationStatus.Accept;
                 return ChallengeStatus.Accept;
 
             case AuthenticationStatus.Reject:

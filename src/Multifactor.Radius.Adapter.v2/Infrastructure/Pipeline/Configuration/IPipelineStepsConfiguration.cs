@@ -6,5 +6,4 @@ public interface IPipelineStepsConfiguration
 {
     public string ConfigurationName { get; }
     public PreAuthMode PreAuthMode { get; }
-    public bool ShouldCheckMembership { get; } 
 }

@@ -14,6 +14,7 @@ public class AccessRequestFilteringStep : IRadiusPipelineStep
 
     public async Task ExecuteAsync(IRadiusPipelineExecutionContext context)
     {
+        _logger.LogDebug("'{name}' started", nameof(AccessRequestFilteringStep));
         if (context.RequestPacket.Code == PacketCode.AccessRequest)
         {
             await Task.CompletedTask;

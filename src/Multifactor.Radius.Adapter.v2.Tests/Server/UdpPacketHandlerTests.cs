@@ -41,7 +41,7 @@ public class UdpPacketHandlerTests
         packetServiceMock.Setup(x => x.TryGetNasIdentifier(It.IsAny<byte[]>(), out nas)).Returns(true);
         configMock.Setup(x => x.GetClient(It.IsAny<string>())).Returns(clientConfigMock.Object);
         
-        var handler = new UpdPacketHandler(configMock.Object, packetServiceMock.Object, pipelineProviderMock.Object, new Mock<IResponseSender>().Object, NullLogger<IUdpPacketHandler>.Instance);
+        var handler = new UdpPacketHandler(configMock.Object, packetServiceMock.Object, pipelineProviderMock.Object, new Mock<IResponseSender>().Object, NullLogger<IUdpPacketHandler>.Instance);
         var tasks = new List<Task>();
 
         for(int i = 0; i < connectionsCount; i++)

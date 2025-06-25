@@ -1,4 +1,6 @@
+using System.Text;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Multifactor.Core.Ldap.LangFeatures;
 using Multifactor.Radius.Adapter.v2.Core.Configuration.Service;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Builder;
@@ -10,18 +12,22 @@ public class PipelineProvider : IPipelineProvider
 {
     private readonly Dictionary<string, IRadiusPipeline> _pipelines = new();
     
-    public PipelineProvider(IServiceConfiguration configuration, IPipelineConfigurationFactory pipelineConfigurationFactory, IServiceProvider serviceProvider)
+    public PipelineProvider(IServiceConfiguration configuration, IPipelineConfigurationFactory pipelineConfigurationFactory, IServiceProvider serviceProvider, ILogger<IPipelineProvider> logger)
     {
         Throw.IfNull(configuration, nameof(configuration));
         Throw.IfNull(pipelineConfigurationFactory, nameof(pipelineConfigurationFactory));
         Throw.IfNull(serviceProvider, nameof(serviceProvider));
         
+        logger.LogDebug($"Initializing pipelines.");
+        
         foreach (var clientConfiguration in configuration.Clients)
         {
-            var pipelineSettings = new PipelineStepsConfiguration(clientConfiguration.Name, clientConfiguration.PreAuthnMode.Mode, true); //TODO remove true;
+            var pipelineSettings = new PipelineStepsConfiguration(clientConfiguration.Name, clientConfiguration.PreAuthnMode.Mode);
             var pipelineConfig = pipelineConfigurationFactory.CreatePipelineConfiguration(pipelineSettings);
             var pipeline = BuildPipeline(pipelineConfig, serviceProvider);
+            var log = BuildLog(clientConfiguration.Name, pipelineConfig);
             _pipelines.TryAdd(clientConfiguration.Name, pipeline);
+            logger.LogDebug(log);
         }
     }
     
@@ -49,5 +55,18 @@ public class PipelineProvider : IPipelineProvider
         }
 
         return builder.Build()!;
+    }
+
+    private string BuildLog(string configName, PipelineConfiguration pipelineConfiguration)
+    {
+        var builder = new StringBuilder();
+        builder.AppendLine($"Configuration: {configName}");
+        builder.AppendLine("Steps:");
+        for (int i = 0; i < pipelineConfiguration.PipelineStepsTypes.Length; i++)
+        {
+            builder.AppendLine($"{i+1}. {pipelineConfiguration.PipelineStepsTypes[i].Name}");
+        }
+        
+        return builder.ToString();
     }
 }

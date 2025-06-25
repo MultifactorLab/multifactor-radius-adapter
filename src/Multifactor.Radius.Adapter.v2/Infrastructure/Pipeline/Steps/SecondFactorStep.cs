@@ -25,6 +25,7 @@ public class SecondFactorStep : IRadiusPipelineStep
 
     public async Task ExecuteAsync(IRadiusPipelineExecutionContext context)
     {
+        _logger.LogDebug("'{name}' started", nameof(SecondFactorStep));
         ArgumentNullException.ThrowIfNull(context);
         
         if (!ShouldCallSecondFactor(context))
@@ -40,6 +41,9 @@ public class SecondFactorStep : IRadiusPipelineStep
 
     private bool ShouldCallSecondFactor(IRadiusPipelineExecutionContext context)
     {
+        if (context.AuthenticationState.SecondFactorStatus != AuthenticationStatus.Awaiting)
+            return false;
+        
         if (ShouldBypassByRequest(context))
         {
             _logger.LogInformation("Second factor is bypassed for user '{user:l}' from {host:l}:{port}",
@@ -51,7 +55,7 @@ public class SecondFactorStep : IRadiusPipelineStep
 
         if (ShouldBypassByGroups(context))
         {
-            _logger.LogInformation("Second factor is bypassed for user {user:l} in '{domain:l}'", context.RequestPacket.UserName, context.Settings.LdapServerConfiguration.ConnectionString);
+            _logger.LogInformation("Second factor is bypassed for user {user:l} at '{domain:l}'", context.RequestPacket.UserName, context.Settings.LdapServerConfiguration.ConnectionString);
             return false;
         }
         
@@ -86,7 +90,7 @@ public class SecondFactorStep : IRadiusPipelineStep
            var request = GetMembershipRequest(context, serverConfig.SecondFaGroups);
            secondFactorMember = _ldapGroupService.IsMemberOf(request);
            if (secondFactorMember is false)
-               _logger.LogInformation("User '{user:l}' is not a member of the 2FA group in '{domain:l}'", context.RequestPacket.UserName, serverConfig.ConnectionString);
+               _logger.LogInformation("User '{user:l}' is not a member of the 2FA group at '{domain:l}'", context.RequestPacket.UserName, serverConfig.ConnectionString);
         }
 
         if (secondFactorMember.HasValue)
@@ -103,8 +107,7 @@ public class SecondFactorStep : IRadiusPipelineStep
 
         if (apiResponse.Code == AuthenticationStatus.Awaiting)
         {
-            var challengeProcessor =
-                _challengeProcessorProvider.GetChallengeProcessorByType(ChallengeType.SecondFactor);
+            var challengeProcessor = _challengeProcessorProvider.GetChallengeProcessorByType(ChallengeType.SecondFactor);
             if (challengeProcessor is null)
                 throw new InvalidOperationException("Challenge processor could not be found");
             challengeProcessor.AddChallengeContext(context);

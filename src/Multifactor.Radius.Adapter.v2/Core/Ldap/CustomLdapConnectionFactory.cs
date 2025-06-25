@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging.Abstractions;
 using Multifactor.Core.Ldap.Connection;
 using Multifactor.Core.Ldap.Connection.LdapConnectionFactory;
 
@@ -10,6 +11,11 @@ public class CustomLdapConnectionFactory : ILdapConnectionFactory
     public CustomLdapConnectionFactory()
     {
         _factory = LdapConnectionFactory.Create();
+    }
+    
+    public CustomLdapConnectionFactory(IEnumerable<Multifactor.Core.Ldap.Connection.LdapConnectionFactory.ILdapConnectionFactory> ldapConnectionFactories)
+    {
+        _factory = new LdapConnectionFactory (NullLogger<LdapConnectionFactory>.Instance, ldapConnectionFactories);
     }
 
     public ILdapConnection CreateConnection(LdapConnectionOptions ldapConnectionOptions)

@@ -2,6 +2,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Multifactor.Core.Ldap.Name;
 using Multifactor.Core.Ldap.Schema;
+using Multifactor.Radius.Adapter.v2.Core.Auth;
 using Multifactor.Radius.Adapter.v2.Core.Configuration.Client;
 using Multifactor.Radius.Adapter.v2.Core.Ldap;
 using Multifactor.Radius.Adapter.v2.Core.Pipeline;
@@ -109,7 +110,9 @@ public class AccessGroupsCheckingStepTests
         contextMock.Setup(x => x.UserLdapProfile).Returns(() => profileMock.Object);
         contextMock.Setup(x => x.LdapSchema).Returns(() => new Mock<ILdapSchema>().Object);
         contextMock.Setup(x => x.ExecutionState).Returns(execState);
+        contextMock.SetupProperty(x => x.AuthenticationState);
         var context = contextMock.Object;
+        context.AuthenticationState = new AuthenticationState();
         
         await step.ExecuteAsync(context);
         

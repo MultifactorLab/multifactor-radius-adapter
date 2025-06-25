@@ -75,7 +75,9 @@ public class RadiusPacket : IRadiusPacket
     public string? CalledStationIdAttribute => GetAttributeValueAsString("Called-Station-Id");
 
     public string? NasIdentifierAttribute => GetAttributeValueAsString("NAS-Identifier");
-
+    
+    public string? State => GetAttributeValueAsString("State");
+    
     public RadiusPacket(RadiusPacketHeader header, RadiusAuthenticator? requestAuthenticator = null)
     {
         _header = header ?? throw new ArgumentNullException(nameof(header));

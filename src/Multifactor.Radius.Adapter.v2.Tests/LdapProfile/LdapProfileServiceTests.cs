@@ -1,12 +1,13 @@
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
-using Multifactor.Core.Ldap.Connection.LdapConnectionFactory;
 using Multifactor.Core.Ldap.Name;
 using Multifactor.Core.Ldap.Schema;
 using Multifactor.Radius.Adapter.v2.Core.Configuration.Client;
+using Multifactor.Radius.Adapter.v2.Core.Ldap;
 using Multifactor.Radius.Adapter.v2.Core.Ldap.Identity;
 using Multifactor.Radius.Adapter.v2.Services.Ldap;
 using Multifactor.Radius.Adapter.v2.Services.LdapForest;
+using Multifactor.Radius.Adapter.v2.Services.NetBios;
 using Multifactor.Radius.Adapter.v2.Tests.Fixture;
 
 namespace Multifactor.Radius.Adapter.v2.Tests.LdapProfile;
@@ -19,12 +20,12 @@ public class LdapProfileServiceTests
         var sensitiveData = GetConfig();
         var searchBase = new DistinguishedName(sensitiveData["SearchBase"]);
         var targetUser = new UserIdentity(sensitiveData["TargetUserDn"]);
-        var cacheMock = new Mock<IForestMetadataCache>();
-        cacheMock.Setup(x => x.Get(It.IsAny<string>(), It.IsAny<DistinguishedName>())).Returns(() => null);
         var serverConfig = GetServerConfig(sensitiveData);
-        
-        var service = new LdapProfileService(LdapConnectionFactory.Create(), cacheMock.Object, NullLogger.Instance);
-        var ldapProfile = service.FindUserProfile("clientKey", serverConfig, searchBase, targetUser);
+        var netBiosServiceMock = new Mock<INetBiosService>();
+        var schema =  LdapSchemaBuilder.Create();
+        schema.LdapServerImplementation = LdapImplementation.ActiveDirectory;
+        var service = new LdapProfileService(new CustomLdapConnectionFactory(), netBiosServiceMock.Object, NullLogger<LdapProfileService>.Instance);
+        var ldapProfile = service.FindUserProfile(new FindUserProfileRequest("clientKey", serverConfig, schema, searchBase, targetUser));
         
         Assert.NotNull(ldapProfile);
         
@@ -40,11 +41,13 @@ public class LdapProfileServiceTests
         var searchBase = new DistinguishedName(sensitiveData["SearchBase"]);
         var targetUser = new UserIdentity(sensitiveData["TargetUserUpn"]);
         var cacheMock = new Mock<IForestMetadataCache>();
+        var netBiosServiceMock = new Mock<INetBiosService>();
         cacheMock.Setup(x => x.Get(It.IsAny<string>(), It.IsAny<DistinguishedName>())).Returns(() => null);
         var serverConfig = GetServerConfig(sensitiveData);
-        
-        var service = new LdapProfileService(LdapConnectionFactory.Create(), cacheMock.Object, NullLogger.Instance);
-        var ldapProfile = service.FindUserProfile("clientKey", serverConfig, searchBase, targetUser);
+        var schema =  LdapSchemaBuilder.Create();
+        schema.LdapServerImplementation = LdapImplementation.ActiveDirectory;
+        var service = new LdapProfileService(new CustomLdapConnectionFactory(), netBiosServiceMock.Object, NullLogger<LdapProfileService>.Instance);
+        var ldapProfile = service.FindUserProfile(new FindUserProfileRequest("clientKey", serverConfig, schema, searchBase, targetUser));
         
         Assert.NotNull(ldapProfile);
         
@@ -59,12 +62,12 @@ public class LdapProfileServiceTests
         var sensitiveData = GetConfig();
         var searchBase = new DistinguishedName(sensitiveData["SearchBase"]);
         var targetUser = new UserIdentity(sensitiveData["TargetUserUid"]);
-        var cacheMock = new Mock<IForestMetadataCache>();
-        cacheMock.Setup(x => x.Get(It.IsAny<string>(), It.IsAny<DistinguishedName>())).Returns(() => null);
+        var netBiosServiceMock = new Mock<INetBiosService>();
         var serverConfig = GetServerConfig(sensitiveData);
-        
-        var service = new LdapProfileService(LdapConnectionFactory.Create(), cacheMock.Object, NullLogger.Instance);
-        var ldapProfile = service.FindUserProfile("clientKey", serverConfig,searchBase, targetUser);
+        var schema =  LdapSchemaBuilder.Create();
+        schema.LdapServerImplementation = LdapImplementation.ActiveDirectory;
+        var service = new LdapProfileService(new CustomLdapConnectionFactory(), netBiosServiceMock.Object, NullLogger<LdapProfileService>.Instance);
+        var ldapProfile = service.FindUserProfile(new FindUserProfileRequest("clientKey", serverConfig, schema, searchBase, targetUser));
         
         Assert.NotNull(ldapProfile);
         
@@ -81,10 +84,12 @@ public class LdapProfileServiceTests
         var targetUser = new UserIdentity(sensitiveData["TargetUserNetBios"]);
         var cacheMock = new Mock<IForestMetadataCache>();
         cacheMock.Setup(x => x.Get(It.IsAny<string>(), It.IsAny<DistinguishedName>())).Returns(() => null);
+        var netBiosService = new NetBiosService(cacheMock.Object, NullLogger<NetBiosService>.Instance);
         var serverConfig = GetServerConfig(sensitiveData);
-        
-        var service = new LdapProfileService(LdapConnectionFactory.Create(), cacheMock.Object, NullLogger.Instance);
-        var ldapProfile = service.FindUserProfile("clientKey", serverConfig,searchBase, targetUser);
+        var schema =  LdapSchemaBuilder.Create();
+        schema.LdapServerImplementation = LdapImplementation.ActiveDirectory;
+        var service = new LdapProfileService(new CustomLdapConnectionFactory(), netBiosService, NullLogger<LdapProfileService>.Instance);
+        var ldapProfile = service.FindUserProfile(new FindUserProfileRequest("clientKey", serverConfig, schema, searchBase, targetUser));
         
         Assert.NotNull(ldapProfile);
         
@@ -95,16 +100,12 @@ public class LdapProfileServiceTests
 
     private ILdapServerConfiguration GetServerConfig(Dictionary<string, string> sensitiveData)
     {
-        var schema =  LdapSchemaBuilder.Create();
-        schema.LdapServerImplementation = LdapImplementation.ActiveDirectory;
-        
         var serverConfigMock = new Mock<ILdapServerConfiguration>();
         serverConfigMock.Setup(x => x.ConnectionString).Returns(sensitiveData["ConnectionString"]);
         serverConfigMock.Setup(x => x.UserName).Returns(sensitiveData["Admin"]);
         serverConfigMock.Setup(x => x.Password).Returns(sensitiveData["AdminPwd"]);
         serverConfigMock.Setup(x => x.Password).Returns(sensitiveData["AdminPwd"]);
         serverConfigMock.Setup(x => x.BindTimeoutInSeconds).Returns(30);
-        serverConfigMock.Setup(x => x.LdapSchema).Returns(schema);
         return serverConfigMock.Object;
     }
 

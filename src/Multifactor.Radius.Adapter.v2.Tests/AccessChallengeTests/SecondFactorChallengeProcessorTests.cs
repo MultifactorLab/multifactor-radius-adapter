@@ -1,6 +1,7 @@
 using System.Net;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
+using Multifactor.Radius.Adapter.v2.Core;
 using Multifactor.Radius.Adapter.v2.Core.AccessChallenge;
 using Multifactor.Radius.Adapter.v2.Core.Auth;
 using Multifactor.Radius.Adapter.v2.Core.Auth.PreAuthMode;
@@ -156,6 +157,7 @@ public class SecondFactorChallengeProcessorTests
         contextMock.Setup(x => x.RequestPacket.TryGetUserPassword()).Returns("password");
         contextMock.Setup(x => x.RemoteEndpoint).Returns(endpoint);
         contextMock.Setup(x => x.Settings.PreAuthnMode).Returns(PreAuthModeDescriptor.Default);
+        contextMock.Setup(x => x.Passphrase).Returns(UserPassphrase.Parse("123456", PreAuthModeDescriptor.Default));
         
         contextMock.SetupProperty(x => x.AuthenticationState.SecondFactorStatus);
         contextMock.SetupProperty(x => x.ResponseInformation.State);
@@ -182,6 +184,7 @@ public class SecondFactorChallengeProcessorTests
         contextMock.Setup(x => x.RequestPacket.TryGetUserPassword()).Returns("password");
         contextMock.Setup(x => x.RemoteEndpoint).Returns(endpoint);
         contextMock.Setup(x => x.Settings.PreAuthnMode).Returns(PreAuthModeDescriptor.Default);
+        contextMock.Setup(x => x.Passphrase).Returns(UserPassphrase.Parse("123456", PreAuthModeDescriptor.Default));
         contextMock.Setup(x => x.Settings.ClientConfigurationName).Returns("1");
         contextMock.SetupProperty(x => x.AuthenticationState.SecondFactorStatus);
         contextMock.SetupProperty(x => x.ResponseInformation.State);
@@ -214,6 +217,7 @@ public class SecondFactorChallengeProcessorTests
         contextMock.Setup(x => x.RemoteEndpoint).Returns(endpoint);
         contextMock.Setup(x => x.Settings.PreAuthnMode).Returns(PreAuthModeDescriptor.Default);
         contextMock.Setup(x => x.Settings.ClientConfigurationName).Returns("1");
+        contextMock.Setup(x => x.Passphrase).Returns(UserPassphrase.Parse("123456", PreAuthModeDescriptor.Default));
         contextMock.SetupProperty(x => x.AuthenticationState.SecondFactorStatus);
         contextMock.SetupProperty(x => x.ResponseInformation.State);
         var context = contextMock.Object;
@@ -246,6 +250,7 @@ public class SecondFactorChallengeProcessorTests
         contextMock.Setup(x => x.RequestPacket.TryGetUserPassword()).Returns("password");
         contextMock.Setup(x => x.RemoteEndpoint).Returns(endpoint);
         contextMock.Setup(x => x.Settings.PreAuthnMode).Returns(PreAuthModeDescriptor.Default);
+        contextMock.Setup(x => x.Passphrase).Returns(UserPassphrase.Parse("123456", PreAuthModeDescriptor.Default));
         contextMock.Setup(x => x.Settings.ClientConfigurationName).Returns("1");
         contextMock.SetupProperty(x => x.AuthenticationState.SecondFactorStatus);
         contextMock.SetupProperty(x => x.ResponseInformation.State);

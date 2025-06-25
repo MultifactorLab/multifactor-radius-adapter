@@ -23,10 +23,10 @@ public class CustomLdapSchemaLoader : ILdapSchemaLoader
         var schema = _ldapSchemaLoader.Load(connectionOptions);
         if (schema is null)
         {
-            _logger.LogWarning("Failed to load ldap schema of '{url}'", connectionOptions.ConnectionString);
+            _logger.LogWarning("Failed to load ldap schema of '{url}'", connectionOptions.ConnectionString.WellFormedLdapUrl);
             return null;
         }
-        _logger.LogDebug("Successfully loaded ldap schema of '{url}'", connectionOptions.ConnectionString);
+        _logger.LogDebug("Successfully loaded ldap schema of '{url}'", connectionOptions.ConnectionString.WellFormedLdapUrl);
         return schema;
     }
 }

@@ -1,4 +1,5 @@
 using System.Net;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Multifactor.Core.Ldap.Attributes;
@@ -6,7 +7,6 @@ using Multifactor.Core.Ldap.Name;
 using Multifactor.Core.Ldap.Schema;
 using Multifactor.Radius.Adapter.v2.Core.Configuration.Client;
 using Multifactor.Radius.Adapter.v2.Core.Ldap;
-using Multifactor.Radius.Adapter.v2.Core.Ldap.Identity;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Context;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Steps;
 using Multifactor.Radius.Adapter.v2.Services.Ldap;
@@ -22,7 +22,7 @@ public class ProfileLoadingTests
         var loaderMock = new Mock<ILdapProfileService>();
         var profile = new LdapProfileMock();
         loaderMock
-            .Setup(x => x.FindUserProfile(It.IsAny<string>(), It.IsAny<ILdapServerConfiguration>(), It.IsAny<DistinguishedName>(), It.IsAny<UserIdentity>(), It.IsAny<LdapAttributeName[]>()))
+            .Setup(x => x.FindUserProfile(It.IsAny<FindUserProfileRequest>()))
             .Returns(profile);
         var schemaMock = new Mock<ILdapSchema>();
         schemaMock.Setup(x => x.NamingContext).Returns(new DistinguishedName("dc=test,dc=example,dc=com"));
@@ -30,10 +30,13 @@ public class ProfileLoadingTests
         contextMock.Setup(x => x.RequestPacket.UserName).Returns("user@example.com");
         contextMock.Setup(x => x.Settings.RadiusReplyAttributes).Returns(new Dictionary<string, RadiusReplyAttributeValue[]>());
         contextMock.Setup(x => x.LdapSchema).Returns(schemaMock.Object);
+        contextMock.Setup(x => x.Settings.LdapServerConfiguration.UserProfileCacheLifeTimeInHours).Returns(1);
+        contextMock.Setup(x => x.Settings.ClientConfigurationName).Returns("name");
         contextMock.SetupProperty(x => x.UserLdapProfile);
         var context = contextMock.Object;
+        var cacheMock = new CacheMock();
         
-        var step = new ProfileLoadingStep(loaderMock.Object, NullLogger<ProfileLoadingStep>.Instance);
+        var step = new ProfileLoadingStep(loaderMock.Object, cacheMock, NullLogger<ProfileLoadingStep>.Instance);
         await step.ExecuteAsync(context);
 
         Assert.NotNull(context.UserLdapProfile);
@@ -47,7 +50,7 @@ public class ProfileLoadingTests
         var loaderMock = new Mock<ILdapProfileService>();
         var profile = new LdapProfileMock();
         loaderMock
-            .Setup(x => x.FindUserProfile(It.IsAny<string>(), It.IsAny<ILdapServerConfiguration>(), It.IsAny<DistinguishedName>(), It.IsAny<UserIdentity>(), It.IsAny<LdapAttributeName[]>()))
+            .Setup(x => x.FindUserProfile(It.IsAny<FindUserProfileRequest>()))
             .Returns(profile);
         
         var contextMock = new Mock<IRadiusPipelineExecutionContext>();
@@ -55,8 +58,8 @@ public class ProfileLoadingTests
         contextMock.Setup(x => x.RemoteEndpoint).Returns(IPEndPoint.Parse("127.0.0.1:666"));
         contextMock.SetupProperty(x => x.UserLdapProfile);
         var context = contextMock.Object;
-        
-        var step = new ProfileLoadingStep(loaderMock.Object, NullLogger<ProfileLoadingStep>.Instance);
+        var cacheMock = new CacheMock();
+        var step = new ProfileLoadingStep(loaderMock.Object, cacheMock, NullLogger<ProfileLoadingStep>.Instance);
         await step.ExecuteAsync(context);
 
         Assert.Null(context.UserLdapProfile);
@@ -67,7 +70,7 @@ public class ProfileLoadingTests
     {
         var loaderMock = new Mock<ILdapProfileService>();
         loaderMock
-            .Setup(x => x.FindUserProfile(It.IsAny<string>(), It.IsAny<ILdapServerConfiguration>(), It.IsAny<DistinguishedName>(), It.IsAny<UserIdentity>(), It.IsAny<LdapAttributeName[]>()))
+            .Setup(x => x.FindUserProfile(It.IsAny<FindUserProfileRequest>()))
             .Returns(() => null);
         var schemaMock = new Mock<ILdapSchema>();
         schemaMock.Setup(x => x.NamingContext).Returns(new DistinguishedName("dc=test,dc=example,dc=com"));
@@ -75,10 +78,12 @@ public class ProfileLoadingTests
         contextMock.Setup(x => x.RequestPacket.UserName).Returns("user@example.com");
         contextMock.Setup(x => x.Settings.RadiusReplyAttributes).Returns(new Dictionary<string, RadiusReplyAttributeValue[]>());
         contextMock.Setup(x => x.LdapSchema).Returns(schemaMock.Object);
+        contextMock.Setup(x => x.Settings.ClientConfigurationName).Returns("name");
+        contextMock.Setup(x => x.Settings.LdapServerConfiguration).Returns(new Mock<ILdapServerConfiguration>().Object);
         contextMock.SetupProperty(x => x.UserLdapProfile);
         var context = contextMock.Object;
-        
-        var step = new ProfileLoadingStep(loaderMock.Object, NullLogger<ProfileLoadingStep>.Instance);
+        var cacheMock = new CacheMock();
+        var step = new ProfileLoadingStep(loaderMock.Object, cacheMock, NullLogger<ProfileLoadingStep>.Instance);
         await step.ExecuteAsync(context);
 
         Assert.Null(context.UserLdapProfile);
@@ -89,16 +94,17 @@ public class ProfileLoadingTests
     {
         var loaderMock = new Mock<ILdapProfileService>();
         loaderMock
-            .Setup(x => x.FindUserProfile(It.IsAny<string>(), It.IsAny<ILdapServerConfiguration>(), It.IsAny<DistinguishedName>(), It.IsAny<UserIdentity>(), It.IsAny<LdapAttributeName[]>()))
+            .Setup(x => x.FindUserProfile(It.IsAny<FindUserProfileRequest>()))
             .Returns(() => null);
         var contextMock = new Mock<IRadiusPipelineExecutionContext>();
         contextMock.Setup(x => x.RequestPacket.UserName).Returns("user@example.com");
         contextMock.Setup(x => x.Settings.RadiusReplyAttributes).Returns(new Dictionary<string, RadiusReplyAttributeValue[]>());
         contextMock.Setup(x => x.LdapSchema).Returns(() => null);
+        contextMock.Setup(x => x.Settings.ClientConfigurationName).Returns("name");
         contextMock.SetupProperty(x => x.UserLdapProfile);
         var context = contextMock.Object;
-        
-        var step = new ProfileLoadingStep(loaderMock.Object, NullLogger<ProfileLoadingStep>.Instance);
+        var cacheMock = new CacheMock();
+        var step = new ProfileLoadingStep(loaderMock.Object, cacheMock, NullLogger<ProfileLoadingStep>.Instance);
         await step.ExecuteAsync(context);
 
         Assert.Null(context.UserLdapProfile);
@@ -117,6 +123,39 @@ public class ProfileLoadingTests
         public LdapProfileMock()
         {
             Dn = new DistinguishedName("dc=test,dc=example,dc=com");
+        }
+    }
+    
+    private class CacheMock() : IMemoryCache
+    {
+        private object? _val;
+
+        public CacheMock(object? val = null) : this()
+        {
+            _val = val;
+        }
+
+        public void Dispose()
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool TryGetValue(object key, out object? value)
+        {
+            value = _val;
+            return value is not null;
+        }
+
+        public ICacheEntry CreateEntry(object key)
+        {
+            var entry = new Mock<ICacheEntry>();
+            entry.SetupProperty(x => x.AbsoluteExpiration);
+            entry.SetupProperty(x => x.Value);
+            return entry.Object;
+        }
+
+        public void Remove(object key)
+        {
         }
     }
 }
