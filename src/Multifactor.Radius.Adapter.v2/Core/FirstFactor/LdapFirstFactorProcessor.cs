@@ -2,23 +2,23 @@ using System.DirectoryServices.Protocols;
 using Microsoft.Extensions.Logging;
 using Multifactor.Core.Ldap;
 using Multifactor.Core.Ldap.Connection;
-using Multifactor.Core.Ldap.Connection.LdapConnectionFactory;
 using Multifactor.Core.Ldap.LangFeatures;
 using Multifactor.Radius.Adapter.v2.Core.Auth;
 using Multifactor.Radius.Adapter.v2.Core.Configuration.Client;
 using Multifactor.Radius.Adapter.v2.Core.Ldap;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Context;
+using ILdapConnectionFactory = Multifactor.Radius.Adapter.v2.Core.Ldap.ILdapConnectionFactory;
 
 namespace Multifactor.Radius.Adapter.v2.Core.FirstFactor;
 
 public class LdapFirstFactorProcessor : IFirstFactorProcessor
 {
-    private LdapConnectionFactory _ldapConnectionFactory;
+    private ILdapConnectionFactory _ldapConnectionFactory;
     private ILogger _logger;
 
     public AuthenticationSource AuthenticationSource => AuthenticationSource.Ldap;
 
-    public LdapFirstFactorProcessor(LdapConnectionFactory ldapConnectionFactory,
+    public LdapFirstFactorProcessor(ILdapConnectionFactory ldapConnectionFactory,
         ILogger<LdapFirstFactorProcessor> logger)
     {
         Throw.IfNull(ldapConnectionFactory, nameof(ldapConnectionFactory));
@@ -28,94 +28,88 @@ public class LdapFirstFactorProcessor : IFirstFactorProcessor
         _logger = logger;
     }
 
-    public async Task ProcessFirstFactor(IRadiusPipelineExecutionContext context)
+    public Task ProcessFirstFactor(IRadiusPipelineExecutionContext context)
     {
-        Throw.IfNull(context, nameof(context));
+        ArgumentNullException.ThrowIfNull(context, nameof(context));
 
         var radiusPacket = context.RequestPacket;
         Throw.IfNull(radiusPacket, nameof(radiusPacket));
 
-        if ((context.Settings.LdapServers?.Count ?? 0) <= 0)
-            throw new ApplicationException("No Ldap servers configured.");
+        if (context.Settings.LdapServerConfiguration is null)
+            throw new InvalidOperationException("No Ldap servers configured.");
 
         if (string.IsNullOrWhiteSpace(radiusPacket.UserName))
         {
-            _logger.LogWarning("Can't find User-Name in message id={id} from {host:l}:{port}",
-                context.RequestPacket.Identifier, context.RemoteEndpoint.Address, context.RemoteEndpoint.Port);
+            _logger.LogWarning("Can't find User-Name in message id={id} from {host:l}:{port}", radiusPacket.Identifier, context.RemoteEndpoint.Address, context.RemoteEndpoint.Port);
             Reject(context);
-            return;
+            return Task.CompletedTask;
         }
 
         var transformedName = UserNameTransformation.Transform(radiusPacket.UserName, context.Settings.UserNameTransformRules.BeforeFirstFactor);
 
-        var pwd = radiusPacket.TryGetUserPassword();
-        if (string.IsNullOrWhiteSpace(pwd))
+        var passphrase = context.Passphrase;
+        if (string.IsNullOrWhiteSpace(passphrase.Raw))
         {
-            _logger.LogWarning("No User-Password in message id={id} from {host:l}:{port}",
-                context.RequestPacket.Identifier, context.RemoteEndpoint.Address, context.RemoteEndpoint.Port);
+            _logger.LogWarning("No User-Password in message id={id} from {host:l}:{port}", radiusPacket.Identifier, context.RemoteEndpoint.Address, context.RemoteEndpoint.Port);
             Reject(context);
-            return;
-        }
-
-        var passphrase = UserPassphrase.Parse(pwd, context.Settings.PreAuthnMode);
-
-        if (string.IsNullOrWhiteSpace(passphrase.Password))
-        {
-            _logger.LogWarning("Can't parse User-Password in message id={id} from {host:l}:{port}",
-                context.RequestPacket.Identifier, context.RemoteEndpoint.Address, context.RemoteEndpoint.Port);
-            Reject(context);
-            return;
-        }
-
-        var availableLdapServer = GetFirstAvailableLdapServer(context, transformedName, passphrase.Password);
-        if (availableLdapServer is null)
-        {
-            Reject(context);
-            _logger.LogWarning("No available LDAP servers.");
-            return;
+            return Task.CompletedTask;
         }
         
-        _logger.LogInformation("User '{user:l}' credential and status verified successfully at {endpoint:l}", transformedName, availableLdapServer.ConnectionString);
-        context.FirstFactorLdapServerConfiguration = availableLdapServer;
-        Accept(context);
-    }
-
-    private ILdapServerConfiguration? GetFirstAvailableLdapServer(IRadiusPipelineExecutionContext context, string login, string password)
-    {
-        foreach (var ldapServer in context.Settings.LdapServers!)
+        if (string.IsNullOrWhiteSpace(passphrase.Password))
         {
-            try
-            {
-                using var connection = GetConnection(
-                    ldapServer.ConnectionString,
-                    login,
-                    password,
-                    ldapServer.BindTimeoutInSeconds);
-                
-                return ldapServer;
-            }
-            catch (Exception ex)
-            {
-                if (ex is not LdapException ldapException)
-                {
-                    _logger.LogError(ex, "Verification user '{user:l}' at {ldapUri:l} failed", login, ldapServer.ConnectionString);
-                    continue;
-                }
-
-                var info = GetLdapErrorInfo(ldapException);
-                if (info != null)
-                {
-                    ProcessErrorReason(info, context, ldapServer);
-                }
-
-                _logger.LogWarning(ldapException, "Verification user '{user:l}' at {ldapUri:l} failed: {dataReason:l}", login, ldapServer.ConnectionString, info?.ReasonText);
-            }
+            _logger.LogWarning("Can't parse User-Password in message id={id} from {host:l}:{port}", radiusPacket.Identifier, context.RemoteEndpoint.Address, context.RemoteEndpoint.Port);
+            Reject(context);
+            return Task.CompletedTask;
         }
 
-        return null;
+        var isValid = ValidateUserCredentials(context, transformedName, passphrase.Password);
+        if (!isValid)
+        {
+            Reject(context);
+            return Task.CompletedTask;
+        }
+
+        _logger.LogInformation("User '{user:l}' credential and status verified successfully at {endpoint:l}", transformedName, context.Settings.LdapServerConfiguration.ConnectionString);
+        Accept(context);
+        return Task.CompletedTask;
     }
 
-    private ILdapConnection GetConnection(string connectionString, string userName, string password, int bindTimeoutInSeconds)
+    private bool ValidateUserCredentials(
+        IRadiusPipelineExecutionContext context,
+        string login,
+        string password)
+    {
+        var serverConfig = context.Settings.LdapServerConfiguration;
+        try
+        {
+            using var connection = GetConnection(
+                serverConfig.ConnectionString,
+                login,
+                password,
+                serverConfig.BindTimeoutInSeconds);
+
+            return true;
+        }
+        catch (Exception ex)
+        {
+            if (ex is not LdapException ldapException)
+            {
+                _logger.LogError(ex, "Verification user '{user:l}' at {ldapUri:l} failed", login, serverConfig.ConnectionString);
+                return false;
+            }
+
+            var info = GetLdapErrorInfo(ldapException);
+            if (info != null)
+                ProcessErrorReason(info, context, serverConfig);
+
+            _logger.LogWarning(ldapException, "Verification user '{user:l}' at {ldapUri:l} failed: {dataReason:l}", login, serverConfig.ConnectionString, info?.ReasonText);
+        }
+
+        return false;
+    }
+
+    private ILdapConnection GetConnection(string connectionString, string userName, string password,
+        int bindTimeoutInSeconds)
     {
         var connectionOptions = new LdapConnectionOptions(
             new LdapConnectionString(connectionString),

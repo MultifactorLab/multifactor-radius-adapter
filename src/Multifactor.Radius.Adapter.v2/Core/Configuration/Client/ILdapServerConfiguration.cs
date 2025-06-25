@@ -1,5 +1,3 @@
-using Multifactor.Core.Ldap.Schema;
-
 namespace Multifactor.Radius.Adapter.v2.Core.Configuration.Client;
 
 public interface ILdapServerConfiguration
@@ -15,6 +13,7 @@ public interface ILdapServerConfiguration
     public IReadOnlyList<string> SecondFaBypassGroups { get; }
     public IReadOnlyList<string> NestedGroupsBaseDns { get; }
     public IReadOnlyList<string> PhoneAttributes { get; }
-    public ILdapSchema LdapSchema { get; } //TODO Same field in the pipeline context. Leave in one place
     public IDomainPermissionRules? DomainPermissionRules { get; }
+    public int LdapSchemaCacheLifeTimeInHours { get; }
+    public int UserProfileCacheLifeTimeInHours { get; }
 }

@@ -28,10 +28,10 @@ public class NetBiosServiceTests
         using var connection = factory.CreateConnection(options);
         var cache = new ForestMetadataCache();
 
-        var service = new NetBiosService(cache, connection, new NullLogger<NetBiosService>());
+        var service = new NetBiosService(cache, new NullLogger<NetBiosService>());
         var clientKey = "clientKey";
         var identity = new UserIdentity(sensitiveData["TargetUser"]);
-        var result = service.GetDomainByIdentityAsync(clientKey, new DistinguishedName(sensitiveData["Server"]), identity);
+        var result = service.GetDomainByIdentityAsync(new NetBiosRequest(clientKey, identity, new DistinguishedName(sensitiveData["Server"]), connection));
         Assert.Equal(sensitiveData["Result"], result.StringRepresentation.ToLower());
     }
 
@@ -50,10 +50,10 @@ public class NetBiosServiceTests
         using var connection = factory.CreateConnection(options);
         var cache = new ForestMetadataCache();
 
-        var service = new NetBiosService(cache, connection, new NullLogger<NetBiosService>());
+        var service = new NetBiosService(cache, new NullLogger<NetBiosService>());
         var clientKey = "clientKey";
         var identity = new UserIdentity(sensitiveData["TargetUser2"]);
-        var result = service.GetDomainByIdentityAsync(clientKey, new DistinguishedName(sensitiveData["Server2"]), identity);
+        var result = service.GetDomainByIdentityAsync(new NetBiosRequest(clientKey, identity, new DistinguishedName(sensitiveData["Server2"]), connection));
         Assert.Equal(sensitiveData["Result2"], result.StringRepresentation.ToLower());
     }
 

@@ -1,84 +1,75 @@
 using System.DirectoryServices.Protocols;
 using Microsoft.Extensions.Logging;
 using Multifactor.Core.Ldap;
-using Multifactor.Core.Ldap.Attributes;
 using Multifactor.Core.Ldap.Connection;
-using Multifactor.Core.Ldap.Connection.LdapConnectionFactory;
-using Multifactor.Core.Ldap.LangFeatures;
-using Multifactor.Core.Ldap.Name;
+using Multifactor.Core.Ldap.Schema;
 using Multifactor.Radius.Adapter.v2.Core.Configuration.Client;
 using Multifactor.Radius.Adapter.v2.Core.Ldap;
 using Multifactor.Radius.Adapter.v2.Core.Ldap.Identity;
-using Multifactor.Radius.Adapter.v2.Services.LdapForest;
 using Multifactor.Radius.Adapter.v2.Services.NetBios;
+using ILdapConnectionFactory = Multifactor.Radius.Adapter.v2.Core.Ldap.ILdapConnectionFactory;
 
 namespace Multifactor.Radius.Adapter.v2.Services.Ldap;
 
 public class LdapProfileService : ILdapProfileService
 {
-    private readonly LdapConnectionFactory _ldapConnectionFactory;
-    private readonly IForestMetadataCache _forestMetadataCache;
+    private readonly ILdapConnectionFactory _ldapConnectionFactory;
+    private readonly INetBiosService _netBiosService;
     private readonly ILogger _logger;
 
-    public LdapProfileService(LdapConnectionFactory ldapConnectionFactory, IForestMetadataCache forestMetadataCache, ILogger logger)
+    public LdapProfileService(ILdapConnectionFactory ldapConnectionFactory, INetBiosService netBiosService, ILogger<LdapProfileService> logger)
     {
-        Throw.IfNull(ldapConnectionFactory, nameof(ldapConnectionFactory));
-        Throw.IfNull(forestMetadataCache, nameof(forestMetadataCache));
-        Throw.IfNull(logger, nameof(logger));
-        
         _ldapConnectionFactory = ldapConnectionFactory;
-        _forestMetadataCache = forestMetadataCache;
+        _netBiosService = netBiosService;
         _logger = logger;
     }
 
-    public ILdapProfile? FindUserProfile(string clientName, ILdapServerConfiguration serverConfiguration, DistinguishedName searchBase, UserIdentity userIdentity, LdapAttributeName[]? attributeNames = null)
+    public ILdapProfile? FindUserProfile(FindUserProfileRequest request)
     {
-        Throw.IfNull(searchBase, nameof(searchBase));
-        Throw.IfNull(userIdentity, nameof(userIdentity));
+        ArgumentNullException.ThrowIfNull(request);
 
-        var options = GetLdapConnectionOptions(serverConfiguration);
+        var options = GetLdapConnectionOptions(request.LdapServerConfiguration);
 
         using var connection = _ldapConnectionFactory.CreateConnection(options);
 
-        var identityToSearch = userIdentity;
-        if (userIdentity.Format == UserIdentityFormat.NetBiosName)
+        var identityToSearch = request.UserIdentity;
+        if (request.UserIdentity.Format == UserIdentityFormat.NetBiosName)
         {
-            var netBiosService = new NetBiosService(_forestMetadataCache, connection, _logger, serverConfiguration.DomainPermissionRules);
-            var upn = netBiosService.ConvertNetBiosToUpn(clientName, identityToSearch, searchBase);
+            var upn = _netBiosService.ConvertNetBiosToUpn(new NetBiosRequest(request.ClientName, identityToSearch, request.SearchBase, connection, request.LdapServerConfiguration.DomainPermissionRules));
+            _logger.LogDebug("Transformed '{netbios}' to '{upn}'", request.UserIdentity.Identity, upn);
             identityToSearch = new UserIdentity(upn);
         }
 
-        var filter = GetFilter(identityToSearch, serverConfiguration);
-        var loader = new LdapProfileLoader(searchBase, connection, serverConfiguration.LdapSchema);
-        return loader.LoadLdapProfile(filter, attributeNames: attributeNames ?? []);
+        var filter = GetFilter(identityToSearch, request.LdapSchema);
+        var loader = new LdapProfileLoader(request.SearchBase, connection, request.LdapSchema);
+        return loader.LoadLdapProfile(filter, attributeNames: request.AttributeNames ?? []);
     }
 
-    public Task<PasswordChangeResponse> ChangeUserPasswordAsync(string newPassword, ILdapProfile ldapProfile, ILdapServerConfiguration serverConfiguration)
+    public Task<PasswordChangeResponse> ChangeUserPasswordAsync(ChangeUserPasswordRequest request)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(newPassword, nameof(newPassword));
-        ArgumentNullException.ThrowIfNull(ldapProfile, nameof(ldapProfile));
-
-        var options = GetLdapConnectionOptions(serverConfiguration);
+        ArgumentNullException.ThrowIfNull(request, nameof(request));
+        
+        var options = GetLdapConnectionOptions(request.ServerConfiguration);
         
         using var connection = _ldapConnectionFactory.CreateConnection(options);
-        var passwordChanger = new LdapPasswordChanger(connection, serverConfiguration.LdapSchema);
-        return passwordChanger.ChangeUserPasswordAsync(newPassword, ldapProfile);
+        var passwordChanger = new LdapPasswordChanger(connection, request.Schema);
+        return passwordChanger.ChangeUserPasswordAsync(request.NewPassword, request.Profile);
     }
 
-    private string GetFilter(UserIdentity identity, ILdapServerConfiguration serverConfiguration)
+    private string GetFilter(UserIdentity identity, ILdapSchema schema)
     {
-        var identityAttribute = GetIdentityAttribute(identity, serverConfiguration);
-        var objectClass = serverConfiguration.LdapSchema.ObjectClass;
-        var classValue = serverConfiguration.LdapSchema.UserObjectClass;
+        var identityAttribute = GetIdentityAttribute(identity, schema);
+        var objectClass = schema.ObjectClass;
+        var classValue = schema.UserObjectClass;
 
         return $"(&({objectClass}={classValue})({identityAttribute}={identity.Identity}))";
     }
 
-    private string GetIdentityAttribute(UserIdentity identity, ILdapServerConfiguration serverConfiguration) => identity.Format switch
+    private string GetIdentityAttribute(UserIdentity identity, ILdapSchema schema) => identity.Format switch
     {
         UserIdentityFormat.UserPrincipalName => "userPrincipalName",
-        UserIdentityFormat.DistinguishedName => serverConfiguration.LdapSchema.Dn,
-        UserIdentityFormat.SamAccountName => serverConfiguration.LdapSchema.Uid,
+        UserIdentityFormat.DistinguishedName => schema.Dn,
+        UserIdentityFormat.SamAccountName => schema.Uid,
         _ => throw new NotSupportedException("Unsupported user identity format")
     };
 

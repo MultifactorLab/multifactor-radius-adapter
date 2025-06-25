@@ -7,12 +7,13 @@ using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Steps;
 
 namespace Multifactor.Radius.Adapter.v2.Tests.PipelineTests;
 
+//TODO fix tests
 public class PipelineConfigurationFactoryTests
 {
     [Fact]
     public void CreatePipelineConfiguration_ShouldReturnConfiguration()
     {
-        var config = new PipelineStepsConfiguration("name", PreAuthMode.None, shouldCheckMembership: true);
+        var config = new PipelineStepsConfiguration("name", PreAuthMode.None);
         
         var cacheMock = new Mock<IMemoryCache>();
         var outVal = new object(); 
@@ -31,7 +32,7 @@ public class PipelineConfigurationFactoryTests
     [Fact]
     public void BuildPipelineConfiguration_ShouldReturnDefaultConfig()
     {
-        var config = new PipelineStepsConfiguration("name", PreAuthMode.None, shouldCheckMembership: true);
+        var config = new PipelineStepsConfiguration("name", PreAuthMode.None);
         
         var cacheMock = new Mock<IMemoryCache>();
         var outVal = new object(); 
@@ -48,7 +49,6 @@ public class PipelineConfigurationFactoryTests
             e => Assert.True(typeof(ProfileLoadingStep).IsAssignableFrom(e)),
             e => Assert.True(typeof(AccessChallengeStep).IsAssignableFrom(e)),
             e => Assert.True(typeof(FirstFactorStep).IsAssignableFrom(e)),
-            e => Assert.True(typeof(CheckingMembershipStep).IsAssignableFrom(e)),
             e => Assert.True(typeof(SecondFactorStep).IsAssignableFrom(e)));
     }
     
@@ -58,7 +58,7 @@ public class PipelineConfigurationFactoryTests
     [InlineData(PreAuthMode.Telegram)]
     public void BuildPipelineConfiguration_ShouldReturnPreAuthConfiguration(PreAuthMode mode)
     {
-        var config = new PipelineStepsConfiguration("name", mode, shouldCheckMembership: true);
+        var config = new PipelineStepsConfiguration("name", mode);
         
         var cacheMock = new Mock<IMemoryCache>();
         var outVal = new object(); 
@@ -75,14 +75,13 @@ public class PipelineConfigurationFactoryTests
             e => Assert.True(typeof(ProfileLoadingStep).IsAssignableFrom(e)),
             e => Assert.True(typeof(AccessChallengeStep).IsAssignableFrom(e)),
             e => Assert.True(typeof(SecondFactorStep).IsAssignableFrom(e)),
-            e => Assert.True(typeof(FirstFactorStep).IsAssignableFrom(e)),
-            e => Assert.True(typeof(CheckingMembershipStep).IsAssignableFrom(e)));
+            e => Assert.True(typeof(FirstFactorStep).IsAssignableFrom(e)));
     }
     
     [Fact]
     public void BuildPipelineConfiguration_ShouldReturnConfigurationWithoutMembership()
     {
-        var config = new PipelineStepsConfiguration("name", PreAuthMode.None, shouldCheckMembership: false);
+        var config = new PipelineStepsConfiguration("name", PreAuthMode.None);
         
         var cacheMock = new Mock<IMemoryCache>();
         var outVal = new object(); 

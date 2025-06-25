@@ -1,19 +1,32 @@
 using System.Runtime.InteropServices;
+using System.Security.Authentication;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Multifactor.Core.Ldap.Connection.LdapConnectionFactory;
+using Multifactor.Core.Ldap.LdapGroup.Load;
+using Multifactor.Core.Ldap.LdapGroup.Membership;
 using Multifactor.Core.Ldap.Schema;
+using Multifactor.Radius.Adapter.v2.Core.AccessChallenge;
 using Multifactor.Radius.Adapter.v2.Core.Configuration.Client.Build;
 using Multifactor.Radius.Adapter.v2.Core.Configuration.Service;
 using Multifactor.Radius.Adapter.v2.Core.Configuration.Service.Build;
 using Multifactor.Radius.Adapter.v2.Core.FirstFactor;
+using Multifactor.Radius.Adapter.v2.Core.Ldap;
 using Multifactor.Radius.Adapter.v2.Core.Radius.Attributes;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configuration.RadiusAdapter.Build;
+using Multifactor.Radius.Adapter.v2.Infrastructure.Http;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Builder;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Steps;
 using Multifactor.Radius.Adapter.v2.Server.Udp;
+using Multifactor.Radius.Adapter.v2.Services.AuthenticatedClientCache;
 using Multifactor.Radius.Adapter.v2.Services.DataProtection;
 using Multifactor.Radius.Adapter.v2.Services.Ldap;
+using Multifactor.Radius.Adapter.v2.Services.LdapForest;
+using Multifactor.Radius.Adapter.v2.Services.MultifactorApi;
+using Multifactor.Radius.Adapter.v2.Services.NetBios;
+using Multifactor.Radius.Adapter.v2.Services.Radius;
+using ILdapConnectionFactory = Multifactor.Radius.Adapter.v2.Core.Ldap.ILdapConnectionFactory;
 
 namespace Multifactor.Radius.Adapter.v2.Extensions;
 
@@ -89,6 +102,35 @@ public static class ServiceCollectionExtensions
         });
     }
 
+    public static void AddMultifactorHttpClient(this IServiceCollection services)
+    {
+        services.AddSingleton<IHttpClient, MultifactorHttpClient>();
+        services.AddHttpClient(nameof(MultifactorHttpClient), (prov, client) =>
+        {
+            var config = prov.GetRequiredService<IServiceConfiguration>();
+            client.BaseAddress = new Uri(config.ApiUrl);
+            client.Timeout = config.ApiTimeout;
+        }).ConfigurePrimaryHttpMessageHandler(prov =>
+        {
+            var config = prov.GetRequiredService<IServiceConfiguration>();
+            var handler = new HttpClientHandler
+            {
+                MaxConnectionsPerServer = 100,
+                SslProtocols = SslProtocols.Tls13 | SslProtocols.Tls12
+            };
+            
+            if (string.IsNullOrWhiteSpace(config.ApiProxy))
+                return handler;
+            
+            if (!WebProxyFactory.TryCreateWebProxy(config.ApiProxy, out var webProxy))
+                throw new Exception("Unable to initialize WebProxy. Please, check whether multifactor-api-proxy URI is valid.");
+
+            handler.Proxy = webProxy;
+
+            return handler;
+        });
+    }
+
     public static void AddRadiusDictionary(this IServiceCollection services)
     {
         services.AddSingleton<RadiusDictionary>();
@@ -110,13 +152,14 @@ public static class ServiceCollectionExtensions
 
     private static void AddPipelineSteps(this IServiceCollection services)
     {
-        services.AddTransient<AccessChallengeStep>();
-        services.AddTransient<AccessRequestFilteringStep>();
-        services.AddTransient<CheckingMembershipStep>();
-        services.AddTransient<FirstFactorStep>();
-        services.AddTransient<ProfileLoadingStep>();
-        services.AddTransient<SecondFactorStep>();
         services.AddTransient<StatusServerFilteringStep>();
+        services.AddTransient<AccessRequestFilteringStep>();
+        services.AddTransient<LdapSchemaLoadingStep>();
+        services.AddTransient<ProfileLoadingStep>();
+        services.AddTransient<AccessGroupsCheckingStep>();
+        services.AddTransient<AccessChallengeStep>();
+        services.AddTransient<FirstFactorStep>();
+        services.AddTransient<SecondFactorStep>();
     }
 
     public static void AddLdapSchemaLoader(this IServiceCollection services)
@@ -131,5 +174,34 @@ public static class ServiceCollectionExtensions
             services.AddTransient<IDataProtectionService, WindowsProtectionService>();
         else
             services.AddTransient<IDataProtectionService, LinuxProtectionService>();
+    }
+
+    public static void AddChallenge(this IServiceCollection services)
+    {
+        services.AddTransient<IChallengeProcessor, SecondFactorChallengeProcessor>();
+        services.AddTransient<IChallengeProcessor, ChangePasswordChallengeProcessor>();
+        services.AddSingleton<IChallengeProcessorProvider, ChallengeProcessorProvider>();
+    }
+
+    public static void AddServices(this IServiceCollection services)
+    {
+        services.AddTransient<IRadiusPacketService, RadiusPacketService>();
+        
+        services.AddSingleton<IAuthenticatedClientCache, AuthenticatedClientCache>();
+        
+        services.AddSingleton(LdapConnectionFactory.Create());
+        services.AddSingleton<ILdapConnectionFactory, CustomLdapConnectionFactory>((prov) => new CustomLdapConnectionFactory());
+        
+        services.AddSingleton<ILdapGroupLoaderFactory, LdapGroupLoaderFactory>();
+        services.AddSingleton<IMembershipCheckerFactory, MembershipCheckerFactory>();
+        services.AddTransient<ILdapGroupService, LdapGroupService>();
+        
+        services.AddSingleton<IForestMetadataCache, ForestMetadataCache>();
+        services.AddTransient<ILdapProfileService, LdapProfileService>();
+
+        services.AddTransient<IMultifactorApi, MultifactorApi>();
+        services.AddSingleton<IAuthenticatedClientCache, AuthenticatedClientCache>();
+        services.AddTransient<IMultifactorApiService, MultifactorApiService>();
+        services.AddTransient<INetBiosService, NetBiosService>();
     }
 }

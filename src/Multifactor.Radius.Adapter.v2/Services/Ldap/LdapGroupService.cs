@@ -3,7 +3,6 @@ using Multifactor.Core.Ldap.Connection;
 using Multifactor.Core.Ldap.LdapGroup.Load;
 using Multifactor.Core.Ldap.LdapGroup.Membership;
 using Multifactor.Core.Ldap.Name;
-using Multifactor.Core.Ldap.Schema;
 using Multifactor.Radius.Adapter.v2.Core.Ldap;
 
 namespace Multifactor.Radius.Adapter.v2.Services.Ldap;
@@ -20,19 +19,14 @@ public class LdapGroupService : ILdapGroupService
         _ldapMembershipCheckerFactory = ldapMembershipCheckerFactory;
         _ldapConnectionFactory = ldapConnectionFactory;
     }
-
-    //TODO create request entity
-    public IReadOnlyList<string> LoadUserGroups(ILdapSchema ldapSchema, ILdapConnection connection, DistinguishedName userName, DistinguishedName? searchBase = null, int limit = int.MaxValue)
+    
+    public IReadOnlyList<string> LoadUserGroups(LoadUserGroupsRequest request)
     {
-        ArgumentNullException.ThrowIfNull(ldapSchema);
-        ArgumentNullException.ThrowIfNull(connection);
-        ArgumentNullException.ThrowIfNull(userName);
-
-        if (limit <= 0)
-            throw new ArgumentOutOfRangeException(nameof(limit));
-        var groupLoader = _ldapGroupLoaderFactory.GetGroupLoader(ldapSchema, connection, searchBase ?? ldapSchema.NamingContext);
-        var groupDns = groupLoader.GetGroups(userName, pageSize: 20);
-        return groupDns.Take(limit).Select(x => x.Components.Deepest.Value).ToList();
+        ArgumentNullException.ThrowIfNull(request);
+        
+        var groupLoader = _ldapGroupLoaderFactory.GetGroupLoader(request.LdapSchema, request.LdapConnection, request.SearchBase ?? request.LdapSchema.NamingContext);
+        var groupDns = groupLoader.GetGroups(request.UserName, pageSize: 20);
+        return groupDns.Take(request.Limit).Select(x => x.Components.Deepest.Value).ToList();
     }
     
     public bool IsMemberOf(MembershipRequest request)

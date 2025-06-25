@@ -1,6 +1,5 @@
 using Microsoft.Extensions.Logging;
 using Multifactor.Core.Ldap.Connection;
-using Multifactor.Core.Ldap.LangFeatures;
 using Multifactor.Core.Ldap.Name;
 using Multifactor.Radius.Adapter.v2.Core.Configuration.Client;
 using Multifactor.Radius.Adapter.v2.Core.Interop;
@@ -15,50 +14,47 @@ public class NetBiosService : INetBiosService
 {
     private readonly ILogger _logger;
     private readonly IForestMetadataCache _forestMetadataCache;
-    private readonly ILdapConnection _ldapConnection;
-    private readonly IDomainPermissionRules _domainPermissionRules;
 
-    public NetBiosService(IForestMetadataCache forestMetadataCache, ILdapConnection connection, ILogger logger, IDomainPermissionRules domainPermissionRules = null )
+    public NetBiosService(IForestMetadataCache forestMetadataCache, ILogger<NetBiosService> logger)
     {
         _logger = logger;
         _forestMetadataCache = forestMetadataCache;
-        _ldapConnection = connection;
-        _domainPermissionRules = domainPermissionRules;
     }
 
-    public string ConvertNetBiosToUpn(string clientKey, UserIdentity identity, DistinguishedName domain)
+    public string ConvertNetBiosToUpn(NetBiosRequest request)
     {
-        var netBiosParts = new NetBiosParts(identity.Identity);
-        var foundDomain = GetDomainByIdentityAsync(clientKey, domain, identity);
+        var netBiosParts = new NetBiosParts(request.UserIdentity.Identity);
+        var foundDomain = GetDomainByIdentityAsync(request);
         var fqdn = LdapNamesUtils.DnToFqdn(foundDomain);
         return $"{netBiosParts.UserName}@{fqdn}";
     }
 
-    public DistinguishedName GetDomainByIdentityAsync(string clientKey, DistinguishedName domain, UserIdentity identity)
+    public DistinguishedName GetDomainByIdentityAsync(NetBiosRequest request)
     {
-        if (identity?.Format != UserIdentityFormat.NetBiosName)
+        ArgumentNullException.ThrowIfNull(request, nameof(request));
+        
+        if (request.UserIdentity.Format != UserIdentityFormat.NetBiosName)
             throw new ArgumentException("Invalid identity");
-
-        Throw.IfNull(domain, nameof(domain));
-        var fqdn = LdapNamesUtils.DnToFqdn(domain);
-        _logger.LogInformation("Trying to resolve domain by user: {UserName:l}.", identity.Identity);
-
-        try
-        {
-            return TryStrictResolving(fqdn, identity);
-        }
-        catch (Exception e)
-        {
-            _logger.LogWarning(e, "Error during translate netbios name {UserName:l}", identity.Identity);
-        }
+        
+        var fqdn = LdapNamesUtils.DnToFqdn(request.Domain);
+        _logger.LogInformation("Trying to resolve domain by user: {UserName:l}.", request.UserIdentity.Identity);
 
         try
         {
-            return TryFindSuitableSuffix(clientKey, fqdn, identity);
+            return TryStrictResolving(fqdn, request.UserIdentity);
         }
         catch (Exception e)
         {
-            _logger.LogWarning(e, "Error during translate netbios name {UserName:l}. Domain can't resolving, the request handling stopped.", identity.Identity);
+            _logger.LogWarning(e, "Error during translate netbios name {UserName:l}", request.UserIdentity.Identity);
+        }
+
+        try
+        {
+            return TryFindSuitableSuffix(request.ClientKey, fqdn, request.UserIdentity, request.Connection, request.DomainPermissionRules);
+        }
+        catch (Exception e)
+        {
+            _logger.LogWarning(e, "Error during translate netbios name {UserName:l}. Domain can't resolving, the request handling stopped.", request.UserIdentity.Identity);
             throw;
         }
     }
@@ -78,7 +74,7 @@ public class NetBiosService : INetBiosService
         throw new Exception($"Domain {possibleDomain} not found");
     }
     
-    private DistinguishedName TryFindSuitableSuffix(string clientKey, string possibleDomain, UserIdentity identity)
+    private DistinguishedName TryFindSuitableSuffix(string clientKey, string possibleDomain, UserIdentity identity, ILdapConnection connection, IDomainPermissionRules? domainPermissionRules = null)
     {
         _logger.LogInformation("Degradation of the domain resolving method for {UserName:l}", identity.Identity);
 
@@ -88,7 +84,7 @@ public class NetBiosService : INetBiosService
 
         if (schema == null)
         {
-            schema = LoadSchema(domainDn);
+            schema = LoadSchema(domainDn, connection, domainPermissionRules);
             _forestMetadataCache.Add(clientKey, schema);
         }
         var netBiosParts = new NetBiosParts(identity.Identity);
@@ -97,9 +93,9 @@ public class NetBiosService : INetBiosService
         return userDomain;
     }
 
-    private IForestSchema LoadSchema(DistinguishedName domain)
+    private IForestSchema LoadSchema(DistinguishedName domain, ILdapConnection connection, IDomainPermissionRules? domainPermissionRules = null)
     {
-        var loader = new ForestSchemaLoader(_ldapConnection, _logger, _domainPermissionRules);
+        var loader = new ForestSchemaLoader(connection, _logger, domainPermissionRules);
         return loader.Load(domain);
     }
 

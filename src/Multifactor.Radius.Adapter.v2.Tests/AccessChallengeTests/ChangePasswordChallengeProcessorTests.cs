@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
+using Multifactor.Core.Ldap.Schema;
 using Multifactor.Radius.Adapter.v2.Core;
 using Multifactor.Radius.Adapter.v2.Core.AccessChallenge;
 using Multifactor.Radius.Adapter.v2.Core.Auth;
@@ -233,8 +234,7 @@ public class ChangePasswordChallengeProcessorTests
     {
         var service = new Mock<ILdapProfileService>();
         service
-            .Setup(x => x.ChangeUserPasswordAsync(It.IsAny<string>(), It.IsAny<ILdapProfile>(),
-                It.IsAny<ILdapServerConfiguration>()))
+            .Setup(x => x.ChangeUserPasswordAsync(It.IsAny<ChangeUserPasswordRequest>()))
             .ReturnsAsync(() => new PasswordChangeResponse() { Success = true });
 
         var dataProtectionServiceMock = new Mock<IDataProtectionService>();
@@ -247,6 +247,9 @@ public class ChangePasswordChallengeProcessorTests
         var contextMock = new Mock<IRadiusPipelineExecutionContext>();
         var passphrase = UserPassphrase.Parse("1234567", PreAuthModeDescriptor.Default);
         contextMock.Setup(x => x.Passphrase).Returns(passphrase);
+        contextMock.Setup(x => x.UserLdapProfile).Returns(new Mock<ILdapProfile>().Object);
+        contextMock.Setup(x => x.Settings.LdapServerConfiguration).Returns(new Mock<ILdapServerConfiguration>().Object);
+        contextMock.Setup(x => x.LdapSchema).Returns(new Mock<ILdapSchema>().Object);
         contextMock.Setup(x => x.Settings.ClientConfigurationName).Returns("name");
         contextMock.Setup(x => x.MustChangePasswordDomain).Returns("domain");
         contextMock.Setup(x => x.Settings.ApiCredential).Returns(new ApiCredential("key", "secret"));
@@ -269,8 +272,7 @@ public class ChangePasswordChallengeProcessorTests
     {
         var service = new Mock<ILdapProfileService>();
         service
-            .Setup(x => x.ChangeUserPasswordAsync(It.IsAny<string>(), It.IsAny<ILdapProfile>(),
-                It.IsAny<ILdapServerConfiguration>()))
+            .Setup(x => x.ChangeUserPasswordAsync(It.IsAny<ChangeUserPasswordRequest>()))
             .ReturnsAsync(() => new PasswordChangeResponse() { Success = false });
 
         var dataProtectionServiceMock = new Mock<IDataProtectionService>();
@@ -283,6 +285,9 @@ public class ChangePasswordChallengeProcessorTests
         var contextMock = new Mock<IRadiusPipelineExecutionContext>();
         var passphrase = UserPassphrase.Parse("1234567", PreAuthModeDescriptor.Default);
         contextMock.Setup(x => x.Passphrase).Returns(passphrase);
+        contextMock.Setup(x => x.UserLdapProfile).Returns(new Mock<ILdapProfile>().Object);
+        contextMock.Setup(x => x.Settings.LdapServerConfiguration).Returns(new Mock<ILdapServerConfiguration>().Object);
+        contextMock.Setup(x => x.LdapSchema).Returns(new Mock<ILdapSchema>().Object);
         contextMock.Setup(x => x.Settings.ClientConfigurationName).Returns("name");
         contextMock.Setup(x => x.MustChangePasswordDomain).Returns("domain");
         contextMock.Setup(x => x.Settings.ApiCredential).Returns(new ApiCredential("key", "secret"));

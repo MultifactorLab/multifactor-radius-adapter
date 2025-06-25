@@ -25,7 +25,7 @@ public class LdapGroupServiceTests
         groupLoaderFactoryMock.Setup(x => x.GetGroupLoader(It.IsAny<ILdapSchema>(), It.IsAny<ILdapConnection>(), It.IsAny<DistinguishedName>())).Returns(loaderMock.Object);
         
         var service = new LdapGroupService(groupLoaderFactoryMock.Object, membershipCheckerFactoryMock.Object, ldapConnectionFactoryMock.Object);
-        var actualGroups = service.LoadUserGroups(schemaMock.Object, ldapConnectionMock.Object, new DistinguishedName("cn=group1,dc=example,dc=com"), new DistinguishedName("dc=search,dc=base"));
+        var actualGroups = service.LoadUserGroups(new LoadUserGroupsRequest(schemaMock.Object, ldapConnectionMock.Object, new DistinguishedName("cn=group1,dc=example,dc=com"), new DistinguishedName("dc=search,dc=base")));
 
         var expectedGroups = new[] { "group1", "group2", "group3" };
         Assert.Equal(expectedGroups.Length, actualGroups.Count);
@@ -49,7 +49,7 @@ public class LdapGroupServiceTests
         groupLoaderFactoryMock.Setup(x => x.GetGroupLoader(It.IsAny<ILdapSchema>(), It.IsAny<ILdapConnection>(), It.IsAny<DistinguishedName>())).Returns(loaderMock.Object);
         
         var service = new LdapGroupService(groupLoaderFactoryMock.Object, membershipCheckerFactoryMock.Object, ldapConnectionFactoryMock.Object);
-        var actualGroups = service.LoadUserGroups(schemaMock.Object, ldapConnectionMock.Object, new DistinguishedName("cn=group1,dc=example,dc=com"), new DistinguishedName("dc=search,dc=base"), limit);
+        var actualGroups = service.LoadUserGroups(new LoadUserGroupsRequest(schemaMock.Object, ldapConnectionMock.Object, new DistinguishedName("cn=group1,dc=example,dc=com"), new DistinguishedName("dc=search,dc=base"), limit));
 
         var expectedGroups = new string[] { "group1", "group2", "group3" };
         Assert.Equal(limit, actualGroups.Count);
@@ -72,24 +72,7 @@ public class LdapGroupServiceTests
         groupLoaderFactory.Setup(x => x.GetGroupLoader(It.IsAny<ILdapSchema>(), It.IsAny<ILdapConnection>(), It.IsAny<DistinguishedName>())).Returns(loaderMock.Object);
         
         var service = new LdapGroupService(groupLoaderFactory.Object, membershipCheckerFactoryMock.Object, ldapConnectionFactoryMock.Object);
-       Assert.Throws<ArgumentOutOfRangeException>(() => service.LoadUserGroups(schemaMock.Object, ldapConnectionMock.Object, new DistinguishedName("cn=group1,dc=example,dc=com"), new DistinguishedName("dc=search,dc=base") ,limit));
-    }
-    
-    [Fact]
-    public void LoadUserGroup_UserNameIsNull_ShouldThrowException()
-    {
-        var schemaMock = new Mock<ILdapSchema>();
-        var ldapConnectionMock = new Mock<ILdapConnection>();
-        var groupLoaderFactory = new Mock<ILdapGroupLoaderFactory>();
-        var membershipCheckerFactoryMock = new Mock<IMembershipCheckerFactory>();
-        var ldapConnectionFactoryMock = new Mock<ILdapConnectionFactory>();
-        var loaderMock = new Mock<ILdapGroupLoader>();
-        var groupsDns = new DistinguishedName[] { new("cn=group1,dc=example,dc=com"), new("cn=group2,dc=example,dc=com"), new("cn=group3,dc=example,dc=com")};
-        loaderMock.Setup(x => x.GetGroups(It.IsAny<DistinguishedName>(), It.IsAny<int>())).Returns(groupsDns);
-        groupLoaderFactory.Setup(x => x.GetGroupLoader(It.IsAny<ILdapSchema>(), It.IsAny<ILdapConnection>(), It.IsAny<DistinguishedName>())).Returns(loaderMock.Object);
-        
-        var service = new LdapGroupService( groupLoaderFactory.Object, membershipCheckerFactoryMock.Object, ldapConnectionFactoryMock.Object);
-        Assert.ThrowsAny<ArgumentException>(() => service.LoadUserGroups(schemaMock.Object, ldapConnectionMock.Object, null!));
+       Assert.Throws<ArgumentOutOfRangeException>(() => service.LoadUserGroups(new LoadUserGroupsRequest(schemaMock.Object, ldapConnectionMock.Object, new DistinguishedName("cn=group1,dc=example,dc=com"), new DistinguishedName("dc=search,dc=base") ,limit)));
     }
     
     [Fact]

@@ -20,6 +20,7 @@ public interface IRadiusPacket
     public string? RemoteHostName { get; }
     public string? CalledStationIdAttribute { get; }
     public string? NasIdentifierAttribute { get; }
+    public string? State { get; }
     public string? TryGetUserPassword();
     public string? TryGetChallenge();
     public IReadOnlyDictionary<string, RadiusAttribute> Attributes { get; }
