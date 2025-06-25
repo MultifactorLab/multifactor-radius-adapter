@@ -80,6 +80,7 @@ public class ProfileLoadingStep : IRadiusPipelineStep
         return profile;
     }
 
+    //TODO add identity attribute
     private IEnumerable<LdapAttributeName> GetAttributes(IEnumerable<RadiusReplyAttributeValue> replyAttributeValues)
     {
         var defaultAttributes = new LdapAttributeName[] { new("memberOf"),  new("userPrincipalName"), new("phone"), new("mail"), new("displayName"), new("email") };

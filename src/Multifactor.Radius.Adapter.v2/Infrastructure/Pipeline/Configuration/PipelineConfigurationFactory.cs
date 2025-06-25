@@ -54,7 +54,9 @@ public class PipelineConfigurationFactory : IPipelineConfigurationFactory
 
         if (pipelineStepsConfiguration.PreAuthMode != PreAuthMode.None)
         {
+            pipeline.Add(typeof(PreAuthCheckStep));
             pipeline.Add(typeof(SecondFactorStep));
+            pipeline.Add(typeof(PreAuthPostCheck));
             pipeline.Add(typeof(FirstFactorStep));
         }
         else
