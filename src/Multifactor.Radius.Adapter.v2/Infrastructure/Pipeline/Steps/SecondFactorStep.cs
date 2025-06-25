@@ -105,13 +105,13 @@ public class SecondFactorStep : IRadiusPipelineStep
         context.ResponseInformation.ReplyMessage = apiResponse.ReplyMessage;
         context.AuthenticationState.SecondFactorStatus = apiResponse.Code;
 
-        if (apiResponse.Code == AuthenticationStatus.Awaiting)
-        {
-            var challengeProcessor = _challengeProcessorProvider.GetChallengeProcessorByType(ChallengeType.SecondFactor);
-            if (challengeProcessor is null)
-                throw new InvalidOperationException("Challenge processor could not be found");
-            challengeProcessor.AddChallengeContext(context);
-        }
+        if (apiResponse.Code != AuthenticationStatus.Awaiting) 
+            return;
+        
+        var challengeProcessor = _challengeProcessorProvider.GetChallengeProcessorByType(ChallengeType.SecondFactor);
+        if (challengeProcessor is null)
+            throw new InvalidOperationException("Challenge processor could not be found");
+        challengeProcessor.AddChallengeContext(context);
     }
 
     private MembershipRequest GetMembershipRequest(IRadiusPipelineExecutionContext context, IEnumerable<string> targetGroupsNames)

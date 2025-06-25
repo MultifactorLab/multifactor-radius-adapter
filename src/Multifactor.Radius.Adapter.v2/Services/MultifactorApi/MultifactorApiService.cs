@@ -205,7 +205,7 @@ public class MultifactorApiService : IMultifactorApiService
             return null;
         }
 
-        return context.Passphrase.Otp ?? passphrase.ProviderCode;
+        return passphrase.Otp ?? passphrase.ProviderCode;
     }
 
     private async Task<AccessRequestResponse?> CreateAccessRequestAsync(PersonalData personalData, AccessRequest payload, IRadiusPipelineExecutionContext context)

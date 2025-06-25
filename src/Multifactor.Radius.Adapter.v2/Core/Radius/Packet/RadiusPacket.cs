@@ -88,10 +88,14 @@ public class RadiusPacket : IRadiusPacket
     {
         var password = UserPassword;
 
-        if (IsOpenVpnStaticChallenge)
-        {
-            password = password?.Split(':')[1].Base64toUtf8();
-        }
+        if (!IsOpenVpnStaticChallenge)
+            return password;
+        
+        var parts = password?.Split(':');
+        if ((parts?.Length ?? 0) < 2)
+            return null;
+            
+        password = parts![1].Base64toUtf8();
 
         return password;
     }
@@ -103,12 +107,14 @@ public class RadiusPacket : IRadiusPacket
     {
         var password = UserPassword;
 
-        if (IsOpenVpnStaticChallenge)
-        {
-            password = password?.Split(':')[2].Base64toUtf8();
-        }
-
-        return password;
+        if (!IsOpenVpnStaticChallenge)
+            return null;
+        
+        var parts = password?.Split(':');
+        if ((parts?.Length ?? 0) < 3)
+            return null;
+        
+        return parts![2].Base64toUtf8();
     }
 
     /// <summary>

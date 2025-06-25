@@ -160,6 +160,8 @@ public static class ServiceCollectionExtensions
         services.AddTransient<AccessChallengeStep>();
         services.AddTransient<FirstFactorStep>();
         services.AddTransient<SecondFactorStep>();
+        services.AddTransient<PreAuthCheckStep>();
+        services.AddTransient<PreAuthPostCheck>();
     }
 
     public static void AddLdapSchemaLoader(this IServiceCollection services)
