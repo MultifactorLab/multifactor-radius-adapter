@@ -23,4 +23,5 @@ public interface IRadiusPipelineExecutionContext
     IPEndPoint? ProxyEndpoint { get; set; }
     ILdapSchema? LdapSchema { get; set; }
     UserPassphrase Passphrase { get; set; }
+    HashSet<string> UserGroups { get; set; }
 }

@@ -193,9 +193,7 @@ public class RadiusPacket : IRadiusPacket
             throw new ArgumentNullException(nameof(name));
         
         if (!_attributes.ContainsKey(name))
-        {
             _attributes.Add(name, new RadiusAttribute(name));
-        }
 
         _attributes[name].AddValues(value);
     }
@@ -206,9 +204,7 @@ public class RadiusPacket : IRadiusPacket
             throw new ArgumentNullException(nameof(name));
         
         if (_attributes.ContainsKey(name))
-        {
             _attributes.Remove(name);
-        }
 
         var attribute = new RadiusAttribute(name);
         attribute.AddValues(values);

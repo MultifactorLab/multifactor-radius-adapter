@@ -148,14 +148,10 @@ public class ClientConfiguration : IClientConfiguration
     public ClientConfiguration AddRadiusReplyAttribute(string attr, IEnumerable<RadiusReplyAttributeValue> values)
     {
         if (string.IsNullOrWhiteSpace(attr))
-        {
             throw new ArgumentException($"'{nameof(attr)}' cannot be null or whitespace.", nameof(attr));
-        }
 
         if (values is null)
-        {
             throw new ArgumentNullException(nameof(values));
-        }
 
         _radiusReplyAttributes[attr] = values.ToArray();
         return this;

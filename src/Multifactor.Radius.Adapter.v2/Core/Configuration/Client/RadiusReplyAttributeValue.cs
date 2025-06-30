@@ -1,8 +1,4 @@
-﻿//Copyright(c) 2020 MultiFactor
-//Please see licence at 
-//https://github.com/MultifactorLab/multifactor-radius-adapter/blob/main/LICENSE.md
-
-namespace Multifactor.Radius.Adapter.v2.Core.Configuration.Client;
+﻿namespace Multifactor.Radius.Adapter.v2.Core.Configuration.Client;
 
 /// <summary>
 /// Radius Access-Accept message extra element
@@ -32,14 +28,14 @@ public class RadiusReplyAttributeValue
     /// <summary>
     /// User group condition
     /// </summary>
-    public string[] UserGroupCondition => _userGroupCondition.ToArray();
+    public IReadOnlyList<string> UserGroupCondition => _userGroupCondition;
 
     private readonly List<string> _userNameCondition = new();
 
     /// <summary>
     /// User name condition
     /// </summary>
-    public string[] UserNameCondition => _userNameCondition.ToArray();
+    public IReadOnlyList<string> UserNameCondition => _userNameCondition;
 
     /// <summary>
     /// Const value with optional condition
@@ -48,9 +44,7 @@ public class RadiusReplyAttributeValue
     {
         Value = value;
         if (!string.IsNullOrEmpty(conditionClause))
-        {
             ParseConditionClause(conditionClause);
-        }
         Sufficient = sufficient;
     }
 
@@ -59,10 +53,7 @@ public class RadiusReplyAttributeValue
     /// </summary>
     public RadiusReplyAttributeValue(string ldapAttributeName, bool sufficient = false)
     {
-        if (string.IsNullOrEmpty(ldapAttributeName))
-        {
-            throw new ArgumentNullException(nameof(ldapAttributeName));
-        }
+        ArgumentException.ThrowIfNullOrWhiteSpace(ldapAttributeName);
             
         LdapAttributeName = ldapAttributeName;
         FromLdap = true;
@@ -71,16 +62,16 @@ public class RadiusReplyAttributeValue
 
     private void ParseConditionClause(string clause)
     {
-        var parts = clause.Split(new[] { '=' }, StringSplitOptions.RemoveEmptyEntries);
+        var parts = clause.Split(['='], StringSplitOptions.RemoveEmptyEntries);
 
         switch (parts[0])
         {
             case "UserGroup":
-                _userGroupCondition.AddRange(parts[1].Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries).Select(x => x.Trim()));
+                _userGroupCondition.AddRange(parts[1].Split([';'], StringSplitOptions.RemoveEmptyEntries).Select(x => x.Trim()));
                 break;
             
             case "UserName":
-                _userNameCondition.AddRange(parts[1].Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries).Select(x => x.Trim()));
+                _userNameCondition.AddRange(parts[1].Split([';'], StringSplitOptions.RemoveEmptyEntries).Select(x => x.Trim()));
                 break;
             
             default:

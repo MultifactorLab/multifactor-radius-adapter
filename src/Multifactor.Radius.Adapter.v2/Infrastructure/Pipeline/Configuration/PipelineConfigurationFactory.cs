@@ -29,9 +29,7 @@ public class PipelineConfigurationFactory : IPipelineConfigurationFactory
     private PipelineConfiguration? GetExistedPipeline(string pipelineName)
     {
         if (!_memoryCache.TryGetValue(pipelineName, out PipelineConfiguration? pipeline))
-        {
             return null;
-        }
 
         return pipeline;
     }
@@ -64,7 +62,10 @@ public class PipelineConfigurationFactory : IPipelineConfigurationFactory
             pipeline.Add(typeof(FirstFactorStep));
             pipeline.Add(typeof(SecondFactorStep));
         }
-
+        
+        if (pipelineStepsConfiguration.ShouldLoadUserGroups)
+            pipeline.Add(typeof(UserGroupLoadingStep));
+        
         return new PipelineConfiguration(pipeline.ToArray());
     }
 }
