@@ -2,6 +2,7 @@ using System.Text;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Multifactor.Core.Ldap.LangFeatures;
+using Multifactor.Radius.Adapter.v2.Core.Configuration.Client;
 using Multifactor.Radius.Adapter.v2.Core.Configuration.Service;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Builder;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Steps;
@@ -22,7 +23,8 @@ public class PipelineProvider : IPipelineProvider
         
         foreach (var clientConfiguration in configuration.Clients)
         {
-            var pipelineSettings = new PipelineStepsConfiguration(clientConfiguration.Name, clientConfiguration.PreAuthnMode.Mode);
+            var shouldLoadUserGroups = ShouldLoadUserGroups(clientConfiguration);
+            var pipelineSettings = new PipelineStepsConfiguration(clientConfiguration.Name, clientConfiguration.PreAuthnMode.Mode, shouldLoadUserGroups);
             var pipelineConfig = pipelineConfigurationFactory.CreatePipelineConfiguration(pipelineSettings);
             var pipeline = BuildPipeline(pipelineConfig, serviceProvider);
             var log = BuildLog(clientConfiguration.Name, pipelineConfig);
@@ -69,4 +71,11 @@ public class PipelineProvider : IPipelineProvider
         
         return builder.ToString();
     }
+    
+    private bool ShouldLoadUserGroups(IClientConfiguration config) => config
+        .RadiusReplyAttributes
+        .Values
+        .SelectMany(x => x)
+        .Any(x => x.IsMemberOf || x.UserGroupCondition.Count > 0);
+
 }

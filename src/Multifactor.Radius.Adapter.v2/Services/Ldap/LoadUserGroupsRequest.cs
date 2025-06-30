@@ -12,7 +12,7 @@ public class LoadUserGroupsRequest
     public DistinguishedName? SearchBase { get; }
     public int Limit { get; }
 
-    public LoadUserGroupsRequest(ILdapSchema ldapSchema, ILdapConnection ldapConnection, DistinguishedName userName, DistinguishedName? searchBase, int limit = int.MaxValue)
+    public LoadUserGroupsRequest(ILdapSchema ldapSchema, ILdapConnection ldapConnection, DistinguishedName userName, DistinguishedName? searchBase = null, int limit = int.MaxValue)
     {
         ArgumentNullException.ThrowIfNull(ldapSchema);
         ArgumentNullException.ThrowIfNull(ldapConnection);

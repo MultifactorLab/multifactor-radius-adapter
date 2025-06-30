@@ -292,31 +292,25 @@ public class ClientConfigurationFactory : IClientConfigurationFactory
         {
             foreach (var attribute in radiusReplyAttributesSection.Attributes.Elements)
             {
-                var radiusAttribute = dictionary.GetAttribute(attribute.Name)
-                                      ?? throw new InvalidConfigurationException($"Unknown attribute '{attribute.Name}' in RadiusReply configuration element, please see dictionary. Config name: '{builder.Name}'");
+                var radiusAttribute = dictionary.GetAttribute(attribute.Name) ?? throw new InvalidConfigurationException($"Unknown attribute '{attribute.Name}' in RadiusReply configuration element, please see dictionary. Config name: '{builder.Name}'");
 
                 if (!replyAttributes.ContainsKey(attribute.Name))
-                {
                     replyAttributes.Add(attribute.Name, new List<RadiusReplyAttributeValue>());
-                }
 
                 if (!string.IsNullOrWhiteSpace(attribute.From))
                 {
-                    replyAttributes[attribute.Name]
-                        .Add(new RadiusReplyAttributeValue(attribute.From, attribute.Sufficient));
+                    replyAttributes[attribute.Name].Add(new RadiusReplyAttributeValue(attribute.From, attribute.Sufficient));
                     continue;
                 }
 
                 try
                 {
                     var value = ParseRadiusReplyAttributeValue(radiusAttribute, attribute.Value);
-                    replyAttributes[attribute.Name]
-                        .Add(new RadiusReplyAttributeValue(value, attribute.When, attribute.Sufficient));
+                    replyAttributes[attribute.Name].Add(new RadiusReplyAttributeValue(value, attribute.When, attribute.Sufficient));
                 }
                 catch (Exception ex)
                 {
-                    throw new InvalidConfigurationException(
-                        $"Error while parsing attribute '{radiusAttribute.Name}' with {radiusAttribute.Type} value '{attribute.Value}' in RadiusReply configuration element: {ex.Message}. Config name: '{builder.Name}'");
+                    throw new InvalidConfigurationException($"Error while parsing attribute '{radiusAttribute.Name}' with {radiusAttribute.Type} value '{attribute.Value}' in RadiusReply configuration element: {ex.Message}. Config name: '{builder.Name}'");
                 }
             }
         }

@@ -25,6 +25,7 @@ public class RadiusPipelineExecutionContext : IRadiusPipelineExecutionContext
     public IPEndPoint? ProxyEndpoint { get; set; }
     public ILdapSchema? LdapSchema { get; set; }
     public UserPassphrase Passphrase { get; set; }
+    public HashSet<string> UserGroups { get; set; } = new();
 
     public RadiusPipelineExecutionContext(IPipelineExecutionSettings settings, IRadiusPacket requestPacket)
     {

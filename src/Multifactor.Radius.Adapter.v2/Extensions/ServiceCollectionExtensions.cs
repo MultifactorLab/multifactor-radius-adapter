@@ -162,6 +162,7 @@ public static class ServiceCollectionExtensions
         services.AddTransient<SecondFactorStep>();
         services.AddTransient<PreAuthCheckStep>();
         services.AddTransient<PreAuthPostCheck>();
+        services.AddTransient<UserGroupLoadingStep>();
     }
 
     public static void AddLdapSchemaLoader(this IServiceCollection services)
@@ -205,5 +206,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IAuthenticatedClientCache, AuthenticatedClientCache>();
         services.AddTransient<IMultifactorApiService, MultifactorApiService>();
         services.AddTransient<INetBiosService, NetBiosService>();
+
+        services.AddTransient<IRadiusReplyAttributeService, RadiusReplyAttributeService>();
     }
 }

@@ -40,7 +40,7 @@ public class ProfileLoadingStep : IRadiusPipelineStep
         }
         
         var userIdentity = new UserIdentity(context.RequestPacket.UserName);
-        var attributes = GetAttributes(context.Settings.RadiusReplyAttributes.Values.SelectMany(x => x)).ToArray();
+        var attributes = GetAttributes(context).ToArray();
         var domain = context.LdapSchema.NamingContext;
         
         var profile = TryGetUserProfile(userIdentity, domain, attributes, context);
@@ -79,15 +79,21 @@ public class ProfileLoadingStep : IRadiusPipelineStep
         
         return profile;
     }
-
-    //TODO add identity attribute
-    private IEnumerable<LdapAttributeName> GetAttributes(IEnumerable<RadiusReplyAttributeValue> replyAttributeValues)
+    
+    private IEnumerable<LdapAttributeName> GetAttributes(IRadiusPipelineExecutionContext context)
     {
-        var defaultAttributes = new LdapAttributeName[] { new("memberOf"),  new("userPrincipalName"), new("phone"), new("mail"), new("displayName"), new("email") };
-        return replyAttributeValues
+        var attributes = new List<LdapAttributeName>() { new("memberOf"), new("userPrincipalName"), new("phone"), new("mail"), new("displayName"), new("email") };
+        if (!string.IsNullOrWhiteSpace(context.Settings.LdapServerConfiguration.IdentityAttribute))
+            attributes.Add(new LdapAttributeName(context.Settings.LdapServerConfiguration.IdentityAttribute));
+
+        var replyAttributes = context.Settings.RadiusReplyAttributes.Values
+            .SelectMany(x => x)
             .Where(x => x.FromLdap)
-            .Select(x => new LdapAttributeName(x.LdapAttributeName))
-            .Concat(defaultAttributes);
+            .Select(x => new LdapAttributeName(x.LdapAttributeName));
+        
+        attributes.AddRange(replyAttributes);
+        
+        return attributes;
     }
 
     private void SaveToCache(string cacheKey, ILdapProfile profile, DateTimeOffset expirationDate)
