@@ -4,6 +4,7 @@ using Multifactor.Core.Ldap.Name;
 
 namespace Multifactor.Radius.Adapter.v2.Tests.LdapProfile;
 
+[Collection("ActiveDirectory")]
 public class LdapProfileTest
 {
     [Fact]
@@ -75,7 +76,7 @@ public class LdapProfileTest
         
         var attributes = new LdapAttribute[]
         {
-            new(new LdapAttributeName("phone"), [phone]),
+            new(new LdapAttributeName("mobile"), [phone]),
         };
         var ldapAttrCollection = new LdapAttributeCollection(attributes);
         var entry = new LdapEntry(dn, ldapAttrCollection);

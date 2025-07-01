@@ -13,6 +13,7 @@ using Multifactor.Radius.Adapter.v2.Core.Radius.Packet;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Context;
 using Multifactor.Radius.Adapter.v2.Server.Udp;
+using Multifactor.Radius.Adapter.v2.Services.AdapterResponseSender;
 using Multifactor.Radius.Adapter.v2.Services.Radius;
 
 namespace Multifactor.Radius.Adapter.v2.Server;
@@ -92,7 +93,8 @@ public class UdpPacketHandler : IUdpPacketHandler
             try
             {
                 await pipeline.ExecuteAsync(context);
-                await _responseSender.SendResponse(context);
+                var responseRequest = GetResponseRequest(context);
+                await _responseSender.SendResponse(responseRequest);
             }
             catch (Exception e)
             {
@@ -145,4 +147,6 @@ public class UdpPacketHandler : IUdpPacketHandler
 
         return clientConfiguration;
     }
+
+    private SendAdapterResponseRequest GetResponseRequest(IRadiusPipelineExecutionContext context) => new(context);
 }

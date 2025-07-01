@@ -21,7 +21,7 @@ public class UserGroupLoadingStepTests
 
         var step = new UserGroupLoadingStep(groupService.Object, connectionFactory.Object, NullLogger<UserGroupLoadingStep>.Instance);
         var contextMock = new Mock<IRadiusPipelineExecutionContext>();
-        contextMock.Setup(x => x.Settings.RadiusReplyAttributes).Returns(new Dictionary<string, RadiusReplyAttributeValue[]>());
+        contextMock.Setup(x => x.RadiusReplyAttributes).Returns(new Dictionary<string, RadiusReplyAttributeValue[]>());
         
         contextMock.SetupProperty(x => x.UserGroups);
         var context = contextMock.Object;
@@ -42,7 +42,7 @@ public class UserGroupLoadingStepTests
         var contextMock = new Mock<IRadiusPipelineExecutionContext>();
         var attributes = new Dictionary<string, RadiusReplyAttributeValue[]>();
         attributes.Add("key", [new RadiusReplyAttributeValue("name", string.Empty)]);
-        contextMock.Setup(x => x.Settings.RadiusReplyAttributes).Returns(attributes);
+        contextMock.Setup(x => x.RadiusReplyAttributes).Returns(attributes);
         
         contextMock.SetupProperty(x => x.UserGroups);
         var context = contextMock.Object;
@@ -68,10 +68,10 @@ public class UserGroupLoadingStepTests
         
         var step = new UserGroupLoadingStep(groupService.Object, connectionFactory.Object, NullLogger<UserGroupLoadingStep>.Instance);
         var contextMock = new Mock<IRadiusPipelineExecutionContext>();
-        contextMock.Setup(x => x.Settings.RadiusReplyAttributes).Returns(attributes);
+        contextMock.Setup(x => x.RadiusReplyAttributes).Returns(attributes);
         contextMock.Setup(x => x.UserLdapProfile.MemberOf).Returns(memberOf);
         contextMock.SetupProperty(x => x.UserGroups);
-        contextMock.Setup(x => x.Settings.LdapServerConfiguration.LoadNestedGroups).Returns(false);
+        contextMock.Setup(x => x.LdapServerConfiguration.LoadNestedGroups).Returns(false);
         
         var context = contextMock.Object;
         context.UserGroups = new();
@@ -101,17 +101,17 @@ public class UserGroupLoadingStepTests
         
         var step = new UserGroupLoadingStep(groupService.Object, connectionFactory.Object, NullLogger<UserGroupLoadingStep>.Instance);
         var contextMock = new Mock<IRadiusPipelineExecutionContext>();
-        contextMock.Setup(x => x.Settings.RadiusReplyAttributes).Returns(attributes);
+        contextMock.Setup(x => x.RadiusReplyAttributes).Returns(attributes);
         contextMock.Setup(x => x.UserLdapProfile.MemberOf).Returns(memberOf);
         contextMock.SetupProperty(x => x.UserGroups);
-        contextMock.Setup(x => x.Settings.LdapServerConfiguration.NestedGroupsBaseDns).Returns([]);
-        contextMock.Setup(x => x.Settings.LdapServerConfiguration.LoadNestedGroups).Returns(true);
-        contextMock.Setup(x => x.Settings.LdapServerConfiguration.UserName).Returns("user");
-        contextMock.Setup(x => x.Settings.LdapServerConfiguration.Password).Returns("password");
-        contextMock.Setup(x => x.Settings.LdapServerConfiguration.BindTimeoutInSeconds).Returns(30);
+        contextMock.Setup(x => x.LdapServerConfiguration.NestedGroupsBaseDns).Returns([]);
+        contextMock.Setup(x => x.LdapServerConfiguration.LoadNestedGroups).Returns(true);
+        contextMock.Setup(x => x.LdapServerConfiguration.UserName).Returns("user");
+        contextMock.Setup(x => x.LdapServerConfiguration.Password).Returns("password");
+        contextMock.Setup(x => x.LdapServerConfiguration.BindTimeoutInSeconds).Returns(30);
         contextMock.Setup(x => x.LdapSchema).Returns(new Mock<ILdapSchema>().Object);
         contextMock.Setup(x => x.UserLdapProfile.Dn).Returns(new DistinguishedName("dc=group1, dc=domain"));
-        contextMock.Setup(x => x.Settings.LdapServerConfiguration.ConnectionString).Returns("Server=localhost;Port=5432");
+        contextMock.Setup(x => x.LdapServerConfiguration.ConnectionString).Returns("Server=localhost;Port=5432");
         contextMock.Setup(x => x.RequestPacket.UserName).Returns("userName");
         
         var context = contextMock.Object;
@@ -141,17 +141,17 @@ public class UserGroupLoadingStepTests
         
         var step = new UserGroupLoadingStep(groupService.Object, connectionFactory.Object, NullLogger<UserGroupLoadingStep>.Instance);
         var contextMock = new Mock<IRadiusPipelineExecutionContext>();
-        contextMock.Setup(x => x.Settings.RadiusReplyAttributes).Returns(attributes);
+        contextMock.Setup(x => x.RadiusReplyAttributes).Returns(attributes);
         contextMock.Setup(x => x.UserLdapProfile.MemberOf).Returns([]);
         contextMock.SetupProperty(x => x.UserGroups);
-        contextMock.Setup(x => x.Settings.LdapServerConfiguration.NestedGroupsBaseDns).Returns([]);
-        contextMock.Setup(x => x.Settings.LdapServerConfiguration.LoadNestedGroups).Returns(true);
-        contextMock.Setup(x => x.Settings.LdapServerConfiguration.UserName).Returns("user");
-        contextMock.Setup(x => x.Settings.LdapServerConfiguration.Password).Returns("password");
-        contextMock.Setup(x => x.Settings.LdapServerConfiguration.BindTimeoutInSeconds).Returns(30);
+        contextMock.Setup(x => x.LdapServerConfiguration.NestedGroupsBaseDns).Returns([]);
+        contextMock.Setup(x => x.LdapServerConfiguration.LoadNestedGroups).Returns(true);
+        contextMock.Setup(x => x.LdapServerConfiguration.UserName).Returns("user");
+        contextMock.Setup(x => x.LdapServerConfiguration.Password).Returns("password");
+        contextMock.Setup(x => x.LdapServerConfiguration.BindTimeoutInSeconds).Returns(30);
         contextMock.Setup(x => x.LdapSchema).Returns(new Mock<ILdapSchema>().Object);
         contextMock.Setup(x => x.UserLdapProfile.Dn).Returns(new DistinguishedName("dc=group1, dc=domain"));
-        contextMock.Setup(x => x.Settings.LdapServerConfiguration.ConnectionString).Returns("Server=localhost;Port=5432");
+        contextMock.Setup(x => x.LdapServerConfiguration.ConnectionString).Returns("Server=localhost;Port=5432");
         contextMock.Setup(x => x.RequestPacket.UserName).Returns("userName");
         
         var context = contextMock.Object;
@@ -181,17 +181,17 @@ public class UserGroupLoadingStepTests
         
         var step = new UserGroupLoadingStep(groupService.Object, connectionFactory.Object, NullLogger<UserGroupLoadingStep>.Instance);
         var contextMock = new Mock<IRadiusPipelineExecutionContext>();
-        contextMock.Setup(x => x.Settings.RadiusReplyAttributes).Returns(attributes);
+        contextMock.Setup(x => x.RadiusReplyAttributes).Returns(attributes);
         contextMock.Setup(x => x.UserLdapProfile.MemberOf).Returns([]);
         contextMock.SetupProperty(x => x.UserGroups);
-        contextMock.Setup(x => x.Settings.LdapServerConfiguration.NestedGroupsBaseDns).Returns(["dc=nested,dc=group"]);
-        contextMock.Setup(x => x.Settings.LdapServerConfiguration.LoadNestedGroups).Returns(true);
-        contextMock.Setup(x => x.Settings.LdapServerConfiguration.UserName).Returns("user");
-        contextMock.Setup(x => x.Settings.LdapServerConfiguration.Password).Returns("password");
-        contextMock.Setup(x => x.Settings.LdapServerConfiguration.BindTimeoutInSeconds).Returns(30);
+        contextMock.Setup(x => x.LdapServerConfiguration.NestedGroupsBaseDns).Returns(["dc=nested,dc=group"]);
+        contextMock.Setup(x => x.LdapServerConfiguration.LoadNestedGroups).Returns(true);
+        contextMock.Setup(x => x.LdapServerConfiguration.UserName).Returns("user");
+        contextMock.Setup(x => x.LdapServerConfiguration.Password).Returns("password");
+        contextMock.Setup(x => x.LdapServerConfiguration.BindTimeoutInSeconds).Returns(30);
         contextMock.Setup(x => x.LdapSchema).Returns(new Mock<ILdapSchema>().Object);
         contextMock.Setup(x => x.UserLdapProfile.Dn).Returns(new DistinguishedName("dc=group1, dc=domain"));
-        contextMock.Setup(x => x.Settings.LdapServerConfiguration.ConnectionString).Returns("Server=localhost;Port=5432");
+        contextMock.Setup(x => x.LdapServerConfiguration.ConnectionString).Returns("Server=localhost;Port=5432");
         contextMock.Setup(x => x.RequestPacket.UserName).Returns("userName");
         
         var context = contextMock.Object;

@@ -32,7 +32,7 @@ public class LdapGroupService : ILdapGroupService
     public bool IsMemberOf(MembershipRequest request)
     {
         ArgumentNullException.ThrowIfNull(request);
-        if (request.TargetGroups.Length == 0)
+        if (request.TargetGroups.Count == 0)
             throw new InvalidOperationException();
         
         var isMemberOf = ProcessProfileGroups(request);
@@ -69,7 +69,7 @@ public class LdapGroupService : ILdapGroupService
         return _ldapConnectionFactory.CreateConnection(options);
     }
     
-    private bool IsMemberOfNestedGroups(MembershipRequest request, ILdapConnection connection) => request.NestedGroupsBaseDns.Length > 0
+    private bool IsMemberOfNestedGroups(MembershipRequest request, ILdapConnection connection) => request.NestedGroupsBaseDns.Count > 0
         ? request.NestedGroupsBaseDns
             .Select(groupBaseDn => IsMemberOf(request, connection, groupBaseDn))
             .Any(isMemberOf => isMemberOf)
@@ -78,6 +78,6 @@ public class LdapGroupService : ILdapGroupService
     private bool IsMemberOf(MembershipRequest request, ILdapConnection connection, DistinguishedName? searchBase = null)
     {
         var membershipChecker = _ldapMembershipCheckerFactory.GetMembershipChecker(request.LdapSchema, connection, searchBase ?? request.LdapSchema.NamingContext);
-        return membershipChecker.IsMemberOf(request.UserDn, request.TargetGroups); 
+        return membershipChecker.IsMemberOf(request.UserDn, request.TargetGroups.ToArray()); 
     }
 }

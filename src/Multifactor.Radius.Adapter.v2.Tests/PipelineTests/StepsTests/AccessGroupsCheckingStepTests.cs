@@ -23,7 +23,7 @@ public class AccessGroupsCheckingStepTests
         var serverConfigMock = new Mock<ILdapServerConfiguration>();
         var execState = new ExecutionState();
         serverConfigMock.Setup(x => x.AccessGroups).Returns([]);
-        contextMock.Setup(x => x.Settings.LdapServerConfiguration).Returns(serverConfigMock.Object);
+        contextMock.Setup(x => x.LdapServerConfiguration).Returns(serverConfigMock.Object);
         contextMock.Setup(x => x.UserLdapProfile).Returns(() => new Mock<ILdapProfile>().Object);
         contextMock.Setup(x => x.LdapSchema).Returns(() => new Mock<ILdapSchema>().Object);
         contextMock.Setup(x => x.ExecutionState).Returns(execState);
@@ -50,7 +50,7 @@ public class AccessGroupsCheckingStepTests
         var groupService = new Mock<ILdapGroupService>();
         var step = new AccessGroupsCheckingStep(groupService.Object, NullLogger<AccessGroupsCheckingStep>.Instance);
         var contextMock = new Mock<IRadiusPipelineExecutionContext>();
-        contextMock.Setup(x => x.Settings.LdapServerConfiguration).Returns(()=> null);
+        contextMock.Setup(x => x.LdapServerConfiguration).Returns(()=> null);
         var context = contextMock.Object;
         
         await Assert.ThrowsAsync<ArgumentNullException>(() => step.ExecuteAsync(context));
@@ -63,7 +63,7 @@ public class AccessGroupsCheckingStepTests
         var step = new AccessGroupsCheckingStep(groupService.Object, NullLogger<AccessGroupsCheckingStep>.Instance);
         var contextMock = new Mock<IRadiusPipelineExecutionContext>();
         var serverConfigMock = new Mock<ILdapServerConfiguration>();
-        contextMock.Setup(x => x.Settings.LdapServerConfiguration).Returns(serverConfigMock.Object);
+        contextMock.Setup(x => x.LdapServerConfiguration).Returns(serverConfigMock.Object);
         contextMock.Setup(x => x.UserLdapProfile).Returns(() => null);
         contextMock.Setup(x => x.LdapSchema).Returns(() => new Mock<ILdapSchema>().Object);
         var context = contextMock.Object;
@@ -78,7 +78,7 @@ public class AccessGroupsCheckingStepTests
         var step = new AccessGroupsCheckingStep(groupService.Object, NullLogger<AccessGroupsCheckingStep>.Instance);
         var contextMock = new Mock<IRadiusPipelineExecutionContext>();
         var serverConfigMock = new Mock<ILdapServerConfiguration>();
-        contextMock.Setup(x => x.Settings.LdapServerConfiguration).Returns(serverConfigMock.Object);
+        contextMock.Setup(x => x.LdapServerConfiguration).Returns(serverConfigMock.Object);
         contextMock.Setup(x => x.UserLdapProfile).Returns(() => new Mock<ILdapProfile>().Object);
         contextMock.Setup(x => x.LdapSchema).Returns(() => null);
         var context = contextMock.Object;
@@ -106,7 +106,7 @@ public class AccessGroupsCheckingStepTests
         profileMock.Setup(x => x.Dn).Returns(new DistinguishedName("cn=admin,dc=admin,dc=user"));
         profileMock.Setup(x => x.MemberOf).Returns([]);
         
-        contextMock.Setup(x => x.Settings.LdapServerConfiguration).Returns(serverConfigMock.Object);
+        contextMock.Setup(x => x.LdapServerConfiguration).Returns(serverConfigMock.Object);
         contextMock.Setup(x => x.UserLdapProfile).Returns(() => profileMock.Object);
         contextMock.Setup(x => x.LdapSchema).Returns(() => new Mock<ILdapSchema>().Object);
         contextMock.Setup(x => x.ExecutionState).Returns(execState);
@@ -139,7 +139,7 @@ public class AccessGroupsCheckingStepTests
         var profileMock = new Mock<ILdapProfile>();
         profileMock.Setup(x => x.Dn).Returns(new DistinguishedName("cn=admin,dc=admin,dc=user"));
         profileMock.Setup(x => x.MemberOf).Returns([]);
-        contextMock.Setup(x => x.Settings.LdapServerConfiguration).Returns(serverConfigMock.Object);
+        contextMock.Setup(x => x.LdapServerConfiguration).Returns(serverConfigMock.Object);
         contextMock.Setup(x => x.UserLdapProfile).Returns(() => profileMock.Object);
         contextMock.Setup(x => x.LdapSchema).Returns(() => new Mock<ILdapSchema>().Object);
         

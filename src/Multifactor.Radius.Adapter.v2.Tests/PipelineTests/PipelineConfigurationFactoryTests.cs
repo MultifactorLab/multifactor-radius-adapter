@@ -46,10 +46,38 @@ public class PipelineConfigurationFactoryTests
             pipelineConfiguration.PipelineStepsTypes,
             e => Assert.True(typeof(StatusServerFilteringStep).IsAssignableFrom(e)),
             e => Assert.True(typeof(AccessRequestFilteringStep).IsAssignableFrom(e)),
+            e => Assert.True(typeof(LdapSchemaLoadingStep).IsAssignableFrom(e)),
             e => Assert.True(typeof(ProfileLoadingStep).IsAssignableFrom(e)),
+            e => Assert.True(typeof(AccessGroupsCheckingStep).IsAssignableFrom(e)),
             e => Assert.True(typeof(AccessChallengeStep).IsAssignableFrom(e)),
             e => Assert.True(typeof(FirstFactorStep).IsAssignableFrom(e)),
             e => Assert.True(typeof(SecondFactorStep).IsAssignableFrom(e)));
+    }
+    
+    [Fact]
+    public void BuildPipelineConfiguration_GroupLoading_ShouldReturnConfig()
+    {
+        var config = new PipelineStepsConfiguration("name", PreAuthMode.None, true);
+        
+        var cacheMock = new Mock<IMemoryCache>();
+        var outVal = new object(); 
+        cacheMock.Setup(x => x.CreateEntry(It.IsAny<object>())).Returns(new Entry());
+        cacheMock.Setup(x => x.TryGetValue(It.IsAny<string>(), out outVal)).Returns(false);
+        
+        var pipelineConfigurationFactory = new PipelineConfigurationFactory(cacheMock.Object);
+        
+        var pipelineConfiguration = pipelineConfigurationFactory.CreatePipelineConfiguration(config);
+        Assert.Collection(
+            pipelineConfiguration.PipelineStepsTypes,
+            e => Assert.True(typeof(StatusServerFilteringStep).IsAssignableFrom(e)),
+            e => Assert.True(typeof(AccessRequestFilteringStep).IsAssignableFrom(e)),
+            e => Assert.True(typeof(LdapSchemaLoadingStep).IsAssignableFrom(e)),
+            e => Assert.True(typeof(ProfileLoadingStep).IsAssignableFrom(e)),
+            e => Assert.True(typeof(AccessGroupsCheckingStep).IsAssignableFrom(e)),
+            e => Assert.True(typeof(AccessChallengeStep).IsAssignableFrom(e)),
+            e => Assert.True(typeof(FirstFactorStep).IsAssignableFrom(e)),
+            e => Assert.True(typeof(SecondFactorStep).IsAssignableFrom(e)),
+            e => Assert.True(typeof(UserGroupLoadingStep).IsAssignableFrom(e)));
     }
     
     [Theory]
@@ -72,9 +100,13 @@ public class PipelineConfigurationFactoryTests
             pipelineConfiguration.PipelineStepsTypes,
             e => Assert.True(typeof(StatusServerFilteringStep).IsAssignableFrom(e)),
             e => Assert.True(typeof(AccessRequestFilteringStep).IsAssignableFrom(e)),
+            e => Assert.True(typeof(LdapSchemaLoadingStep).IsAssignableFrom(e)),
             e => Assert.True(typeof(ProfileLoadingStep).IsAssignableFrom(e)),
+            e => Assert.True(typeof(AccessGroupsCheckingStep).IsAssignableFrom(e)),
             e => Assert.True(typeof(AccessChallengeStep).IsAssignableFrom(e)),
+            e => Assert.True(typeof(PreAuthCheckStep).IsAssignableFrom(e)),
             e => Assert.True(typeof(SecondFactorStep).IsAssignableFrom(e)),
+            e => Assert.True(typeof(PreAuthPostCheck).IsAssignableFrom(e)),
             e => Assert.True(typeof(FirstFactorStep).IsAssignableFrom(e)));
     }
     
@@ -95,7 +127,9 @@ public class PipelineConfigurationFactoryTests
             pipelineConfiguration.PipelineStepsTypes,
             e => Assert.True(typeof(StatusServerFilteringStep).IsAssignableFrom(e)),
             e => Assert.True(typeof(AccessRequestFilteringStep).IsAssignableFrom(e)),
+            e => Assert.True(typeof(LdapSchemaLoadingStep).IsAssignableFrom(e)),
             e => Assert.True(typeof(ProfileLoadingStep).IsAssignableFrom(e)),
+            e => Assert.True(typeof(AccessGroupsCheckingStep).IsAssignableFrom(e)),
             e => Assert.True(typeof(AccessChallengeStep).IsAssignableFrom(e)),
             e => Assert.True(typeof(FirstFactorStep).IsAssignableFrom(e)),
             e => Assert.True(typeof(SecondFactorStep).IsAssignableFrom(e)));

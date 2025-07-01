@@ -208,5 +208,6 @@ public static class ServiceCollectionExtensions
         services.AddTransient<INetBiosService, NetBiosService>();
 
         services.AddTransient<IRadiusReplyAttributeService, RadiusReplyAttributeService>();
+        services.AddTransient<IRadiusAttributeTypeConverter, RadiusAttributeTypeConverter>();
     }
 }

@@ -38,6 +38,7 @@ public class LdapServerConfiguration : ILdapServerConfiguration
         Password = password;
     }
 
+    // TODO add to ldap server config this settings
     public LdapServerConfiguration SetDomainPermissionRules(DomainPermissionRules rules)
     {
         _domainPermissionRules = rules;
@@ -103,9 +104,7 @@ public class LdapServerConfiguration : ILdapServerConfiguration
     private LdapServerConfiguration AddToList<T>(IList<T> target, params T[] items)
     {
         foreach (var group in items)
-        {
             target.Add(group);
-        }
 
         return this;
     }

@@ -35,7 +35,7 @@ public class LdapFirstFactorProcessor : IFirstFactorProcessor
         var radiusPacket = context.RequestPacket;
         Throw.IfNull(radiusPacket, nameof(radiusPacket));
 
-        if (context.Settings.LdapServerConfiguration is null)
+        if (context.LdapServerConfiguration is null)
             throw new InvalidOperationException("No Ldap servers configured.");
 
         if (string.IsNullOrWhiteSpace(radiusPacket.UserName))
@@ -45,7 +45,7 @@ public class LdapFirstFactorProcessor : IFirstFactorProcessor
             return Task.CompletedTask;
         }
 
-        var transformedName = UserNameTransformation.Transform(radiusPacket.UserName, context.Settings.UserNameTransformRules.BeforeFirstFactor);
+        var transformedName = UserNameTransformation.Transform(radiusPacket.UserName, context.UserNameTransformRules.BeforeFirstFactor);
 
         var passphrase = context.Passphrase;
         if (string.IsNullOrWhiteSpace(passphrase.Raw))
@@ -69,7 +69,7 @@ public class LdapFirstFactorProcessor : IFirstFactorProcessor
             return Task.CompletedTask;
         }
 
-        _logger.LogInformation("User '{user:l}' credential and status verified successfully at {endpoint:l}", transformedName, context.Settings.LdapServerConfiguration.ConnectionString);
+        _logger.LogInformation("User '{user:l}' credential and status verified successfully at {endpoint:l}", transformedName, context.LdapServerConfiguration.ConnectionString);
         Accept(context);
         return Task.CompletedTask;
     }
@@ -79,7 +79,7 @@ public class LdapFirstFactorProcessor : IFirstFactorProcessor
         string login,
         string password)
     {
-        var serverConfig = context.Settings.LdapServerConfiguration;
+        var serverConfig = context.LdapServerConfiguration;
         try
         {
             using var connection = GetConnection(
@@ -142,8 +142,6 @@ public class LdapFirstFactorProcessor : IFirstFactorProcessor
     private void ProcessErrorReason(LdapErrorReasonInfo errorInfo, IRadiusPipelineExecutionContext context, ILdapServerConfiguration ldapServerConfiguration)
     {
         if (errorInfo.Flags.HasFlag(LdapErrorFlag.MustChangePassword))
-        {
             context.MustChangePasswordDomain = ldapServerConfiguration.ConnectionString;
-        }
     }
 }

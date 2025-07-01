@@ -80,22 +80,14 @@ public class ClientConfigurationFactory : IClientConfigurationFactory
 
     private static void ReadLdapServersSettings(ClientConfiguration builder, LdapServersSection ldapServersSection)
     {
-        if (builder.FirstFactorAuthenticationSource == AuthenticationSource.Ldap)
-        {
-            if (ldapServersSection.Servers.Length == 0)
-                throw InvalidConfigurationException.For(
-                    x => x.LdapServers,
-                    "Can't parse '{prop}' value. Config name: '{0}'",
-                    builder.Name);
-        }
-        else
-        {
-            if (ldapServersSection.Servers.Length == 0)
-                return;
-        }
-
-        ValidateLdapServers(ldapServersSection, builder.Name);
+        if (ldapServersSection.Servers.Length == 0)
+            throw InvalidConfigurationException.For(
+                x => x.LdapServers,
+                "Can't parse '{prop}' value. Config name: '{0}'",
+                builder.Name);
         
+        ValidateLdapServers(ldapServersSection, builder.Name);
+
         foreach (var ldapSettings in ldapServersSection.Servers)
         {
             var ldapConfig = new LdapServerConfiguration(
@@ -104,11 +96,11 @@ public class ClientConfigurationFactory : IClientConfigurationFactory
                 ldapSettings.Password);
 
             ldapConfig
-                .AddPhoneAttributes(Utils.SplitString(ldapSettings.PhoneAttributes))
-                .AddAccessGroups(Utils.SplitString(ldapSettings.AccessGroups))
-                .AddSecondFaGroups(Utils.SplitString(ldapSettings.SecondFaGroups))
-                .AddSecondFaBypassGroups(Utils.SplitString(ldapSettings.SecondFaBypassGroups))
-                .AddNestedGroupBaseDns(Utils.SplitString(ldapSettings.NestedGroupsBaseDn))
+                .AddPhoneAttributes(Utils.SplitString(ldapSettings.PhoneAttributes.ToLower()))
+                .AddAccessGroups(Utils.SplitString(ldapSettings.AccessGroups.ToLower()))
+                .AddSecondFaGroups(Utils.SplitString(ldapSettings.SecondFaGroups.ToLower()))
+                .AddSecondFaBypassGroups(Utils.SplitString(ldapSettings.SecondFaBypassGroups.ToLower()))
+                .AddNestedGroupBaseDns(Utils.SplitString(ldapSettings.NestedGroupsBaseDn.ToLower()))
                 .SetIdentityAttribute(ldapSettings.IdentityAttribute)
                 .SetLoadNestedGroups(ldapSettings.LoadNestedGroups)
                 .SetBindTimeoutInSeconds(ldapSettings.BindTimeoutInSeconds);
@@ -183,7 +175,8 @@ public class ClientConfigurationFactory : IClientConfigurationFactory
         }
     }
 
-    private static void LoadUserNameTransformRulesSection(RadiusAdapterConfiguration configuration, ClientConfiguration builder)
+    private static void LoadUserNameTransformRulesSection(RadiusAdapterConfiguration configuration,
+        ClientConfiguration builder)
     {
         var userNameTransformRulesSection = configuration.UserNameTransformRules;
         var firstFactorRules = new List<UserNameTransformRule>();
@@ -203,7 +196,8 @@ public class ClientConfigurationFactory : IClientConfigurationFactory
         );
     }
 
-    private static void ReadRadiusAuthenticationSourceSettings(ClientConfiguration builder, AppSettingsSection appSettings)
+    private static void ReadRadiusAuthenticationSourceSettings(ClientConfiguration builder,
+        AppSettingsSection appSettings)
     {
         if (string.IsNullOrWhiteSpace(appSettings.AdapterClientEndpoint))
         {
@@ -292,25 +286,30 @@ public class ClientConfigurationFactory : IClientConfigurationFactory
         {
             foreach (var attribute in radiusReplyAttributesSection.Attributes.Elements)
             {
-                var radiusAttribute = dictionary.GetAttribute(attribute.Name) ?? throw new InvalidConfigurationException($"Unknown attribute '{attribute.Name}' in RadiusReply configuration element, please see dictionary. Config name: '{builder.Name}'");
+                var radiusAttribute = dictionary.GetAttribute(attribute.Name) ??
+                                      throw new InvalidConfigurationException(
+                                          $"Unknown attribute '{attribute.Name}' in RadiusReply configuration element, please see dictionary. Config name: '{builder.Name}'");
 
                 if (!replyAttributes.ContainsKey(attribute.Name))
                     replyAttributes.Add(attribute.Name, new List<RadiusReplyAttributeValue>());
 
                 if (!string.IsNullOrWhiteSpace(attribute.From))
                 {
-                    replyAttributes[attribute.Name].Add(new RadiusReplyAttributeValue(attribute.From, attribute.Sufficient));
+                    replyAttributes[attribute.Name]
+                        .Add(new RadiusReplyAttributeValue(attribute.From, attribute.Sufficient));
                     continue;
                 }
 
                 try
                 {
                     var value = ParseRadiusReplyAttributeValue(radiusAttribute, attribute.Value);
-                    replyAttributes[attribute.Name].Add(new RadiusReplyAttributeValue(value, attribute.When, attribute.Sufficient));
+                    replyAttributes[attribute.Name]
+                        .Add(new RadiusReplyAttributeValue(value, attribute.When, attribute.Sufficient));
                 }
                 catch (Exception ex)
                 {
-                    throw new InvalidConfigurationException($"Error while parsing attribute '{radiusAttribute.Name}' with {radiusAttribute.Type} value '{attribute.Value}' in RadiusReply configuration element: {ex.Message}. Config name: '{builder.Name}'");
+                    throw new InvalidConfigurationException(
+                        $"Error while parsing attribute '{radiusAttribute.Name}' with {radiusAttribute.Type} value '{attribute.Value}' in RadiusReply configuration element: {ex.Message}. Config name: '{builder.Name}'");
                 }
             }
         }
@@ -352,7 +351,7 @@ public class ClientConfigurationFactory : IClientConfigurationFactory
         var isValidAuthSource =
             Enum.TryParse<AuthenticationSource>(appSettings.FirstFactorAuthenticationSource, true, out _);
         var authTypes = Enum.GetNames<AuthenticationSource>();
-        
+
         if (isDigit || !isValidAuthSource)
         {
             throw InvalidConfigurationException.For(
@@ -406,7 +405,7 @@ public class ClientConfigurationFactory : IClientConfigurationFactory
                     "Can't parse '{prop}' value. Config name: '{0}'",
                     configName);
             }
-            
+
             if (string.IsNullOrWhiteSpace(server.UserName))
             {
                 throw InvalidConfigurationException.For(

@@ -9,6 +9,7 @@ public class FirstFactorStep : IRadiusPipelineStep
 {
     private readonly IFirstFactorProcessorProvider _firstFactorProcessor;
     private readonly ILogger<FirstFactorStep> _logger;
+
     public FirstFactorStep(IFirstFactorProcessorProvider processorProvider, ILogger<FirstFactorStep> logger)
     {
         _firstFactorProcessor = processorProvider;
@@ -19,14 +20,13 @@ public class FirstFactorStep : IRadiusPipelineStep
     {
         _logger.LogDebug("'{name}' started", nameof(FirstFactorStep));
         ArgumentNullException.ThrowIfNull(context, nameof(context));
-        
-        if(context.AuthenticationState.FirstFactorStatus != AuthenticationStatus.Awaiting)
+
+        if (context.AuthenticationState.FirstFactorStatus != AuthenticationStatus.Awaiting)
             return;
-        
-        var processor = _firstFactorProcessor.GetProcessor(context.Settings.FirstFactorAuthenticationSource);
-       
+
+        var processor = _firstFactorProcessor.GetProcessor(context.FirstFactorAuthenticationSource);
         await processor.ProcessFirstFactor(context);
-        
+
         if (context.AuthenticationState.FirstFactorStatus != AuthenticationStatus.Accept)
             context.ExecutionState.Terminate();
     }

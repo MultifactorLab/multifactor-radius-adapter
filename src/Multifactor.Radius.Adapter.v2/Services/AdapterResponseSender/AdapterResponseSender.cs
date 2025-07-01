@@ -4,11 +4,10 @@ using Multifactor.Core.Ldap.LangFeatures;
 using Multifactor.Radius.Adapter.v2.Core.Auth;
 using Multifactor.Radius.Adapter.v2.Core.Pipeline;
 using Multifactor.Radius.Adapter.v2.Core.Radius.Packet;
-using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Context;
 using Multifactor.Radius.Adapter.v2.Server.Udp;
 using Multifactor.Radius.Adapter.v2.Services.Radius;
 
-namespace Multifactor.Radius.Adapter.v2.Services;
+namespace Multifactor.Radius.Adapter.v2.Services.AdapterResponseSender;
 
 public class AdapterResponseSender : IResponseSender
 {
@@ -31,40 +30,47 @@ public class AdapterResponseSender : IResponseSender
         _logger = logger;
     }
     
-    public async Task SendResponse(IRadiusPipelineExecutionContext context)
+    public async Task SendResponse(SendAdapterResponseRequest request)
     {
-        if (context.ExecutionState.ShouldSkipResponse)
+        if (request.ShouldSkipResponse)
             return;
         
-        if (context.ResponsePacket?.IsEapMessageChallenge == true)
+        if (request.ResponsePacket?.IsEapMessageChallenge == true)
         {
             //EAP authentication in process, just proxy response
-            _logger.LogDebug("Proxying EAP-Message Challenge to {host:l}:{port} id={id}", context.RemoteEndpoint.Address, context.RemoteEndpoint.Port, context.RequestPacket.Identifier);
-            await SendResponse(context.ResponsePacket, context);
+            _logger.LogDebug("Proxying EAP-Message Challenge to {host:l}:{port} id={id}", request.RemoteEndpoint.Address, request.RemoteEndpoint.Port, request.RequestPacket.Identifier);
+            await SendResponse(request.ResponsePacket, request);
             return;
         }
         
-        if (context.RequestPacket.IsVendorAclRequest && context.ResponsePacket != null)
+        if (request.RequestPacket.IsVendorAclRequest && request.ResponsePacket != null)
         {
             //ACL and other rules transfer, just proxy response
-            _logger.LogDebug("Proxying #ACSACL# to {host:l}:{port} id={id}", context.RemoteEndpoint.Address, context.RemoteEndpoint.Port, context.RequestPacket.Identifier);
-            await SendResponse(context.ResponsePacket, context);
+            _logger.LogDebug("Proxying #ACSACL# to {host:l}:{port} id={id}", request.RemoteEndpoint.Address, request.RemoteEndpoint.Port, request.RequestPacket.Identifier);
+            await SendResponse(request.ResponsePacket, request);
             return;
         }
         
-        var requestPacket = context.RequestPacket;
-        var responsePacketCode = ToPacketCode(context.AuthenticationState);
+        var requestPacket = request.RequestPacket;
+        var responsePacketCode = ToPacketCode(request.AuthenticationState);
         var responsePacket = _radiusPacketService.CreateResponsePacket(requestPacket, responsePacketCode);
 
         switch (responsePacketCode)
         {
             case PacketCode.AccessAccept:
-                AddResponsePacketAttributes(context.ResponsePacket, responsePacket);
-                AddReplyAttributes(responsePacket, context);
+                AddResponsePacketAttributes(request.ResponsePacket, responsePacket);
+                AddReplyAttributes(responsePacket, request);
                 break;
             case PacketCode.AccessReject:
-                if (context.ResponsePacket != null && context.ResponsePacket.Code == PacketCode.AccessReject)
-                    AddResponsePacketAttributes(context.ResponsePacket, responsePacket);
+                if (request.ResponsePacket != null && request.ResponsePacket.Code == PacketCode.AccessReject)
+                    AddResponsePacketAttributes(request.ResponsePacket, responsePacket);
+                break;
+            case PacketCode.AccessChallenge:
+                if (!string.IsNullOrWhiteSpace(request.ResponseInformation.ReplyMessage))
+                    responsePacket.ReplaceAttribute("Reply-Message", request.ResponseInformation.ReplyMessage);
+        
+                if (!string.IsNullOrWhiteSpace(request.ResponseInformation.State))
+                    responsePacket.ReplaceAttribute("State", request.ResponseInformation.State);
                 break;
             default:
                 throw new NotImplementedException(responsePacketCode.ToString());
@@ -74,15 +80,9 @@ public class AdapterResponseSender : IResponseSender
         
         AddMessageAuthenticator(responsePacket);
         
-        if (!string.IsNullOrWhiteSpace(context.ResponseInformation.ReplyMessage))
-            responsePacket.ReplaceAttribute("Reply-Message", context.ResponseInformation.ReplyMessage);
-        
-        if (!string.IsNullOrWhiteSpace(context.ResponseInformation.State))
-            responsePacket.ReplaceAttribute("State", context.ResponseInformation.State);
-        
-        await SendResponse(responsePacket, context);
-        var endpoint = context.ProxyEndpoint ?? context.RemoteEndpoint;
-        _logger.LogInformation("{code:l} sent to {host:l}:{port} id={id} user='{user:l}'", responsePacket.Code.ToString(), endpoint.Address, endpoint.Port, responsePacket.Identifier, context.RequestPacket.UserName);
+        await SendResponse(responsePacket, request);
+        var endpoint = request.ProxyEndpoint ?? request.RemoteEndpoint;
+        _logger.LogInformation("{code:l} sent to {host:l}:{port} id={id} user='{user:l}'", responsePacket.Code.ToString(), endpoint.Address, endpoint.Port, responsePacket.Identifier, request.RequestPacket.UserName);
     }
 
     private void AddResponsePacketAttributes(IRadiusPacket? source, RadiusPacket target)
@@ -115,15 +115,15 @@ public class AdapterResponseSender : IResponseSender
         target.AddAttributeValue("Message-Authenticator", placeholderStr);
     }
 
-    private void AddReplyAttributes(RadiusPacket target, IRadiusPipelineExecutionContext context)
+    private void AddReplyAttributes(RadiusPacket target, SendAdapterResponseRequest request)
     {
-        var request = new GetReplyAttributesRequest(
-            context.RequestPacket.UserName!,
-            context.UserGroups,
-            context.Settings.RadiusReplyAttributes,
-            context.UserLdapProfile.Attributes);
+        var replyAttributesRequest = new GetReplyAttributesRequest(
+            request.RequestPacket.UserName!,
+            request.UserGroups,
+            request.RadiusReplyAttributes,
+            request.Attributes);
         
-       var attributes = _radiusReplyAttributeService.GetReplyAttributes(request);
+       var attributes = _radiusReplyAttributeService.GetReplyAttributes(replyAttributesRequest);
        foreach (var attribute in attributes)
        {
            target.RemoveAttribute(attribute.Key);
@@ -142,9 +142,9 @@ public class AdapterResponseSender : IResponseSender
         return authFailed ? PacketCode.AccessReject : PacketCode.AccessChallenge;
     }
     
-    private async Task SendResponse(IRadiusPacket responsePacket, IRadiusPipelineExecutionContext context)
+    private async Task SendResponse(IRadiusPacket responsePacket, SendAdapterResponseRequest context)
     {
-        var bytes = _radiusPacketService.GetBytes(responsePacket, context.Settings.RadiusSharedSecret);
+        var bytes = _radiusPacketService.GetBytes(responsePacket, context.RadiusSharedSecret);
         var endpoint = context.ProxyEndpoint ?? context.RemoteEndpoint;
         
         await _udpClient.SendAsync(bytes, bytes.Length, endpoint);

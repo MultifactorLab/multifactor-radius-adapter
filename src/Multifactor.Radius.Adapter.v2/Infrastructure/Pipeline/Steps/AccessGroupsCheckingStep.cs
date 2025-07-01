@@ -23,11 +23,11 @@ public class AccessGroupsCheckingStep : IRadiusPipelineStep
     {
         _logger.LogDebug("'{name}' started", nameof(AccessGroupsCheckingStep));
         ArgumentNullException.ThrowIfNull(context, nameof(context));
-        ArgumentNullException.ThrowIfNull(context.Settings.LdapServerConfiguration, nameof(context.Settings.LdapServerConfiguration));
+        ArgumentNullException.ThrowIfNull(context.LdapServerConfiguration, nameof(context.LdapServerConfiguration));
         ArgumentNullException.ThrowIfNull(context.UserLdapProfile, nameof(context.UserLdapProfile));
         ArgumentNullException.ThrowIfNull(context.LdapSchema, nameof(context.LdapSchema));
         
-        var serverConfig = context.Settings.LdapServerConfiguration;
+        var serverConfig = context.LdapServerConfiguration;
         if (serverConfig.AccessGroups.Count == 0)
             return Task.CompletedTask;
 
@@ -38,25 +38,11 @@ public class AccessGroupsCheckingStep : IRadiusPipelineStep
         return isMember ? Task.CompletedTask : TerminatePipeline(context);
     }
 
-    private MembershipRequest GetMembershipRequest(IRadiusPipelineExecutionContext context, DistinguishedName[] accessGroupNames)
-    {
-        return new MembershipRequest(
-            context.UserLdapProfile.Dn,
-            context.UserLdapProfile.MemberOf.ToArray(),
-            context.Settings.LdapServerConfiguration.LoadNestedGroups,
-            context.Settings.LdapServerConfiguration.NestedGroupsBaseDns.Select(x => new DistinguishedName(x)).ToArray(),
-            context.Settings.LdapServerConfiguration.ConnectionString,
-            context.Settings.LdapServerConfiguration.UserName,
-            context.Settings.LdapServerConfiguration.Password,
-            context.Settings.LdapServerConfiguration.BindTimeoutInSeconds,
-            context.LdapSchema!,
-            accessGroupNames
-        );
-    }
+    private MembershipRequest GetMembershipRequest(IRadiusPipelineExecutionContext context, DistinguishedName[] accessGroupNames) => new(context, accessGroupNames);
 
     private Task TerminatePipeline(IRadiusPipelineExecutionContext context)
     {
-        _logger.LogWarning("User '{user}' is not member of any access group of the '{connectionString}'.", context.UserLdapProfile.Dn, context.Settings.LdapServerConfiguration.ConnectionString);
+        _logger.LogWarning("User '{user}' is not member of any access group of the '{connectionString}'.", context.UserLdapProfile.Dn, context.LdapServerConfiguration.ConnectionString);
         context.AuthenticationState.FirstFactorStatus = AuthenticationStatus.Reject;
         context.AuthenticationState.SecondFactorStatus = AuthenticationStatus.Reject;
         context.ExecutionState.Terminate();

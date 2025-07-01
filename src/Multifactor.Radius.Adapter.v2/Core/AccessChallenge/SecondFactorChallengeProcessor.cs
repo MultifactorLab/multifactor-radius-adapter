@@ -11,6 +11,7 @@ namespace Multifactor.Radius.Adapter.v2.Core.AccessChallenge;
 
 public class SecondFactorChallengeProcessor : IChallengeProcessor
 {
+    // TODO ConcurrentDictionary -> MemoryCache
     private readonly ConcurrentDictionary<ChallengeIdentifier, IRadiusPipelineExecutionContext> _challengeContexts = new();
     private readonly IMultifactorApiService _apiService;
     private readonly ILogger<SecondFactorChallengeProcessor> _logger;
@@ -28,21 +29,18 @@ public class SecondFactorChallengeProcessor : IChallengeProcessor
         ArgumentNullException.ThrowIfNull(context, nameof(context));
         ArgumentException.ThrowIfNullOrWhiteSpace(context.ResponseInformation.State);
         
-        var id = new ChallengeIdentifier(context.Settings.ClientConfigurationName, context.ResponseInformation.State);
+        var id = new ChallengeIdentifier(context.ClientConfigurationName, context.ResponseInformation.State);
         if (_challengeContexts.TryAdd(id, context))
         {
             _logger.LogInformation("Challenge {State:l} was added for message id={id}", id.RequestId, context.RequestPacket.Identifier);
             return id;
         }
 
-        _logger.LogError("Unable to cache request id={id} for the '{cfg:l}' configuration", context.RequestPacket.Identifier, context.Settings.ClientConfigurationName);
+        _logger.LogError("Unable to cache request id={id} for the '{cfg:l}' configuration", context.RequestPacket.Identifier, context.ClientConfigurationName);
         return ChallengeIdentifier.Empty;
     }
 
-    public bool HasChallengeContext(ChallengeIdentifier identifier)
-    {
-        return _challengeContexts.ContainsKey(identifier);
-    }
+    public bool HasChallengeContext(ChallengeIdentifier identifier) => _challengeContexts.ContainsKey(identifier);
 
     public async Task<ChallengeStatus> ProcessChallengeAsync(ChallengeIdentifier identifier, IRadiusPipelineExecutionContext context)
     {
@@ -61,7 +59,7 @@ public class SecondFactorChallengeProcessor : IChallengeProcessor
             return challengeStatus;
 
         var challengeContext = GetChallengeContext(identifier) ?? throw new InvalidOperationException($"Challenge context with identifier '{identifier}' was not found");
-        var response = await _apiService.SendChallengeAsync(challengeContext, userAnswer!, identifier.RequestId);
+        var response = await _apiService.SendChallengeAsync(new SendChallengeRequest(challengeContext, userAnswer!, identifier.RequestId));
 
         return ProcessResponse(context, challengeContext, response, identifier);
     }
