@@ -11,6 +11,7 @@ using Multifactor.Radius.Adapter.v2.Tests.Fixture;
 
 namespace Multifactor.Radius.Adapter.v2.Tests;
 
+[Collection("ActiveDirectory")]
 public class NetBiosServiceTests
 {
     [Fact]

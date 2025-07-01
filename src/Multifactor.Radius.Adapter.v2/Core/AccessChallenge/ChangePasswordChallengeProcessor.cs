@@ -14,7 +14,11 @@ public class ChangePasswordChallengeProcessor : IChallengeProcessor
     private readonly IDataProtectionService _dataProtectionService;
     private readonly ILogger<ChangePasswordChallengeProcessor> _logger;
 
-    public ChangePasswordChallengeProcessor(IMemoryCache memoryCache, ILdapProfileService ldapService, IDataProtectionService dataProtectionService, ILogger<ChangePasswordChallengeProcessor> logger)
+    public ChangePasswordChallengeProcessor(
+        IMemoryCache memoryCache,
+        ILdapProfileService ldapService,
+        IDataProtectionService dataProtectionService,
+        ILogger<ChangePasswordChallengeProcessor> logger)
     {
         _cache = memoryCache;
         _ldapService = ldapService;
@@ -33,7 +37,7 @@ public class ChangePasswordChallengeProcessor : IChallengeProcessor
         if (string.IsNullOrWhiteSpace(context.MustChangePasswordDomain))
             throw new InvalidOperationException("Domain is required.");
         
-        var encryptedPassword = _dataProtectionService.Protect(context.Settings.ApiCredential.Pwd, context.Passphrase.Password);
+        var encryptedPassword = _dataProtectionService.Protect(context.ApiCredential.Pwd, context.Passphrase.Password);
 
         var passwordRequest = new PasswordChangeRequest()
         {
@@ -45,13 +49,10 @@ public class ChangePasswordChallengeProcessor : IChallengeProcessor
         _logger.LogInformation($"Password change state: \"{passwordRequest.Id}\"");
         context.ResponseInformation.State = passwordRequest.Id;
         context.ResponseInformation.ReplyMessage = "Please change password to continue. Enter new password: ";
-        return new ChallengeIdentifier(context.Settings.ClientConfigurationName, context.ResponseInformation.State);
+        return new ChallengeIdentifier(context.ClientConfigurationName, context.ResponseInformation.State);
     }
 
-    public bool HasChallengeContext(ChallengeIdentifier identifier)
-    {
-        return _cache.TryGetValue(identifier.RequestId, out _);
-    }
+    public bool HasChallengeContext(ChallengeIdentifier identifier) => _cache.TryGetValue(identifier.RequestId, out _);
 
     public async Task<ChallengeStatus> ProcessChallengeAsync(ChallengeIdentifier identifier, IRadiusPipelineExecutionContext context)
     {
@@ -70,14 +71,14 @@ public class ChangePasswordChallengeProcessor : IChallengeProcessor
         if (string.IsNullOrWhiteSpace(passwordChangeRequest.NewPasswordEncryptedData))
             return RepeatPasswordChallenge(context, passwordChangeRequest);
         
-        var decryptedNewPassword = _dataProtectionService.Unprotect(context.Settings.ApiCredential.Pwd, passwordChangeRequest.NewPasswordEncryptedData);
+        var decryptedNewPassword = _dataProtectionService.Unprotect(context.ApiCredential.Pwd, passwordChangeRequest.NewPasswordEncryptedData);
         if (decryptedNewPassword != context.Passphrase.Raw)
             return PasswordsNotMatchChallenge(context, passwordChangeRequest);
 
         var request = new ChangeUserPasswordRequest(
             decryptedNewPassword,
             context.UserLdapProfile,
-            context.Settings.LdapServerConfiguration,
+            context.LdapServerConfiguration,
             context.LdapSchema!);
         
         var result = await _ldapService.ChangeUserPasswordAsync(request);
@@ -109,7 +110,7 @@ public class ChangePasswordChallengeProcessor : IChallengeProcessor
     
     private ChallengeStatus RepeatPasswordChallenge(IRadiusPipelineExecutionContext context, PasswordChangeRequest passwordChangeRequest)
     {
-        passwordChangeRequest.NewPasswordEncryptedData = _dataProtectionService.Protect(context.Settings.ApiCredential.Pwd, context.Passphrase.Raw!);
+        passwordChangeRequest.NewPasswordEncryptedData = _dataProtectionService.Protect(context.ApiCredential.Pwd, context.Passphrase.Raw!);
 
         _cache.Set(passwordChangeRequest.Id, passwordChangeRequest, DateTimeOffset.UtcNow.AddMinutes(5));
 

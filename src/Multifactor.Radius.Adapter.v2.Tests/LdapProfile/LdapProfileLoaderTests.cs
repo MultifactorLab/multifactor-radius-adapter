@@ -9,6 +9,7 @@ using Multifactor.Radius.Adapter.v2.Tests.Fixture;
 
 namespace Multifactor.Radius.Adapter.v2.Tests.LdapProfile;
 
+[Collection("ActiveDirectory")]
 public class LdapProfileLoaderTests
 {
     [Fact]

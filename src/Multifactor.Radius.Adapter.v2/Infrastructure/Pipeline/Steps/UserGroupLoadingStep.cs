@@ -10,6 +10,7 @@ using Multifactor.Radius.Adapter.v2.Services.Ldap;
 
 namespace Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Steps;
 
+//TODO load groups only when request accepted or use cache
 public class UserGroupLoadingStep : IRadiusPipelineStep
 {
     private readonly ILdapGroupService _ldapGroupService;
@@ -39,9 +40,9 @@ public class UserGroupLoadingStep : IRadiusPipelineStep
         foreach (var group in context.UserLdapProfile.MemberOf.Select(x => x.Components.Deepest.Value))
             userGroups.Add(group);
         
-        if (!context.Settings.LdapServerConfiguration.LoadNestedGroups)
+        if (!context.LdapServerConfiguration.LoadNestedGroups)
         {
-            _logger.LogDebug("Nested groups for {domain} are not required.", context.Settings.LdapServerConfiguration.ConnectionString);
+            _logger.LogDebug("Nested groups for {domain} are not required.", context.LdapServerConfiguration.ConnectionString);
             return Task.CompletedTask;
         }
 
@@ -52,9 +53,9 @@ public class UserGroupLoadingStep : IRadiusPipelineStep
 
     private void LoadGroupsFromLdapCatalog(IRadiusPipelineExecutionContext context, HashSet<string> userGroups)
     {
-        using var connection = _ldapConnectionFactory.CreateConnection(GetLdapConnectionOptions(context.Settings.LdapServerConfiguration));
+        using var connection = _ldapConnectionFactory.CreateConnection(GetLdapConnectionOptions(context.LdapServerConfiguration));
         
-        if (context.Settings.LdapServerConfiguration.NestedGroupsBaseDns.Count > 0)
+        if (context.LdapServerConfiguration.NestedGroupsBaseDns.Count > 0)
             LoadUserGroupsFromContainers(context, userGroups, connection);
         else
             LoadUserGroupsFromRoot(context, userGroups, connection);
@@ -62,9 +63,9 @@ public class UserGroupLoadingStep : IRadiusPipelineStep
 
     private void LoadUserGroupsFromContainers(IRadiusPipelineExecutionContext context, HashSet<string> userGroups, ILdapConnection connection)
     {
-        foreach (var dn in context.Settings.LdapServerConfiguration.NestedGroupsBaseDns)
+        foreach (var dn in context.LdapServerConfiguration.NestedGroupsBaseDns)
         {
-            _logger.LogDebug("Loading nested groups from '{dn}' at '{domain}' for '{user}'", dn, context.Settings.LdapServerConfiguration.ConnectionString, context.RequestPacket.UserName);
+            _logger.LogDebug("Loading nested groups from '{dn}' at '{domain}' for '{user}'", dn, context.LdapServerConfiguration.ConnectionString, context.RequestPacket.UserName);
             
             var request = new LoadUserGroupsRequest(
                 context.LdapSchema!,
@@ -88,7 +89,7 @@ public class UserGroupLoadingStep : IRadiusPipelineStep
             connection,
             context.UserLdapProfile.Dn);
             
-        _logger.LogDebug("Loading nested groups from root at '{domain}' for '{user}'", context.Settings.LdapServerConfiguration.ConnectionString, context.RequestPacket.UserName);   
+        _logger.LogDebug("Loading nested groups from root at '{domain}' for '{user}'", context.LdapServerConfiguration.ConnectionString, context.RequestPacket.UserName);   
         var groups = _ldapGroupService.LoadUserGroups(request);
             
         var groupLog = string.Join("\n", groups);
@@ -98,7 +99,6 @@ public class UserGroupLoadingStep : IRadiusPipelineStep
     }
 
     private bool ShouldSkipGroupLoading(IRadiusPipelineExecutionContext context) => !context
-        .Settings
         .RadiusReplyAttributes
         .Values
         .SelectMany(x => x)

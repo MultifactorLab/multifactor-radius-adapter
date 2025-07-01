@@ -18,7 +18,7 @@ public class PreAuthCheckStepTests
         var contextMock = new Mock<IRadiusPipelineExecutionContext>();
         var preAuth = PreAuthModeDescriptor.Create("otp", new PreAuthModeSettings(10));
         var execState = new ExecutionState();
-        contextMock.Setup(x => x.Settings.PreAuthnMode).Returns(preAuth);
+        contextMock.Setup(x => x.PreAuthnMode).Returns(preAuth);
         contextMock.Setup(x => x.Passphrase).Returns(UserPassphrase.Parse("123456", preAuth));
         contextMock.Setup(x => x.RequestPacket.UserName).Returns("username");
         contextMock.Setup(x => x.RemoteEndpoint).Returns(IPEndPoint.Parse("127.0.0.1:1"));
@@ -44,7 +44,7 @@ public class PreAuthCheckStepTests
         var contextMock = new Mock<IRadiusPipelineExecutionContext>();
         var preAuth = PreAuthModeDescriptor.Create(mode, new PreAuthModeSettings(1));
         var execState = new ExecutionState();
-        contextMock.Setup(x => x.Settings.PreAuthnMode).Returns(preAuth);
+        contextMock.Setup(x => x.PreAuthnMode).Returns(preAuth);
         contextMock.Setup(x => x.Passphrase).Returns(UserPassphrase.Parse("123456", preAuth));
         contextMock.Setup(x => x.RequestPacket.UserName).Returns("username");
         contextMock.Setup(x => x.RemoteEndpoint).Returns(IPEndPoint.Parse("127.0.0.1:1"));

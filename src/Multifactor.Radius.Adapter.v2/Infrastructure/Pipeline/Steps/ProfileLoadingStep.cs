@@ -67,12 +67,12 @@ public class ProfileLoadingStep : IRadiusPipelineStep
         }
                 
         _logger.LogInformation("Try to find '{userIdentity}' profile at '{domain}'.", userIdentity.Identity, domain.StringRepresentation);
-        profile = _ldapProfileService.FindUserProfile(new FindUserProfileRequest(context.Settings.ClientConfigurationName, context.Settings.LdapServerConfiguration, context.LdapSchema!, domain, userIdentity, attributes));
+        profile = _ldapProfileService.FindUserProfile(new FindUserProfileRequest(context.ClientConfigurationName, context.LdapServerConfiguration, context.LdapSchema!, domain, userIdentity, attributes));
 
         if (profile is null)
             return profile;
 
-        var expirationDate = DateTimeOffset.Now.AddHours(context.Settings.LdapServerConfiguration.UserProfileCacheLifeTimeInHours);
+        var expirationDate = DateTimeOffset.Now.AddHours(context.LdapServerConfiguration.UserProfileCacheLifeTimeInHours);
         SaveToCache(cacheKey, profile, expirationDate);
         
         _logger.LogDebug("'{userIdentity}' profile at '{domain}' is saved in cache till '{expirationDate}'.",  userIdentity.Identity, domain.StringRepresentation, expirationDate.ToString());
@@ -83,16 +83,16 @@ public class ProfileLoadingStep : IRadiusPipelineStep
     private IEnumerable<LdapAttributeName> GetAttributes(IRadiusPipelineExecutionContext context)
     {
         var attributes = new List<LdapAttributeName>() { new("memberOf"), new("userPrincipalName"), new("phone"), new("mail"), new("displayName"), new("email") };
-        if (!string.IsNullOrWhiteSpace(context.Settings.LdapServerConfiguration.IdentityAttribute))
-            attributes.Add(new LdapAttributeName(context.Settings.LdapServerConfiguration.IdentityAttribute));
+        if (!string.IsNullOrWhiteSpace(context.LdapServerConfiguration.IdentityAttribute))
+            attributes.Add(new LdapAttributeName(context.LdapServerConfiguration.IdentityAttribute));
 
-        var replyAttributes = context.Settings.RadiusReplyAttributes.Values
+        var replyAttributes = context.RadiusReplyAttributes.Values
             .SelectMany(x => x)
             .Where(x => x.FromLdap)
             .Select(x => new LdapAttributeName(x.LdapAttributeName));
         
         attributes.AddRange(replyAttributes);
-        
+        attributes.AddRange(context.LdapServerConfiguration.PhoneAttributes.Select(x => new LdapAttributeName(x)));
         return attributes;
     }
 

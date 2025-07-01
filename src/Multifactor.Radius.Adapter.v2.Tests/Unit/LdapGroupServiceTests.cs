@@ -5,6 +5,7 @@ using Multifactor.Core.Ldap.LdapGroup.Membership;
 using Multifactor.Core.Ldap.Name;
 using Multifactor.Core.Ldap.Schema;
 using Multifactor.Radius.Adapter.v2.Core.Ldap;
+using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Context;
 using Multifactor.Radius.Adapter.v2.Services.Ldap;
 
 namespace Multifactor.Radius.Adapter.v2.Tests.Unit;
@@ -83,17 +84,20 @@ public class LdapGroupServiceTests
         var memberShipCheckerFactoryMock = new Mock<IMembershipCheckerFactory>();
         
         var service = new LdapGroupService(groupLoaderFactoryMock.Object, memberShipCheckerFactoryMock.Object, connectionFactory.Object);
-        var request = new MembershipRequest(
-            new DistinguishedName("cn=user,dc=example,dc=com"),
-            [new DistinguishedName("cn=group1,dc=example,dc=com")],
-            false,
-            [],
-            "connectionString",
-            "user",
-            "password",
-            10,
-            new Mock<ILdapSchema>().Object,
-            [new DistinguishedName("cn=group1,dc=example,dc=com")]);
+
+        var contextMock = new Mock<IRadiusPipelineExecutionContext>();
+        contextMock.Setup(x => x.UserLdapProfile.Dn).Returns(new DistinguishedName("cn=user,dc=example,dc=com"));
+        contextMock.Setup(x => x.UserLdapProfile.MemberOf).Returns([new DistinguishedName("cn=group1,dc=example,dc=com")]);
+        contextMock.Setup(x => x.LdapServerConfiguration.LoadNestedGroups).Returns(false);
+        contextMock.Setup(x => x.LdapServerConfiguration.NestedGroupsBaseDns).Returns([]);
+        contextMock.Setup(x => x.LdapServerConfiguration.ConnectionString).Returns("connectionString");
+        contextMock.Setup(x => x.LdapServerConfiguration.UserName).Returns("user");
+        contextMock.Setup(x => x.LdapServerConfiguration.Password).Returns("password");
+        contextMock.Setup(x => x.LdapServerConfiguration.BindTimeoutInSeconds).Returns(10);
+        contextMock.Setup(x => x.LdapSchema).Returns(new Mock<ILdapSchema>().Object);
+        contextMock.Setup(x => x.LdapSchema).Returns(new Mock<ILdapSchema>().Object);
+        
+        var request = new MembershipRequest(contextMock.Object, [new DistinguishedName("cn=group1,dc=example,dc=com")]);
 
         var isMember = service.IsMemberOf(request);
         Assert.True(isMember);
@@ -107,17 +111,19 @@ public class LdapGroupServiceTests
         var memberShipCheckerFactoryMock = new Mock<IMembershipCheckerFactory>();
         
         var service = new LdapGroupService(groupLoaderFactoryMock.Object, memberShipCheckerFactoryMock.Object, connectionFactory.Object);
-        var request = new MembershipRequest(
-            new DistinguishedName("cn=user,dc=example,dc=com"),
-            [],
-            false,
-            [],
-            "connectionString",
-            "user",
-            "password",
-            10,
-            new Mock<ILdapSchema>().Object,
-            [new DistinguishedName("cn=group1,dc=example,dc=com")]);
+        var contextMock = new Mock<IRadiusPipelineExecutionContext>();
+        contextMock.Setup(x => x.UserLdapProfile.Dn).Returns(new DistinguishedName("cn=user,dc=example,dc=com"));
+        contextMock.Setup(x => x.UserLdapProfile.MemberOf).Returns([]);
+        contextMock.Setup(x => x.LdapServerConfiguration.LoadNestedGroups).Returns(false);
+        contextMock.Setup(x => x.LdapServerConfiguration.NestedGroupsBaseDns).Returns([]);
+        contextMock.Setup(x => x.LdapServerConfiguration.ConnectionString).Returns("connectionString");
+        contextMock.Setup(x => x.LdapServerConfiguration.UserName).Returns("user");
+        contextMock.Setup(x => x.LdapServerConfiguration.Password).Returns("password");
+        contextMock.Setup(x => x.LdapServerConfiguration.BindTimeoutInSeconds).Returns(10);
+        contextMock.Setup(x => x.LdapSchema).Returns(new Mock<ILdapSchema>().Object);
+        contextMock.Setup(x => x.LdapSchema).Returns(new Mock<ILdapSchema>().Object);
+        
+        var request = new MembershipRequest(contextMock.Object, [new DistinguishedName("cn=group1,dc=example,dc=com")]);
 
         var isMember = service.IsMemberOf(request);
         Assert.False(isMember);
@@ -131,17 +137,19 @@ public class LdapGroupServiceTests
         var memberShipCheckerFactoryMock = new Mock<IMembershipCheckerFactory>();
         
         var service = new LdapGroupService(groupLoaderFactoryMock.Object, memberShipCheckerFactoryMock.Object, connectionFactory.Object);
-        var request = new MembershipRequest(
-            new DistinguishedName("cn=user,dc=example,dc=com"),
-            [new DistinguishedName("cn=group1,dc=example,dc=com")],
-            false,
-            [],
-            "connectionString",
-            "user",
-            "password",
-            10,
-            new Mock<ILdapSchema>().Object,
-            [new DistinguishedName("cn=group2,dc=example,dc=com")]);
+        
+        var contextMock = new Mock<IRadiusPipelineExecutionContext>();
+        contextMock.Setup(x => x.UserLdapProfile.Dn).Returns(new DistinguishedName("cn=user,dc=example,dc=com"));
+        contextMock.Setup(x => x.UserLdapProfile.MemberOf).Returns([new DistinguishedName("cn=group1,dc=example,dc=com")]);
+        contextMock.Setup(x => x.LdapServerConfiguration.LoadNestedGroups).Returns(false);
+        contextMock.Setup(x => x.LdapServerConfiguration.NestedGroupsBaseDns).Returns([]);
+        contextMock.Setup(x => x.LdapServerConfiguration.ConnectionString).Returns("connectionString");
+        contextMock.Setup(x => x.LdapServerConfiguration.UserName).Returns("user");
+        contextMock.Setup(x => x.LdapServerConfiguration.Password).Returns("password");
+        contextMock.Setup(x => x.LdapServerConfiguration.BindTimeoutInSeconds).Returns(10);
+        contextMock.Setup(x => x.LdapSchema).Returns(new Mock<ILdapSchema>().Object);
+        
+        var request = new MembershipRequest(contextMock.Object, [new DistinguishedName("cn=group2,dc=example,dc=com")]);
 
         var isMember = service.IsMemberOf(request);
         Assert.False(isMember);
@@ -166,17 +174,18 @@ public class LdapGroupServiceTests
         var schemaMock = new Mock<ILdapSchema>();
         schemaMock.Setup(x => x.NamingContext).Returns(namingContext);
         
-        var request = new MembershipRequest(
-            new DistinguishedName("cn=user,dc=example,dc=com"),
-            [new DistinguishedName("cn=group1,dc=example,dc=com")],
-            loadNestedGroups: true,
-            nestedGroupsBaseDns: [],
-            "connectionString",
-            "user",
-            "password",
-            10,
-            schemaMock.Object,
-            [new DistinguishedName("cn=group2,dc=example,dc=com")]);
+        var contextMock = new Mock<IRadiusPipelineExecutionContext>();
+        contextMock.Setup(x => x.UserLdapProfile.Dn).Returns(new DistinguishedName("cn=user,dc=example,dc=com"));
+        contextMock.Setup(x => x.UserLdapProfile.MemberOf).Returns([new DistinguishedName("cn=group1,dc=example,dc=com")]);
+        contextMock.Setup(x => x.LdapServerConfiguration.LoadNestedGroups).Returns(true);
+        contextMock.Setup(x => x.LdapServerConfiguration.NestedGroupsBaseDns).Returns([]);
+        contextMock.Setup(x => x.LdapServerConfiguration.ConnectionString).Returns("connectionString");
+        contextMock.Setup(x => x.LdapServerConfiguration.UserName).Returns("user");
+        contextMock.Setup(x => x.LdapServerConfiguration.Password).Returns("password");
+        contextMock.Setup(x => x.LdapServerConfiguration.BindTimeoutInSeconds).Returns(10);
+        contextMock.Setup(x => x.LdapSchema).Returns(schemaMock.Object);
+        
+        var request = new MembershipRequest(contextMock.Object, [new DistinguishedName("cn=group2,dc=example,dc=com")]);
 
         var isMember = service.IsMemberOf(request);
         Assert.True(isMember);
@@ -198,18 +207,18 @@ public class LdapGroupServiceTests
             .Returns(checkerMock.Object);
         
         var service = new LdapGroupService(groupLoaderFactoryMock.Object, memberShipCheckerFactoryMock.Object, connectionFactory.Object);
+        var contextMock = new Mock<IRadiusPipelineExecutionContext>();
+        contextMock.Setup(x => x.UserLdapProfile.Dn).Returns(new DistinguishedName("cn=user,dc=example,dc=com"));
+        contextMock.Setup(x => x.UserLdapProfile.MemberOf).Returns([new DistinguishedName("cn=group1,dc=example,dc=com")]);
+        contextMock.Setup(x => x.LdapServerConfiguration.LoadNestedGroups).Returns(true);
+        contextMock.Setup(x => x.LdapServerConfiguration.NestedGroupsBaseDns).Returns(["dc=example1,dc=com"]);
+        contextMock.Setup(x => x.LdapServerConfiguration.ConnectionString).Returns("connectionString");
+        contextMock.Setup(x => x.LdapServerConfiguration.UserName).Returns("user");
+        contextMock.Setup(x => x.LdapServerConfiguration.Password).Returns("password");
+        contextMock.Setup(x => x.LdapServerConfiguration.BindTimeoutInSeconds).Returns(10);
+        contextMock.Setup(x => x.LdapSchema).Returns(new Mock<ILdapSchema>().Object);
         
-        var request = new MembershipRequest(
-            new DistinguishedName("cn=user,dc=example,dc=com"),
-            [new DistinguishedName("cn=group1,dc=example,dc=com")],
-            loadNestedGroups: true,
-            nestedGroupsBaseDns: [namingContext],
-            "connectionString",
-            "user",
-            "password",
-            10,
-            new Mock<ILdapSchema>().Object,
-            [new DistinguishedName("cn=group2,dc=example,dc=com")]);
+        var request = new MembershipRequest(contextMock.Object, [new DistinguishedName("cn=group2,dc=example,dc=com")]);
 
         var isMember = service.IsMemberOf(request);
         Assert.True(isMember);
@@ -233,18 +242,17 @@ public class LdapGroupServiceTests
         var service = new LdapGroupService(groupLoaderFactoryMock.Object, memberShipCheckerFactoryMock.Object, connectionFactory.Object);
         var schemaMock = new Mock<ILdapSchema>();
         schemaMock.Setup(x => x.NamingContext).Returns(namingContext);
-        
-        var request = new MembershipRequest(
-            new DistinguishedName("cn=user,dc=example,dc=com"),
-            [new DistinguishedName("cn=group1,dc=example,dc=com")],
-            loadNestedGroups: true,
-            nestedGroupsBaseDns: [],
-            "connectionString",
-            "user",
-            "password",
-            10,
-            schemaMock.Object,
-            [new DistinguishedName("cn=group2,dc=example,dc=com")]);
+        var contextMock = new Mock<IRadiusPipelineExecutionContext>();
+        contextMock.Setup(x => x.UserLdapProfile.Dn).Returns(new DistinguishedName("cn=user,dc=example,dc=com"));
+        contextMock.Setup(x => x.UserLdapProfile.MemberOf).Returns([new DistinguishedName("cn=group1,dc=example,dc=com")]);
+        contextMock.Setup(x => x.LdapServerConfiguration.LoadNestedGroups).Returns(true);
+        contextMock.Setup(x => x.LdapServerConfiguration.NestedGroupsBaseDns).Returns([]);
+        contextMock.Setup(x => x.LdapServerConfiguration.ConnectionString).Returns("connectionString");
+        contextMock.Setup(x => x.LdapServerConfiguration.UserName).Returns("user");
+        contextMock.Setup(x => x.LdapServerConfiguration.Password).Returns("password");
+        contextMock.Setup(x => x.LdapServerConfiguration.BindTimeoutInSeconds).Returns(10);
+        contextMock.Setup(x => x.LdapSchema).Returns(schemaMock.Object);
+        var request = new MembershipRequest(contextMock.Object, [new DistinguishedName("cn=group2,dc=example,dc=com")]);
 
         var isMember = service.IsMemberOf(request);
         Assert.False(isMember);
@@ -266,18 +274,17 @@ public class LdapGroupServiceTests
             .Returns(checkerMock.Object);
         
         var service = new LdapGroupService(groupLoaderFactoryMock.Object, memberShipCheckerFactoryMock.Object, connectionFactory.Object);
-        
-        var request = new MembershipRequest(
-            new DistinguishedName("cn=user,dc=example,dc=com"),
-            [new DistinguishedName("cn=group1,dc=example,dc=com")],
-            loadNestedGroups: true,
-            nestedGroupsBaseDns: [namingContext],
-            "connectionString",
-            "user",
-            "password",
-            10,
-            new Mock<ILdapSchema>().Object,
-            [new DistinguishedName("cn=group2,dc=example,dc=com")]);
+        var contextMock = new Mock<IRadiusPipelineExecutionContext>();
+        contextMock.Setup(x => x.UserLdapProfile.Dn).Returns(new DistinguishedName("cn=user,dc=example,dc=com"));
+        contextMock.Setup(x => x.UserLdapProfile.MemberOf).Returns([new DistinguishedName("cn=group1,dc=example,dc=com")]);
+        contextMock.Setup(x => x.LdapServerConfiguration.LoadNestedGroups).Returns(true);
+        contextMock.Setup(x => x.LdapServerConfiguration.NestedGroupsBaseDns).Returns(["dc=example1,dc=com"]);
+        contextMock.Setup(x => x.LdapServerConfiguration.ConnectionString).Returns("connectionString");
+        contextMock.Setup(x => x.LdapServerConfiguration.UserName).Returns("user");
+        contextMock.Setup(x => x.LdapServerConfiguration.Password).Returns("password");
+        contextMock.Setup(x => x.LdapServerConfiguration.BindTimeoutInSeconds).Returns(10);
+        contextMock.Setup(x => x.LdapSchema).Returns(new Mock<ILdapSchema>().Object);
+        var request = new MembershipRequest(contextMock.Object, [new DistinguishedName("cn=group2,dc=example,dc=com")]);
 
         var isMember = service.IsMemberOf(request);
         Assert.False(isMember);

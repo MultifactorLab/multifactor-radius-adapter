@@ -5,6 +5,8 @@ using Multifactor.Radius.Adapter.v2.Core;
 using Multifactor.Radius.Adapter.v2.Core.AccessChallenge;
 using Multifactor.Radius.Adapter.v2.Core.Auth;
 using Multifactor.Radius.Adapter.v2.Core.Auth.PreAuthMode;
+using Multifactor.Radius.Adapter.v2.Core.Configuration.Client;
+using Multifactor.Radius.Adapter.v2.Core.Ldap;
 using Multifactor.Radius.Adapter.v2.Core.MultifactorApi;
 using Multifactor.Radius.Adapter.v2.Core.Radius;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Context;
@@ -57,7 +59,7 @@ public class SecondFactorChallengeProcessorTests
         var processor =
             new SecondFactorChallengeProcessor(mfService, NullLogger<SecondFactorChallengeProcessor>.Instance);
         var contextMock = new Mock<IRadiusPipelineExecutionContext>();
-        contextMock.Setup(x => x.Settings.ClientConfigurationName).Returns("config");
+        contextMock.Setup(x => x.ClientConfigurationName).Returns("config");
         contextMock.Setup(x => x.ResponseInformation.State).Returns("state");
         contextMock.Setup(x => x.RequestPacket.Identifier).Returns(1);
 
@@ -75,7 +77,7 @@ public class SecondFactorChallengeProcessorTests
         var processor =
             new SecondFactorChallengeProcessor(mfService, NullLogger<SecondFactorChallengeProcessor>.Instance);
         var contextMock = new Mock<IRadiusPipelineExecutionContext>();
-        contextMock.Setup(x => x.Settings.ClientConfigurationName).Returns("config");
+        contextMock.Setup(x => x.ClientConfigurationName).Returns("config");
         contextMock.Setup(x => x.ResponseInformation.State).Returns("state");
         contextMock.Setup(x => x.RequestPacket.Identifier).Returns(1);
         var context = contextMock.Object;
@@ -127,7 +129,7 @@ public class SecondFactorChallengeProcessorTests
         contextMock.Setup(x => x.RequestPacket.AuthenticationType).Returns(authType);
         contextMock.Setup(x => x.RequestPacket.TryGetUserPassword()).Returns("password");
         contextMock.Setup(x => x.RemoteEndpoint).Returns(endpoint);
-        contextMock.Setup(x => x.Settings.PreAuthnMode).Returns(PreAuthModeDescriptor.Default);
+        contextMock.Setup(x => x.PreAuthnMode).Returns(PreAuthModeDescriptor.Default);
         
         contextMock.SetupProperty(x => x.AuthenticationState.SecondFactorStatus);
         contextMock.SetupProperty(x => x.ResponseInformation.State);
@@ -156,7 +158,7 @@ public class SecondFactorChallengeProcessorTests
         contextMock.Setup(x => x.RequestPacket.AuthenticationType).Returns(authType);
         contextMock.Setup(x => x.RequestPacket.TryGetUserPassword()).Returns("password");
         contextMock.Setup(x => x.RemoteEndpoint).Returns(endpoint);
-        contextMock.Setup(x => x.Settings.PreAuthnMode).Returns(PreAuthModeDescriptor.Default);
+        contextMock.Setup(x => x.PreAuthnMode).Returns(PreAuthModeDescriptor.Default);
         contextMock.Setup(x => x.Passphrase).Returns(UserPassphrase.Parse("123456", PreAuthModeDescriptor.Default));
         
         contextMock.SetupProperty(x => x.AuthenticationState.SecondFactorStatus);
@@ -172,7 +174,7 @@ public class SecondFactorChallengeProcessorTests
     {
         var mfServiceMock = new Mock<IMultifactorApiService>();
         mfServiceMock
-            .Setup(x => x.SendChallengeAsync(It.IsAny<IRadiusPipelineExecutionContext>(), It.IsAny<string>(), It.IsAny<string>()))
+            .Setup(x => x.SendChallengeAsync(It.IsAny<SendChallengeRequest>()))
             .ReturnsAsync(new MultifactorResponse(AuthenticationStatus.Accept));
         var mfService = mfServiceMock.Object;
         var processor = new SecondFactorChallengeProcessor(mfService, NullLogger<SecondFactorChallengeProcessor>.Instance);
@@ -183,15 +185,19 @@ public class SecondFactorChallengeProcessorTests
         contextMock.Setup(x => x.RequestPacket.AuthenticationType).Returns(AuthenticationType.PAP);
         contextMock.Setup(x => x.RequestPacket.TryGetUserPassword()).Returns("password");
         contextMock.Setup(x => x.RemoteEndpoint).Returns(endpoint);
-        contextMock.Setup(x => x.Settings.PreAuthnMode).Returns(PreAuthModeDescriptor.Default);
+        contextMock.Setup(x => x.PreAuthnMode).Returns(PreAuthModeDescriptor.Default);
         contextMock.Setup(x => x.Passphrase).Returns(UserPassphrase.Parse("123456", PreAuthModeDescriptor.Default));
-        contextMock.Setup(x => x.Settings.ClientConfigurationName).Returns("1");
+        contextMock.Setup(x => x.ClientConfigurationName).Returns("1");
         contextMock.SetupProperty(x => x.AuthenticationState.SecondFactorStatus);
         contextMock.SetupProperty(x => x.ResponseInformation.State);
+        contextMock.Setup(x => x.ApiCredential).Returns(new ApiCredential("1", "2"));
+        contextMock.Setup(x => x.LdapServerConfiguration).Returns(new Mock<ILdapServerConfiguration>().Object);
+        contextMock.Setup(x => x.UserLdapProfile).Returns(new Mock<ILdapProfile>().Object);
+        contextMock.Setup(x => x.AuthenticationCacheLifetime).Returns(AuthenticatedClientCacheConfig.Create("08:08:08", false));
         var context = contextMock.Object;
         
         context.ResponseInformation.State = "2";
-        var id = new ChallengeIdentifier(context.Settings.ClientConfigurationName, context.ResponseInformation.State);
+        var id = new ChallengeIdentifier(context.ClientConfigurationName, context.ResponseInformation.State);
         processor.AddChallengeContext(context);
         var result = await processor.ProcessChallengeAsync(id, context);
         Assert.Equal(ChallengeStatus.Accept, result);
@@ -204,7 +210,7 @@ public class SecondFactorChallengeProcessorTests
     {
         var mfServiceMock = new Mock<IMultifactorApiService>();
         mfServiceMock
-            .Setup(x => x.SendChallengeAsync(It.IsAny<IRadiusPipelineExecutionContext>(), It.IsAny<string>(), It.IsAny<string>()))
+            .Setup(x => x.SendChallengeAsync(It.IsAny<SendChallengeRequest>()))
             .ReturnsAsync(new MultifactorResponse(AuthenticationStatus.Reject));
         var mfService = mfServiceMock.Object;
         var processor = new SecondFactorChallengeProcessor(mfService, NullLogger<SecondFactorChallengeProcessor>.Instance);
@@ -215,15 +221,19 @@ public class SecondFactorChallengeProcessorTests
         contextMock.Setup(x => x.RequestPacket.AuthenticationType).Returns(AuthenticationType.PAP);
         contextMock.Setup(x => x.RequestPacket.TryGetUserPassword()).Returns("password");
         contextMock.Setup(x => x.RemoteEndpoint).Returns(endpoint);
-        contextMock.Setup(x => x.Settings.PreAuthnMode).Returns(PreAuthModeDescriptor.Default);
-        contextMock.Setup(x => x.Settings.ClientConfigurationName).Returns("1");
+        contextMock.Setup(x => x.PreAuthnMode).Returns(PreAuthModeDescriptor.Default);
+        contextMock.Setup(x => x.ClientConfigurationName).Returns("1");
         contextMock.Setup(x => x.Passphrase).Returns(UserPassphrase.Parse("123456", PreAuthModeDescriptor.Default));
         contextMock.SetupProperty(x => x.AuthenticationState.SecondFactorStatus);
         contextMock.SetupProperty(x => x.ResponseInformation.State);
+        contextMock.Setup(x => x.ApiCredential).Returns(new ApiCredential("1", "2"));
+        contextMock.Setup(x => x.LdapServerConfiguration).Returns(new Mock<ILdapServerConfiguration>().Object);
+        contextMock.Setup(x => x.UserLdapProfile).Returns(new Mock<ILdapProfile>().Object);
+        contextMock.Setup(x => x.AuthenticationCacheLifetime).Returns(AuthenticatedClientCacheConfig.Create("08:08:08", false));
         var context = contextMock.Object;
         
         context.ResponseInformation.State = "2";
-        var id = new ChallengeIdentifier(context.Settings.ClientConfigurationName, context.ResponseInformation.State);
+        var id = new ChallengeIdentifier(context.ClientConfigurationName, context.ResponseInformation.State);
         processor.AddChallengeContext(context);
         var result = await processor.ProcessChallengeAsync(id, context);
         Assert.Equal(ChallengeStatus.Reject, result);
@@ -238,7 +248,7 @@ public class SecondFactorChallengeProcessorTests
     {
         var mfServiceMock = new Mock<IMultifactorApiService>();
         mfServiceMock
-            .Setup(x => x.SendChallengeAsync(It.IsAny<IRadiusPipelineExecutionContext>(), It.IsAny<string>(), It.IsAny<string>()))
+            .Setup(x => x.SendChallengeAsync(It.IsAny<SendChallengeRequest>()))
             .ReturnsAsync(new MultifactorResponse(status));
         var mfService = mfServiceMock.Object;
         var processor = new SecondFactorChallengeProcessor(mfService, NullLogger<SecondFactorChallengeProcessor>.Instance);
@@ -249,15 +259,19 @@ public class SecondFactorChallengeProcessorTests
         contextMock.Setup(x => x.RequestPacket.AuthenticationType).Returns(AuthenticationType.PAP);
         contextMock.Setup(x => x.RequestPacket.TryGetUserPassword()).Returns("password");
         contextMock.Setup(x => x.RemoteEndpoint).Returns(endpoint);
-        contextMock.Setup(x => x.Settings.PreAuthnMode).Returns(PreAuthModeDescriptor.Default);
+        contextMock.Setup(x => x.PreAuthnMode).Returns(PreAuthModeDescriptor.Default);
         contextMock.Setup(x => x.Passphrase).Returns(UserPassphrase.Parse("123456", PreAuthModeDescriptor.Default));
-        contextMock.Setup(x => x.Settings.ClientConfigurationName).Returns("1");
+        contextMock.Setup(x => x.ClientConfigurationName).Returns("1");
         contextMock.SetupProperty(x => x.AuthenticationState.SecondFactorStatus);
         contextMock.SetupProperty(x => x.ResponseInformation.State);
+        contextMock.Setup(x => x.ApiCredential).Returns(new ApiCredential("1", "2"));
+        contextMock.Setup(x => x.LdapServerConfiguration).Returns(new Mock<ILdapServerConfiguration>().Object);
+        contextMock.Setup(x => x.UserLdapProfile).Returns(new Mock<ILdapProfile>().Object);
+        contextMock.Setup(x => x.AuthenticationCacheLifetime).Returns(AuthenticatedClientCacheConfig.Create("08:08:08", false));
         var context = contextMock.Object;
         
         context.ResponseInformation.State = "2";
-        var id = new ChallengeIdentifier(context.Settings.ClientConfigurationName, context.ResponseInformation.State);
+        var id = new ChallengeIdentifier(context.ClientConfigurationName, context.ResponseInformation.State);
         processor.AddChallengeContext(context);
         var result = await processor.ProcessChallengeAsync(id, context);
         Assert.Equal(ChallengeStatus.InProcess, result);

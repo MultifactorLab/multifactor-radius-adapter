@@ -196,8 +196,11 @@ public class LdapSettingsTests
         }
     }
 
-    [Fact]
-    public void CreateClientConfiguration_LdapFirstFactorNoServerConfigs_ShouldThrow()
+    [Theory]
+    [InlineData("None")]
+    [InlineData("Radius")]
+    [InlineData("Ldap")]
+    public void CreateClientConfiguration_NoServerConfigs_ShouldThrow(string factor)
     {
         var radiusConfig = new RadiusAdapterConfiguration()
         {
@@ -207,7 +210,7 @@ public class LdapSettingsTests
                 MultifactorSharedSecret = "secret",
                 SignUpGroups = "groups",
                 BypassSecondFactorWhenApiUnreachable = true,
-                FirstFactorAuthenticationSource = "Ldap",
+                FirstFactorAuthenticationSource = factor,
                 AdapterClientEndpoint = "127.0.0.1",
                 AdapterServerEndpoint = "127.0.0.1",
                 RadiusSharedSecret = "secret",
@@ -222,38 +225,6 @@ public class LdapSettingsTests
         dictionaryMock.Setup(x => x.GetAttribute(It.IsAny<string>())).Returns(attribute);
         var factory = new ClientConfigurationFactory(dictionaryMock.Object);
         Assert.Throws<InvalidConfigurationException>(() => factory.CreateConfig(configName, radiusConfig, serviceConfig));
-    }
-    
-    [Theory]
-    [InlineData("None")]
-    [InlineData("Radius")]
-    public void CreateClientConfiguration_NoLdapServerConfigs_ShouldCreate(string firstFactorAuthenticationSource)
-    {
-        var radiusConfig = new RadiusAdapterConfiguration()
-        {
-            AppSettings = new AppSettingsSection()
-            {
-                MultifactorNasIdentifier = "identifier",
-                MultifactorSharedSecret = "secret",
-                SignUpGroups = "groups",
-                BypassSecondFactorWhenApiUnreachable = true,
-                FirstFactorAuthenticationSource = firstFactorAuthenticationSource,
-                AdapterClientEndpoint = "127.0.0.1",
-                AdapterServerEndpoint = "127.0.0.1",
-                RadiusSharedSecret = "secret",
-                InvalidCredentialDelay = "3",
-                NpsServerEndpoint = "127.0.0.1"
-            }
-        };
-
-        var serviceConfig = new ServiceConfiguration();
-        var configName = "name";
-        var dictionaryMock = new Mock<IRadiusDictionary>();
-        var attribute = new DictionaryAttribute("name", 1, "type");
-        dictionaryMock.Setup(x => x.GetAttribute(It.IsAny<string>())).Returns(attribute);
-        var factory = new ClientConfigurationFactory(dictionaryMock.Object);
-        var conf =  factory.CreateConfig(configName, radiusConfig, serviceConfig);
-        Assert.NotNull(conf);
     }
     
     [Theory]

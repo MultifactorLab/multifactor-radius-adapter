@@ -1,16 +1,17 @@
 using System.Net;
 using Microsoft.Extensions.Logging;
+using Multifactor.Core.Ldap.Attributes;
 using Multifactor.Radius.Adapter.v2.Core;
 using Multifactor.Radius.Adapter.v2.Core.Auth;
 using Multifactor.Radius.Adapter.v2.Core.Auth.PreAuthMode;
 using Multifactor.Radius.Adapter.v2.Core.MultifactorApi;
 using Multifactor.Radius.Adapter.v2.Core.MultifactorApi.PrivacyMode;
 using Multifactor.Radius.Adapter.v2.Exceptions;
-using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Context;
 using Multifactor.Radius.Adapter.v2.Services.AuthenticatedClientCache;
 
 namespace Multifactor.Radius.Adapter.v2.Services.MultifactorApi;
 
+//TODO separate creation and sending api request
 public class MultifactorApiService : IMultifactorApiService
 {
     private readonly IMultifactorApi _api;
@@ -28,102 +29,98 @@ public class MultifactorApiService : IMultifactorApiService
         _logger = logger;
     }
 
-    public async Task<MultifactorResponse> CreateSecondFactorRequestAsync(IRadiusPipelineExecutionContext context)
+    public async Task<MultifactorResponse> CreateSecondFactorRequestAsync(CreateSecondFactorRequest request)
     {
-        ArgumentNullException.ThrowIfNull(context, nameof(context));
-        var secondFactorIdentity = GetSecondFactorIdentity(context);
+        ArgumentNullException.ThrowIfNull(request, nameof(request));
+        var secondFactorIdentity = GetSecondFactorIdentity(request);
         if (string.IsNullOrWhiteSpace(secondFactorIdentity))
         {
             _logger.LogWarning("Empty user name for second factor request. Request rejected.");
             return new MultifactorResponse(AuthenticationStatus.Reject);
         }
 
-        var personalData = GetPersonalData(context);
-        var callingStationId = context.RequestPacket.CallingStationIdAttribute;
+        var personalData = GetPersonalData(request);
+        var callingStationId = request.RequestPacket.CallingStationIdAttribute;
 
         //try to get authenticated client to bypass second factor if configured
-        if (_authenticatedClientCache.TryHitCache(callingStationId, personalData.Identity, context.Settings))
+        if (_authenticatedClientCache.TryHitCache(callingStationId, personalData.Identity, request.ConfigName, request.AuthenticationCacheLifetime))
         {
             _logger.LogInformation(
                 "Bypass second factor for user '{user:l}' with calling-station-id {csi:l} from {host:l}:{port}",
                 personalData.Identity,
                 callingStationId,
-                context.RemoteEndpoint.Address,
-                context.RemoteEndpoint.Port);
+                request.RemoteEndpoint.Address,
+                request.RemoteEndpoint.Port);
             return new MultifactorResponse(AuthenticationStatus.Bypass);
         }
 
-        ApplyPrivacyMode(personalData, context.Settings.PrivacyMode);
-
-        var payload = GetRequestPayload(personalData, context);
+        ApplyPrivacyMode(personalData, request.PrivacyMode);
+        var payload = GetRequestPayload(personalData, request);
 
         try
         {
-            var response = await CreateAccessRequestAsync(personalData, payload, context);
+            var response = await CreateAccessRequestAsync(personalData, payload, request);
             var responseCode = ConvertToAuthCode(response);
             if (responseCode == AuthenticationStatus.Accept && !(response?.Bypassed ?? false))
             {
-                LogGrantedInfo(personalData.Identity, response, context);
-                _authenticatedClientCache.SetCache(callingStationId, personalData.Identity, context.Settings);
+                LogGrantedInfo(personalData.Identity, response, request.RequestPacket.CallingStationIdAttribute);
+                _authenticatedClientCache.SetCache(callingStationId, personalData.Identity, request.ConfigName, request.AuthenticationCacheLifetime);
             }
 
             return new MultifactorResponse(responseCode, response?.Id, response?.ReplyMessage);
         }
         catch (MultifactorApiUnreachableException apiEx)
         {
-            return ProcessMfException(apiEx, personalData.Identity, context);
+            return ProcessMfException(apiEx, personalData.Identity, request.BypassSecondFactorWhenApiUnreachable, request.RemoteEndpoint);
         }
         catch (Exception ex)
         {
-            return ProcessException(ex, personalData.Identity, context);
+            return ProcessException(ex, personalData.Identity, request.RemoteEndpoint);
         }
     }
 
-    public async Task<MultifactorResponse> SendChallengeAsync(IRadiusPipelineExecutionContext context, string answer, string requestId)
+    public async Task<MultifactorResponse> SendChallengeAsync(SendChallengeRequest request)
     {
-        ArgumentNullException.ThrowIfNull(context, nameof(context));
-        ArgumentException.ThrowIfNullOrWhiteSpace(requestId, nameof(requestId));
-        ArgumentException.ThrowIfNullOrWhiteSpace(answer, nameof(answer));
+        ArgumentNullException.ThrowIfNull(request, nameof(request));
+        ArgumentException.ThrowIfNullOrWhiteSpace(request.RequestId, nameof(request.RequestId));
+        ArgumentException.ThrowIfNullOrWhiteSpace(request.Answer, nameof(request.Answer));
 
-        var identity = GetSecondFactorIdentity(context);
+        var identity = GetSecondFactorIdentity(request.IdentityAttribute, request.RequestPacket.UserName, request.UserProfile.Attributes);
         if (string.IsNullOrWhiteSpace(identity))
             throw new InvalidOperationException("The identity is empty.");
 
         var payload = new ChallengeRequest()
         {
             Identity = identity,
-            Challenge = answer,
-            RequestId = requestId
+            Challenge = request.Answer,
+            RequestId = request.RequestId
         };
 
         try
         {
-            var response = await _api.SendChallengeAsync(payload, context.Settings.ApiCredential);
+            var response = await _api.SendChallengeAsync(payload, request.ApiCredential);
             var responseCode = ConvertToAuthCode(response);
-            if (responseCode == AuthenticationStatus.Accept && !response.Bypassed)
-            {
-                LogGrantedInfo(identity, response, context);
-                _authenticatedClientCache.SetCache(context.RequestPacket.CallingStationIdAttribute, identity, context.Settings);
-            }
+            if (responseCode != AuthenticationStatus.Accept || response.Bypassed)
+                return new MultifactorResponse(responseCode, response?.ReplyMessage);
+            LogGrantedInfo(identity, response, request.RequestPacket.CallingStationIdAttribute);
+            _authenticatedClientCache.SetCache(request.RequestPacket.CallingStationIdAttribute, identity, request.ConfigName, request.AuthenticationCacheLifetime);
 
             return new MultifactorResponse(responseCode, response?.ReplyMessage);
         }
         catch (MultifactorApiUnreachableException apiEx)
         {
-            return ProcessMfException(apiEx, identity, context);
+            return ProcessMfException(apiEx, identity, request.BypassSecondFactorWhenApiUnreachable, request.RemoteEndpoint);
         }
         catch (Exception ex)
         {
-            return ProcessException(ex, identity, context);
+            return ProcessException(ex, identity, request.RemoteEndpoint);
         }
     }
 
     private AuthenticationStatus ConvertToAuthCode(AccessRequestResponse? multifactorAccessRequest)
     {
         if (multifactorAccessRequest == null)
-        {
             return AuthenticationStatus.Reject;
-        }
 
         switch (multifactorAccessRequest.Status)
         {
@@ -145,12 +142,12 @@ public class MultifactorApiService : IMultifactorApiService
         }
     }
 
-    private void LogGrantedInfo(string identity, AccessRequestResponse? response, IRadiusPipelineExecutionContext context)
+    private void LogGrantedInfo(string identity, AccessRequestResponse? response, string? callingStationIdAttribute)
     {
         string? countryValue = null;
         string? regionValue = null;
         string? cityValue = null;
-        string? callingStationId = context?.RequestPacket?.CallingStationIdAttribute;
+        var callingStationId = callingStationIdAttribute;
 
         if (response != null && IPAddress.TryParse(callingStationId, out var ip))
         {
@@ -172,7 +169,7 @@ public class MultifactorApiService : IMultifactorApiService
             response!.AuthenticatorId);
     }
 
-    private static string? GetPassCodeOrNull(IRadiusPipelineExecutionContext context)
+    private static string? GetPassCodeOrNull(CreateSecondFactorRequest context)
     {
         //check static challenge
         var challenge = context.RequestPacket.TryGetChallenge();
@@ -183,7 +180,7 @@ public class MultifactorApiService : IMultifactorApiService
 
         //check password challenge (otp or passcode)
         var passphrase = context.Passphrase;
-        switch (context.Settings.PreAuthnMode.Mode)
+        switch (context.PreAuthnMode.Mode)
         {
             case PreAuthMode.Otp:
                 return passphrase.Otp;
@@ -196,21 +193,17 @@ public class MultifactorApiService : IMultifactorApiService
         }
 
         if (passphrase.IsEmpty)
-        {
             return null;
-        }
 
-        if (context.Settings.FirstFactorAuthenticationSource != AuthenticationSource.None)
-        {
+        if (context.FirstFactorAuthenticationSource != AuthenticationSource.None)
             return null;
-        }
 
         return passphrase.Otp ?? passphrase.ProviderCode;
     }
 
-    private async Task<AccessRequestResponse?> CreateAccessRequestAsync(PersonalData personalData, AccessRequest payload, IRadiusPipelineExecutionContext context)
+    private async Task<AccessRequestResponse?> CreateAccessRequestAsync(PersonalData personalData, AccessRequest payload, CreateSecondFactorRequest context)
     {
-        var response = await _api.CreateAccessRequest(payload, context.Settings.ApiCredential);
+        var response = await _api.CreateAccessRequest(payload, context.ApiCredential);
         var responseCode = ConvertToAuthCode(response);
 
         if (responseCode == AuthenticationStatus.Reject)
@@ -229,42 +222,58 @@ public class MultifactorApiService : IMultifactorApiService
         return response;
     }
 
-    private string? GetSecondFactorIdentity(IRadiusPipelineExecutionContext context)
+    private string? GetSecondFactorIdentity(CreateSecondFactorRequest context)
     {
-        if (string.IsNullOrWhiteSpace(context.Settings.LdapServerConfiguration.IdentityAttribute))
+        if (string.IsNullOrWhiteSpace(context.IdentityAttribute))
             return context.RequestPacket.UserName;
 
-        return context.UserLdapProfile?.Attributes
-            .FirstOrDefault(x => x.Name == context.Settings.LdapServerConfiguration.IdentityAttribute)?.Values
+        return context.UserProfile?.Attributes
+            .FirstOrDefault(x => x.Name == context.IdentityAttribute)?.Values
+            .FirstOrDefault();
+    }
+    
+    private string? GetSecondFactorIdentity(string? identityAttribute, string? userName, IReadOnlyCollection<LdapAttribute> profileAttributes)
+    {
+        if (string.IsNullOrWhiteSpace(identityAttribute))
+            return userName;
+
+        return profileAttributes
+            .FirstOrDefault(x => x.Name == identityAttribute)?.Values
             .FirstOrDefault();
     }
 
-    private PersonalData GetPersonalData(IRadiusPipelineExecutionContext context)
+    private PersonalData GetPersonalData(CreateSecondFactorRequest request)
     {
-        var secondFactorIdentity = GetSecondFactorIdentity(context);
-        var callingStationId = context.RequestPacket.CallingStationIdAttribute;
+        var secondFactorIdentity = GetSecondFactorIdentity(request);
+        var callingStationId = request.RequestPacket.CallingStationIdAttribute;
         // CallingStationId may contain hostname. For IP policy to work correctly in MF cloud we need IP instead of hostname
         var callingStationIdForApiRequest = IPAddress.TryParse(callingStationId ?? string.Empty, out _)
             ? callingStationId
-            : context.RemoteEndpoint.Address.ToString();
+            : request.RemoteEndpoint.Address.ToString();
+
+        var phone = request.UserProfile.Attributes
+            .Where(x => request.PhoneAttributesNames.Contains(x.Name.Value))
+            .Select(x => x.GetNotEmptyValues().FirstOrDefault())
+            .FirstOrDefault();
+        
         var personalData = new PersonalData
         {
             Identity = secondFactorIdentity!,
-            DisplayName = context.UserLdapProfile.DisplayName,
-            Email = context.UserLdapProfile.Email,
-            Phone = context.UserLdapProfile.Phone,
-            CalledStationId = context.RequestPacket.CalledStationIdAttribute,
+            DisplayName = request.UserProfile.DisplayName,
+            Email = request.UserProfile.Email,
+            Phone = string.IsNullOrWhiteSpace(phone) ? request.UserProfile.Phone : phone,
+            CalledStationId = request.RequestPacket.CalledStationIdAttribute,
             CallingStationId = callingStationIdForApiRequest
         };
 
         return personalData;
     }
 
-    private AccessRequest GetRequestPayload(PersonalData personalData, IRadiusPipelineExecutionContext context)
+    private AccessRequest GetRequestPayload(PersonalData personalData, CreateSecondFactorRequest context)
     {
         return new AccessRequest
         {
-            Identity = UserNameTransformation.Transform(personalData.Identity, context.Settings.UserNameTransformRules.BeforeSecondFactor),
+            Identity = UserNameTransformation.Transform(personalData.Identity, context.UserNameTransformRules.BeforeSecondFactor),
             Name = personalData.DisplayName,
             Email = personalData.Email,
             Phone = personalData.Phone,
@@ -277,7 +286,7 @@ public class MultifactorApiService : IMultifactorApiService
             },
             GroupPolicyPreset = new GroupPolicyPreset
             {
-                SignUpGroups = context.Settings.SignUpGroups
+                SignUpGroups = context.SignUpGroups ?? string.Empty
             }
         };
     }
@@ -297,24 +306,16 @@ public class MultifactorApiService : IMultifactorApiService
 
             case PrivacyMode.Partial:
                 if (!modeDescriptor.HasField("Name"))
-                {
                     pd.DisplayName = null;
-                }
 
                 if (!modeDescriptor.HasField("Email"))
-                {
                     pd.Email = null;
-                }
 
                 if (!modeDescriptor.HasField("Phone"))
-                {
                     pd.Phone = null;
-                }
 
                 if (!modeDescriptor.HasField("RemoteHost"))
-                {
                     pd.CallingStationId = "";
-                }
 
                 pd.CalledStationId = null;
 
@@ -322,16 +323,16 @@ public class MultifactorApiService : IMultifactorApiService
         }
     }
     
-    private MultifactorResponse ProcessMfException(MultifactorApiUnreachableException apiEx, string identity, IRadiusPipelineExecutionContext context)
+    private MultifactorResponse ProcessMfException(MultifactorApiUnreachableException apiEx, string identity, bool bypassSecondFactorWhenApiUnreachable, IPEndPoint remoteEndpoint)
     {
         _logger.LogError(apiEx,
             "Error occured while requesting API for user '{user:l}' from {host:l}:{port}, {msg:l}",
             identity,
-            context.RemoteEndpoint.Address,
-            context.RemoteEndpoint.Port,
+            remoteEndpoint.Address,
+            remoteEndpoint.Port,
             apiEx.Message);
 
-        if (!context.Settings.BypassSecondFactorWhenApiUnreachable)
+        if (!bypassSecondFactorWhenApiUnreachable)
         {
             var radCode = ConvertToAuthCode(null);
             return new MultifactorResponse(radCode);
@@ -339,19 +340,19 @@ public class MultifactorApiService : IMultifactorApiService
 
         _logger.LogWarning("Bypass second factor for user '{user:l}' from {host:l}:{port}",
             identity,
-            context.RemoteEndpoint.Address,
-            context.RemoteEndpoint.Port);
+            remoteEndpoint.Address,
+            remoteEndpoint.Port);
 
         var code = ConvertToAuthCode(AccessRequestResponse.Bypass);
         return new MultifactorResponse(code);
     }
     
-    private MultifactorResponse ProcessException(Exception ex, string identity, IRadiusPipelineExecutionContext context)
-     {
+    private MultifactorResponse ProcessException(Exception ex, string identity, IPEndPoint remoteEndpoint)
+    {
          _logger.LogError(ex, "Error occured while requesting API for user '{user:l}' from {host:l}:{port}, {msg:l}",
              identity,
-             context.RemoteEndpoint.Address,
-             context.RemoteEndpoint.Port,
+             remoteEndpoint.Address,
+             remoteEndpoint.Port,
              ex.Message);
 
          var code = ConvertToAuthCode(null);

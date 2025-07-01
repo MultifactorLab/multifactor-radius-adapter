@@ -8,10 +8,10 @@ namespace Multifactor.Radius.Adapter.v2.Services.Radius;
 
 public sealed class RadiusClient : IDisposable
 {
-    private readonly UdpClient _udpClient;
-
-    private readonly ConcurrentDictionary<Tuple<byte, IPEndPoint>, TaskCompletionSource<UdpReceiveResult>>
-        _pendingRequests = new();
+    private readonly UdpClient _udpClient; 
+    
+    // TODO ConcurrentDictionary -> MemoryCache
+    private readonly ConcurrentDictionary<Tuple<byte, IPEndPoint>, TaskCompletionSource<UdpReceiveResult>> _pendingRequests = new();
 
     private readonly CancellationTokenSource _cancellationTokenSource;
     private readonly ILogger _logger;
@@ -69,9 +69,7 @@ public sealed class RadiusClient : IDisposable
                 var response = await _udpClient.ReceiveAsync(cancellationToken);
 
                 if (_pendingRequests.TryRemove(new Tuple<byte, IPEndPoint>(response.Buffer[1], response.RemoteEndPoint), out var taskCs))
-                {
                     taskCs.SetResult(response);
-                }
             }
             catch (ObjectDisposedException)
             {

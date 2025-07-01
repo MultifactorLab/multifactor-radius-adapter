@@ -22,7 +22,7 @@ public class PreAuthPostCheckStepTests
         contextMock.Setup(x => x.LdapSchema).Returns(LdapSchemaBuilder.Default);
         contextMock.Setup(x => x.ExecutionState).Returns(execState);
         
-        var context =  contextMock.Object;
+        var context = contextMock.Object;
         var step = new PreAuthPostCheck(NullLogger<PreAuthPostCheck>.Instance);
         await step.ExecuteAsync(context);
         Assert.False(execState.IsTerminated);
