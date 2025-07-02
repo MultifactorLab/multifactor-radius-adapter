@@ -152,7 +152,7 @@ public class SecondFactorChallengeProcessor : IChallengeProcessor
                 context.AuthenticationState.FirstFactorStatus = challengeContext.AuthenticationState.FirstFactorStatus;
                 context.AuthenticationState.SecondFactorStatus = AuthenticationStatus.Accept;
                 context.Passphrase = challengeContext.Passphrase;
-
+                
                 RemoveChallengeContext(identifier);
                 
                 _logger.LogDebug(

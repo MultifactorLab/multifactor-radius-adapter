@@ -41,7 +41,7 @@ public class RadiusFirstFactorProcessor : IFirstFactorProcessor
         try
         {
             var transformedName = UserNameTransformation.Transform(requestPacket.UserName, context.UserNameTransformRules.BeforeFirstFactor);
-            var authPacket = PreparePacket(requestPacket, transformedName, context.PreAuthnMode);
+            var authPacket = PreparePacket(requestPacket, transformedName, context.Passphrase);
 
             var authBytes = _radiusPacketService.GetBytes(authPacket, context.RadiusSharedSecret);
             using var client = new RadiusClient(context.ServiceClientEndpoint, _logger);
@@ -51,7 +51,6 @@ public class RadiusFirstFactorProcessor : IFirstFactorProcessor
             if (response is null)
             {
                 _logger.LogWarning("Remote Radius Server did not respond on message with id={id}", authPacket.Identifier);
-                context.ExecutionState.SkipResponse();
                 context.AuthenticationState.FirstFactorStatus = GetAuthState(PacketCode.AccessReject);
                 return;
             }
@@ -77,7 +76,7 @@ public class RadiusFirstFactorProcessor : IFirstFactorProcessor
         context.AuthenticationState.FirstFactorStatus = GetAuthState(PacketCode.AccessReject);
     }
 
-    private IRadiusPacket PreparePacket(IRadiusPacket radiusPacket, string userName, PreAuthModeDescriptor authModeDescriptor)
+    private IRadiusPacket PreparePacket(IRadiusPacket radiusPacket, string userName, UserPassphrase passphrase)
     {
         var authPacket = new RadiusPacket(new RadiusPacketHeader(radiusPacket.Code, radiusPacket.Identifier, radiusPacket.Authenticator));
 
@@ -88,15 +87,11 @@ public class RadiusFirstFactorProcessor : IFirstFactorProcessor
         }
 
         authPacket.RemoveAttribute("Proxy-State");
+        //authPacket.RemoveAttribute("State"); // radius server does not send response
         authPacket.ReplaceAttribute("User-Name", userName);
-
-        var pwd = radiusPacket.TryGetUserPassword();
-        if (string.IsNullOrWhiteSpace(pwd))
-            return authPacket;
         
-        var userPassphrase = UserPassphrase.Parse(pwd, authModeDescriptor);
-        if (!string.IsNullOrWhiteSpace(userPassphrase.Password))
-            authPacket.ReplaceAttribute("User-Password", userPassphrase.Password);
+        if (!string.IsNullOrWhiteSpace(passphrase.Password))
+            authPacket.ReplaceAttribute("User-Password", passphrase.Password);
 
         return authPacket;
     }

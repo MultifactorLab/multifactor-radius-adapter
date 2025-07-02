@@ -15,6 +15,16 @@ public class RadiusReplyAttributesSection
 
     [ConfigurationKeyName("add")]
     private RadiusReplyAttribute _singleElement { get; set; }
+    
+    public RadiusReplyAttributesSection()
+    {
+    }
+
+    public RadiusReplyAttributesSection(RadiusReplyAttribute singleElement = null, RadiusReplyAttribute[] elements = null)
+    {
+        _elements = elements;
+        _singleElement = singleElement;
+    }
 
     public RadiusReplyAttribute[] Elements
     {

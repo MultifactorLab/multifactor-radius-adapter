@@ -133,9 +133,9 @@ public class LdapFirstFactorProcessor : IFirstFactorProcessor
 
     private LdapErrorReasonInfo? GetLdapErrorInfo(LdapException exception)
     {
-        if (string.IsNullOrWhiteSpace(exception.Message))
+        if (string.IsNullOrWhiteSpace(exception.ServerErrorMessage))
             return null;
-        var reason = LdapErrorReasonInfo.Create(exception.Message);
+        var reason = LdapErrorReasonInfo.Create(exception.ServerErrorMessage);
         return reason;
     }
 

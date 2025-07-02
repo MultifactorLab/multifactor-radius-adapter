@@ -1,6 +1,7 @@
 using System.Net;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
+using Multifactor.Radius.Adapter.v2.Core;
 using Multifactor.Radius.Adapter.v2.Core.Auth;
 using Multifactor.Radius.Adapter.v2.Core.Auth.PreAuthMode;
 using Multifactor.Radius.Adapter.v2.Core.FirstFactor;
@@ -40,6 +41,7 @@ public class RadiusFirstFactorProcessorTests
         contextMock.Setup(x => x.ServiceClientEndpoint).Returns(IPEndPoint.Parse(sensitiveData["ServiceClientEndpoint"]));
         contextMock.Setup(x => x.PreAuthnMode).Returns(PreAuthModeDescriptor.Default);
         contextMock.Setup(x => x.RadiusSharedSecret).Returns(secret);
+        contextMock.Setup(x => x.Passphrase).Returns(UserPassphrase.Parse(sensitiveData["Password"], PreAuthModeDescriptor.Default));
         await processor.ProcessFirstFactor(contextMock.Object);
         
         Assert.Equal(AuthenticationStatus.Accept, authState.FirstFactorStatus);
