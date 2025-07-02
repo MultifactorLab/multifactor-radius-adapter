@@ -342,3 +342,5 @@ src/Properties/launchSettings.json
 
 # E2E sensitive data folder
 src/Multifactor.Radius.Adapter.v2.Tests/Assets/SensitiveData
+# E2E sensitive data folder
+src\MultiFactor.Radius.Adapter.EndToEndTests\Assets\SensitiveData

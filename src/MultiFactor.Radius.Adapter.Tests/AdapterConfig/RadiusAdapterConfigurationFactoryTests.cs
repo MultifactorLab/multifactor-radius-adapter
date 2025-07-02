@@ -1,4 +1,5 @@
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration.ConfigurationLoading;
+using MultiFactor.Radius.Adapter.Infrastructure.Configuration.XmlAppConfiguration;
 using MultiFactor.Radius.Adapter.Tests.Fixtures;
 
 namespace MultiFactor.Radius.Adapter.Tests.AdapterConfig;
@@ -9,7 +10,7 @@ public class RadiusAdapterConfigurationFactoryTests
     public void CreateMinimalRoot_WithNoEnvVar_ShouldCreate()
     {
         var path = TestEnvironment.GetAssetPath("root-minimal-single.config");
-        var config = RadiusAdapterConfigurationFactory.Create(path);
+        var config = RadiusAdapterConfigurationFactory.Create(new RadiusConfigurationFile(path));
         
         Assert.Equal("0.0.0.0:1812", config.AppSettings.AdapterServerEndpoint);
         Assert.Equal("000", config.AppSettings.RadiusSharedSecret);
@@ -34,7 +35,7 @@ public class RadiusAdapterConfigurationFactoryTests
             env.SetEnvironmentVariable("rad_appsettings__LoggingLevel", "Info");
 
             var path = TestEnvironment.GetAssetPath("root-minimal-single.config");
-            var config = RadiusAdapterConfigurationFactory.Create(path);
+            var config = RadiusAdapterConfigurationFactory.Create(new RadiusConfigurationFile(path));
         
             Assert.Equal("0.0.0.0:1818", config.AppSettings.AdapterServerEndpoint);
             Assert.Equal("888", config.AppSettings.RadiusSharedSecret);
@@ -51,7 +52,7 @@ public class RadiusAdapterConfigurationFactoryTests
     {
         var path = TestEnvironment.GetAssetPath(TestAssetLocation.ClientsDirectory, 
             "client-minimal-for-overriding.config");
-        var config = RadiusAdapterConfigurationFactory.Create(path, "client-minimal-for-overriding");
+        var config = RadiusAdapterConfigurationFactory.Create(new RadiusConfigurationFile(path), "client-minimal-for-overriding");
         
         Assert.Equal("windows", config.AppSettings.RadiusClientNasIdentifier);
         Assert.Equal("000", config.AppSettings.RadiusSharedSecret);
@@ -78,7 +79,7 @@ public class RadiusAdapterConfigurationFactoryTests
             
             var path = TestEnvironment.GetAssetPath(TestAssetLocation.ClientsDirectory, 
                 "client-minimal-for-overriding.config");
-            var config = RadiusAdapterConfigurationFactory.Create(path, "client-minimal-for-overriding");
+            var config = RadiusAdapterConfigurationFactory.Create(new RadiusConfigurationFile(path), "client-minimal-for-overriding");
         
             Assert.Equal("Linux", config.AppSettings.RadiusClientNasIdentifier);
             Assert.Equal("888", config.AppSettings.RadiusSharedSecret);
@@ -98,7 +99,7 @@ public class RadiusAdapterConfigurationFactoryTests
             
             var path = TestEnvironment.GetAssetPath(TestAssetLocation.ClientsDirectory, 
                 "client-minimal-for-overriding.config");
-            var config = RadiusAdapterConfigurationFactory.Create(path, "client minimal spaced");
+            var config = RadiusAdapterConfigurationFactory.Create(new RadiusConfigurationFile(path), "client minimal spaced");
         
             Assert.Equal("Linux", config.AppSettings.RadiusClientNasIdentifier);
         });
@@ -119,7 +120,7 @@ public class RadiusAdapterConfigurationFactoryTests
             
             var path = TestEnvironment.GetAssetPath(TestAssetLocation.ClientsDirectory, 
                 "client-minimal-for-overriding.config");
-            var config = RadiusAdapterConfigurationFactory.Create(path, "client-minimal-for-overriding");
+            var config = RadiusAdapterConfigurationFactory.Create(new RadiusConfigurationFile(path), "client-minimal-for-overriding");
             var attribute = Assert.Single(config.RadiusReply.Attributes.Elements);
             Assert.NotNull(attribute);
             

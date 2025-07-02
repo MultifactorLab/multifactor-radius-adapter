@@ -1,0 +1,10 @@
+{
+  "version": "1", // value must be 1
+  "environments": [
+    {
+      "name": "Linux x64",
+      "type": "docker",
+      "dockerFile": "Multifactor.Radius.Adapter.EndToEndTests\\Dockerfile"
+    }
+  ]
+}
