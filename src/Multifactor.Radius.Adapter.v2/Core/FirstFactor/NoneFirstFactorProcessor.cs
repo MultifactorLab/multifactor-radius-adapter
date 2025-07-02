@@ -16,7 +16,7 @@ public class NoneFirstFactorProcessor : IFirstFactorProcessor
     public Task ProcessFirstFactor(IRadiusPipelineExecutionContext context)
     {
         context.AuthenticationState.FirstFactorStatus = AuthenticationStatus.Accept;
-        _logger.LogInformation("Bypass first factor for user '{user:l}' due to '{ff:l}' variant of first factor.", context.RequestPacket.UserName, context.Settings.FirstFactorAuthenticationSource.ToString());
+        _logger.LogInformation("Bypass first factor for user '{user:l}' due to '{ff:l}' variant of first factor.", context.RequestPacket.UserName, context.FirstFactorAuthenticationSource.ToString());
         return Task.CompletedTask;
     }
 }

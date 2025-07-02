@@ -35,7 +35,7 @@ public class SecondFactorStep : IRadiusPipelineStep
             return;
         }
 
-        var apiResponse = await _multifactorApiService.CreateSecondFactorRequestAsync(context);
+        var apiResponse = await _multifactorApiService.CreateSecondFactorRequestAsync(new CreateSecondFactorRequest(context));
         ProcessApiResponse(context, apiResponse);
     }
 
@@ -55,7 +55,7 @@ public class SecondFactorStep : IRadiusPipelineStep
 
         if (ShouldBypassByGroups(context))
         {
-            _logger.LogInformation("Second factor is bypassed for user {user:l} at '{domain:l}'", context.RequestPacket.UserName, context.Settings.LdapServerConfiguration.ConnectionString);
+            _logger.LogInformation("Second factor is bypassed for user {user:l} at '{domain:l}'", context.RequestPacket.UserName, context.LdapServerConfiguration.ConnectionString);
             return false;
         }
         
@@ -64,12 +64,12 @@ public class SecondFactorStep : IRadiusPipelineStep
 
     private bool ShouldBypassByRequest(IRadiusPipelineExecutionContext context)
     {
-        return context.RequestPacket.IsVendorAclRequest && context.Settings.FirstFactorAuthenticationSource == AuthenticationSource.Radius;
+        return context.RequestPacket.IsVendorAclRequest && context.FirstFactorAuthenticationSource == AuthenticationSource.Radius;
     }
 
     private bool ShouldBypassByGroups(IRadiusPipelineExecutionContext context)
     {
-        var serverConfig = context.Settings.LdapServerConfiguration;
+        var serverConfig = context.LdapServerConfiguration;
         bool? bypassMember = null;
 
         if (serverConfig.SecondFaBypassGroups.Any())
@@ -101,10 +101,10 @@ public class SecondFactorStep : IRadiusPipelineStep
 
     private void ProcessApiResponse(IRadiusPipelineExecutionContext context, MultifactorResponse apiResponse)
     {
+        context.AuthenticationState.SecondFactorStatus = apiResponse.Code;
         context.ResponseInformation.State = apiResponse.State;
         context.ResponseInformation.ReplyMessage = apiResponse.ReplyMessage;
-        context.AuthenticationState.SecondFactorStatus = apiResponse.Code;
-
+        
         if (apiResponse.Code != AuthenticationStatus.Awaiting) 
             return;
         
@@ -118,17 +118,6 @@ public class SecondFactorStep : IRadiusPipelineStep
     {
         var groupDns = targetGroupsNames.Select(x => new DistinguishedName(x)).ToArray();
         
-        return new MembershipRequest(
-            context.UserLdapProfile.Dn,
-            context.UserLdapProfile.MemberOf.ToArray(),
-            context.Settings.LdapServerConfiguration.LoadNestedGroups,
-            context.Settings.LdapServerConfiguration.NestedGroupsBaseDns.Select(x => new DistinguishedName(x)).ToArray(),
-            context.Settings.LdapServerConfiguration.ConnectionString,
-            context.Settings.LdapServerConfiguration.UserName,
-            context.Settings.LdapServerConfiguration.Password,
-            context.Settings.LdapServerConfiguration.BindTimeoutInSeconds,
-            context.LdapSchema!,
-            groupDns
-        );
+        return new MembershipRequest(context, groupDns);
     }
 }

@@ -8,7 +8,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Multifactor.Radius.Adapter.v2.Core.Pipeline;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Logging;
-using Multifactor.Radius.Adapter.v2.Services;
+using Multifactor.Radius.Adapter.v2.Services.AdapterResponseSender;
 
 IHost? host = null;
 try

@@ -32,7 +32,7 @@ public class LdapSchemaLoadingStep: IRadiusPipelineStep
 
         if (schema is null)
         {
-            _logger.LogWarning("Unable to load LDAP schema for '{domain}'", context.Settings.LdapServerConfiguration.ConnectionString);
+            _logger.LogWarning("Unable to load LDAP schema for '{domain}'", context.LdapServerConfiguration.ConnectionString);
             throw new InvalidOperationException();
         }
 
@@ -42,20 +42,20 @@ public class LdapSchemaLoadingStep: IRadiusPipelineStep
 
     private ILdapSchema? TryGetLdapSchema(IRadiusPipelineExecutionContext context)
     {
-        var cacheKey = context.Settings.LdapServerConfiguration.ConnectionString;
+        var cacheKey = context.LdapServerConfiguration.ConnectionString;
         if (_memoryCache.TryGetValue(cacheKey, out ILdapSchema? schema))
         {
             _logger.LogDebug("Loaded LDAP schema for '{domain}' from cache.", cacheKey);
             return schema;
         }
 
-        var options = GetLdapConnectionOptions(context.Settings.LdapServerConfiguration);
+        var options = GetLdapConnectionOptions(context.LdapServerConfiguration);
         schema = _ldapSchemaLoader.Load(options);
 
         if (schema is null)
             return schema;
           
-        var expirationDate = DateTimeOffset.Now.AddHours(context.Settings.LdapServerConfiguration.LdapSchemaCacheLifeTimeInHours);  
+        var expirationDate = DateTimeOffset.Now.AddHours(context.LdapServerConfiguration.LdapSchemaCacheLifeTimeInHours);  
         SaveToCache(cacheKey, schema, expirationDate);
         
         _logger.LogDebug("LDAP schema for '{domain}' is saved in cache till '{expirationDate}'.", cacheKey, expirationDate.ToString());

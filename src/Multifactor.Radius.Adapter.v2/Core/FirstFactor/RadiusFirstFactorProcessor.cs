@@ -40,13 +40,13 @@ public class RadiusFirstFactorProcessor : IFirstFactorProcessor
 
         try
         {
-            var transformedName = UserNameTransformation.Transform(requestPacket.UserName, context.Settings.UserNameTransformRules.BeforeFirstFactor);
-            var authPacket = PreparePacket(requestPacket, transformedName, context.Settings.PreAuthnMode);
+            var transformedName = UserNameTransformation.Transform(requestPacket.UserName, context.UserNameTransformRules.BeforeFirstFactor);
+            var authPacket = PreparePacket(requestPacket, transformedName, context.PreAuthnMode);
 
-            var authBytes = _radiusPacketService.GetBytes(authPacket, context.Settings.RadiusSharedSecret);
-            using var client = new RadiusClient(context.Settings.ServiceClientEndpoint, _logger);
-            _logger.LogDebug("Sending AccessRequest message with id={id} to Remote Radius Server {endpoint:l}", requestPacket.Identifier, context.Settings.NpsServerEndpoint);
-            var response = await client.SendPacketAsync(authPacket.Identifier, authBytes, context.Settings.NpsServerEndpoint, TimeSpan.FromSeconds(5));
+            var authBytes = _radiusPacketService.GetBytes(authPacket, context.RadiusSharedSecret);
+            using var client = new RadiusClient(context.ServiceClientEndpoint, _logger);
+            _logger.LogDebug("Sending AccessRequest message with id={id} to Remote Radius Server {endpoint:l}", requestPacket.Identifier, context.NpsServerEndpoint);
+            var response = await client.SendPacketAsync(authPacket.Identifier, authBytes, context.NpsServerEndpoint, TimeSpan.FromSeconds(5));
 
             if (response is null)
             {
@@ -56,13 +56,13 @@ public class RadiusFirstFactorProcessor : IFirstFactorProcessor
                 return;
             }
 
-            var responsePacket = _radiusPacketService.Parse(response, context.Settings.RadiusSharedSecret, authPacket.Authenticator);
+            var responsePacket = _radiusPacketService.Parse(response, context.RadiusSharedSecret, authPacket.Authenticator);
             _logger.LogDebug("Received {code:l} message with id={id} from Remote Radius Server", authPacket.Code.ToString(), authPacket.Identifier);
 
             if (responsePacket.Code == PacketCode.AccessAccept)
             {
                 var userName = context.RequestPacket.UserName;
-                _logger.LogInformation("User '{user:l}' credential and status verified successfully at {endpoint:l}", userName, context.Settings.NpsServerEndpoint);
+                _logger.LogInformation("User '{user:l}' credential and status verified successfully at {endpoint:l}", userName, context.NpsServerEndpoint);
             }
 
             context.ResponsePacket = responsePacket;
@@ -91,12 +91,12 @@ public class RadiusFirstFactorProcessor : IFirstFactorProcessor
         authPacket.ReplaceAttribute("User-Name", userName);
 
         var pwd = radiusPacket.TryGetUserPassword();
-        if (!string.IsNullOrWhiteSpace(pwd))
-        {
-            var userPassphrase = UserPassphrase.Parse(pwd, authModeDescriptor);
-            if (!string.IsNullOrWhiteSpace(userPassphrase.Password))
-                authPacket.ReplaceAttribute("User-Password", userPassphrase.Password);
-        }
+        if (string.IsNullOrWhiteSpace(pwd))
+            return authPacket;
+        
+        var userPassphrase = UserPassphrase.Parse(pwd, authModeDescriptor);
+        if (!string.IsNullOrWhiteSpace(userPassphrase.Password))
+            authPacket.ReplaceAttribute("User-Password", userPassphrase.Password);
 
         return authPacket;
     }

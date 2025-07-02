@@ -3,10 +3,14 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Multifactor.Core.Ldap.Name;
 using Multifactor.Core.Ldap.Schema;
+using Multifactor.Radius.Adapter.v2.Core;
 using Multifactor.Radius.Adapter.v2.Core.AccessChallenge;
 using Multifactor.Radius.Adapter.v2.Core.Auth;
+using Multifactor.Radius.Adapter.v2.Core.Auth.PreAuthMode;
 using Multifactor.Radius.Adapter.v2.Core.Configuration.Client;
+using Multifactor.Radius.Adapter.v2.Core.Ldap;
 using Multifactor.Radius.Adapter.v2.Core.MultifactorApi;
+using Multifactor.Radius.Adapter.v2.Core.MultifactorApi.PrivacyMode;
 using Multifactor.Radius.Adapter.v2.Core.Pipeline;
 using Multifactor.Radius.Adapter.v2.Core.Radius.Packet;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Context;
@@ -44,14 +48,14 @@ public class SecondFactorStepTests
         var contextMock = new Mock<IRadiusPipelineExecutionContext>();
         contextMock.SetupProperty(x => x.AuthenticationState);
         contextMock.Setup(x => x.RequestPacket).Returns(packetMock.Object);
-        contextMock.Setup(x => x.Settings.FirstFactorAuthenticationSource).Returns(AuthenticationSource.Radius);
+        contextMock.Setup(x => x.FirstFactorAuthenticationSource).Returns(AuthenticationSource.Radius);
         contextMock.Setup(x => x.RequestPacket.UserName).Returns("username");
         contextMock.Setup(x => x.RemoteEndpoint).Returns(IPEndPoint.Parse("127.0.0.1:1"));
         
         var ldapConfig = new Mock<ILdapServerConfiguration>();
         ldapConfig.Setup(x => x.SecondFaGroups).Returns(new List<string>());
         ldapConfig.Setup(x => x.SecondFaBypassGroups).Returns(new List<string>());
-        contextMock.Setup(x => x.Settings.LdapServerConfiguration).Returns(ldapConfig.Object); 
+        contextMock.Setup(x => x.LdapServerConfiguration).Returns(ldapConfig.Object); 
         
         var context = contextMock.Object;
         context.AuthenticationState = new AuthenticationState();
@@ -68,7 +72,7 @@ public class SecondFactorStepTests
     public async Task ExecuteAsync_NoBypass_ShouldSecondFactorStatus(AuthenticationStatus apiResponseStatus)
     {
         var apiServiceMock = new Mock<IMultifactorApiService>();
-        apiServiceMock.Setup(x => x.CreateSecondFactorRequestAsync(It.IsAny<IRadiusPipelineExecutionContext>())).ReturnsAsync(new MultifactorResponse(apiResponseStatus, "state", "message"));
+        apiServiceMock.Setup(x => x.CreateSecondFactorRequestAsync(It.IsAny<CreateSecondFactorRequest>())).ReturnsAsync(new MultifactorResponse(apiResponseStatus, "state", "message"));
         
         var challengeProviderMock = new Mock<IChallengeProcessorProvider>();
         challengeProviderMock.Setup(x => x.GetChallengeProcessorByType(ChallengeType.SecondFactor)).Returns(new Mock<IChallengeProcessor>().Object);
@@ -82,15 +86,23 @@ public class SecondFactorStepTests
         var contextMock = new Mock<IRadiusPipelineExecutionContext>();
         contextMock.SetupProperty(x => x.AuthenticationState);
         contextMock.Setup(x => x.RequestPacket).Returns(packetMock.Object);
-        contextMock.Setup(x => x.Settings.FirstFactorAuthenticationSource).Returns(AuthenticationSource.Radius);
+        contextMock.Setup(x => x.FirstFactorAuthenticationSource).Returns(AuthenticationSource.Radius);
         contextMock.Setup(x => x.RequestPacket.UserName).Returns("username");
         contextMock.Setup(x => x.RemoteEndpoint).Returns(IPEndPoint.Parse("127.0.0.1:1"));
         contextMock.SetupProperty(x => x.ResponseInformation);
+        contextMock.Setup(x => x.UserLdapProfile).Returns(new Mock<ILdapProfile>().Object);
+        contextMock.Setup(x => x.ClientConfigurationName).Returns("config");
+        contextMock.Setup(x => x.AuthenticationCacheLifetime).Returns(AuthenticatedClientCacheConfig.Create("08:08:08", false));
+        contextMock.Setup(x => x.PrivacyMode).Returns(PrivacyModeDescriptor.Default);
+        contextMock.Setup(x => x.Passphrase).Returns(UserPassphrase.Parse("123", PreAuthModeDescriptor.Default));
+        contextMock.Setup(x => x.PreAuthnMode).Returns(PreAuthModeDescriptor.Default);
+        contextMock.Setup(x => x.UserNameTransformRules).Returns(new UserNameTransformRules());
+        contextMock.Setup(x => x.ApiCredential).Returns(new ApiCredential("1","2"));
         
         var ldapConfig = new Mock<ILdapServerConfiguration>();
         ldapConfig.Setup(x => x.SecondFaGroups).Returns(new List<string>());
         ldapConfig.Setup(x => x.SecondFaBypassGroups).Returns(new List<string>());
-        contextMock.Setup(x => x.Settings.LdapServerConfiguration).Returns(ldapConfig.Object); 
+        contextMock.Setup(x => x.LdapServerConfiguration).Returns(ldapConfig.Object); 
         
         var context = contextMock.Object;
         context.AuthenticationState = new AuthenticationState();
@@ -107,7 +119,7 @@ public class SecondFactorStepTests
     {
         var apiServiceMock = new Mock<IMultifactorApiService>();
         apiServiceMock
-            .Setup(x => x.CreateSecondFactorRequestAsync(It.IsAny<IRadiusPipelineExecutionContext>()))
+            .Setup(x => x.CreateSecondFactorRequestAsync(It.IsAny<CreateSecondFactorRequest>()))
             .ReturnsAsync(new MultifactorResponse(AuthenticationStatus.Awaiting, "state", "message"));
         
         var challengeProviderMock = new Mock<IChallengeProcessorProvider>();
@@ -123,15 +135,23 @@ public class SecondFactorStepTests
         var contextMock = new Mock<IRadiusPipelineExecutionContext>();
         contextMock.SetupProperty(x => x.AuthenticationState);
         contextMock.Setup(x => x.RequestPacket).Returns(packetMock.Object);
-        contextMock.Setup(x => x.Settings.FirstFactorAuthenticationSource).Returns(AuthenticationSource.Radius);
+        contextMock.Setup(x => x.FirstFactorAuthenticationSource).Returns(AuthenticationSource.Radius);
         contextMock.Setup(x => x.RequestPacket.UserName).Returns("username");
         contextMock.Setup(x => x.RemoteEndpoint).Returns(IPEndPoint.Parse("127.0.0.1:1"));
+        contextMock.Setup(x => x.UserLdapProfile).Returns(new Mock<ILdapProfile>().Object);
+        contextMock.Setup(x => x.ClientConfigurationName).Returns("config");
+        contextMock.Setup(x => x.AuthenticationCacheLifetime).Returns(AuthenticatedClientCacheConfig.Create("08:08:08", false));
+        contextMock.Setup(x => x.PrivacyMode).Returns(PrivacyModeDescriptor.Default);
+        contextMock.Setup(x => x.Passphrase).Returns(UserPassphrase.Parse("123", PreAuthModeDescriptor.Default));
+        contextMock.Setup(x => x.PreAuthnMode).Returns(PreAuthModeDescriptor.Default);
+        contextMock.Setup(x => x.UserNameTransformRules).Returns(new UserNameTransformRules());
+        contextMock.Setup(x => x.ApiCredential).Returns(new ApiCredential("1","2"));
         contextMock.SetupProperty(x => x.ResponseInformation);
         
         var ldapConfig = new Mock<ILdapServerConfiguration>();
         ldapConfig.Setup(x => x.SecondFaGroups).Returns(new List<string>());
         ldapConfig.Setup(x => x.SecondFaBypassGroups).Returns(new List<string>());
-        contextMock.Setup(x => x.Settings.LdapServerConfiguration).Returns(ldapConfig.Object); 
+        contextMock.Setup(x => x.LdapServerConfiguration).Returns(ldapConfig.Object); 
         
         var context = contextMock.Object;
         context.AuthenticationState = new AuthenticationState();
@@ -164,7 +184,7 @@ public class SecondFactorStepTests
         ldapConfig.Setup(x => x.BindTimeoutInSeconds).Returns(30);
         
         var contextMock = new Mock<IRadiusPipelineExecutionContext>();
-        contextMock.Setup(x => x.Settings.LdapServerConfiguration).Returns(ldapConfig.Object);
+        contextMock.Setup(x => x.LdapServerConfiguration).Returns(ldapConfig.Object);
         contextMock.Setup(x => x.UserLdapProfile.Dn).Returns(new DistinguishedName("dc=bypass,dc=group,dc=member"));
         contextMock.Setup(x => x.UserLdapProfile.MemberOf).Returns([]);
         contextMock.Setup(x => x.RequestPacket.UserName).Returns("userName");
@@ -200,7 +220,7 @@ public class SecondFactorStepTests
         ldapConfig.Setup(x => x.BindTimeoutInSeconds).Returns(30);
         
         var contextMock = new Mock<IRadiusPipelineExecutionContext>();
-        contextMock.Setup(x => x.Settings.LdapServerConfiguration).Returns(ldapConfig.Object);
+        contextMock.Setup(x => x.LdapServerConfiguration).Returns(ldapConfig.Object);
         contextMock.Setup(x => x.UserLdapProfile.Dn).Returns(new DistinguishedName("dc=bypass,dc=group,dc=member"));
         contextMock.Setup(x => x.UserLdapProfile.MemberOf).Returns([]);
         contextMock.Setup(x => x.LdapSchema).Returns(new Mock<ILdapSchema>().Object);

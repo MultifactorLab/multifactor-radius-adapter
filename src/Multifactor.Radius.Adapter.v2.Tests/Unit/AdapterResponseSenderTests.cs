@@ -3,11 +3,13 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Multifactor.Radius.Adapter.v2.Core.Auth;
 using Multifactor.Radius.Adapter.v2.Core.Configuration.Client;
+using Multifactor.Radius.Adapter.v2.Core.Pipeline;
 using Multifactor.Radius.Adapter.v2.Core.Radius;
 using Multifactor.Radius.Adapter.v2.Core.Radius.Packet;
+using Multifactor.Radius.Adapter.v2.Core.RandomWaiterFeature;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Context;
 using Multifactor.Radius.Adapter.v2.Server.Udp;
-using Multifactor.Radius.Adapter.v2.Services;
+using Multifactor.Radius.Adapter.v2.Services.AdapterResponseSender;
 using Multifactor.Radius.Adapter.v2.Services.Radius;
 
 namespace Multifactor.Radius.Adapter.v2.Tests.Unit;
@@ -18,15 +20,26 @@ public class AdapterResponseSenderTests
     public async Task SendResponse_ShouldSkipResponse()
     {
         var contextMock = new Mock<IRadiusPipelineExecutionContext>();
+        contextMock.Setup(x => x.ResponsePacket).Returns(() => null);
+        contextMock.Setup(x => x.RemoteEndpoint).Returns(IPEndPoint.Parse("127.0.0.1"));
+        contextMock.SetupProperty(x => x.AuthenticationState);
+        contextMock.Setup(x => x.RadiusSharedSecret).Returns(new SharedSecret("123"));
+        contextMock.Setup(x => x.UserGroups).Returns([]);
+        contextMock.Setup(x => x.RadiusReplyAttributes).Returns(new Dictionary<string, RadiusReplyAttributeValue[]>());
         contextMock.Setup(x => x.ExecutionState.ShouldSkipResponse).Returns(true);
-
+        contextMock.Setup(x => x.UserLdapProfile.Attributes).Returns([]);
+        contextMock.Setup(x => x.AuthenticationState).Returns(new AuthenticationState());
+        contextMock.Setup(x => x.ResponseInformation).Returns(new ResponseInformation());
+        contextMock.Setup(x => x.RequestPacket).Returns(new Mock<IRadiusPacket>().Object);
+        
         var packetServiceMock = new Mock<IRadiusPacketService>();
         var attributeServiceMock = new Mock<IRadiusReplyAttributeService>();
         var udpClientMock = new Mock<IUdpClient>();
 
         var sender = new AdapterResponseSender(packetServiceMock.Object, udpClientMock.Object, attributeServiceMock.Object, NullLogger<AdapterResponseSender>.Instance);
+        var request = new SendAdapterResponseRequest(contextMock.Object);
         
-        await sender.SendResponse(contextMock.Object);
+        await sender.SendResponse(request);
         
         udpClientMock.Verify(x =>  x.SendAsync(It.IsAny<byte[]>(), It.IsAny<int>(), It.IsAny<IPEndPoint>()), Times.Never);
     }
@@ -35,19 +48,32 @@ public class AdapterResponseSenderTests
     public async Task SendResponse_EapMessageChallenge_ShouldSendResponse()
     {
         var contextMock = new Mock<IRadiusPipelineExecutionContext>();
+        
+        contextMock.SetupProperty(x => x.AuthenticationState);
+        contextMock.Setup(x => x.UserGroups).Returns([]);
+        contextMock.Setup(x => x.RadiusReplyAttributes).Returns(new Dictionary<string, RadiusReplyAttributeValue[]>());
         contextMock.Setup(x => x.ExecutionState.ShouldSkipResponse).Returns(false);
         contextMock.Setup(x => x.ResponsePacket!.IsEapMessageChallenge).Returns(true);
         contextMock.Setup(x => x.RemoteEndpoint).Returns(IPEndPoint.Parse("127.0.0.1"));
         contextMock.Setup(x => x.RequestPacket.Identifier).Returns(1);
-        contextMock.Setup(x => x.Settings.RadiusSharedSecret).Returns(new SharedSecret("123"));
+        contextMock.Setup(x => x.RadiusSharedSecret).Returns(new SharedSecret("123"));
+        contextMock.Setup(x => x.UserLdapProfile.Attributes).Returns([]);
+        contextMock.Setup(x => x.AuthenticationState).Returns(new AuthenticationState());
+        contextMock.Setup(x => x.ResponseInformation).Returns(new ResponseInformation());
         
         var packetServiceMock = new Mock<IRadiusPacketService>();
         var attributeServiceMock = new Mock<IRadiusReplyAttributeService>();
         var udpClientMock = new Mock<IUdpClient>();
 
         var sender = new AdapterResponseSender(packetServiceMock.Object, udpClientMock.Object, attributeServiceMock.Object, NullLogger<AdapterResponseSender>.Instance);
+        var responsePacketMock = new Mock<IRadiusPacket>();
+        responsePacketMock.Setup(x => x.IsEapMessageChallenge).Returns(true);
+        var requestPacketMock = new Mock<IRadiusPacket>();
+        requestPacketMock.Setup(x=> x.Identifier).Returns(1);
         
-        await sender.SendResponse(contextMock.Object);
+        var request = new SendAdapterResponseRequest(contextMock.Object);
+        
+        await sender.SendResponse(request);
         
         udpClientMock.Verify(x =>  x.SendAsync(It.IsAny<byte[]>(), It.IsAny<int>(), It.IsAny<IPEndPoint>()), Times.Once);
     }
@@ -57,20 +83,24 @@ public class AdapterResponseSenderTests
     {
         var contextMock = new Mock<IRadiusPipelineExecutionContext>();
         contextMock.Setup(x => x.ExecutionState.ShouldSkipResponse).Returns(false);
-        contextMock.Setup(x => x.ResponsePacket).Returns(new RadiusPacket(new RadiusPacketHeader(PacketCode.AccessAccept, 1, new byte[16])));
+        contextMock.Setup(x => x.ResponsePacket).Returns(new Mock<IRadiusPacket>().Object);
         contextMock.Setup(x => x.ResponsePacket!.IsEapMessageChallenge).Returns(false);
         contextMock.Setup(x => x.RemoteEndpoint).Returns(IPEndPoint.Parse("127.0.0.1"));
         contextMock.Setup(x => x.RequestPacket.Identifier).Returns(1);
         contextMock.Setup(x => x.RequestPacket.IsVendorAclRequest).Returns(true);
-        contextMock.Setup(x => x.Settings.RadiusSharedSecret).Returns(new SharedSecret("123"));
-        
+        contextMock.Setup(x => x.RadiusSharedSecret).Returns(new SharedSecret("123"));
+        contextMock.Setup(x => x.UserLdapProfile.Attributes).Returns([]);
+        contextMock.Setup(x => x.AuthenticationState).Returns(new AuthenticationState());
+        contextMock.Setup(x => x.ResponseInformation).Returns(new ResponseInformation());
+        contextMock.Setup(x => x.UserGroups).Returns([]);
+        contextMock.Setup(x => x.RadiusReplyAttributes).Returns(new Dictionary<string, RadiusReplyAttributeValue[]>());
         var packetServiceMock = new Mock<IRadiusPacketService>();
         var attributeServiceMock = new Mock<IRadiusReplyAttributeService>();
         var udpClientMock = new Mock<IUdpClient>();
 
         var sender = new AdapterResponseSender(packetServiceMock.Object, udpClientMock.Object, attributeServiceMock.Object, NullLogger<AdapterResponseSender>.Instance);
-        
-        await sender.SendResponse(contextMock.Object);
+        var request = new SendAdapterResponseRequest(contextMock.Object);
+        await sender.SendResponse(request);
         
         udpClientMock.Verify(x =>  x.SendAsync(It.IsAny<byte[]>(), It.IsAny<int>(), It.IsAny<IPEndPoint>()), Times.Once);
     }
@@ -85,11 +115,11 @@ public class AdapterResponseSenderTests
         contextMock.Setup(x => x.RequestPacket.Identifier).Returns(1);
         contextMock.Setup(x => x.RequestPacket.IsVendorAclRequest).Returns(false);
         contextMock.SetupProperty(x => x.AuthenticationState);
-        contextMock.Setup(x => x.Settings.RadiusSharedSecret).Returns(new SharedSecret("123"));
+        contextMock.Setup(x => x.RadiusSharedSecret).Returns(new SharedSecret("123"));
         contextMock.Setup(x => x.RequestPacket.UserName).Returns("userName");
         contextMock.Setup(x => x.RequestPacket.Attributes).Returns(new Dictionary<string, RadiusAttribute>());
         contextMock.Setup(x => x.UserGroups).Returns([]);
-        contextMock.Setup(x => x.Settings.RadiusReplyAttributes).Returns(new Dictionary<string, RadiusReplyAttributeValue[]>());
+        contextMock.Setup(x => x.RadiusReplyAttributes).Returns(new Dictionary<string, RadiusReplyAttributeValue[]>());
         contextMock.Setup(x => x.UserLdapProfile.Attributes).Returns([]);
         contextMock.Setup(x => x.ResponseInformation.ReplyMessage).Returns("replyMessage");
         contextMock.Setup(x => x.ResponseInformation.State).Returns("state");
@@ -109,8 +139,8 @@ public class AdapterResponseSenderTests
         var udpClientMock = new Mock<IUdpClient>();
 
         var sender = new AdapterResponseSender(packetServiceMock.Object, udpClientMock.Object, attributeServiceMock.Object, NullLogger<AdapterResponseSender>.Instance);
-
-        await sender.SendResponse(context);
+        var request = new SendAdapterResponseRequest(context);
+        await sender.SendResponse(request);
         
         udpClientMock.Verify(x =>  x.SendAsync(packetBytes, It.IsAny<int>(), It.IsAny<IPEndPoint>()), Times.Once);
     }
@@ -125,14 +155,17 @@ public class AdapterResponseSenderTests
         contextMock.Setup(x => x.ExecutionState.ShouldSkipResponse).Returns(false);
         contextMock.Setup(x => x.ResponsePacket).Returns(responsePacketMock.Object);
         contextMock.Setup(x => x.RemoteEndpoint).Returns(IPEndPoint.Parse("127.0.0.1"));
+        contextMock.Setup(x => x.RequestPacket).Returns(new Mock<IRadiusPacket>().Object);
         contextMock.Setup(x => x.RequestPacket.Identifier).Returns(1);
         contextMock.Setup(x => x.RequestPacket.IsVendorAclRequest).Returns(false);
-        contextMock.SetupProperty(x => x.AuthenticationState);
-        contextMock.Setup(x => x.Settings.RadiusSharedSecret).Returns(new SharedSecret("123"));
         contextMock.Setup(x => x.RequestPacket.UserName).Returns("userName");
         contextMock.Setup(x => x.RequestPacket.Attributes).Returns(new Dictionary<string, RadiusAttribute>());
+
+        contextMock.SetupProperty(x => x.AuthenticationState);
+        contextMock.Setup(x => x.RadiusSharedSecret).Returns(new SharedSecret("123"));
+
         contextMock.Setup(x => x.UserGroups).Returns([]);
-        contextMock.Setup(x => x.Settings.RadiusReplyAttributes).Returns(new Dictionary<string, RadiusReplyAttributeValue[]>());
+        contextMock.Setup(x => x.RadiusReplyAttributes).Returns(new Dictionary<string, RadiusReplyAttributeValue[]>());
         contextMock.Setup(x => x.UserLdapProfile.Attributes).Returns([]);
         contextMock.Setup(x => x.ResponseInformation.ReplyMessage).Returns("replyMessage");
         contextMock.Setup(x => x.ResponseInformation.State).Returns("state");
@@ -152,8 +185,9 @@ public class AdapterResponseSenderTests
         var udpClientMock = new Mock<IUdpClient>();
 
         var sender = new AdapterResponseSender(packetServiceMock.Object, udpClientMock.Object, attributeServiceMock.Object, NullLogger<AdapterResponseSender>.Instance);
-
-        await sender.SendResponse(context);
+        var request = new SendAdapterResponseRequest(context);
+        
+        await sender.SendResponse(request);
         
         udpClientMock.Verify(x =>  x.SendAsync(packetBytes, It.IsAny<int>(), It.IsAny<IPEndPoint>()), Times.Once);
     }
@@ -172,14 +206,15 @@ public class AdapterResponseSenderTests
         contextMock.Setup(x => x.RequestPacket.Identifier).Returns(1);
         contextMock.Setup(x => x.RequestPacket.IsVendorAclRequest).Returns(false);
         contextMock.SetupProperty(x => x.AuthenticationState);
-        contextMock.Setup(x => x.Settings.RadiusSharedSecret).Returns(new SharedSecret("123"));
+        contextMock.Setup(x => x.RadiusSharedSecret).Returns(new SharedSecret("123"));
         contextMock.Setup(x => x.RequestPacket.UserName).Returns("userName");
         contextMock.Setup(x => x.RequestPacket.Attributes).Returns(new Dictionary<string, RadiusAttribute>());
         contextMock.Setup(x => x.UserGroups).Returns([]);
-        contextMock.Setup(x => x.Settings.RadiusReplyAttributes).Returns(new Dictionary<string, RadiusReplyAttributeValue[]>());
+        contextMock.Setup(x => x.RadiusReplyAttributes).Returns(new Dictionary<string, RadiusReplyAttributeValue[]>());
         contextMock.Setup(x => x.UserLdapProfile.Attributes).Returns([]);
         contextMock.Setup(x => x.ResponseInformation.ReplyMessage).Returns("replyMessage");
         contextMock.Setup(x => x.ResponseInformation.State).Returns("state");
+        contextMock.Setup(x => x.InvalidCredentialDelay).Returns(RandomWaiterConfig.Create("0-0"));
         var context = contextMock.Object;
         context.AuthenticationState = new AuthenticationState();
         context.AuthenticationState.FirstFactorStatus = AuthenticationStatus.Reject;
@@ -196,7 +231,9 @@ public class AdapterResponseSenderTests
         
         var udpClientMock = new Mock<IUdpClient>();
         var sender = new AdapterResponseSender(packetServiceMock.Object, udpClientMock.Object, attributeServiceMock.Object, NullLogger<AdapterResponseSender>.Instance);
-        await sender.SendResponse(context);
+        var request = new SendAdapterResponseRequest(context);
+        
+        await sender.SendResponse(request);
         
         udpClientMock.Verify(x =>  x.SendAsync(packetBytes, It.IsAny<int>(), It.IsAny<IPEndPoint>()), Times.Once);
     }
@@ -212,14 +249,15 @@ public class AdapterResponseSenderTests
         contextMock.Setup(x => x.RequestPacket.Identifier).Returns(1);
         contextMock.Setup(x => x.RequestPacket.IsVendorAclRequest).Returns(false);
         contextMock.SetupProperty(x => x.AuthenticationState);
-        contextMock.Setup(x => x.Settings.RadiusSharedSecret).Returns(new SharedSecret("123"));
+        contextMock.Setup(x => x.RadiusSharedSecret).Returns(new SharedSecret("123"));
         contextMock.Setup(x => x.RequestPacket.UserName).Returns("userName");
         contextMock.Setup(x => x.RequestPacket.Attributes).Returns(new Dictionary<string, RadiusAttribute>());
         contextMock.Setup(x => x.UserGroups).Returns([]);
-        contextMock.Setup(x => x.Settings.RadiusReplyAttributes).Returns(new Dictionary<string, RadiusReplyAttributeValue[]>());
+        contextMock.Setup(x => x.RadiusReplyAttributes).Returns(new Dictionary<string, RadiusReplyAttributeValue[]>());
         contextMock.Setup(x => x.UserLdapProfile.Attributes).Returns([]);
         contextMock.Setup(x => x.ResponseInformation.ReplyMessage).Returns("replyMessage");
         contextMock.Setup(x => x.ResponseInformation.State).Returns("state");
+        contextMock.Setup(x => x.InvalidCredentialDelay).Returns(RandomWaiterConfig.Create("0-0"));
         var context = contextMock.Object;
         context.AuthenticationState = new AuthenticationState();
         context.AuthenticationState.FirstFactorStatus = AuthenticationStatus.Reject;
@@ -236,8 +274,8 @@ public class AdapterResponseSenderTests
         
         var udpClientMock = new Mock<IUdpClient>();
         var sender = new AdapterResponseSender(packetServiceMock.Object, udpClientMock.Object, attributeServiceMock.Object, NullLogger<AdapterResponseSender>.Instance);
-        
-        await sender.SendResponse(context);
+        var request = new SendAdapterResponseRequest(context);
+        await sender.SendResponse(request);
         
         udpClientMock.Verify(x =>  x.SendAsync(packetBytes, It.IsAny<int>(), It.IsAny<IPEndPoint>()), Times.Once);
     }
@@ -257,11 +295,11 @@ public class AdapterResponseSenderTests
         contextMock.Setup(x => x.RequestPacket.Identifier).Returns(1);
         contextMock.Setup(x => x.RequestPacket.IsVendorAclRequest).Returns(false);
         contextMock.SetupProperty(x => x.AuthenticationState);
-        contextMock.Setup(x => x.Settings.RadiusSharedSecret).Returns(new SharedSecret("123"));
+        contextMock.Setup(x => x.RadiusSharedSecret).Returns(new SharedSecret("123"));
         contextMock.Setup(x => x.RequestPacket.UserName).Returns("userName");
         contextMock.Setup(x => x.RequestPacket.Attributes).Returns(new Dictionary<string, RadiusAttribute>());
         contextMock.Setup(x => x.UserGroups).Returns([]);
-        contextMock.Setup(x => x.Settings.RadiusReplyAttributes).Returns(new Dictionary<string, RadiusReplyAttributeValue[]>());
+        contextMock.Setup(x => x.RadiusReplyAttributes).Returns(new Dictionary<string, RadiusReplyAttributeValue[]>());
         contextMock.Setup(x => x.UserLdapProfile.Attributes).Returns([]);
         contextMock.Setup(x => x.ResponseInformation.ReplyMessage).Returns("replyMessage");
         contextMock.Setup(x => x.ResponseInformation.State).Returns("state");
@@ -282,8 +320,8 @@ public class AdapterResponseSenderTests
         var udpClientMock = new Mock<IUdpClient>();
 
         var sender = new AdapterResponseSender(packetServiceMock.Object, udpClientMock.Object, attributeServiceMock.Object, NullLogger<AdapterResponseSender>.Instance);
-        
-        await sender.SendResponse(context);
+        var request = new SendAdapterResponseRequest(context);
+        await sender.SendResponse(request);
         
         udpClientMock.Verify(x =>  x.SendAsync(packetBytes, It.IsAny<int>(), It.IsAny<IPEndPoint>()), Times.Once);
         Assert.True(packet.Attributes.ContainsKey("key"));
@@ -301,11 +339,11 @@ public class AdapterResponseSenderTests
         contextMock.Setup(x => x.RequestPacket.Identifier).Returns(1);
         contextMock.Setup(x => x.RequestPacket.IsVendorAclRequest).Returns(false);
         contextMock.SetupProperty(x => x.AuthenticationState);
-        contextMock.Setup(x => x.Settings.RadiusSharedSecret).Returns(new SharedSecret("123"));
+        contextMock.Setup(x => x.RadiusSharedSecret).Returns(new SharedSecret("123"));
         contextMock.Setup(x => x.RequestPacket.UserName).Returns("userName");
         contextMock.Setup(x => x.RequestPacket.Attributes).Returns(new Dictionary<string, RadiusAttribute>());
         contextMock.Setup(x => x.UserGroups).Returns([]);
-        contextMock.Setup(x => x.Settings.RadiusReplyAttributes).Returns(new Dictionary<string, RadiusReplyAttributeValue[]>());
+        contextMock.Setup(x => x.RadiusReplyAttributes).Returns(new Dictionary<string, RadiusReplyAttributeValue[]>());
         contextMock.Setup(x => x.UserLdapProfile.Attributes).Returns([]);
         contextMock.Setup(x => x.ResponseInformation.ReplyMessage).Returns("replyMessage");
         contextMock.Setup(x => x.ResponseInformation.State).Returns("state");
@@ -328,8 +366,9 @@ public class AdapterResponseSenderTests
         var udpClientMock = new Mock<IUdpClient>();
         
         var sender = new AdapterResponseSender(packetServiceMock.Object, udpClientMock.Object, attributeServiceMock.Object, NullLogger<AdapterResponseSender>.Instance);
+        var request = new SendAdapterResponseRequest(context);
         
-        await sender.SendResponse(context);
+        await sender.SendResponse(request);
         
         udpClientMock.Verify(x =>  x.SendAsync(packetBytes, It.IsAny<int>(), It.IsAny<IPEndPoint>()), Times.Once);
         Assert.True(packet.Attributes.ContainsKey("key"));
@@ -351,14 +390,15 @@ public class AdapterResponseSenderTests
         contextMock.Setup(x => x.RequestPacket.Identifier).Returns(1);
         contextMock.Setup(x => x.RequestPacket.IsVendorAclRequest).Returns(false);
         contextMock.SetupProperty(x => x.AuthenticationState);
-        contextMock.Setup(x => x.Settings.RadiusSharedSecret).Returns(new SharedSecret("123"));
+        contextMock.Setup(x => x.RadiusSharedSecret).Returns(new SharedSecret("123"));
         contextMock.Setup(x => x.RequestPacket.UserName).Returns("userName");
         contextMock.Setup(x => x.RequestPacket.Attributes).Returns(new Dictionary<string, RadiusAttribute>());
         contextMock.Setup(x => x.UserGroups).Returns([]);
-        contextMock.Setup(x => x.Settings.RadiusReplyAttributes).Returns(new Dictionary<string, RadiusReplyAttributeValue[]>());
+        contextMock.Setup(x => x.RadiusReplyAttributes).Returns(new Dictionary<string, RadiusReplyAttributeValue[]>());
         contextMock.Setup(x => x.UserLdapProfile.Attributes).Returns([]);
         contextMock.Setup(x => x.ResponseInformation.ReplyMessage).Returns("replyMessage");
         contextMock.Setup(x => x.ResponseInformation.State).Returns("state");
+        contextMock.Setup(x => x.InvalidCredentialDelay).Returns(RandomWaiterConfig.Create("0-0"));
         var context = contextMock.Object;
         context.AuthenticationState = new AuthenticationState();
         context.AuthenticationState.FirstFactorStatus = AuthenticationStatus.Reject;
@@ -375,7 +415,8 @@ public class AdapterResponseSenderTests
         var udpClientMock = new Mock<IUdpClient>();
         
         var sender = new AdapterResponseSender(packetServiceMock.Object, udpClientMock.Object, attributeServiceMock.Object, NullLogger<AdapterResponseSender>.Instance);
-        await sender.SendResponse(context);
+        var request = new SendAdapterResponseRequest(context);
+        await sender.SendResponse(request);
         
         udpClientMock.Verify(x =>  x.SendAsync(packetBytes, It.IsAny<int>(), It.IsAny<IPEndPoint>()), Times.Once);
         Assert.True(packet.Attributes.ContainsKey("key"));

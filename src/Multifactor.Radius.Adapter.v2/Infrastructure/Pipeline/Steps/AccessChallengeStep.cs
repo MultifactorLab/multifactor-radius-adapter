@@ -20,10 +20,12 @@ public class AccessChallengeStep : IRadiusPipelineStep
         if (string.IsNullOrWhiteSpace(context.RequestPacket.State))
             return;
 
-        var identifier = new ChallengeIdentifier(context.Settings.ClientConfigurationName, context.RequestPacket.State);
+        var identifier = new ChallengeIdentifier(context.ClientConfigurationName, context.RequestPacket.State);
         var processor = _challengeProcessorProvider.GetChallengeProcessorByIdentifier(identifier);
+        
         if (processor is null)
             return;
+        
         var result = await processor.ProcessChallengeAsync(identifier, context);
 
         switch (result)

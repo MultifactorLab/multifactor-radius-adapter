@@ -90,9 +90,9 @@ public class ChangePasswordChallengeProcessorTests
         var contextMock = new Mock<IRadiusPipelineExecutionContext>();
         var passphrase = UserPassphrase.Parse("123456", PreAuthModeDescriptor.Default);
         contextMock.Setup(x => x.Passphrase).Returns(passphrase);
-        contextMock.Setup(x => x.Settings.ClientConfigurationName).Returns("name");
+        contextMock.Setup(x => x.ClientConfigurationName).Returns("name");
         contextMock.Setup(x => x.MustChangePasswordDomain).Returns("domain");
-        contextMock.Setup(x => x.Settings.ApiCredential).Returns(new ApiCredential("key", "secret"));
+        contextMock.Setup(x => x.ApiCredential).Returns(new ApiCredential("key", "secret"));
         contextMock.SetupProperty(x => x.ResponseInformation);
         var context = contextMock.Object;
         context.ResponseInformation = new ResponseInformation();
@@ -131,7 +131,7 @@ public class ChangePasswordChallengeProcessorTests
         var contextMock = new Mock<IRadiusPipelineExecutionContext>();
         var passphrase = UserPassphrase.Parse("123456", PreAuthModeDescriptor.Default);
         contextMock.Setup(x => x.Passphrase).Returns(passphrase);
-        contextMock.Setup(x => x.Settings.ClientConfigurationName).Returns("name");
+        contextMock.Setup(x => x.ClientConfigurationName).Returns("name");
         contextMock.Setup(x => x.MustChangePasswordDomain).Returns("domain");
         contextMock.SetupProperty(x => x.ResponseInformation);
         var context = contextMock.Object;
@@ -155,7 +155,7 @@ public class ChangePasswordChallengeProcessorTests
         var contextMock = new Mock<IRadiusPipelineExecutionContext>();
         var passphrase = UserPassphrase.Parse(null, PreAuthModeDescriptor.Default);
         contextMock.Setup(x => x.Passphrase).Returns(passphrase);
-        contextMock.Setup(x => x.Settings.ClientConfigurationName).Returns("name");
+        contextMock.Setup(x => x.ClientConfigurationName).Returns("name");
         contextMock.Setup(x => x.MustChangePasswordDomain).Returns("domain");
         contextMock.SetupProperty(x => x.ResponseInformation);
         contextMock.SetupProperty(x => x.AuthenticationState);
@@ -183,9 +183,9 @@ public class ChangePasswordChallengeProcessorTests
         var contextMock = new Mock<IRadiusPipelineExecutionContext>();
         var passphrase = UserPassphrase.Parse("123456", PreAuthModeDescriptor.Default);
         contextMock.Setup(x => x.Passphrase).Returns(passphrase);
-        contextMock.Setup(x => x.Settings.ClientConfigurationName).Returns("name");
+        contextMock.Setup(x => x.ClientConfigurationName).Returns("name");
         contextMock.Setup(x => x.MustChangePasswordDomain).Returns("domain");
-        contextMock.Setup(x => x.Settings.ApiCredential).Returns(new ApiCredential("key", "secret"));
+        contextMock.Setup(x => x.ApiCredential).Returns(new ApiCredential("key", "secret"));
         contextMock.SetupProperty(x => x.ResponseInformation);
         contextMock.SetupProperty(x => x.AuthenticationState);
         var context = contextMock.Object;
@@ -212,9 +212,9 @@ public class ChangePasswordChallengeProcessorTests
         var contextMock = new Mock<IRadiusPipelineExecutionContext>();
         var passphrase = UserPassphrase.Parse("123456", PreAuthModeDescriptor.Default);
         contextMock.Setup(x => x.Passphrase).Returns(passphrase);
-        contextMock.Setup(x => x.Settings.ClientConfigurationName).Returns("name");
+        contextMock.Setup(x => x.ClientConfigurationName).Returns("name");
         contextMock.Setup(x => x.MustChangePasswordDomain).Returns("domain");
-        contextMock.Setup(x => x.Settings.ApiCredential).Returns(new ApiCredential("key", "secret"));
+        contextMock.Setup(x => x.ApiCredential).Returns(new ApiCredential("key", "secret"));
         contextMock.SetupProperty(x => x.ResponseInformation);
         contextMock.SetupProperty(x => x.AuthenticationState);
         var context = contextMock.Object;
@@ -248,11 +248,11 @@ public class ChangePasswordChallengeProcessorTests
         var passphrase = UserPassphrase.Parse("1234567", PreAuthModeDescriptor.Default);
         contextMock.Setup(x => x.Passphrase).Returns(passphrase);
         contextMock.Setup(x => x.UserLdapProfile).Returns(new Mock<ILdapProfile>().Object);
-        contextMock.Setup(x => x.Settings.LdapServerConfiguration).Returns(new Mock<ILdapServerConfiguration>().Object);
+        contextMock.Setup(x => x.LdapServerConfiguration).Returns(new Mock<ILdapServerConfiguration>().Object);
         contextMock.Setup(x => x.LdapSchema).Returns(new Mock<ILdapSchema>().Object);
-        contextMock.Setup(x => x.Settings.ClientConfigurationName).Returns("name");
+        contextMock.Setup(x => x.ClientConfigurationName).Returns("name");
         contextMock.Setup(x => x.MustChangePasswordDomain).Returns("domain");
-        contextMock.Setup(x => x.Settings.ApiCredential).Returns(new ApiCredential("key", "secret"));
+        contextMock.Setup(x => x.ApiCredential).Returns(new ApiCredential("key", "secret"));
         contextMock.SetupProperty(x => x.ResponseInformation);
         contextMock.SetupProperty(x => x.AuthenticationState);
         var context = contextMock.Object;
@@ -268,7 +268,7 @@ public class ChangePasswordChallengeProcessorTests
     }
 
     [Fact]
-    public async Task ProcessChallenge_UnsuccessfulPasswordChange_ShouldReturnAccept()
+    public async Task ProcessChallenge_UnsuccessfulPasswordChange_ShouldReturnReject()
     {
         var service = new Mock<ILdapProfileService>();
         service
@@ -286,11 +286,11 @@ public class ChangePasswordChallengeProcessorTests
         var passphrase = UserPassphrase.Parse("1234567", PreAuthModeDescriptor.Default);
         contextMock.Setup(x => x.Passphrase).Returns(passphrase);
         contextMock.Setup(x => x.UserLdapProfile).Returns(new Mock<ILdapProfile>().Object);
-        contextMock.Setup(x => x.Settings.LdapServerConfiguration).Returns(new Mock<ILdapServerConfiguration>().Object);
+        contextMock.Setup(x => x.LdapServerConfiguration).Returns(new Mock<ILdapServerConfiguration>().Object);
         contextMock.Setup(x => x.LdapSchema).Returns(new Mock<ILdapSchema>().Object);
-        contextMock.Setup(x => x.Settings.ClientConfigurationName).Returns("name");
+        contextMock.Setup(x => x.ClientConfigurationName).Returns("name");
         contextMock.Setup(x => x.MustChangePasswordDomain).Returns("domain");
-        contextMock.Setup(x => x.Settings.ApiCredential).Returns(new ApiCredential("key", "secret"));
+        contextMock.Setup(x => x.ApiCredential).Returns(new ApiCredential("key", "secret"));
         contextMock.SetupProperty(x => x.ResponseInformation);
         contextMock.SetupProperty(x => x.AuthenticationState);
         var context = contextMock.Object;

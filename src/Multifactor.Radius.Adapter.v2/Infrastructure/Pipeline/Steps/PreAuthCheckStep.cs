@@ -17,7 +17,7 @@ public class PreAuthCheckStep : IRadiusPipelineStep
     public Task ExecuteAsync(IRadiusPipelineExecutionContext context)
     {
         _logger.LogDebug("'{name}' started", nameof(PreAuthCheckStep));
-        switch (context.Settings.PreAuthnMode.Mode)
+        switch (context.PreAuthnMode.Mode)
         {
             case PreAuthMode.Otp when context.Passphrase.Otp == null:
                 context.AuthenticationState.SecondFactorStatus = AuthenticationStatus.Reject;
@@ -36,7 +36,7 @@ public class PreAuthCheckStep : IRadiusPipelineStep
                 return Task.CompletedTask;
             
             default:
-                throw new NotImplementedException($"Unknown pre-auth method: {context.Settings.PreAuthnMode.Mode}"); 
+                throw new NotImplementedException($"Unknown pre-auth method: {context.PreAuthnMode.Mode}"); 
         }
     }
 }

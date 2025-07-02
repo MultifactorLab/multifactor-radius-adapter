@@ -17,6 +17,7 @@ using ILdapConnectionFactory = Multifactor.Core.Ldap.Connection.LdapConnectionFa
 
 namespace Multifactor.Radius.Adapter.v2.Tests.FirstFactorAuthTests;
 
+[Collection("ActiveDirectory")]
 public class LdapFirstFactorProcessorTests
 {
     [Fact]
@@ -35,14 +36,14 @@ public class LdapFirstFactorProcessorTests
         var serverSettings = new Mock<ILdapServerConfiguration>();
         serverSettings.Setup(x => x.ConnectionString).Returns(sensitiveData["ConnectionString"]);
         serverSettings.Setup(x => x.BindTimeoutInSeconds).Returns(30);
-        contextMock.Setup(x => x.Settings.LdapServerConfiguration).Returns(serverSettings.Object);
+        contextMock.Setup(x => x.LdapServerConfiguration).Returns(serverSettings.Object);
         
         var authState = new AuthenticationState();
         contextMock.Setup(x => x.AuthenticationState).Returns(authState);
 
         var transformRules = new UserNameTransformRules();
-        contextMock.Setup(x => x.Settings.UserNameTransformRules).Returns(transformRules);
-        contextMock.Setup(x => x.Settings.PreAuthnMode).Returns(PreAuthModeDescriptor.Default);
+        contextMock.Setup(x => x.UserNameTransformRules).Returns(transformRules);
+        contextMock.Setup(x => x.PreAuthnMode).Returns(PreAuthModeDescriptor.Default);
         contextMock.Setup(x => x.Passphrase).Returns(UserPassphrase.Parse(sensitiveData["Password"], PreAuthModeDescriptor.Default));
         await processor.ProcessFirstFactor(contextMock.Object);
         Assert.Equal(AuthenticationStatus.Accept, authState.FirstFactorStatus);
@@ -64,10 +65,10 @@ public class LdapFirstFactorProcessorTests
         contextMock.Setup(x => x.RequestPacket).Returns(packetMock.Object);
         serverSettings.Setup(x => x.ConnectionString).Returns(sensitiveData["ConnectionString"]);
         serverSettings.Setup(x => x.BindTimeoutInSeconds).Returns(30);
-        contextMock.Setup(x => x.Settings.LdapServerConfiguration).Returns(serverSettings.Object);
+        contextMock.Setup(x => x.LdapServerConfiguration).Returns(serverSettings.Object);
         contextMock.Setup(x => x.AuthenticationState).Returns(authState);
-        contextMock.Setup(x => x.Settings.UserNameTransformRules).Returns(transformRules);
-        contextMock.Setup(x => x.Settings.PreAuthnMode).Returns(PreAuthModeDescriptor.Default);
+        contextMock.Setup(x => x.UserNameTransformRules).Returns(transformRules);
+        contextMock.Setup(x => x.PreAuthnMode).Returns(PreAuthModeDescriptor.Default);
         contextMock.Setup(x => x.Passphrase).Returns(UserPassphrase.Parse("123456", PreAuthModeDescriptor.Default));
         
         await processor.ProcessFirstFactor(contextMock.Object);
@@ -90,10 +91,10 @@ public class LdapFirstFactorProcessorTests
         contextMock.Setup(x => x.RequestPacket).Returns(packetMock.Object);
         serverSettings.Setup(x => x.ConnectionString).Returns(sensitiveData["ConnectionString"]);
         serverSettings.Setup(x => x.BindTimeoutInSeconds).Returns(30);
-        contextMock.Setup(x => x.Settings.LdapServerConfiguration).Returns(serverSettings.Object);
+        contextMock.Setup(x => x.LdapServerConfiguration).Returns(serverSettings.Object);
         contextMock.Setup(x => x.AuthenticationState).Returns(authState);
-        contextMock.Setup(x => x.Settings.UserNameTransformRules).Returns(transformRules);
-        contextMock.Setup(x => x.Settings.PreAuthnMode).Returns(PreAuthModeDescriptor.Default);
+        contextMock.Setup(x => x.UserNameTransformRules).Returns(transformRules);
+        contextMock.Setup(x => x.PreAuthnMode).Returns(PreAuthModeDescriptor.Default);
         contextMock.Setup(x => x.Passphrase).Returns(UserPassphrase.Parse("123456", PreAuthModeDescriptor.Default));
         
         await processor.ProcessFirstFactor(contextMock.Object);
@@ -115,10 +116,10 @@ public class LdapFirstFactorProcessorTests
         packetMock.Setup(x => x.Identifier).Returns(0);
         contextMock.Setup(x => x.RequestPacket).Returns(packetMock.Object);
         contextMock.Setup(x => x.RemoteEndpoint).Returns(IPEndPoint.Parse("127.0.0.1:8080"));
-        contextMock.Setup(x => x.Settings.LdapServerConfiguration).Returns(new Mock<ILdapServerConfiguration>().Object);
+        contextMock.Setup(x => x.LdapServerConfiguration).Returns(new Mock<ILdapServerConfiguration>().Object);
         contextMock.Setup(x => x.AuthenticationState).Returns(authState);
-        contextMock.Setup(x => x.Settings.UserNameTransformRules).Returns(transformRules);
-        contextMock.Setup(x => x.Settings.PreAuthnMode).Returns(PreAuthModeDescriptor.Default);
+        contextMock.Setup(x => x.UserNameTransformRules).Returns(transformRules);
+        contextMock.Setup(x => x.PreAuthnMode).Returns(PreAuthModeDescriptor.Default);
 
         await processor.ProcessFirstFactor(contextMock.Object);
         Assert.Equal(AuthenticationStatus.Reject, authState.FirstFactorStatus);
@@ -139,10 +140,10 @@ public class LdapFirstFactorProcessorTests
         packetMock.Setup(x => x.Identifier).Returns(0);
         contextMock.Setup(x => x.RequestPacket).Returns(packetMock.Object);
         contextMock.Setup(x => x.RemoteEndpoint).Returns(IPEndPoint.Parse("127.0.0.1:8080"));
-        contextMock.Setup(x => x.Settings.LdapServerConfiguration).Returns(new Mock<ILdapServerConfiguration>().Object);
+        contextMock.Setup(x => x.LdapServerConfiguration).Returns(new Mock<ILdapServerConfiguration>().Object);
         contextMock.Setup(x => x.AuthenticationState).Returns(authState);
-        contextMock.Setup(x => x.Settings.UserNameTransformRules).Returns(transformRules);
-        contextMock.Setup(x => x.Settings.PreAuthnMode).Returns(PreAuthModeDescriptor.Default);
+        contextMock.Setup(x => x.UserNameTransformRules).Returns(transformRules);
+        contextMock.Setup(x => x.PreAuthnMode).Returns(PreAuthModeDescriptor.Default);
         contextMock.Setup(x => x.Passphrase).Returns(UserPassphrase.Parse("123456", PreAuthModeDescriptor.Default));
         
         await processor.ProcessFirstFactor(contextMock.Object);
@@ -167,10 +168,10 @@ public class LdapFirstFactorProcessorTests
         contextMock.Setup(x => x.RequestPacket).Returns(packetMock.Object);
         serverSettings.Setup(x => x.ConnectionString).Returns("your.domain");
         serverSettings.Setup(x => x.BindTimeoutInSeconds).Returns(30);
-        contextMock.Setup(x => x.Settings.LdapServerConfiguration).Returns(serverSettings.Object);
+        contextMock.Setup(x => x.LdapServerConfiguration).Returns(serverSettings.Object);
         contextMock.Setup(x => x.AuthenticationState).Returns(authState);
-        contextMock.Setup(x => x.Settings.UserNameTransformRules).Returns(transformRules);
-        contextMock.Setup(x => x.Settings.PreAuthnMode).Returns(PreAuthModeDescriptor.Default);
+        contextMock.Setup(x => x.UserNameTransformRules).Returns(transformRules);
+        contextMock.Setup(x => x.PreAuthnMode).Returns(PreAuthModeDescriptor.Default);
         contextMock.SetupProperty(x => x.MustChangePasswordDomain);
         contextMock.Setup(x => x.Passphrase).Returns(UserPassphrase.Parse("123456", PreAuthModeDescriptor.Default));
         var context = contextMock.Object;
