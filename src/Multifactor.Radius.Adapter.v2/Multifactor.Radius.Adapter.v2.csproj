@@ -67,5 +67,10 @@
             <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
         </Content>
     </ItemGroup>
-
+    
+    <ItemGroup>
+        <InternalsVisibleTo Include="MultiFactor.Radius.Adapter.v2.EndToEndTests" />
+        <InternalsVisibleTo Include="DynamicProxyGenAssembly2" />
+    </ItemGroup>
+    
 </Project>
