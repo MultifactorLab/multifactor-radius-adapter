@@ -49,7 +49,7 @@ public sealed class RadiusClient : IDisposable
             }
 
             //timeout
-            _logger.LogDebug("Server {remoteEndpoint:l} did not respond within {timeout:l}", remoteEndpoint, timeout);
+            _logger.LogDebug("Server {remoteEndpoint:l} did not respond within {timeout:l}", remoteEndpoint, timeout.ToString());
             return null;
         }
 

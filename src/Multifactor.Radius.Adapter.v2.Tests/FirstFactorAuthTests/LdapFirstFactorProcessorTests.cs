@@ -183,7 +183,7 @@ public class LdapFirstFactorProcessorTests
 
     private LdapException GetLdapException()
     {
-        var ex = new LdapException("data 773");
+        var ex = new LdapException(1, "message", "data 773");
         return ex;
     }
 

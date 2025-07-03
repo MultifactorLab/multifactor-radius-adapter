@@ -26,7 +26,7 @@ public class LdapServerConfiguration
     public string SecondFaBypassGroups { get; init; } = string.Empty;
 
     [Description("load-nested-groups")]
-    public bool LoadNestedGroups { get; init; }
+    public bool LoadNestedGroups { get; init; } = true;
 
     [Description("nested-groups-base-dn")]
     public string NestedGroupsBaseDn { get; init; } = string.Empty;
