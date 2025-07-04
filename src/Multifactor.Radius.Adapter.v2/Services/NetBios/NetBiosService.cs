@@ -64,7 +64,7 @@ public class NetBiosService : INetBiosService
         using (var nameTranslator = new NameTranslator(possibleDomain, _logger))
         {
             var netBiosDomain = nameTranslator.Translate(identity.Identity);
-            if (!string.IsNullOrEmpty(netBiosDomain))
+            if (!string.IsNullOrWhiteSpace(netBiosDomain))
             {
                 _logger.LogInformation("Success find {Netbios:l} by {UserName:l}", netBiosDomain, identity.Identity);
                 return new DistinguishedName(netBiosDomain);
@@ -89,7 +89,7 @@ public class NetBiosService : INetBiosService
         }
         var netBiosParts = new NetBiosParts(identity.Identity);
         var userDomain = schema.FindDomainByNetbiosName(netBiosParts.Netbios);
-        _logger.LogInformation("Success find {UserDomain:l} by {UserName:l}", userDomain, identity.Identity);
+        _logger.LogInformation("Successfully found {UserDomain:l} by {UserName:l}", userDomain, identity.Identity);
         return userDomain;
     }
 

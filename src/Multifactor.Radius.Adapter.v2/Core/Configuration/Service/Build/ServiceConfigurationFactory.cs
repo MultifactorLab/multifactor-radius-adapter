@@ -44,7 +44,7 @@ public class ServiceConfigurationFactory : IServiceConfigurationFactory
         var apiProxySetting = appSettings.MultifactorApiProxy;
         var apiTimeoutSetting = appSettings.MultifactorApiTimeout;
         
-        if (string.IsNullOrEmpty(apiUrlSetting))
+        if (string.IsNullOrWhiteSpace(apiUrlSetting))
         {
             throw InvalidConfigurationException.For(
                 x => x.AppSettings.MultifactorApiUrl,
@@ -114,13 +114,13 @@ public class ServiceConfigurationFactory : IServiceConfigurationFactory
         var radiusClientNasIdentifierSetting = clientSettings.RadiusClientNasIdentifier;
         var radiusClientIpSetting = clientSettings.RadiusClientIp;
 
-        if (!string.IsNullOrEmpty(radiusClientNasIdentifierSetting))
+        if (!string.IsNullOrWhiteSpace(radiusClientNasIdentifierSetting))
         {
             builder.AddClient(radiusClientNasIdentifierSetting, client);
             return;
         }
 
-        if (string.IsNullOrEmpty(radiusClientIpSetting))
+        if (string.IsNullOrWhiteSpace(radiusClientIpSetting))
         {
             throw InvalidConfigurationException.For(
                 x => x.AppSettings.RadiusClientNasIdentifier,
@@ -160,7 +160,7 @@ public class ServiceConfigurationFactory : IServiceConfigurationFactory
 
     private static IPEndPoint ParseAdapterServerEndpoint(AppSettingsSection appSettings)
     {
-        if (string.IsNullOrEmpty(appSettings.AdapterServerEndpoint))
+        if (string.IsNullOrWhiteSpace(appSettings.AdapterServerEndpoint))
         {
             throw InvalidConfigurationException.For(
                 x => x.AppSettings.AdapterServerEndpoint,

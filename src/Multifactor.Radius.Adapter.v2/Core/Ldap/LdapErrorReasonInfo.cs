@@ -30,7 +30,7 @@ public class LdapErrorReasonInfo
 
     private static LdapErrorReason GetErrorReason(string message)
     {
-        if (string.IsNullOrEmpty(message))
+        if (string.IsNullOrWhiteSpace(message))
         {
             return LdapErrorReason.UnknownError;
         }

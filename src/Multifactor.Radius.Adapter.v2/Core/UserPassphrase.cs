@@ -52,15 +52,11 @@ public class UserPassphrase
             
             var hasOtp = TryGetOtpCode(rawPwd, preAuthnMode, out var otp);
             if (!hasOtp)
-            {
                 otp = null;
-            }
 
             var pwd = GetPassword(rawPwd, preAuthnMode, hasOtp);
-            if (string.IsNullOrEmpty(pwd))
-            {
+            if (string.IsNullOrWhiteSpace(pwd))
                 pwd = null;
-            }
 
             var provCode = ProviderCodes.FirstOrDefault(x => x == pwd?.ToLower());
             return new UserPassphrase(rawPwd, pwd, otp, provCode);
@@ -74,14 +70,10 @@ public class UserPassphrase
                 case PreAuthMode.Otp:
                     var length = preAuthnMode.Settings.OtpCodeLength;
                     if (passwordAndOtp.Length < length)
-                    {
                         return passwordAndOtp;
-                    }
 
                     if (!hasOtp)
-                    {
                         return passwordAndOtp;
-                    }
 
                     var sub = passwordAndOtp[..^length];
                     return sub;

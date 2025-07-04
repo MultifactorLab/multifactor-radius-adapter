@@ -87,7 +87,7 @@ public class RadiusFirstFactorProcessor : IFirstFactorProcessor
         }
 
         authPacket.RemoveAttribute("Proxy-State");
-        //authPacket.RemoveAttribute("State");  radius server does not send response
+        authPacket.RemoveAttribute("State"); // radius server does not send response
         authPacket.ReplaceAttribute("User-Name", userName);
 
         if (!string.IsNullOrWhiteSpace(passphrase.Password))

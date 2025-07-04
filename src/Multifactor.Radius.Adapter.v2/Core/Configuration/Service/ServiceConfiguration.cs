@@ -24,19 +24,13 @@ public class ServiceConfiguration : IServiceConfiguration
     public IClientConfiguration? GetClient(string nasIdentifier)
     {
         if (SingleClientMode)
-        {
             return _ipClients[IPAddress.Any];
-        }
         
-        if (string.IsNullOrEmpty(nasIdentifier))
-        {
+        if (string.IsNullOrWhiteSpace(nasIdentifier))
             return null;
-        }
         
         if (_nasIdClients.TryGetValue(nasIdentifier, out var client))
-        {
             return client;
-        }
         
         return null;
     }
@@ -44,14 +38,10 @@ public class ServiceConfiguration : IServiceConfiguration
     public IClientConfiguration? GetClient(IPAddress ip)
     {
         if (SingleClientMode)
-        {
             return _ipClients[IPAddress.Any];
-        }
         
         if (_ipClients.TryGetValue(ip, out var client))
-        {
             return client;
-        }
         
         return null;
     }
@@ -82,9 +72,7 @@ public class ServiceConfiguration : IServiceConfiguration
     public ServiceConfiguration SetApiProxy(string val)
     {
         if (string.IsNullOrWhiteSpace(val))
-        {
             throw new ArgumentException($"'{nameof(val)}' cannot be null or whitespace.", nameof(val));
-        }
 
         ApiProxy = val;
         return this;
@@ -93,9 +81,7 @@ public class ServiceConfiguration : IServiceConfiguration
     public ServiceConfiguration SetApiUrl(string val)
     {
         if (string.IsNullOrWhiteSpace(val))
-        {
             throw new ArgumentException($"'{nameof(val)}' cannot be null or whitespace.", nameof(val));
-        }
 
         ApiUrl = val;
         return this;
@@ -110,19 +96,13 @@ public class ServiceConfiguration : IServiceConfiguration
     public ServiceConfiguration AddClient(string nasId, IClientConfiguration client)
     {
         if (_nasIdClients.TryGetValue(nasId, out var idClient))
-        {
             throw new ConfigurationErrorsException($"Client with NAS-Identifier '{nasId} already added from {idClient.Name}.config");
-        }
 
         if (string.IsNullOrWhiteSpace(nasId))
-        {
             throw new ArgumentException($"'{nameof(nasId)}' cannot be null or whitespace.", nameof(nasId));
-        }
 
         if (client is null)
-        {
             throw new ArgumentNullException(nameof(client));
-        }
 
         _nasIdClients.Add(nasId, client);
         _clients.Add(client);
@@ -132,19 +112,13 @@ public class ServiceConfiguration : IServiceConfiguration
     public ServiceConfiguration AddClient(IPAddress ip, IClientConfiguration client)
     {
         if (ip is null)
-        {
             throw new ArgumentNullException(nameof(ip));
-        }
 
         if (client is null)
-        {
             throw new ArgumentNullException(nameof(client));
-        }
 
         if (!_ipClients.TryAdd(ip, client))
-        {
             throw new ConfigurationErrorsException($"Client with IP {ip} already added from {_ipClients[ip].Name}.config");
-        }
 
         _clients.Add(client);
         return this;

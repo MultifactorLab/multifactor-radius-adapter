@@ -38,9 +38,7 @@ namespace Multifactor.Radius.Adapter.v2.Core
         public static string Base64(this byte[] bytes)
         {
             if (bytes != null)
-            {
                 return Convert.ToBase64String(bytes);
-            }
 
             return null;
         }
@@ -60,24 +58,18 @@ namespace Multifactor.Radius.Adapter.v2.Core
         /// </summary>
         public static string CanonicalizeUserName(string userName)
         {
-            if (string.IsNullOrEmpty(userName))
-            {
+            if (string.IsNullOrWhiteSpace(userName))
                 throw new ArgumentNullException(nameof(userName));
-            }
 
             var identity = userName.ToLower();
 
             var index = identity.IndexOf("\\");
             if (index > 0)
-            {
                 identity = identity[(index + 1)..];
-            }
 
             index = identity.IndexOf("@");
             if (index > 0)
-            {
                 identity = identity[..index];
-            }
 
             return identity;
         }
@@ -87,10 +79,8 @@ namespace Multifactor.Radius.Adapter.v2.Core
         /// </summary>
         public static bool IsCanicalUserName(string userName)
         {
-            if (string.IsNullOrEmpty(userName))
-            {
+            if (string.IsNullOrWhiteSpace(userName))
                 throw new ArgumentNullException(nameof(userName));
-            }
 
             return userName.IndexOfAny(new[] { '\\', '@' }) == -1;
         }

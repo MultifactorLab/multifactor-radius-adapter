@@ -41,7 +41,7 @@ public static class WebProxyFactory
 
     private static void SetProxyCredentials(WebProxy proxy, Uri proxyUri)
     {
-        if (string.IsNullOrEmpty(proxyUri.UserInfo))
+        if (string.IsNullOrWhiteSpace(proxyUri.UserInfo))
             return;
 
         var credentials = proxyUri.UserInfo.Split(new[] { ':' }, 2);

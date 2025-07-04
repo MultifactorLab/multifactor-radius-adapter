@@ -42,7 +42,7 @@ public abstract class E2ETestBase(RadiusFixtures radiusFixtures) : IDisposable
     {
         var builder = Host.CreateApplicationBuilder(["--environment", "Test"]);
         builder.Services.AddMemoryCache();
-        builder.AddLogging();
+        builder.Services.AddAdapterLogging();
     
         var appVars = new ApplicationVariables
         {
@@ -67,7 +67,7 @@ public abstract class E2ETestBase(RadiusFixtures radiusFixtures) : IDisposable
         var clientConfigsProvider = new E2EClientConfigurationsProvider(clientConfigs);
         builder.Services.ReplaceService<IClientConfigurationsProvider>(clientConfigsProvider);
         builder.Services.AddLdapSchemaLoader();
-        builder.Services.AddDataProtection();
+        builder.Services.AddDataProtectionService();
     
         builder.Services.AddFirstFactor();
         builder.Services.AddPipelines();

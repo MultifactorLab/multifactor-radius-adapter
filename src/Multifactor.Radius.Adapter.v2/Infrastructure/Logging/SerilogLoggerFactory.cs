@@ -57,9 +57,10 @@ public static class SerilogLoggerFactory
                 .WriteTo.Console(formatter)
                 .WriteTo.File(formatter,
                     logsPath,
+                    flushToDiskInterval: TimeSpan.FromSeconds(1),
                     rollingInterval: RollingInterval.Day);
 
-            if (!string.IsNullOrEmpty(fileTemplate))
+            if (!string.IsNullOrWhiteSpace(fileTemplate))
             {
                 Log.Logger.Warning(
                     "The {LoggingFormat:l} parameter cannot be used together with the template. The {FileLogOutputTemplate:l} parameter will be ignored.",
@@ -70,19 +71,16 @@ public static class SerilogLoggerFactory
             return;
         }
 
-        if (!string.IsNullOrEmpty(consoleTemplate))
-        {
+        if (!string.IsNullOrWhiteSpace(consoleTemplate))
             loggerConfiguration.WriteTo.Console(outputTemplate: consoleTemplate);
-        }
         else
-        {
             loggerConfiguration.WriteTo.Console();
-        }
 
-        if (fileTemplate != null)
+        if (!string.IsNullOrWhiteSpace(fileTemplate))
         {
             loggerConfiguration.WriteTo.File(
                 logsPath,
+                flushToDiskInterval: TimeSpan.FromSeconds(1),
                 rollingInterval: RollingInterval.Day,
                 outputTemplate: fileTemplate);
         }
@@ -90,6 +88,7 @@ public static class SerilogLoggerFactory
         {
             loggerConfiguration.WriteTo.File(
                 logsPath,
+                flushToDiskInterval: TimeSpan.FromSeconds(1),
                 rollingInterval: RollingInterval.Day);
         }
     }
@@ -120,16 +119,12 @@ public static class SerilogLoggerFactory
 
     private static ITextFormatter? GetLogFormatter(string? loggingFormat)
     {
-        if (string.IsNullOrEmpty(loggingFormat))
-        {
+        if (string.IsNullOrWhiteSpace(loggingFormat))
             return null;
-        }
 
         if (!Enum.TryParse<SerilogJsonFormatterTypes>(loggingFormat, true, out var formatterType))
-        {
             return null;
-        }
-
+        
         return formatterType switch
         {
             SerilogJsonFormatterTypes.Json or SerilogJsonFormatterTypes.JsonUtc => new RenderedCompactJsonFormatter(),

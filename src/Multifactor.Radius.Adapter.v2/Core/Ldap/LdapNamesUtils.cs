@@ -9,7 +9,7 @@ public static class LdapNamesUtils
     /// </summary>
     public static DistinguishedName FqdnToDn(string name)
     {
-        if (string.IsNullOrEmpty(name)) throw new ArgumentNullException(nameof(name));
+        if (string.IsNullOrWhiteSpace(name)) throw new ArgumentNullException(nameof(name));
 
         var portIndex = name.IndexOf(':');
         if (portIndex > 0)

@@ -15,8 +15,7 @@ try
 {
     var builder = Host.CreateApplicationBuilder(args);
     builder.Services.AddMemoryCache();
-    builder.AddLogging();
-    
+    builder.Services.AddAdapterLogging();
     var appVars = new ApplicationVariables
     {
         AppPath = Path.GetDirectoryName(AppDomain.CurrentDomain.BaseDirectory),
@@ -29,7 +28,7 @@ try
     builder.Services.AddConfiguration();
     
     builder.Services.AddLdapSchemaLoader();
-    builder.Services.AddDataProtection();
+    builder.Services.AddDataProtectionService();
     
     builder.Services.AddFirstFactor();
     builder.Services.AddPipelines();

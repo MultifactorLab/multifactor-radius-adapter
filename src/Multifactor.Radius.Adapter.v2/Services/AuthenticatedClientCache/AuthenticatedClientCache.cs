@@ -24,7 +24,7 @@ namespace Multifactor.Radius.Adapter.v2.Services.AuthenticatedClientCache;
             if (!cacheConfig.Enabled)
                 return false;
 
-            if (!cacheConfig.MinimalMatching && string.IsNullOrEmpty(callingStationId))
+            if (!cacheConfig.MinimalMatching && string.IsNullOrWhiteSpace(callingStationId))
             {
                 _logger.LogWarning("Remote host parameter miss for user {userName:l}", userName);
                 return false;
@@ -49,7 +49,7 @@ namespace Multifactor.Radius.Adapter.v2.Services.AuthenticatedClientCache;
             ArgumentNullException.ThrowIfNull(cacheConfig);
             ArgumentException.ThrowIfNullOrWhiteSpace(clientName);
             
-            if (!cacheConfig.Enabled || !cacheConfig.MinimalMatching && string.IsNullOrEmpty(callingStationId))
+            if (!cacheConfig.Enabled || !cacheConfig.MinimalMatching && string.IsNullOrWhiteSpace(callingStationId))
                 return;
 
             var client = AuthenticatedClient.Create(callingStationId, clientName, userName);

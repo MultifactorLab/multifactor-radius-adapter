@@ -25,7 +25,7 @@ public class DomainPermissionRules : IDomainPermissionRules
 
     public bool IsPermittedDomain(string domain)
     {
-        if (string.IsNullOrEmpty(domain)) throw new ArgumentNullException(nameof(domain));
+        if (string.IsNullOrWhiteSpace(domain)) throw new ArgumentNullException(nameof(domain));
 
         if (IncludedDomains?.Count > 0)
         {

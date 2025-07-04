@@ -43,7 +43,7 @@ public class RadiusReplyAttributeValue
     public RadiusReplyAttributeValue(object value, string conditionClause, bool sufficient = false)
     {
         Value = value;
-        if (!string.IsNullOrEmpty(conditionClause))
+        if (!string.IsNullOrWhiteSpace(conditionClause))
             ParseConditionClause(conditionClause);
         Sufficient = sufficient;
     }

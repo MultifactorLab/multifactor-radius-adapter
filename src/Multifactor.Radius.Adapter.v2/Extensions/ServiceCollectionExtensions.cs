@@ -15,6 +15,7 @@ using Multifactor.Radius.Adapter.v2.Core.Ldap;
 using Multifactor.Radius.Adapter.v2.Core.Radius.Attributes;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configuration.RadiusAdapter.Build;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Http;
+using Multifactor.Radius.Adapter.v2.Infrastructure.Logging;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Builder;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Steps;
@@ -26,6 +27,7 @@ using Multifactor.Radius.Adapter.v2.Services.LdapForest;
 using Multifactor.Radius.Adapter.v2.Services.MultifactorApi;
 using Multifactor.Radius.Adapter.v2.Services.NetBios;
 using Multifactor.Radius.Adapter.v2.Services.Radius;
+using Serilog;
 using ILdapConnectionFactory = Multifactor.Radius.Adapter.v2.Core.Ldap.ILdapConnectionFactory;
 
 namespace Multifactor.Radius.Adapter.v2.Extensions;
@@ -171,7 +173,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<ILdapSchemaLoader, CustomLdapSchemaLoader>();
     }
 
-    public static void AddDataProtection(this IServiceCollection services)
+    public static void AddDataProtectionService(this IServiceCollection services)
     {
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             services.AddTransient<IDataProtectionService, WindowsProtectionService>();
@@ -209,5 +211,14 @@ public static class ServiceCollectionExtensions
 
         services.AddTransient<IRadiusReplyAttributeService, RadiusReplyAttributeService>();
         services.AddTransient<IRadiusAttributeTypeConverter, RadiusAttributeTypeConverter>();
+    }
+
+    public static void AddAdapterLogging(this IServiceCollection services)
+    {
+        var rootConfig = RadiusAdapterConfigurationProvider.GetRootConfiguration();
+        var logger = SerilogLoggerFactory.CreateLogger(rootConfig);
+        Log.Logger = logger;
+
+        services.AddSerilog();
     }
 }
