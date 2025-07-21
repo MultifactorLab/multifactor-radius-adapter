@@ -1,8 +1,8 @@
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
-using Multifactor.Core.Ldap.LangFeatures;
 using Multifactor.Radius.Adapter.v2.Core;
 using Multifactor.Radius.Adapter.v2.Core.Configuration.Client;
 using Multifactor.Radius.Adapter.v2.Core.Configuration.Service;
@@ -25,27 +25,24 @@ public class UdpPacketHandler : IUdpPacketHandler
     private readonly IRadiusPacketService _radiusPacketService;
     private readonly IPipelineProvider _pipelineProvider;
     private readonly IResponseSender _responseSender;
+    private readonly IMemoryCache _memoryCache;
 
     public UdpPacketHandler(
         IServiceConfiguration serviceConfiguration,
         IRadiusPacketService packetService,
         IPipelineProvider pipelineProvider,
         IResponseSender responseSender,
+        IMemoryCache memoryCache,
         ILogger<IUdpPacketHandler> logger)
     {
-        Throw.IfNull(serviceConfiguration, nameof(serviceConfiguration));
-        Throw.IfNull(packetService, nameof(packetService));
-        Throw.IfNull(pipelineProvider, nameof(pipelineProvider));
-        Throw.IfNull(logger, nameof(logger));
-
         _serviceConfiguration = serviceConfiguration;
         _radiusPacketService = packetService;
         _pipelineProvider = pipelineProvider;
         _logger = logger;
         _responseSender = responseSender;
+        _memoryCache = memoryCache;
     }
-
-    //TODO duplicate check
+    
     public async Task HandleUdpPacket(UdpReceiveResult udpPacket)
     {
         IPEndPoint? proxyEndpoint = null;
@@ -66,14 +63,17 @@ public class UdpPacketHandler : IUdpPacketHandler
             return;
         }
 
-        var pipeline = _pipelineProvider.GetRadiusPipeline(clientConfiguration.Name);
-        if (pipeline is null)
+        var requestPacket = _radiusPacketService.Parse(packetBytes, new SharedSecret(clientConfiguration.RadiusSharedSecret));
+        if (IsRetransmission(requestPacket, remoteEndpoint))
         {
-            throw new Exception($"No pipeline found for client {clientConfiguration.Name}, check adapter configuration and restart the adapter.");
+            _logger.LogDebug("Duplicated request from {host:l}:{port} id={id} client '{client:l}', ignoring", remoteEndpoint.Address, remoteEndpoint.Port, requestPacket.Identifier, clientConfiguration.Name);
+            return;
         }
 
-        var requestPacket = _radiusPacketService.Parse(packetBytes, new SharedSecret(clientConfiguration.RadiusSharedSecret));
-
+        var pipeline = _pipelineProvider.GetRadiusPipeline(clientConfiguration.Name);
+        if (pipeline is null)
+            throw new Exception($"No pipeline found for client {clientConfiguration.Name}, check adapter configuration and restart the adapter.");
+        
         await StartPipeline(clientConfiguration, requestPacket, remoteEndpoint, proxyEndpoint, pipeline);
     }
 
@@ -112,16 +112,12 @@ public class UdpPacketHandler : IUdpPacketHandler
         requestWithoutProxyHeader = null;
 
         if (request.Length < 6)
-        {
             return false;
-        }
 
         var proxySig = Encoding.ASCII.GetString(request.Take(5).ToArray());
 
         if (proxySig != "PROXY")
-        {
             return false;
-        }
 
         var lf = Array.IndexOf(request, (byte)'\n');
         var headerBytes = request.Take(lf + 1).ToArray();
@@ -150,4 +146,21 @@ public class UdpPacketHandler : IUdpPacketHandler
     }
 
     private SendAdapterResponseRequest GetResponseRequest(IRadiusPipelineExecutionContext context) => new(context);
+
+    private bool IsRetransmission(IRadiusPacket requestPacket, IPEndPoint remoteEndpoint)
+    {
+        var packetKey = CreateUniquePacketKey(requestPacket, remoteEndpoint);
+        if (_memoryCache.TryGetValue(packetKey, out _))
+            return true;
+
+        _memoryCache.Set(packetKey, 1, DateTimeOffset.UtcNow.AddMinutes(1));
+
+        return false;
+    }
+
+    private string CreateUniquePacketKey(IRadiusPacket requestPacket, IPEndPoint remoteEndpoint)
+    {
+        var base64Authenticator = requestPacket.Authenticator.Value.Base64();
+        return $"{requestPacket.Code:d}:{requestPacket.Identifier}:{remoteEndpoint}:{requestPacket.UserName}:{base64Authenticator}";
+    }
 }

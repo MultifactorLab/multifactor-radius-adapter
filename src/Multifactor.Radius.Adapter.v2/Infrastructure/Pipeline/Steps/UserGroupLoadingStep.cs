@@ -10,7 +10,7 @@ using Multifactor.Radius.Adapter.v2.Services.Ldap;
 
 namespace Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Steps;
 
-//TODO load groups only when request accepted or use cache
+//TODO load groups only when request is accepted or use cache
 public class UserGroupLoadingStep : IRadiusPipelineStep
 {
     private readonly ILdapGroupService _ldapGroupService;

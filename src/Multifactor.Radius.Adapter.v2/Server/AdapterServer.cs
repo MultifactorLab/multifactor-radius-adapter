@@ -1,6 +1,8 @@
 using System.Net.Sockets;
 using Microsoft.Extensions.Logging;
-using Multifactor.Core.Ldap.LangFeatures;
+using Multifactor.Radius.Adapter.v2.Core;
+using Multifactor.Radius.Adapter.v2.Core.Configuration.Service;
+using Multifactor.Radius.Adapter.v2.Core.Radius.Attributes;
 using Multifactor.Radius.Adapter.v2.Server.Udp;
 
 namespace Multifactor.Radius.Adapter.v2.Server;
@@ -10,17 +12,25 @@ public class AdapterServer : IDisposable
     private readonly IUdpClient _udpClient;
     private readonly IUdpPacketHandler _packetHandler;
     private readonly ILogger<AdapterServer> _logger;
+    private readonly IServiceConfiguration _serviceConfiguration;
+    private readonly ApplicationVariables _applicationVariables;
+    private readonly IRadiusDictionary _radiusDictionary;
     
     private bool _isRunning;
     
-    public AdapterServer(IUdpClient udpClient, IUdpPacketHandler handler, ILogger<AdapterServer> logger)
+    public AdapterServer(
+        IUdpClient udpClient,
+        IUdpPacketHandler handler,
+        IServiceConfiguration serviceConfiguration,
+        ApplicationVariables applicationVariables,
+        IRadiusDictionary radiusDictionary,
+        ILogger<AdapterServer> logger)
     {
-        Throw.IfNull(udpClient);
-        Throw.IfNull(handler);
-        Throw.IfNull(logger);
-        
         _udpClient = udpClient;
         _packetHandler = handler;
+        _serviceConfiguration = serviceConfiguration;
+        _applicationVariables = applicationVariables;
+        _radiusDictionary = radiusDictionary;
         _logger = logger;
     }
 
@@ -33,14 +43,14 @@ public class AdapterServer : IDisposable
             }
 
             _isRunning = true;
-            _logger.LogInformation("Server is started.");
+            LogHelloMessage();
             UdpReceiveResult udpPacket = new UdpReceiveResult();
             while (_isRunning && !cancellationToken.IsCancellationRequested)
             {
                 try
                 {
-                     var packet = await ReceivePackets();
-                     udpPacket = packet;
+                    var packet = await ReceivePackets();
+                    udpPacket = packet;
                     _logger.LogInformation("Received packet from {host:l}:{port}.", packet.RemoteEndPoint.Address, packet.RemoteEndPoint.Port);
                     var task = Task.Factory.StartNew(() => ProcessPacket(packet), TaskCreationOptions.LongRunning);
                 }
@@ -48,7 +58,6 @@ public class AdapterServer : IDisposable
                 {
                     _logger.LogWarning(ex, "Error while processing packet from '{client:l}'", udpPacket.RemoteEndPoint.Address);
                 }
-
             }
     }
 
@@ -64,6 +73,16 @@ public class AdapterServer : IDisposable
         _udpClient?.Dispose();
         _logger.LogInformation("Server is stopped");
         return Task.CompletedTask;
+    }
+
+    private void LogHelloMessage()
+    {
+        _logger.LogInformation("Multifactor (c) cross-platform RADIUS Adapter, v. {Version:l}", _applicationVariables.AppVersion);
+        _logger.LogInformation("Starting Radius server on {host:l}:{port}",
+            _serviceConfiguration.ServiceServerEndpoint.Address,
+            _serviceConfiguration.ServiceServerEndpoint.Port);
+
+        _logger.LogInformation(_radiusDictionary.GetInfo());
     }
 
     private async Task ProcessPacket(UdpReceiveResult udpPacket)
