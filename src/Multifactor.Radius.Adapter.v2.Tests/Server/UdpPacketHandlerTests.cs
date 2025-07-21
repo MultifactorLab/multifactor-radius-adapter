@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Sockets;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Multifactor.Radius.Adapter.v2.Core.Configuration.Client;
@@ -12,6 +13,7 @@ using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Context;
 using Multifactor.Radius.Adapter.v2.Server;
 using Multifactor.Radius.Adapter.v2.Server.Udp;
 using Multifactor.Radius.Adapter.v2.Services.Radius;
+using Multifactor.Radius.Adapter.v2.Tests.PipelineTests;
 
 namespace Multifactor.Radius.Adapter.v2.Tests.Server;
 
@@ -41,7 +43,12 @@ public class UdpPacketHandlerTests
         packetServiceMock.Setup(x => x.TryGetNasIdentifier(It.IsAny<byte[]>(), out nas)).Returns(true);
         configMock.Setup(x => x.GetClient(It.IsAny<string>())).Returns(clientConfigMock.Object);
         
-        var handler = new UdpPacketHandler(configMock.Object, packetServiceMock.Object, pipelineProviderMock.Object, new Mock<IResponseSender>().Object, NullLogger<IUdpPacketHandler>.Instance);
+        var cacheMock = new Mock<IMemoryCache>();
+        var outVal = new object(); 
+        cacheMock.Setup(x => x.CreateEntry(It.IsAny<object>())).Returns(new PipelineConfigurationFactoryTests.Entry());
+        cacheMock.Setup(x => x.TryGetValue(It.IsAny<string>(), out outVal)).Returns(false);
+        
+        var handler = new UdpPacketHandler(configMock.Object, packetServiceMock.Object, pipelineProviderMock.Object, new Mock<IResponseSender>().Object, cacheMock.Object, NullLogger<IUdpPacketHandler>.Instance);
         var tasks = new List<Task>();
 
         for(int i = 0; i < connectionsCount; i++)
