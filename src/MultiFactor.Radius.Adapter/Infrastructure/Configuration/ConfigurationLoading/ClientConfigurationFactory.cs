@@ -380,7 +380,10 @@ public class ClientConfigurationFactory
     {
         try
         {
-            var ltConf = AuthenticatedClientCacheConfig.Create(appSettings.AuthenticationCacheLifetime, appSettings.AuthenticationCacheMinimalMatching);
+            var ltConf = AuthenticatedClientCacheConfig.Create(
+                appSettings.AuthenticationCacheLifetime,
+                appSettings.AuthenticationCacheMinimalMatching,
+                appSettings.AuthenticationCacheGroups);
             builder.SetAuthenticationCacheLifetime(ltConf);
         }
         catch

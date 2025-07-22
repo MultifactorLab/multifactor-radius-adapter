@@ -70,6 +70,7 @@ public class ClientConfiguration : IClientConfiguration
                    ActiveDirectory2FaGroup.Any() ||
                    ActiveDirectory2FaBypassGroup.Any() ||
                    PhoneAttributes.Any() ||
+                   AuthenticationCacheLifetime.AuthenticationCacheGroups.Any() ||
                    RadiusReplyAttributes
                        .Values
                        .SelectMany(attr => attr)

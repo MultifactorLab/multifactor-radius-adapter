@@ -1,7 +1,8 @@
 ﻿using Microsoft.Extensions.Logging;
-using MultiFactor.Radius.Adapter.Infrastructure.Configuration;
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Linq;
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration.ClientLevel;
 
 namespace MultiFactor.Radius.Adapter.Services
@@ -16,10 +17,22 @@ namespace MultiFactor.Radius.Adapter.Services
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
-        public bool TryHitCache(string callingStationId, string userName, IClientConfiguration clientConfiguration)
+        public bool TryHitCache(string callingStationId, string userName, IClientConfiguration clientConfiguration, IReadOnlyCollection<string> userGroups)
         {
+            ArgumentNullException.ThrowIfNull(userGroups, nameof(userGroups));
             if (!clientConfiguration.AuthenticationCacheLifetime.Enabled) return false;
 
+            var cacheGroups = clientConfiguration.AuthenticationCacheLifetime.AuthenticationCacheGroups;
+            var lowercaseUserGroups = userGroups.Select(x => x.ToLower().Trim());
+            var groupsStr = string.Join(',', cacheGroups);
+            if (cacheGroups.Count > 0 && !cacheGroups.Intersect(lowercaseUserGroups).Any())
+            {
+                _logger.LogDebug("Skip auth caching. User '{userName}' is not a member of any authentication cache groups: ({groups})", userName, groupsStr);
+                return false;
+            }
+                
+            _logger.LogDebug("User '{userName}' is a member of authentication cache groups: ({groups})", userName, groupsStr);
+            
             if (!clientConfiguration.AuthenticationCacheLifetime.MinimalMatching && string.IsNullOrEmpty(callingStationId))
             {
                 _logger.LogWarning("Remote host parameter miss for user {userName:l}", userName);
