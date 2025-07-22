@@ -21,6 +21,7 @@ using MultiFactor.Radius.Adapter.Infrastructure.Configuration.ClientLevel;
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration.RootLevel;
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Models.UserNameTransform;
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Features.UserNameTransform;
+using NetTools;
 
 namespace MultiFactor.Radius.Adapter.Infrastructure.Configuration.ConfigurationLoading;
 
@@ -138,6 +139,8 @@ public class ClientConfigurationFactory
             builder.SetCallingStationIdVendorAttribute(callingStationIdAttr);
         }
 
+        ReadIpWhiteList(builder, appSettings.IpWhiteList);
+        
         return builder;
     }
 
@@ -431,6 +434,22 @@ public class ClientConfigurationFactory
         foreach (var attr in replyAttributes)
         {
             builder.AddRadiusReplyAttribute(attr.Key, attr.Value);
+        }
+    }
+
+    private void ReadIpWhiteList(ClientConfiguration builder, string ipWhiteList)
+    {
+        var splittedRanges = ipWhiteList
+            ?.Split([';'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Select(x => x.ToLower())
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray() ?? [];
+        
+        foreach (var range in splittedRanges)
+        {
+            if (!IPAddressRange.TryParse(range, out var ipAddressRange))
+                throw new InvalidConfigurationException($"Invalid IP address range: '{range}' in '{builder.Name}' config");
+            builder.AddWhiteIpRange(ipAddressRange);
         }
     }
 

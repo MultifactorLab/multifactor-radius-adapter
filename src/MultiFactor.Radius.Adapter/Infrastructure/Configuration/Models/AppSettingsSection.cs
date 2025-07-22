@@ -136,4 +136,7 @@ public class AppSettingsSection
     
     [Description("ldap-bind-timeout")]
     public string LdapBindTimeout { get; set; }
+    
+    [Description("ip-white-list")]
+    public string IpWhiteList { get; init; }
 }

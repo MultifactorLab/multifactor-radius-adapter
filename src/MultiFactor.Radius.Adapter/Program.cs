@@ -11,6 +11,7 @@ using System;
 using System.Text;
 using System.Threading.Tasks;
 using MultiFactor.Radius.Adapter.Infrastructure.Logging;
+using MultiFactor.Radius.Adapter.Server.Pipeline.IpWhiteList;
 
 IHost host = null;
 
@@ -20,6 +21,7 @@ try
     builder.AddLogging();
     builder.ConfigureApplication();
 
+    builder.UseMiddleware<IpWhiteListMiddleware>();
     builder.UseMiddleware<StatusServerMiddleware>();
     builder.UseMiddleware<AccessRequestFilterMiddleware>();
     builder.UseMiddleware<AccessChallengeMiddleware>();

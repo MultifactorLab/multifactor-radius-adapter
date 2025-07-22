@@ -8,12 +8,14 @@ using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Features.PreAuthMo
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Features.PrivacyModeFeature;
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Features.RandomWaiterFeature;
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Features.UserNameTransform;
+using NetTools;
 
 namespace MultiFactor.Radius.Adapter.Infrastructure.Configuration.ClientLevel;
 
 public class ClientConfiguration : IClientConfiguration
 {
     private string _nestedGroupsBaseDn;
+    private readonly List<IPAddressRange> _ipAddressRanges = new List<IPAddressRange>();
 
     public ClientConfiguration(string name,
         string rdsSharedSecret,
@@ -195,6 +197,7 @@ public class ClientConfiguration : IClientConfiguration
     public PreAuthModeDescriptor PreAuthnMode { get; private set; } = PreAuthModeDescriptor.Default;
     public bool IsFreeIpa => !string.IsNullOrEmpty(LdapBindDn);
     public TimeSpan LdapBindTimeout => _ldapTimeout;
+    public IReadOnlyCollection<IPAddressRange> IpWhiteAddressRanges => _ipAddressRanges;
 
     public ClientConfiguration SetBypassSecondFactorWhenApiUnreachable(bool val)
     {
@@ -420,4 +423,6 @@ public class ClientConfiguration : IClientConfiguration
 
         return this;
     }
+    
+    public void AddWhiteIpRange(IPAddressRange range) => _ipAddressRanges.Add(range);
 }
