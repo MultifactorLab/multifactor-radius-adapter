@@ -442,7 +442,7 @@ public class ClientConfigurationFactory
         var splittedRanges = ipWhiteList
             ?.Split([';'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
             .Select(x => x.ToLower())
-            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Distinct()
             .ToArray() ?? [];
         
         foreach (var range in splittedRanges)

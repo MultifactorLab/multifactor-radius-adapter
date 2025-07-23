@@ -1,4 +1,5 @@
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using MultiFactor.Radius.Adapter.Core.Framework.Context;
@@ -24,16 +25,22 @@ public class IpWhiteListMiddleware : IRadiusMiddleware
             return;
         }
         
-        var clientIp = context.RemoteEndpoint.Address;
+        var callingStationId = context.RequestPacket.CallingStationId;
+            
+        var clientIp =  IPAddress.TryParse(callingStationId ?? string.Empty, out var callingStationIp)
+            ? callingStationIp
+            : context.RemoteEndpoint.Address;
+        
         var isIpInRange = ipWhiteList.Any(x => x.Contains(clientIp));
-
+        var rangesStr = string.Join(", ", ipWhiteList);
+        
         if (isIpInRange)
         {
+            _logger.LogDebug("Client '{clientIp}' is in the allowed IP range: ({ranges})", clientIp.ToString(), rangesStr);
             await next(context);
             return;
         }
         
-        var rangesStr = string.Join(", ", ipWhiteList);
         _logger.LogDebug("Client '{clientIp}' is not in the allowed IP range: ({ranges})", clientIp.ToString(), rangesStr);
         
         context.SetFirstFactorAuth(AuthenticationCode.Reject);

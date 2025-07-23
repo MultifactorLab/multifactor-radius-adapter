@@ -30,7 +30,7 @@ public record AuthenticatedClientCacheConfig
         var groups = authenticationCacheGroups
             ?.Split([';'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
             .Select(x => x.ToLower())
-            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Distinct()
             .ToArray() ?? [];
         
         return new AuthenticatedClientCacheConfig(

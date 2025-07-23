@@ -30,9 +30,12 @@ namespace MultiFactor.Radius.Adapter.Services
                 _logger.LogDebug("Skip auth caching. User '{userName}' is not a member of any authentication cache groups: ({groups})", userName, groupsStr);
                 return false;
             }
-                
-            _logger.LogDebug("User '{userName}' is a member of authentication cache groups: ({groups})", userName, groupsStr);
-            
+
+            if (!string.IsNullOrEmpty(groupsStr))
+            {
+                _logger.LogDebug("User '{userName}' is a member of authentication cache groups: ({groups})", userName, groupsStr);
+            }
+
             if (!clientConfiguration.AuthenticationCacheLifetime.MinimalMatching && string.IsNullOrEmpty(callingStationId))
             {
                 _logger.LogWarning("Remote host parameter miss for user {userName:l}", userName);

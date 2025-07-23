@@ -20,10 +20,10 @@ try
     var builder = RadiusHost.CreateApplicationBuilder(args);
     builder.AddLogging();
     builder.ConfigureApplication();
-
-    builder.UseMiddleware<IpWhiteListMiddleware>();
+    
     builder.UseMiddleware<StatusServerMiddleware>();
     builder.UseMiddleware<AccessRequestFilterMiddleware>();
+    builder.UseMiddleware<IpWhiteListMiddleware>();
     builder.UseMiddleware<AccessChallengeMiddleware>();
     builder.UseMiddleware<AnonymousFirstFactorAuthenticationMiddleware>();
     builder.UseMiddleware<PreSecondFactorAuthenticationMiddleware>();
