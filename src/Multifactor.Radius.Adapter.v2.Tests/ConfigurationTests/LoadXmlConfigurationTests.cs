@@ -105,7 +105,7 @@ public class LoadXmlConfigurationTests
 
         var config = configRoot.BindRadiusAdapterConfig();
 
-        Assert.Equal(2, config!.RadiusReply.Attributes.Elements.Length);
+        Assert.Equal(2, config.RadiusReply.Attributes.Elements.Length);
 
         Assert.Contains(config.RadiusReply.Attributes.Elements, x =>
         {
@@ -136,7 +136,7 @@ public class LoadXmlConfigurationTests
             .Build();
 
         var config = configRoot.BindRadiusAdapterConfig();
-        Assert.Equal(2, config!.UserNameTransformRules.Elements.Count());
+        Assert.Equal(2, config.UserNameTransformRules.Elements.Count());
 
         Assert.Contains(config.UserNameTransformRules.Elements, x =>
         {
@@ -145,7 +145,7 @@ public class LoadXmlConfigurationTests
                    x.Count == 3;
         });
 
-        Assert.Contains(config!.UserNameTransformRules.Elements, x =>
+        Assert.Contains(config.UserNameTransformRules.Elements, x =>
         {
             return x.Match == "^([^@]*)$" &&
                    x.Replace == "$1@domain.local" &&

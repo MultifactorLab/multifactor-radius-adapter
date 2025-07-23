@@ -38,8 +38,19 @@ public class PreSecondFactorTests(RadiusFixtures radiusFixtures) : E2ETestBase(r
         {
             builder.Services.ReplaceService(mfAPiMock.Object);
         };
+
+        var ldapServersSection = new LdapServersSection()
+        {
+            LdapServer = new LdapServerConfiguration()
+            {
+                ConnectionString =
+                    sensitiveData.GetConfigValue("root", nameof(LdapServerConfiguration.ConnectionString))!,
+                UserName = RadiusAdapterConstants.AdminUserName,
+                Password = RadiusAdapterConstants.AdminUserPassword
+            }
+        };
         
-        var rootConfig = CreateRadiusConfiguration(sensitiveData);
+        var rootConfig = CreateRadiusConfiguration(sensitiveData, ldapServersSection);
         
         await StartHostAsync(
             rootConfig,
@@ -85,8 +96,19 @@ public class PreSecondFactorTests(RadiusFixtures radiusFixtures) : E2ETestBase(r
         {
             builder.Services.ReplaceService(mfAPiMock.Object);
         };
-
-        var rootConfig = CreateRadiusConfiguration(sensitiveData);
+        
+        var ldapServersSection = new LdapServersSection()
+        {
+            LdapServer = new LdapServerConfiguration()
+            {
+                ConnectionString =
+                    sensitiveData.GetConfigValue("root", nameof(LdapServerConfiguration.ConnectionString))!,
+                UserName = RadiusAdapterConstants.AdminUserName,
+                Password = RadiusAdapterConstants.AdminUserPassword
+            }
+        };
+        
+        var rootConfig = CreateRadiusConfiguration(sensitiveData, ldapServersSection);
 
         await StartHostAsync(
             rootConfig,
@@ -155,7 +177,99 @@ public class PreSecondFactorTests(RadiusFixtures radiusFixtures) : E2ETestBase(r
             builder.Services.ReplaceService(mfAPiMock.Object);
         };
 
-        var rootConfig = CreateRadiusConfiguration(sensitiveData);
+        var ldapServersSection = new LdapServersSection()
+        {
+            LdapServer = new LdapServerConfiguration()
+            {
+                ConnectionString =
+                    sensitiveData.GetConfigValue("root", nameof(LdapServerConfiguration.ConnectionString))!,
+                UserName = RadiusAdapterConstants.AdminUserName,
+                Password = RadiusAdapterConstants.AdminUserPassword
+            }
+        };
+        
+        var rootConfig = CreateRadiusConfiguration(sensitiveData, ldapServersSection);
+        
+        await StartHostAsync(
+            rootConfig,
+            configure: hostConfiguration);
+        
+        // AccessRequest step 1
+        var accessRequest = CreateRadiusPacket(PacketCode.AccessRequest, identifier: 0);
+        accessRequest.AddAttributeValue("NAS-Identifier", RadiusAdapterConstants.DefaultNasIdentifier);
+        accessRequest.AddAttributeValue("User-Name", RadiusAdapterConstants.BindUserName);
+        accessRequest.AddAttributeValue("User-Password", RadiusAdapterConstants.BindUserPassword);
+        
+        var response = SendPacketAsync(accessRequest);
+        
+        Assert.NotNull(response);
+        Assert.Single(mfAPiMock.Invocations);
+        Assert.Equal(PacketCode.AccessChallenge, response.Code);
+        var attribute = response.Attributes["State"];
+        Assert.NotNull(attribute.Values.FirstOrDefault());
+        var attributeValue = attribute.Values.FirstOrDefault();
+        var responseState =  Encoding.UTF8.GetString(attributeValue as byte[]);
+        Assert.Equal(responseState, state);
+        
+        // Challenge step 2
+        accessRequest = CreateRadiusPacket(PacketCode.AccessRequest, identifier: 1);
+        accessRequest.AddAttributeValue("NAS-Identifier", RadiusAdapterConstants.DefaultNasIdentifier);
+        accessRequest.AddAttributeValue("User-Name", RadiusAdapterConstants.BindUserName);
+        accessRequest.AddAttributeValue("State", state);
+        accessRequest.AddAttributeValue("User-Password", challenge1);
+        
+        response = SendPacketAsync(accessRequest);
+        
+        Assert.NotNull(response);
+        Assert.Equal(2, mfAPiMock.Invocations.Count);
+        Assert.Equal(PacketCode.AccessChallenge, response.Code);
+        
+        // Challenge step 3
+        accessRequest = CreateRadiusPacket(PacketCode.AccessRequest, identifier: 2);
+        accessRequest.AddAttributeValue("NAS-Identifier", RadiusAdapterConstants.DefaultNasIdentifier);
+        accessRequest.AddAttributeValue("User-Name", RadiusAdapterConstants.BindUserName);
+        accessRequest.AddAttributeValue("State", state);
+        accessRequest.AddAttributeValue("User-Password", challenge2);
+        
+        response = SendPacketAsync(accessRequest);
+        
+        Assert.NotNull(response);
+        Assert.Equal(3, mfAPiMock.Invocations.Count);
+        Assert.Equal(PacketCode.AccessAccept, response.Code);
+    }
+    
+    [Theory]
+    [InlineData("no-ldap-radius-conf.env")]
+    [InlineData("no-ldap-none-conf.env")]
+    public async Task PreAuth_NoLdapServerSettings_ShouldAccept(string configName)
+    {
+        var state = "PreAuth_NoLdapServerSettings";
+        var challenge1 = "challenge-1";
+        var challenge2 = "challenge-2";
+        
+        var sensitiveData =
+            E2ETestsUtils.GetConfigSensitiveData(configName);
+        
+        var mfAPiMock = new Mock<IMultifactorApiService>();
+        
+        mfAPiMock
+            .Setup(x => x.CreateSecondFactorRequestAsync(It.IsAny<CreateSecondFactorRequest>()))
+            .ReturnsAsync(new MultifactorResponse(AuthenticationStatus.Awaiting, state));
+        
+        mfAPiMock
+            .Setup(x => x.SendChallengeAsync(It.Is<SendChallengeRequest>(r => r.Answer == challenge1)))
+            .ReturnsAsync(new MultifactorResponse(AuthenticationStatus.Awaiting));
+        
+        mfAPiMock
+            .Setup(x => x.SendChallengeAsync(It.Is<SendChallengeRequest>(r => r.Answer == challenge2)))
+            .ReturnsAsync(new MultifactorResponse(AuthenticationStatus.Accept));
+        
+        var hostConfiguration = (HostApplicationBuilder builder) =>
+        {
+            builder.Services.ReplaceService(mfAPiMock.Object);
+        };
+
+        var rootConfig = CreateRadiusConfiguration(sensitiveData, new());
         
         await StartHostAsync(
             rootConfig,
@@ -205,7 +319,7 @@ public class PreSecondFactorTests(RadiusFixtures radiusFixtures) : E2ETestBase(r
         Assert.Equal(PacketCode.AccessAccept, response.Code);
     }
 
-    private RadiusAdapterConfiguration CreateRadiusConfiguration(ConfigSensitiveData[] sensitiveData)
+    private RadiusAdapterConfiguration CreateRadiusConfiguration(ConfigSensitiveData[] sensitiveData, LdapServersSection ldapServersSection)
     {
         var configName = "root";
         var rootConfig = new RadiusAdapterConfiguration()
@@ -237,15 +351,7 @@ public class PreSecondFactorTests(RadiusFixtures radiusFixtures) : E2ETestBase(r
                     nameof(AppSettingsSection.FirstFactorAuthenticationSource))!
             },
             
-            LdapServers = new LdapServersSection()
-            {
-                LdapServer = new LdapServerConfiguration()
-                {
-                    ConnectionString = sensitiveData.GetConfigValue(configName, nameof(LdapServerConfiguration.ConnectionString))!,
-                    UserName = RadiusAdapterConstants.AdminUserName,
-                    Password = RadiusAdapterConstants.AdminUserPassword
-                }
-            }
+            LdapServers = ldapServersSection
         };
 
         return rootConfig;

@@ -16,7 +16,7 @@ namespace Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Context;
 
 public interface IRadiusPipelineExecutionContext
 {
-    ILdapProfile UserLdapProfile { get; set; }
+    ILdapProfile? UserLdapProfile { get; set; }
     IRadiusPacket RequestPacket { get; }
     IRadiusPacket? ResponsePacket { get; set; }
     IAuthenticationState AuthenticationState { get; set; }
@@ -28,7 +28,7 @@ public interface IRadiusPipelineExecutionContext
     ILdapSchema? LdapSchema { get; set; }
     UserPassphrase Passphrase { get; set; }
     HashSet<string> UserGroups { get; set; }
-    ILdapServerConfiguration LdapServerConfiguration { get; }
+    ILdapServerConfiguration? LdapServerConfiguration { get; }
     AuthenticatedClientCacheConfig AuthenticationCacheLifetime { get; }
     bool BypassSecondFactorWhenApiUnreachable { get; }
     AuthenticationSource FirstFactorAuthenticationSource { get; }

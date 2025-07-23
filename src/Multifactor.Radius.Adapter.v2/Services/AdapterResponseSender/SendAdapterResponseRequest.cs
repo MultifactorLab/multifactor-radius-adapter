@@ -35,7 +35,6 @@ public class SendAdapterResponseRequest
         ArgumentNullException.ThrowIfNull(context.RadiusSharedSecret);
         ArgumentNullException.ThrowIfNull(context.UserGroups);
         ArgumentNullException.ThrowIfNull(context.RadiusReplyAttributes);
-        ArgumentNullException.ThrowIfNull(context.UserLdapProfile?.Attributes);
         
         ShouldSkipResponse = context.ExecutionState.ShouldSkipResponse;
         ResponsePacket = context.ResponsePacket;
@@ -47,7 +46,7 @@ public class SendAdapterResponseRequest
         RadiusSharedSecret = context.RadiusSharedSecret;
         UserGroups = context.UserGroups;
         RadiusReplyAttributes = context.RadiusReplyAttributes;
-        Attributes = context.UserLdapProfile.Attributes;
+        Attributes = context.UserLdapProfile?.Attributes ?? Array.Empty<LdapAttribute>();
         InvalidCredentialDelay = context.InvalidCredentialDelay;
     }
 }

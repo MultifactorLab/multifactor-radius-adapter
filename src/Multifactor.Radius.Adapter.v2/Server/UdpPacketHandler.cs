@@ -79,29 +79,47 @@ public class UdpPacketHandler : IUdpPacketHandler
 
     private async Task StartPipeline(IClientConfiguration clientConfiguration, IRadiusPacket requestPacket, IPEndPoint remoteEndpoint, IPEndPoint? proxyEndpoint, IRadiusPipeline pipeline)
     {
-        foreach (var serverConfig in clientConfiguration.LdapServers)
+        if (clientConfiguration.LdapServers.Count > 0)
         {
-            var executionSetting = new PipelineExecutionSettings(clientConfiguration, serverConfig);
-            var context = new RadiusPipelineExecutionContext(executionSetting, requestPacket)
+            foreach (var serverConfig in clientConfiguration.LdapServers)
             {
-                ProxyEndpoint = proxyEndpoint,
-                RemoteEndpoint = remoteEndpoint,
-                Passphrase = UserPassphrase.Parse(requestPacket.TryGetUserPassword(), clientConfiguration.PreAuthnMode)
-            };
-            
-            _logger.LogDebug("Start executing pipeline for '{name}'", clientConfiguration.Name);
-            
-            try
-            {
-                await pipeline.ExecuteAsync(context);
-                var responseRequest = GetResponseRequest(context);
-                await _responseSender.SendResponse(responseRequest);
-            }
-            catch (Exception e)
-            {
-                _logger.LogWarning(exception: e, "Failed to execute pipeline for {name}", serverConfig.ConnectionString);
+                var isSuccessful = await ExecutePipeline(clientConfiguration, requestPacket, remoteEndpoint, proxyEndpoint, pipeline, serverConfig);
+                if (isSuccessful)
+                    break;
             }
         }
+        else
+        {
+            await ExecutePipeline(clientConfiguration, requestPacket, remoteEndpoint, proxyEndpoint, pipeline);
+        }
+    }
+
+    private async Task<bool> ExecutePipeline(IClientConfiguration clientConfiguration, IRadiusPacket requestPacket, IPEndPoint remoteEndpoint, IPEndPoint? proxyEndpoint, IRadiusPipeline pipeline, ILdapServerConfiguration? ldapServerConfiguration = null)
+    {
+        var executionSetting = new PipelineExecutionSettings(clientConfiguration, ldapServerConfiguration);
+        var context = new RadiusPipelineExecutionContext(executionSetting, requestPacket)
+        {
+            ProxyEndpoint = proxyEndpoint,
+            RemoteEndpoint = remoteEndpoint,
+            Passphrase = UserPassphrase.Parse(requestPacket.TryGetUserPassword(), clientConfiguration.PreAuthnMode)
+        };
+
+        var logMessage = $"Start executing pipeline for '{clientConfiguration.Name}'" + (ldapServerConfiguration is not null ? $" at '{ldapServerConfiguration.ConnectionString}'" : string.Empty);
+        _logger.LogDebug(logMessage);
+        try
+        {
+            await pipeline.ExecuteAsync(context);
+            var responseRequest = GetResponseRequest(context);
+            await _responseSender.SendResponse(responseRequest);
+            return true;
+        }
+        catch (Exception e)
+        {
+            var errMessage = $"Failed to execute pipeline for '{clientConfiguration.Name}'" + (ldapServerConfiguration is not null ? $" at '{ldapServerConfiguration.ConnectionString}'" : string.Empty);
+            _logger.LogWarning(exception: e, errMessage);
+        }
+
+        return false;
     }
 
     private bool IsProxyProtocol(byte[] request, out IPEndPoint sourceEndpoint, out byte[] requestWithoutProxyHeader)

@@ -36,6 +36,35 @@ public class PipelineConfigurationFactory : IPipelineConfigurationFactory
 
     private PipelineConfiguration BuildNewPipeline(IPipelineStepsConfiguration pipelineStepsConfiguration)
     {
+        return pipelineStepsConfiguration.HasLdapServers ? GetPipelineWithLdap(pipelineStepsConfiguration) : GetPipelineWithoutLdap(pipelineStepsConfiguration);
+    }
+
+    private PipelineConfiguration GetPipelineWithoutLdap(IPipelineStepsConfiguration pipelineStepsConfiguration)
+    {
+        var pipeline = new List<Type>();
+
+        pipeline.Add(typeof(StatusServerFilteringStep));
+        pipeline.Add(typeof(AccessRequestFilteringStep));
+        pipeline.Add(typeof(AccessChallengeStep));
+        
+        if (pipelineStepsConfiguration.PreAuthMode != PreAuthMode.None)
+        {
+            pipeline.Add(typeof(PreAuthCheckStep));
+            pipeline.Add(typeof(SecondFactorStep));
+            pipeline.Add(typeof(PreAuthPostCheck));
+            pipeline.Add(typeof(FirstFactorStep));
+        }
+        else
+        {
+            pipeline.Add(typeof(FirstFactorStep));
+            pipeline.Add(typeof(SecondFactorStep));
+        }
+        
+        return new PipelineConfiguration(pipeline.ToArray());
+    }
+
+    private PipelineConfiguration GetPipelineWithLdap(IPipelineStepsConfiguration pipelineStepsConfiguration)
+    {
         var pipeline = new List<Type>();
 
         pipeline.Add(typeof(StatusServerFilteringStep));
@@ -45,7 +74,7 @@ public class PipelineConfigurationFactory : IPipelineConfigurationFactory
         pipeline.Add(typeof(LdapSchemaLoadingStep));
 
         pipeline.Add(typeof(ProfileLoadingStep));
-        
+
         pipeline.Add(typeof(AccessGroupsCheckingStep));
 
         pipeline.Add(typeof(AccessChallengeStep));
@@ -62,10 +91,10 @@ public class PipelineConfigurationFactory : IPipelineConfigurationFactory
             pipeline.Add(typeof(FirstFactorStep));
             pipeline.Add(typeof(SecondFactorStep));
         }
-        
+
         if (pipelineStepsConfiguration.ShouldLoadUserGroups)
             pipeline.Add(typeof(UserGroupLoadingStep));
-        
+
         return new PipelineConfiguration(pipeline.ToArray());
     }
 }

@@ -1,3 +1,4 @@
+# nullable disable
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Multifactor.Core.Ldap.Connection;

@@ -24,7 +24,8 @@ public class PipelineProvider : IPipelineProvider
         foreach (var clientConfiguration in configuration.Clients)
         {
             var shouldLoadUserGroups = ShouldLoadUserGroups(clientConfiguration);
-            var pipelineSettings = new PipelineStepsConfiguration(clientConfiguration.Name, clientConfiguration.PreAuthnMode.Mode, shouldLoadUserGroups);
+            var hasLdapServers = clientConfiguration.LdapServers.Count > 0;
+            var pipelineSettings = new PipelineStepsConfiguration(clientConfiguration.Name, clientConfiguration.PreAuthnMode.Mode, shouldLoadUserGroups, hasLdapServers);
             var pipelineConfig = pipelineConfigurationFactory.CreatePipelineConfiguration(pipelineSettings);
             var pipeline = BuildPipeline(pipelineConfig, serviceProvider);
             var log = BuildLog(clientConfiguration.Name, pipelineConfig);

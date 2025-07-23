@@ -21,7 +21,8 @@ public class ResponsePacketTests
 
         Assert.NotNull(responsePacket);
         Assert.Equal(PacketCode.AccountingRequest, responsePacket.Code);
-        Assert.True(packet.Authenticator!.Value.SequenceEqual(responsePacket.RequestAuthenticator!.Value));
+        Assert.NotNull(responsePacket.RequestAuthenticator);
+        Assert.True(packet.Authenticator.Value.SequenceEqual(responsePacket.RequestAuthenticator.Value));
         Assert.Equal(packet.Identifier, responsePacket.Identifier);
     }
 

@@ -7,6 +7,7 @@ using Multifactor.Radius.Adapter.v2.Infrastructure.Configuration.Exceptions;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configuration.RadiusAdapter;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configuration.RadiusAdapter.Sections;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configuration.RadiusAdapter.Sections.LdapServer;
+using Multifactor.Radius.Adapter.v2.Infrastructure.Configuration.RadiusAdapter.Sections.RadiusReply;
 using Multifactor.Radius.Adapter.v2.Tests.Fixture;
 
 namespace Multifactor.Radius.Adapter.v2.Tests.ConfigurationTests.ClientConfigurationFactoryTests;
@@ -198,6 +199,74 @@ public class AppSettingsTests
         Assert.Empty(clientConfig.RadiusReplyAttributes);
         Assert.NotNull(clientConfig.UserNameTransformRules);
         Assert.Null(clientConfig.ServiceClientEndpoint);
+    }
+    
+    [Fact]
+    public void CreateClientConfiguration_FirstFactorIsLdapNoServers_ShouldThrow()
+    {
+        var radiusConfig = new RadiusAdapterConfiguration()
+        {
+            AppSettings = new AppSettingsSection()
+            {
+                MultifactorNasIdentifier = "identifier",
+                MultifactorSharedSecret = "secret",
+                SignUpGroups = "groups",
+                BypassSecondFactorWhenApiUnreachable = true,
+                FirstFactorAuthenticationSource = "Ldap",
+                RadiusSharedSecret = "secret",
+                PrivacyMode = "Full",
+                PreAuthenticationMethod = "None",
+                AuthenticationCacheLifetime = "00:01:00",
+                AuthenticationCacheMinimalMatching = true,
+                CallingStationIdAttribute = "12345",
+                InvalidCredentialDelay = "3"
+            }
+        };
+
+        var serviceConfig = new ServiceConfiguration();
+        var configName = "name";
+        var dictionaryMock = new Mock<IRadiusDictionary>();
+        var attribute = new DictionaryAttribute("name", 1, "type");
+        dictionaryMock.Setup(x => x.GetAttribute(It.IsAny<string>())).Returns(attribute);
+        var factory = new ClientConfigurationFactory(dictionaryMock.Object);
+        Assert.Throws<InvalidConfigurationException>(() => factory.CreateConfig(configName, radiusConfig, serviceConfig));
+    }
+    
+    [Theory]
+    [InlineData("none")]
+    [InlineData("radius")]
+    public void CreateClientConfiguration_ReplyAttributesNoLdapServer_ShouldThrow(string firstFactor)
+    {
+        var radiusConfig = new RadiusAdapterConfiguration()
+        {
+            AppSettings = new AppSettingsSection()
+            {
+                MultifactorNasIdentifier = "identifier",
+                MultifactorSharedSecret = "secret",
+                SignUpGroups = "groups",
+                BypassSecondFactorWhenApiUnreachable = true,
+                FirstFactorAuthenticationSource = firstFactor,
+                RadiusSharedSecret = "secret",
+                PrivacyMode = "Full",
+                PreAuthenticationMethod = "None",
+                AuthenticationCacheLifetime = "00:01:00",
+                AuthenticationCacheMinimalMatching = true,
+                CallingStationIdAttribute = "12345",
+                InvalidCredentialDelay = "3"
+            },
+            RadiusReply = new RadiusReplySection()
+            {
+                Attributes = new RadiusReplyAttributesSection(new RadiusReplyAttribute() { Name = "name", From = "attr" })
+            }
+        };
+
+        var serviceConfig = new ServiceConfiguration();
+        var configName = "name";
+        var dictionaryMock = new Mock<IRadiusDictionary>();
+        var attribute = new DictionaryAttribute("name", 1, "type");
+        dictionaryMock.Setup(x => x.GetAttribute(It.IsAny<string>())).Returns(attribute);
+        var factory = new ClientConfigurationFactory(dictionaryMock.Object);
+        Assert.Throws<InvalidConfigurationException>(() => factory.CreateConfig(configName, radiusConfig, serviceConfig));
     }
     
     [Theory]

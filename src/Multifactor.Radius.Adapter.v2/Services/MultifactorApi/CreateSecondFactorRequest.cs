@@ -12,7 +12,7 @@ namespace Multifactor.Radius.Adapter.v2.Services.MultifactorApi;
 
 public class CreateSecondFactorRequest
 {
-    public ILdapProfile UserProfile { get; }
+    public ILdapProfile? UserProfile { get; }
     public IRadiusPacket RequestPacket { get; }
     public IPEndPoint RemoteEndpoint { get; }
     public string ConfigName { get; }
@@ -31,7 +31,6 @@ public class CreateSecondFactorRequest
     public CreateSecondFactorRequest(IRadiusPipelineExecutionContext context)
     {
         ArgumentNullException.ThrowIfNull(context);
-        ArgumentNullException.ThrowIfNull(context.UserLdapProfile);
         ArgumentNullException.ThrowIfNull(context.RequestPacket);
         ArgumentNullException.ThrowIfNull(context.RemoteEndpoint);
         ArgumentException.ThrowIfNullOrWhiteSpace(context.ClientConfigurationName);
@@ -41,7 +40,6 @@ public class CreateSecondFactorRequest
         ArgumentNullException.ThrowIfNull(context.PreAuthnMode);
         ArgumentNullException.ThrowIfNull(context.UserNameTransformRules);
         ArgumentNullException.ThrowIfNull(context.ApiCredential);
-        ArgumentNullException.ThrowIfNull(context.LdapServerConfiguration);
         
         UserProfile = context.UserLdapProfile;
         RequestPacket = context.RequestPacket;
@@ -55,8 +53,8 @@ public class CreateSecondFactorRequest
         FirstFactorAuthenticationSource = context.FirstFactorAuthenticationSource;
         UserNameTransformRules = context.UserNameTransformRules;
         ApiCredential = context.ApiCredential;
-        IdentityAttribute = context.LdapServerConfiguration.IdentityAttribute;
+        IdentityAttribute = context.LdapServerConfiguration?.IdentityAttribute;
         BypassSecondFactorWhenApiUnreachable = context.BypassSecondFactorWhenApiUnreachable;
-        PhoneAttributesNames = context.LdapServerConfiguration.PhoneAttributes;
+        PhoneAttributesNames = context.LdapServerConfiguration?.PhoneAttributes ?? new List<string>();
     }
 }
