@@ -134,8 +134,10 @@ public abstract class E2ETestBase(RadiusFixtures radiusFixtures) : IDisposable
         string attributeName,
         object attributeValue)
     {
+        ArgumentNullException.ThrowIfNull(_host);
+        
         var clientConfiguration = CreateClientConfiguration(config);
-        var connectionFactory = _host!.Services.GetRequiredService<ILdapConnectionFactory>();
+        var connectionFactory = _host.Services.GetRequiredService<ILdapConnectionFactory>();
         var serverConfig = clientConfiguration.LdapServers.First();
         
         using var connection = connectionFactory.CreateConnection(new LdapConnectionOptions(
@@ -154,8 +156,11 @@ public abstract class E2ETestBase(RadiusFixtures radiusFixtures) : IDisposable
     
     protected IClientConfiguration CreateClientConfiguration(RadiusAdapterConfiguration configuration)
     {
-        var serviceConfig = _host!.Services.GetService<IServiceConfiguration>();
-        return _clientConfigurationFactory!.CreateConfig("e2e", configuration, serviceConfig!);
+        ArgumentNullException.ThrowIfNull(_host);
+        ArgumentNullException.ThrowIfNull(_clientConfigurationFactory);
+        
+        var serviceConfig = _host.Services.GetService<IServiceConfiguration>();
+        return _clientConfigurationFactory.CreateConfig("e2e", configuration, serviceConfig!);
     }
     
     private ModifyRequest BuildModifyRequest(

@@ -57,6 +57,10 @@ public class ChangePasswordChallengeProcessor : IChallengeProcessor
     public async Task<ChallengeStatus> ProcessChallengeAsync(ChallengeIdentifier identifier, IRadiusPipelineExecutionContext context)
     {
         ArgumentNullException.ThrowIfNull(context);
+        ArgumentNullException.ThrowIfNull(context.UserLdapProfile);
+        ArgumentNullException.ThrowIfNull(context.LdapServerConfiguration);
+        ArgumentNullException.ThrowIfNull(context.LdapSchema);
+        
         var passwordChangeRequest = GetPasswordChangeRequest(identifier.RequestId);
         if (passwordChangeRequest == null)
             return ChallengeStatus.Accept;
@@ -79,7 +83,7 @@ public class ChangePasswordChallengeProcessor : IChallengeProcessor
             decryptedNewPassword,
             context.UserLdapProfile,
             context.LdapServerConfiguration,
-            context.LdapSchema!);
+            context.LdapSchema);
         
         var result = await _ldapService.ChangeUserPasswordAsync(request);
             

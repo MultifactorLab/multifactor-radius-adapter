@@ -10,7 +10,7 @@ namespace Multifactor.Radius.Adapter.v2.Services.MultifactorApi;
 public class SendChallengeRequest
 {
     public ApiCredential ApiCredential { get; }
-    public ILdapProfile UserProfile { get; }
+    public ILdapProfile? UserProfile { get; }
     public string? IdentityAttribute { get; }
     public IRadiusPacket RequestPacket { get; }
     public string ConfigName { get; }
@@ -24,8 +24,6 @@ public class SendChallengeRequest
     {
         ArgumentNullException.ThrowIfNull(context);
         ArgumentNullException.ThrowIfNull(context.ApiCredential);
-        ArgumentNullException.ThrowIfNull(context.LdapServerConfiguration);
-        ArgumentNullException.ThrowIfNull(context.UserLdapProfile);
         ArgumentNullException.ThrowIfNull(context.RequestPacket);
         ArgumentException.ThrowIfNullOrWhiteSpace(context.ClientConfigurationName);
         ArgumentException.ThrowIfNullOrWhiteSpace(answer);
@@ -34,7 +32,7 @@ public class SendChallengeRequest
         ArgumentNullException.ThrowIfNull(context.RemoteEndpoint);
         
         ApiCredential = context.ApiCredential;
-        IdentityAttribute = context.LdapServerConfiguration.IdentityAttribute;
+        IdentityAttribute = context.LdapServerConfiguration?.IdentityAttribute;
         UserProfile = context.UserLdapProfile;
         RequestPacket = context.RequestPacket;
         ConfigName = context.ClientConfigurationName;

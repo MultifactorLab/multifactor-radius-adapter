@@ -70,6 +70,10 @@ public class SecondFactorStep : IRadiusPipelineStep
     private bool ShouldBypassByGroups(IRadiusPipelineExecutionContext context)
     {
         var serverConfig = context.LdapServerConfiguration;
+        
+        if (serverConfig is null)
+            return false;
+        
         bool? bypassMember = null;
 
         if (serverConfig.SecondFaBypassGroups.Any())

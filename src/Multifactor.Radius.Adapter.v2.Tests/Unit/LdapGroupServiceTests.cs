@@ -1,3 +1,4 @@
+# nullable disable
 using Moq;
 using Multifactor.Core.Ldap.Connection;
 using Multifactor.Core.Ldap.LdapGroup.Load;

@@ -197,8 +197,6 @@ public class LdapSettingsTests
     }
 
     [Theory]
-    [InlineData("None")]
-    [InlineData("Radius")]
     [InlineData("Ldap")]
     public void CreateClientConfiguration_NoServerConfigs_ShouldThrow(string factor)
     {

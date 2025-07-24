@@ -60,7 +60,7 @@ public class ClientConfigurationFactory : IClientConfigurationFactory
 
         if (builder.FirstFactorAuthenticationSource == AuthenticationSource.Radius)
             ReadRadiusAuthenticationSourceSettings(builder, appSettings);
-
+        
         ReadLdapServersSettings(builder, configuration.LdapServers);
         ReadRadiusReplyAttributes(builder, _dictionary, configuration.RadiusReply);
 
@@ -74,17 +74,15 @@ public class ClientConfigurationFactory : IClientConfigurationFactory
         {
             builder.SetCallingStationIdVendorAttribute(callingStationIdAttr);
         }
-
+        
+        Validate(builder);
         return builder;
     }
 
     private static void ReadLdapServersSettings(ClientConfiguration builder, LdapServersSection ldapServersSection)
     {
         if (ldapServersSection.Servers.Length == 0)
-            throw InvalidConfigurationException.For(
-                x => x.LdapServers,
-                "Can't parse '{prop}' value. Config name: '{0}'",
-                builder.Name);
+            return;
         
         ValidateLdapServers(ldapServersSection, builder.Name);
 
@@ -175,8 +173,7 @@ public class ClientConfigurationFactory : IClientConfigurationFactory
         }
     }
 
-    private static void LoadUserNameTransformRulesSection(RadiusAdapterConfiguration configuration,
-        ClientConfiguration builder)
+    private static void LoadUserNameTransformRulesSection(RadiusAdapterConfiguration configuration, ClientConfiguration builder)
     {
         var userNameTransformRulesSection = configuration.UserNameTransformRules;
         var firstFactorRules = new List<UserNameTransformRule>();
@@ -196,8 +193,7 @@ public class ClientConfigurationFactory : IClientConfigurationFactory
         );
     }
 
-    private static void ReadRadiusAuthenticationSourceSettings(ClientConfiguration builder,
-        AppSettingsSection appSettings)
+    private static void ReadRadiusAuthenticationSourceSettings(ClientConfiguration builder, AppSettingsSection appSettings)
     {
         if (string.IsNullOrWhiteSpace(appSettings.AdapterClientEndpoint))
         {
@@ -414,5 +410,22 @@ public class ClientConfigurationFactory : IClientConfigurationFactory
                     configName);
             }
         }
+    }
+
+    private void Validate(ClientConfiguration builder)
+    {
+        var serversRequired = IsLdapServerRequired(builder);
+        if (serversRequired && builder.LdapServers.Count == 0)
+            throw InvalidConfigurationException.For(
+                x => x.LdapServers,
+                "Can't parse '{prop}' value. Config name: '{0}'",
+                builder.Name);
+    }
+    
+    private static bool IsLdapServerRequired(ClientConfiguration builder)
+    {
+        var ldapFirstFactor = builder.FirstFactorAuthenticationSource == AuthenticationSource.Ldap;
+        var hasReplyAttributesFromLdap = builder.RadiusReplyAttributes.Values.SelectMany(x => x).Any(x => x.FromLdap || x.IsMemberOf || x.UserGroupCondition.Count > 0);
+        return ldapFirstFactor || hasReplyAttributesFromLdap;
     }
 }

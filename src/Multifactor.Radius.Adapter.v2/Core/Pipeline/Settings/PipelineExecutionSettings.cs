@@ -14,7 +14,7 @@ public class PipelineExecutionSettings : IPipelineExecutionSettings
 {
     private readonly IClientConfiguration _configuration;
     private readonly SharedSecret _sharedSecret;
-    public ILdapServerConfiguration LdapServerConfiguration { get; }
+    public ILdapServerConfiguration? LdapServerConfiguration { get; }
     public AuthenticatedClientCacheConfig AuthenticationCacheLifetime => _configuration.AuthenticationCacheLifetime;
     public bool BypassSecondFactorWhenApiUnreachable => _configuration.BypassSecondFactorWhenApiUnreachable;
     public AuthenticationSource FirstFactorAuthenticationSource => _configuration.FirstFactorAuthenticationSource;
@@ -30,7 +30,7 @@ public class PipelineExecutionSettings : IPipelineExecutionSettings
     public SharedSecret RadiusSharedSecret => _sharedSecret;
     public string ClientConfigurationName => _configuration.Name;
     
-    public PipelineExecutionSettings(IClientConfiguration clientConfiguration, ILdapServerConfiguration ldapServerConfiguration)
+    public PipelineExecutionSettings(IClientConfiguration clientConfiguration, ILdapServerConfiguration? ldapServerConfiguration = null)
     {
         Throw.IfNull(clientConfiguration, nameof(clientConfiguration));
         

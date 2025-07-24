@@ -85,7 +85,7 @@ public class MultifactorApiService : IMultifactorApiService
         ArgumentException.ThrowIfNullOrWhiteSpace(request.RequestId, nameof(request.RequestId));
         ArgumentException.ThrowIfNullOrWhiteSpace(request.Answer, nameof(request.Answer));
 
-        var identity = GetSecondFactorIdentity(request.IdentityAttribute, request.RequestPacket.UserName, request.UserProfile.Attributes);
+        var identity = GetSecondFactorIdentity(request.IdentityAttribute, request.RequestPacket.UserName, request.UserProfile?.Attributes ?? []);
         if (string.IsNullOrWhiteSpace(identity))
             throw new InvalidOperationException("The identity is empty.");
 
@@ -166,7 +166,7 @@ public class MultifactorApiService : IMultifactorApiService
             regionValue,
             cityValue,
             callingStationId,
-            response!.AuthenticatorId);
+            response?.AuthenticatorId);
     }
 
     private static string? GetPassCodeOrNull(CreateSecondFactorRequest context)
@@ -251,7 +251,7 @@ public class MultifactorApiService : IMultifactorApiService
             ? callingStationId
             : request.RemoteEndpoint.Address.ToString();
 
-        var phone = request.UserProfile.Attributes
+        var phone = request.UserProfile?.Attributes
             .Where(x => request.PhoneAttributesNames.Contains(x.Name.Value))
             .Select(x => x.GetNotEmptyValues().FirstOrDefault())
             .FirstOrDefault();
@@ -259,9 +259,9 @@ public class MultifactorApiService : IMultifactorApiService
         var personalData = new PersonalData
         {
             Identity = secondFactorIdentity!,
-            DisplayName = request.UserProfile.DisplayName,
-            Email = request.UserProfile.Email,
-            Phone = string.IsNullOrWhiteSpace(phone) ? request.UserProfile.Phone : phone,
+            DisplayName = request.UserProfile?.DisplayName,
+            Email = request.UserProfile?.Email,
+            Phone = string.IsNullOrWhiteSpace(phone) ? request.UserProfile?.Phone : phone,
             CalledStationId = request.RequestPacket.CalledStationIdAttribute,
             CallingStationId = callingStationIdForApiRequest
         };

@@ -75,15 +75,15 @@ public class AdapterResponseSender : IResponseSender
                     AddResponsePacketAttributes(request.ResponsePacket, responsePacket);
                 break;
             case PacketCode.AccessChallenge:
-                if (!string.IsNullOrWhiteSpace(request.ResponseInformation.ReplyMessage))
-                    responsePacket.ReplaceAttribute("Reply-Message", request.ResponseInformation.ReplyMessage);
-        
                 if (!string.IsNullOrWhiteSpace(request.ResponseInformation.State))
                     responsePacket.ReplaceAttribute("State", request.ResponseInformation.State);
                 break;
             default:
                 throw new NotImplementedException(responsePacketCode.ToString());
         }
+        
+        if (!string.IsNullOrWhiteSpace(request.ResponseInformation.ReplyMessage))
+            responsePacket.ReplaceAttribute("Reply-Message", request.ResponseInformation.ReplyMessage);
         
         AddProxyAttribute(requestPacket, responsePacket);
         

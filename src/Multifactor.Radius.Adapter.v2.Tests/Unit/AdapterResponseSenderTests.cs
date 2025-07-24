@@ -1,3 +1,4 @@
+# nullable disable
 using System.Net;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
@@ -53,7 +54,7 @@ public class AdapterResponseSenderTests
         contextMock.Setup(x => x.UserGroups).Returns([]);
         contextMock.Setup(x => x.RadiusReplyAttributes).Returns(new Dictionary<string, RadiusReplyAttributeValue[]>());
         contextMock.Setup(x => x.ExecutionState.ShouldSkipResponse).Returns(false);
-        contextMock.Setup(x => x.ResponsePacket!.IsEapMessageChallenge).Returns(true);
+        contextMock.Setup(x => x.ResponsePacket.IsEapMessageChallenge).Returns(true);
         contextMock.Setup(x => x.RemoteEndpoint).Returns(IPEndPoint.Parse("127.0.0.1"));
         contextMock.Setup(x => x.RequestPacket.Identifier).Returns(1);
         contextMock.Setup(x => x.RadiusSharedSecret).Returns(new SharedSecret("123"));
@@ -84,7 +85,7 @@ public class AdapterResponseSenderTests
         var contextMock = new Mock<IRadiusPipelineExecutionContext>();
         contextMock.Setup(x => x.ExecutionState.ShouldSkipResponse).Returns(false);
         contextMock.Setup(x => x.ResponsePacket).Returns(new Mock<IRadiusPacket>().Object);
-        contextMock.Setup(x => x.ResponsePacket!.IsEapMessageChallenge).Returns(false);
+        contextMock.Setup(x => x.ResponsePacket.IsEapMessageChallenge).Returns(false);
         contextMock.Setup(x => x.RemoteEndpoint).Returns(IPEndPoint.Parse("127.0.0.1"));
         contextMock.Setup(x => x.RequestPacket.Identifier).Returns(1);
         contextMock.Setup(x => x.RequestPacket.IsVendorAclRequest).Returns(true);
@@ -360,8 +361,7 @@ public class AdapterResponseSenderTests
         packetServiceMock.Setup(x => x.GetBytes(packet, It.IsAny<SharedSecret>())).Returns(packetBytes);
         
         var attributeServiceMock = new Mock<IRadiusReplyAttributeService>();
-        var replyAttributes = new Dictionary<string, List<object>>();
-        replyAttributes.Add("key", new List<object>() { 123 });
+        var replyAttributes = new Dictionary<string, List<object>> { { "key", new List<object>() { 123 } } };
         attributeServiceMock.Setup(x => x.GetReplyAttributes(It.IsAny<GetReplyAttributesRequest>())).Returns(replyAttributes);
         var udpClientMock = new Mock<IUdpClient>();
         

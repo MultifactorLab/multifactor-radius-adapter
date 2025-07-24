@@ -60,6 +60,7 @@ public class ProfileLoadingTests
         contextMock.Setup(x => x.RequestPacket.UserName).Returns(userName);
         contextMock.Setup(x => x.RemoteEndpoint).Returns(IPEndPoint.Parse("127.0.0.1:666"));
         contextMock.SetupProperty(x => x.UserLdapProfile);
+        contextMock.Setup(x => x.LdapServerConfiguration).Returns(new Mock<ILdapServerConfiguration>().Object);
         var context = contextMock.Object;
         var cacheMock = new CacheMock();
         var step = new ProfileLoadingStep(loaderMock.Object, cacheMock, NullLogger<ProfileLoadingStep>.Instance);
@@ -106,6 +107,7 @@ public class ProfileLoadingTests
         contextMock.Setup(x => x.RadiusReplyAttributes).Returns(new Dictionary<string, RadiusReplyAttributeValue[]>());
         contextMock.Setup(x => x.LdapSchema).Returns(() => null);
         contextMock.Setup(x => x.ClientConfigurationName).Returns("name");
+        contextMock.Setup(x => x.LdapServerConfiguration).Returns(new Mock<ILdapServerConfiguration>().Object);
         contextMock.SetupProperty(x => x.UserLdapProfile);
         var context = contextMock.Object;
         var cacheMock = new CacheMock();
@@ -127,6 +129,8 @@ public class ProfileLoadingTests
 
         public LdapProfileMock()
         {
+            MemberOf = [];
+            Attributes = [];
             Dn = new DistinguishedName("dc=test,dc=example,dc=com");
         }
     }

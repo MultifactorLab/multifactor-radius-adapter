@@ -17,7 +17,7 @@ public class PipelineExecutionTests
         var contextMock = new Mock<IRadiusPipelineExecutionContext>();
         contextMock.Setup(x => x.ExecutionState).Returns(new ExecutionState());
         var context = contextMock.Object;
-        await pipeline!.ExecuteAsync(context);
+        await pipeline.ExecuteAsync(context);
     }
     
     [Fact]
@@ -35,7 +35,7 @@ public class PipelineExecutionTests
         var contextMock = new Mock<IRadiusPipelineExecutionContext>();
         contextMock.Setup(x => x.ExecutionState).Returns(new ExecutionState());
         var context = contextMock.Object;
-        await pipeline!.ExecuteAsync(context);
+        await pipeline.ExecuteAsync(context);
         
         Assert.Equal(3, executionChain.Count);
         Assert.Collection(executionChain,

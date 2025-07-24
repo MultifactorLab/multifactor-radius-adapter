@@ -113,9 +113,9 @@ public class MultipleActiveDirectory2FaGroupsTests(RadiusFixtures radiusFixtures
             configure: hostConfiguration);
 
         var accessRequest = CreateRadiusPacket(PacketCode.AccessRequest);
-        accessRequest!.AddAttributeValue("NAS-Identifier", RadiusAdapterConstants.DefaultNasIdentifier);
-        accessRequest!.AddAttributeValue("User-Name", RadiusAdapterConstants.BindUserName);
-        accessRequest!.AddAttributeValue("User-Password", RadiusAdapterConstants.BindUserPassword);
+        accessRequest.AddAttributeValue("NAS-Identifier", RadiusAdapterConstants.DefaultNasIdentifier);
+        accessRequest.AddAttributeValue("User-Name", RadiusAdapterConstants.BindUserName);
+        accessRequest.AddAttributeValue("User-Password", RadiusAdapterConstants.BindUserPassword);
 
         var response = SendPacketAsync(accessRequest);
 
