@@ -12,7 +12,6 @@ namespace Multifactor.Radius.Adapter.v2.Services.AuthenticatedClientCache;
 
         public AuthenticatedClientCache(ILogger<AuthenticatedClientCache> logger)
         {
-            ArgumentNullException.ThrowIfNull(logger);
             _logger = logger;
         }
 

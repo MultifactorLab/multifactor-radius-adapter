@@ -9,6 +9,7 @@ using Multifactor.Radius.Adapter.v2.Infrastructure.Configuration.RadiusAdapter.S
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configuration.RadiusAdapter.Sections.LdapServer;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configuration.RadiusAdapter.Sections.RadiusReply;
 using Multifactor.Radius.Adapter.v2.Tests.Fixture;
+using NetTools;
 
 namespace Multifactor.Radius.Adapter.v2.Tests.ConfigurationTests.ClientConfigurationFactoryTests;
 
@@ -577,5 +578,104 @@ public class AppSettingsTests
         var factory =
             new ClientConfigurationFactory(dictionaryMock.Object);
         Assert.Throws<InvalidConfigurationException>(() => factory.CreateConfig(configName, radiusConfig, serviceConfig));
+    }
+
+    [Fact]
+    public void CreateClientConfiguration_SingleValidWhiteIp_ShouldCreate()
+    {
+        var whiteList = "127.0.0.1";
+        var radiusConfig = new RadiusAdapterConfiguration()
+        {
+            AppSettings = new AppSettingsSection()
+            {
+                MultifactorNasIdentifier = "nasIdentifier",
+                MultifactorSharedSecret = "Secret",
+                SignUpGroups = "group",
+                BypassSecondFactorWhenApiUnreachable = true,
+                FirstFactorAuthenticationSource = "None",
+                RadiusSharedSecret = "secret",
+                PrivacyMode = "None",
+                PreAuthenticationMethod = "None",
+                CallingStationIdAttribute = "12345",
+                InvalidCredentialDelay = "1",
+                IpWhiteList = whiteList
+            }
+        };
+        
+        var serviceConfig = new ServiceConfiguration();
+        var configName = "name";
+        var dictionaryMock = new Mock<IRadiusDictionary>();
+        var attribute = new DictionaryAttribute("name", 1, "type");
+        dictionaryMock.Setup(x => x.GetAttribute(It.IsAny<string>())).Returns(attribute);
+        var factory = new ClientConfigurationFactory(dictionaryMock.Object);
+        var config = factory.CreateConfig(configName, radiusConfig, serviceConfig);
+        
+        var expectedWhiteList = IPAddressRange.Parse(whiteList);
+        Assert.Equal(expectedWhiteList, config.IpWhiteList.First());
+    }
+    
+    [Fact]
+    public void CreateClientConfiguration_MultipleValidWhiteIps_ShouldCreate()
+    {
+        var whiteList = "127.0.0.1; 127.0.0.2-128.0.0.1; 127.2.0.0/16";
+        var radiusConfig = new RadiusAdapterConfiguration()
+        {
+            AppSettings = new AppSettingsSection()
+            {
+                MultifactorNasIdentifier = "nasIdentifier",
+                MultifactorSharedSecret = "Secret",
+                SignUpGroups = "group",
+                BypassSecondFactorWhenApiUnreachable = true,
+                FirstFactorAuthenticationSource = "None",
+                RadiusSharedSecret = "secret",
+                PrivacyMode = "None",
+                PreAuthenticationMethod = "None",
+                CallingStationIdAttribute = "12345",
+                InvalidCredentialDelay = "1",
+                IpWhiteList = whiteList
+            }
+        };
+        
+        var serviceConfig = new ServiceConfiguration();
+        var configName = "name";
+        var dictionaryMock = new Mock<IRadiusDictionary>();
+        var attribute = new DictionaryAttribute("name", 1, "type");
+        dictionaryMock.Setup(x => x.GetAttribute(It.IsAny<string>())).Returns(attribute);
+        var factory = new ClientConfigurationFactory(dictionaryMock.Object);
+        var config = factory.CreateConfig(configName, radiusConfig, serviceConfig);
+        
+        var expectedWhiteList = new[] { IPAddressRange.Parse("127.0.0.1"), IPAddressRange.Parse("127.0.0.2-128.0.0.1"), IPAddressRange.Parse("127.2.0.0/16") };
+        Assert.True(expectedWhiteList.SequenceEqual(config.IpWhiteList));
+    }
+    
+    [Fact]
+    public void CreateClientConfiguration_InvalidIpWhiteList_ShouldThrow()
+    {
+        var whiteList = "127.0.0.1; invalid-ip-address";
+        var radiusConfig = new RadiusAdapterConfiguration()
+        {
+            AppSettings = new AppSettingsSection()
+            {
+                MultifactorNasIdentifier = "nasIdentifier",
+                MultifactorSharedSecret = "Secret",
+                SignUpGroups = "group",
+                BypassSecondFactorWhenApiUnreachable = true,
+                FirstFactorAuthenticationSource = "None",
+                RadiusSharedSecret = "secret",
+                PrivacyMode = "None",
+                PreAuthenticationMethod = "None",
+                CallingStationIdAttribute = "12345",
+                InvalidCredentialDelay = "1",
+                IpWhiteList = whiteList
+            }
+        };
+        
+        var serviceConfig = new ServiceConfiguration();
+        var configName = "name";
+        var dictionaryMock = new Mock<IRadiusDictionary>();
+        var attribute = new DictionaryAttribute("name", 1, "type");
+        dictionaryMock.Setup(x => x.GetAttribute(It.IsAny<string>())).Returns(attribute);
+        var factory = new ClientConfigurationFactory(dictionaryMock.Object);
+       Assert.Throws<InvalidConfigurationException>(() => factory.CreateConfig(configName, radiusConfig, serviceConfig));
     }
 }

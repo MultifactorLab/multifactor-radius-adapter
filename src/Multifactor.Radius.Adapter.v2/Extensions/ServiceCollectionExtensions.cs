@@ -165,6 +165,7 @@ public static class ServiceCollectionExtensions
         services.AddTransient<PreAuthCheckStep>();
         services.AddTransient<PreAuthPostCheck>();
         services.AddTransient<UserGroupLoadingStep>();
+        services.AddTransient<IpWhiteListStep>();
     }
 
     public static void AddLdapSchemaLoader(this IServiceCollection services)

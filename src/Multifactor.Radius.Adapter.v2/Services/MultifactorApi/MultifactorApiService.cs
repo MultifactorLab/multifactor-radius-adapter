@@ -61,11 +61,15 @@ public class MultifactorApiService : IMultifactorApiService
         {
             var response = await CreateAccessRequestAsync(personalData, payload, request);
             var responseCode = ConvertToAuthCode(response);
-            if (responseCode == AuthenticationStatus.Accept && !(response?.Bypassed ?? false))
+
+            if (!ShouldCacheResponse(request.ApiResponseCacheEnabled, responseCode, response))
             {
-                LogGrantedInfo(personalData.Identity, response, request.RequestPacket.CallingStationIdAttribute);
-                _authenticatedClientCache.SetCache(callingStationId, personalData.Identity, request.ConfigName, request.AuthenticationCacheLifetime);
+                _logger.LogDebug("Skip 2FA response caching for user '{user}'.", request.RequestPacket.UserName);
+                return new MultifactorResponse(responseCode, response?.Id, response?.ReplyMessage);
             }
+
+            LogGrantedInfo(personalData.Identity, response, request.RequestPacket.CallingStationIdAttribute);
+            _authenticatedClientCache.SetCache(callingStationId, personalData.Identity, request.ConfigName, request.AuthenticationCacheLifetime);
 
             return new MultifactorResponse(responseCode, response?.Id, response?.ReplyMessage);
         }
@@ -100,8 +104,13 @@ public class MultifactorApiService : IMultifactorApiService
         {
             var response = await _api.SendChallengeAsync(payload, request.ApiCredential);
             var responseCode = ConvertToAuthCode(response);
-            if (responseCode != AuthenticationStatus.Accept || response.Bypassed)
+            
+            if (!ShouldCacheResponse(request.ApiResponseCacheEnabled, responseCode, response))
+            {
+                _logger.LogDebug("Skip challenge response caching for user '{user}'.", request.RequestPacket.UserName);
                 return new MultifactorResponse(responseCode, response?.ReplyMessage);
+            }
+
             LogGrantedInfo(identity, response, request.RequestPacket.CallingStationIdAttribute);
             _authenticatedClientCache.SetCache(request.RequestPacket.CallingStationIdAttribute, identity, request.ConfigName, request.AuthenticationCacheLifetime);
 
@@ -221,7 +230,7 @@ public class MultifactorApiService : IMultifactorApiService
 
         return response;
     }
-
+    
     private string? GetSecondFactorIdentity(CreateSecondFactorRequest context)
     {
         if (string.IsNullOrWhiteSpace(context.IdentityAttribute))
@@ -358,4 +367,6 @@ public class MultifactorApiService : IMultifactorApiService
          var code = ConvertToAuthCode(null);
          return new MultifactorResponse(code);
     }
+
+    private bool ShouldCacheResponse(bool apiResponseCacheEnabled, AuthenticationStatus responseCode,  AccessRequestResponse? response) => apiResponseCacheEnabled && responseCode == AuthenticationStatus.Accept && !(response?.Bypassed ?? false);
 }

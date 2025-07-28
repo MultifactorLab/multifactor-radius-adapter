@@ -33,6 +33,12 @@ public class LdapServerConfiguration
 
     [Description("phone-attributes")]
     public string PhoneAttributes { get; init; } = string.Empty;
+    
+    [Description("ip-white-list")]
+    public string IpWhiteList { get; init; } = string.Empty;
+
+    [Description("authentication-cache-groups")]
+    public string AuthenticationCacheGroups { get; init; } = string.Empty;
 
     [Description("identity-attribute")]
     public string IdentityAttribute { get; init; } = string.Empty;

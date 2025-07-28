@@ -4,12 +4,14 @@ using Multifactor.Radius.Adapter.v2.Core.Auth.PreAuthMode;
 using Multifactor.Radius.Adapter.v2.Core.MultifactorApi;
 using Multifactor.Radius.Adapter.v2.Core.MultifactorApi.PrivacyMode;
 using Multifactor.Radius.Adapter.v2.Core.RandomWaiterFeature;
+using NetTools;
 
 namespace Multifactor.Radius.Adapter.v2.Core.Configuration.Client;
 
 public class ClientConfiguration : IClientConfiguration
 {
     private readonly List<ILdapServerConfiguration> _ldapServers = new();
+    private readonly List<IPAddressRange> _ipWhiteList = new();
 
     public IReadOnlyList<ILdapServerConfiguration> LdapServers => _ldapServers;
 
@@ -108,6 +110,7 @@ public class ClientConfiguration : IClientConfiguration
 
     public RandomWaiterConfig InvalidCredentialDelay { get; private set; }
     public PreAuthModeDescriptor PreAuthnMode { get; private set; } = PreAuthModeDescriptor.Default;
+    public IReadOnlyList<IPAddressRange> IpWhiteList => _ipWhiteList;
 
     public ClientConfiguration SetBypassSecondFactorWhenApiUnreachable(bool val)
     {
@@ -186,6 +189,13 @@ public class ClientConfiguration : IClientConfiguration
             _ldapServers.AddRange(ldapServers);
         else
             throw new ArgumentNullException(nameof(ldapServers));
+        return this;
+    }
+
+    public ClientConfiguration AddWhiteIpRange(IPAddressRange range)
+    {
+        ArgumentNullException.ThrowIfNull(range);
+        _ipWhiteList.Add(range);
         return this;
     }
 }

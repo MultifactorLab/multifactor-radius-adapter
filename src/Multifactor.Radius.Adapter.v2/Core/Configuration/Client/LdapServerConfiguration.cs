@@ -1,3 +1,6 @@
+using Multifactor.Radius.Adapter.v2.Infrastructure.Configuration.Exceptions;
+using NetTools;
+
 namespace Multifactor.Radius.Adapter.v2.Core.Configuration.Client;
 
 public class LdapServerConfiguration : ILdapServerConfiguration
@@ -5,12 +8,14 @@ public class LdapServerConfiguration : ILdapServerConfiguration
     private string? _identity;
     private bool _loadNestedGroups;
     private int _timeout;
-    private readonly List<string> _accessGroups = new List<string>();
-    private readonly List<string> _2FaGroups = new List<string>();
-    private readonly List<string> _2FaBypassGroups = new List<string>();
-    private readonly List<string> _baseDns = new List<string>();
-    private readonly List<string> _phones = new List<string>();
+    private readonly List<string> _accessGroups = new();
+    private readonly List<string> _2FaGroups = new();
+    private readonly List<string> _2FaBypassGroups = new();
+    private readonly List<string> _baseDns = new();
+    private readonly List<string> _phones = new();
     private DomainPermissionRules? _domainPermissionRules;
+    private readonly List<IPAddressRange> _ipWhiteList = new();
+    private readonly List<string> _authenticationCacheGroups = new();
     
     public string ConnectionString { get; }
     public string UserName { get; }
@@ -24,6 +29,8 @@ public class LdapServerConfiguration : ILdapServerConfiguration
     public IReadOnlyList<string> NestedGroupsBaseDns => _baseDns;
     public IReadOnlyList<string> PhoneAttributes => _phones;
     public IDomainPermissionRules? DomainPermissionRules => _domainPermissionRules;
+    public IReadOnlyList<IPAddressRange> IpWhiteList => _ipWhiteList;
+    public IReadOnlyList<string> AuthenticationCacheGroups => _authenticationCacheGroups;
     public int LdapSchemaCacheLifeTimeInHours { get; } = 1;
     public int UserProfileCacheLifeTimeInHours { get; } = 1;
 
@@ -98,6 +105,30 @@ public class LdapServerConfiguration : ILdapServerConfiguration
     {
         if (groups?.Length > 0)
             return AddToList(_phones, groups);
+        return this;
+    }
+    
+    //maybe for future
+    public LdapServerConfiguration AddWhiteIpList(params string[] ranges)
+    {
+        if (!(ranges?.Length > 0))
+            return this;
+        
+        foreach (var range in ranges)
+        {
+            if (!IPAddressRange.TryParse(range, out var ipAddressRange))
+                throw new InvalidConfigurationException($"Invalid IP address range: '{range}' config");
+            
+            AddToList(_ipWhiteList, ipAddressRange);
+        }
+
+        return this;
+    }
+    
+    public LdapServerConfiguration AddAuthenticationCacheGroups(params string[] groups)
+    {
+        if (groups?.Length > 0)
+            return AddToList(_authenticationCacheGroups, groups);
         return this;
     }
 

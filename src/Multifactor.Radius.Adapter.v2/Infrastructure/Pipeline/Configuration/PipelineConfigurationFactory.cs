@@ -44,6 +44,7 @@ public class PipelineConfigurationFactory : IPipelineConfigurationFactory
         var pipeline = new List<Type>();
 
         pipeline.Add(typeof(StatusServerFilteringStep));
+        pipeline.Add(typeof(IpWhiteListStep));
         pipeline.Add(typeof(AccessRequestFilteringStep));
         pipeline.Add(typeof(AccessChallengeStep));
         
@@ -68,15 +69,11 @@ public class PipelineConfigurationFactory : IPipelineConfigurationFactory
         var pipeline = new List<Type>();
 
         pipeline.Add(typeof(StatusServerFilteringStep));
-
+        pipeline.Add(typeof(IpWhiteListStep));
         pipeline.Add(typeof(AccessRequestFilteringStep));
-        
         pipeline.Add(typeof(LdapSchemaLoadingStep));
-
         pipeline.Add(typeof(ProfileLoadingStep));
-
         pipeline.Add(typeof(AccessGroupsCheckingStep));
-
         pipeline.Add(typeof(AccessChallengeStep));
 
         if (pipelineStepsConfiguration.PreAuthMode != PreAuthMode.None)

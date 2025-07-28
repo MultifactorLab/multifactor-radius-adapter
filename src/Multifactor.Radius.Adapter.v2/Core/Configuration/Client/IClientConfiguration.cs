@@ -4,6 +4,7 @@ using Multifactor.Radius.Adapter.v2.Core.Auth.PreAuthMode;
 using Multifactor.Radius.Adapter.v2.Core.MultifactorApi;
 using Multifactor.Radius.Adapter.v2.Core.MultifactorApi.PrivacyMode;
 using Multifactor.Radius.Adapter.v2.Core.RandomWaiterFeature;
+using NetTools;
 
 namespace Multifactor.Radius.Adapter.v2.Core.Configuration.Client;
 
@@ -25,4 +26,5 @@ public interface IClientConfiguration
     UserNameTransformRules UserNameTransformRules { get; }
     RandomWaiterConfig InvalidCredentialDelay { get; }
     PreAuthModeDescriptor PreAuthnMode { get; }
+    IReadOnlyList<IPAddressRange> IpWhiteList { get; }
 }

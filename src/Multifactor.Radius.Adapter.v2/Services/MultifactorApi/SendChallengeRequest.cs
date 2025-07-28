@@ -19,8 +19,9 @@ public class SendChallengeRequest
     public IPEndPoint RemoteEndpoint { get;  }
     public string Answer { get; }
     public string RequestId { get; }
+    public bool ApiResponseCacheEnabled { get; }
 
-    public SendChallengeRequest(IRadiusPipelineExecutionContext context, string answer, string requestId)
+    public SendChallengeRequest(IRadiusPipelineExecutionContext context, string answer, string requestId, bool cacheEnabled = true)
     {
         ArgumentNullException.ThrowIfNull(context);
         ArgumentNullException.ThrowIfNull(context.ApiCredential);
@@ -41,5 +42,6 @@ public class SendChallengeRequest
         RemoteEndpoint = context.RemoteEndpoint;
         Answer = answer;
         RequestId = requestId;
+        ApiResponseCacheEnabled = cacheEnabled;
     }
 }
