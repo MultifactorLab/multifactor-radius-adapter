@@ -56,6 +56,12 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.FirstFactorAuthentication.P
                 try
                 {
                     await _ldapService.VerifyCredential(userName, password, ldapUri, context);
+                    if (context.RequestPacket.AccountType != AccountType.Domain)
+                    {
+                        _logger.LogInformation("User '{user}' used '{accountType}' account to log in. Membership check is skipped.", context.UserName, context.RequestPacket.AccountType);
+                        return PacketCode.AccessAccept;
+                    }
+                    
                     var isValid = await _ldapService.VerifyMembership(userName, password, ldapUri, context);
                     if (isValid)
                     {

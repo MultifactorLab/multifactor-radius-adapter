@@ -13,7 +13,13 @@ using System.Threading.Tasks;
 
 namespace MultiFactor.Radius.Adapter.Services.Ldap.MembershipVerification
 {
-    public class MembershipProcessor
+    public interface IMembershipProcessor
+    {
+        Task<MembershipProcessingResult> ProcessMembershipAsync(RadiusContext context);
+        Task<LdapProfile> LoadProfileWithRequiredAttributeAsync(RadiusContext context, string attr);
+    }
+
+    public class MembershipProcessor : IMembershipProcessor
     {
         private readonly ProfileLoader _profileLoader;
         private readonly MembershipVerifier _membershipVerifier;

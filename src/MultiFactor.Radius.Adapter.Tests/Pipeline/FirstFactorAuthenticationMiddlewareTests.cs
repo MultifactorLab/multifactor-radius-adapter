@@ -6,9 +6,11 @@ using MultiFactor.Radius.Adapter.Core.Framework.Pipeline;
 using MultiFactor.Radius.Adapter.Core.Radius;
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration;
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration.ClientLevel;
+using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Features.PreAuthModeFeature;
 using MultiFactor.Radius.Adapter.Server.Pipeline.AccessChallenge;
 using MultiFactor.Radius.Adapter.Server.Pipeline.FirstFactorAuthentication;
 using MultiFactor.Radius.Adapter.Server.Pipeline.FirstFactorAuthentication.Processing;
+using MultiFactor.Radius.Adapter.Services.Ldap.MembershipVerification;
 using MultiFactor.Radius.Adapter.Tests.Fixtures;
 using MultiFactor.Radius.Adapter.Tests.Fixtures.ConfigLoading;
 using MultiFactor.Radius.Adapter.Tests.Fixtures.Radius;
@@ -163,6 +165,77 @@ namespace MultiFactor.Radius.Adapter.Tests.Pipeline
             
             challengeProcessorProvider.Verify(x => x.GetChallengeProcessorByType(ChallengeType.PasswordChange), Times.Once);
             challengeProcessor.Verify(x => x.AddChallengeContext(It.IsAny<RadiusContext>()), Times.Once);
+        }
+        
+        [Fact]
+        public async Task Invoke_FirstFactorSourceIsNoneAndWinLogonAccount_ShouldInvokeVerifyMembership()
+        {
+            var processorMock = new Mock<IMembershipProcessor>();
+            processorMock
+                .Setup(x => x.ProcessMembershipAsync(It.IsAny<RadiusContext>()))
+                .ReturnsAsync(MembershipProcessingResult.Empty);
+            var host = TestHostFactory.CreateHost(builder =>
+            {
+                builder.Services.Configure<TestConfigProviderOptions>(x =>
+                {
+                    x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-single.config");
+                });
+            
+                builder.UseMiddleware<AnonymousFirstFactorAuthenticationMiddleware>();
+                builder.InternalHostApplicationBuilder.Services.ReplaceService<IMembershipProcessor>(processorMock.Object);
+            });
+
+            var client = new Mock<IClientConfiguration>();
+            client.Setup(x => x.FirstFactorAuthenticationSource).Returns(AuthenticationSource.None);
+            client.Setup(x => x.ShouldLoadUserProfile).Returns(true);
+            client.Setup(x => x.ShouldLoadUserGroups).Returns(true);
+            client.Setup(x => x.PreAuthnMode).Returns(PreAuthModeDescriptor.Default);
+            
+            var packetMock = new Mock<IRadiusPacket>();
+            packetMock.Setup(x => x.UserName).Returns("user");
+            packetMock.Setup(x => x.TryGetUserPassword()).Returns("password");
+            packetMock.Setup(x => x.AccountType).Returns(AccountType.Domain);
+            
+            var context = host.CreateContext(packetMock.Object, clientConfig: client.Object);
+            await host.InvokePipeline(context);
+
+            processorMock.Verify(x => x.ProcessMembershipAsync(It.IsAny<RadiusContext>()), Times.Once);
+        }
+        
+        [Theory]
+        [InlineData(AccountType.Unknown)]
+        [InlineData(AccountType.Local)]
+        [InlineData(AccountType.Microsoft)]
+        public async Task Invoke_FirstFactorSourceIsNoneAndWinLogonAccount_ShouldNotInvokeVerifyMembership(AccountType accountType)
+        {
+            var processorMock = new Mock<IMembershipProcessor>();
+            
+            var host = TestHostFactory.CreateHost(builder =>
+            {
+                builder.Services.Configure<TestConfigProviderOptions>(x =>
+                {
+                    x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-minimal-single.config");
+                });
+            
+                builder.UseMiddleware<AnonymousFirstFactorAuthenticationMiddleware>();
+                builder.InternalHostApplicationBuilder.Services.ReplaceService<IMembershipProcessor>(processorMock.Object);
+            });
+
+            var client = new Mock<IClientConfiguration>();
+            client.Setup(x => x.FirstFactorAuthenticationSource).Returns(AuthenticationSource.None);
+            client.Setup(x => x.ShouldLoadUserProfile).Returns(true);
+            client.Setup(x => x.ShouldLoadUserGroups).Returns(true);
+            client.Setup(x => x.PreAuthnMode).Returns(PreAuthModeDescriptor.Default);
+            
+            var packetMock = new Mock<IRadiusPacket>();
+            packetMock.Setup(x => x.UserName).Returns("user");
+            packetMock.Setup(x => x.TryGetUserPassword()).Returns("password");
+            packetMock.Setup(x => x.AccountType).Returns(accountType);
+            
+            var context = host.CreateContext(packetMock.Object, clientConfig: client.Object);
+            await host.InvokePipeline(context);
+
+            processorMock.Verify(x => x.ProcessMembershipAsync(It.IsAny<RadiusContext>()), Times.Never);
         }
     }
 }

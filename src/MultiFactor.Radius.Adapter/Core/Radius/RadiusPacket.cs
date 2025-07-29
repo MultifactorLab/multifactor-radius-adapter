@@ -105,6 +105,15 @@ namespace MultiFactor.Radius.Adapter.Core.Radius
         public string CallingStationId => GetCallingStationId();
         public string CalledStationId => IsWinLogon ? GetString("Called-Station-Id") : null;
         public string NasIdentifier => GetString("NAS-Identifier");
+        
+        public AccountType AccountType
+        {
+            get
+            {
+                var attrValue = AcctAuthentic ?? 0;
+                return UnintToAccountType(attrValue);
+            }
+        }
 
         public string TryGetUserPassword()
         {
@@ -326,5 +335,34 @@ namespace MultiFactor.Radius.Adapter.Core.Radius
 
             _transformMap[attribute] = transformedValue;
         }
+
+        private uint? AcctAuthentic
+        {
+            get
+            {
+                if (Attributes.TryGetValue("Acct-Authentic", out var values))
+                {
+                    return values.FirstOrDefault() as uint?;
+                }
+
+                return null;
+            }
+        }
+
+        private static AccountType UnintToAccountType(uint value) => value switch
+        {
+            1 => AccountType.Domain,
+            2 => AccountType.Local,
+            3 => AccountType.Microsoft,
+            _ => AccountType.Domain
+        };
+    }
+
+    public enum AccountType
+    {
+        Unknown = 0,
+        Domain = 1,
+        Local = 2,
+        Microsoft = 3
     }
 }
