@@ -62,8 +62,14 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.FirstFactorAuthentication
 
             if (context.Configuration.UseIdentityAttribute)
             {
-                var profile = await _membershipProcessor.LoadProfileWithRequiredAttributeAsync(context, context.Configuration.TwoFAIdentityAttribute);
-                if (profile == null)
+                var profile = context.Profile;
+                
+                if (profile is null || !profile.Attributes.Has(context.Configuration.TwoFAIdentityAttribute))
+                {
+                    profile = await _membershipProcessor.LoadProfileWithRequiredAttributeAsync(context, context.Configuration.TwoFAIdentityAttribute);
+                }
+
+                if (profile is null)
                 {
                     _logger.LogWarning("User profile and attribute '{TwoFAIdentityAttribyte}' was not loaded", context.Configuration.TwoFAIdentityAttribute);
                     _logger.LogError("Failed to validate user profile.");

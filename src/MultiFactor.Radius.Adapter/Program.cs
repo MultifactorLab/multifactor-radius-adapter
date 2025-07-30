@@ -11,6 +11,7 @@ using System;
 using System.Text;
 using System.Threading.Tasks;
 using MultiFactor.Radius.Adapter.Infrastructure.Logging;
+using MultiFactor.Radius.Adapter.Server.Pipeline.IpWhiteList;
 
 IHost host = null;
 
@@ -19,9 +20,10 @@ try
     var builder = RadiusHost.CreateApplicationBuilder(args);
     builder.AddLogging();
     builder.ConfigureApplication();
-
+    
     builder.UseMiddleware<StatusServerMiddleware>();
     builder.UseMiddleware<AccessRequestFilterMiddleware>();
+    builder.UseMiddleware<IpWhiteListMiddleware>();
     builder.UseMiddleware<AccessChallengeMiddleware>();
     builder.UseMiddleware<AnonymousFirstFactorAuthenticationMiddleware>();
     builder.UseMiddleware<PreSecondFactorAuthenticationMiddleware>();

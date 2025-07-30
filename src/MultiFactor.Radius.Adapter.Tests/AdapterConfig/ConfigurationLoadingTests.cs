@@ -9,6 +9,7 @@ using System.Net;
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration;
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration.RootLevel;
 using MultiFactor.Radius.Adapter.Tests.Data.UsernameTransformationRules;
+using NetTools;
 
 namespace MultiFactor.Radius.Adapter.Tests.AdapterConfig;
 
@@ -996,5 +997,23 @@ public partial class ConfigurationLoadingTests
         var conf = host.Service<IServiceConfiguration>();
         var client = conf.GetClient(IPAddress.Parse("0.0.0.0"));
         Assert.Equal(TimeSpan.FromSeconds(30), client.LdapBindTimeout);
+    }
+    
+    [Fact]
+    [Trait("Category", "ip-white-list")]
+    public void IpWhiteList_ShouldSet()
+    {
+        var host = TestHostFactory.CreateHost(builder =>
+        {
+            builder.Services.Configure<TestConfigProviderOptions>(x =>
+            {
+                x.RootConfigFilePath = TestEnvironment.GetAssetPath("root-ip-white-list.config");
+            });
+        });
+
+        var conf = host.Service<IServiceConfiguration>();
+        var client = conf.GetClient(IPAddress.Parse("0.0.0.0"));
+        var expected = new[] { IPAddressRange.Parse("127.0.0.1/16"), IPAddressRange.Parse("126.0.0.1-127.0.0.3"), IPAddressRange.Parse("192.168.0.1") };
+        Assert.True(expected.SequenceEqual(client.IpWhiteAddressRanges));
     }
 }
