@@ -18,8 +18,7 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.FirstFactorAuthentication
         private readonly IMembershipProcessor _membershipProcessor;
         private readonly ILogger<AnonymousFirstFactorAuthenticationMiddleware> _logger;
 
-        public AnonymousFirstFactorAuthenticationMiddleware(IMembershipProcessor membershipProcessor, 
-            ILogger<AnonymousFirstFactorAuthenticationMiddleware> logger)
+        public AnonymousFirstFactorAuthenticationMiddleware(IMembershipProcessor membershipProcessor, ILogger<AnonymousFirstFactorAuthenticationMiddleware> logger)
         {
             _membershipProcessor = membershipProcessor;
             _logger = logger;
@@ -45,7 +44,9 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.FirstFactorAuthentication
 
             if (context.RequestPacket.AccountType != AccountType.Domain)
             {
-                _logger.LogInformation("User '{user}' used '{accountType}' account to log in. Membership check is skipped.", context.UserName, context.RequestPacket.AccountType);
+                _logger.LogInformation(
+                    "User '{user}' used '{accountType}' account to log in. Membership check is skipped.",
+                    context.UserName, context.RequestPacket.AccountType);
             }
             else
             {
@@ -66,19 +67,21 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.FirstFactorAuthentication
                     }
                 }
 
-            if (context.Configuration.UseIdentityAttribute)
-            {
-                var profile = context.Profile;
-                
-                if (profile is null || !profile.Attributes.Has(context.Configuration.TwoFAIdentityAttribute))
+                if (context.Configuration.UseIdentityAttribute)
                 {
-                    profile = await _membershipProcessor.LoadProfileWithRequiredAttributeAsync(context, context.Configuration.TwoFAIdentityAttribute);
-                }
+                    var profile = context.Profile;
 
-                if (profile is null)
-                {
-                    _logger.LogWarning("User profile and attribute '{TwoFAIdentityAttribyte}' was not loaded", context.Configuration.TwoFAIdentityAttribute);
-                    _logger.LogError("Failed to validate user profile.");
+                    if (profile is null || !profile.Attributes.Has(context.Configuration.TwoFAIdentityAttribute))
+                    {
+                        profile = await _membershipProcessor.LoadProfileWithRequiredAttributeAsync(context,
+                            context.Configuration.TwoFAIdentityAttribute);
+                    }
+
+                    if (profile is null)
+                    {
+                        _logger.LogWarning("User profile and attribute '{TwoFAIdentityAttribyte}' was not loaded",
+                            context.Configuration.TwoFAIdentityAttribute);
+                        _logger.LogError("Failed to validate user profile.");
 
                         context.SetFirstFactorAuth(AuthenticationCode.Reject);
                         return;
