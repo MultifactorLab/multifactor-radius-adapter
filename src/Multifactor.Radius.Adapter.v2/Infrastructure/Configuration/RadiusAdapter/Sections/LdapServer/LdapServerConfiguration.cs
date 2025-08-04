@@ -36,4 +36,25 @@ public class LdapServerConfiguration
 
     [Description("identity-attribute")]
     public string IdentityAttribute { get; init; } = string.Empty;
+
+    [Description("requires-upn")]
+    public bool RequiresUpn { get; init; } = false;
+    
+    [Description("enable-trusted-domains")]
+    public bool EnableTrustedDomains { get; init; } = false;
+
+    [Description("included-domains")]
+    public string IncludedDomains { get; set; } = string.Empty;
+    
+    [Description("excluded-domains")]
+    public string ExcludedDomains { get; set; } = string.Empty;
+    
+    [Description("enable-alternative-suffixes")]
+    public bool EnableAlternativeSuffixes { get; init; } = false;
+    
+    [Description("included-suffixes")]
+    public string IncludedSuffixes { get; set; } = string.Empty;
+    
+    [Description("excluded-suffixes")]
+    public string ExcludedSuffixes { get; set; } = string.Empty;
 }

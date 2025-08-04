@@ -1,8 +1,9 @@
-﻿//Copyright(c) 2020 MultiFactor
-//Please see licence at 
-//https://github.com/MultifactorLab/multifactor-radius-adapter/blob/main/LICENSE.md
-
+﻿using System.DirectoryServices.Protocols;
 using System.Text;
+using Multifactor.Core.Ldap;
+using Multifactor.Core.Ldap.Connection;
+using Multifactor.Radius.Adapter.v2.Core.Configuration.Client;
+using Multifactor.Radius.Adapter.v2.Core.Ldap.Identity;
 
 namespace Multifactor.Radius.Adapter.v2.Core
 {
@@ -89,5 +90,21 @@ namespace Multifactor.Radius.Adapter.v2.Core
             ?.Split(separator, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToArray() ?? [];
+
+        public static LdapConnectionOptions CreateLdapConnectionOptions(ILdapServerConfiguration serverConfiguration) =>
+            new(new LdapConnectionString(serverConfiguration.ConnectionString),
+                AuthType.Basic,
+                serverConfiguration.UserName,
+                serverConfiguration.Password,
+                TimeSpan.FromSeconds(serverConfiguration.BindTimeoutInSeconds));
+
+        public static string GetUpnSuffix(UserIdentity userIdentity)
+        {
+            if (userIdentity.Format != UserIdentityFormat.UserPrincipalName)
+                return string.Empty;
+
+            var suffix = userIdentity.Identity.Split('@', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries).Last();
+            return suffix;
+        }
     }
 }

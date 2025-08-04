@@ -28,4 +28,6 @@ public interface IRadiusPacket
     public List<T> GetAttributes<T>(string name);
     public string? GetAttributeValueAsString(string name);
     public string CreateUniqueKey(IPEndPoint remoteEndpoint);
+    public IPEndPoint? ProxyEndpoint { get; set; }
+    public IPEndPoint RemoteEndpoint { get; set; }
 }

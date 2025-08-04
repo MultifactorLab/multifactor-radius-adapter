@@ -68,15 +68,11 @@ public class PipelineConfigurationFactory : IPipelineConfigurationFactory
         var pipeline = new List<Type>();
 
         pipeline.Add(typeof(StatusServerFilteringStep));
-
         pipeline.Add(typeof(AccessRequestFilteringStep));
-        
+        pipeline.Add(typeof(UserNameValidationStep));
         pipeline.Add(typeof(LdapSchemaLoadingStep));
-
         pipeline.Add(typeof(ProfileLoadingStep));
-
         pipeline.Add(typeof(AccessGroupsCheckingStep));
-
         pipeline.Add(typeof(AccessChallengeStep));
 
         if (pipelineStepsConfiguration.PreAuthMode != PreAuthMode.None)

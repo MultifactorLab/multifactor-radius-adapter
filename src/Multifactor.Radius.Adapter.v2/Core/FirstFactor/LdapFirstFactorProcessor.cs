@@ -7,6 +7,7 @@ using Multifactor.Radius.Adapter.v2.Core.Auth;
 using Multifactor.Radius.Adapter.v2.Core.Configuration.Client;
 using Multifactor.Radius.Adapter.v2.Core.Ldap;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Context;
+using ILdapConnection = Multifactor.Radius.Adapter.v2.Core.Ldap.ILdapConnection;
 using ILdapConnectionFactory = Multifactor.Radius.Adapter.v2.Core.Ldap.ILdapConnectionFactory;
 
 namespace Multifactor.Radius.Adapter.v2.Core.FirstFactor;
@@ -108,8 +109,7 @@ public class LdapFirstFactorProcessor : IFirstFactorProcessor
         return false;
     }
 
-    private ILdapConnection GetConnection(string connectionString, string userName, string password,
-        int bindTimeoutInSeconds)
+    private ILdapConnection GetConnection(string connectionString, string userName, string password, int bindTimeoutInSeconds)
     {
         var connectionOptions = new LdapConnectionOptions(
             new LdapConnectionString(connectionString),

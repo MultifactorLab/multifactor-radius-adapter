@@ -48,7 +48,7 @@ public class UdpPacketHandlerTests
         cacheMock.Setup(x => x.CreateEntry(It.IsAny<object>())).Returns(new PipelineConfigurationFactoryTests.Entry());
         cacheMock.Setup(x => x.TryGetValue(It.IsAny<string>(), out outVal)).Returns(false);
         
-        var handler = new UdpPacketHandler(configMock.Object, packetServiceMock.Object, pipelineProviderMock.Object, new Mock<IResponseSender>().Object, cacheMock.Object, NullLogger<IUdpPacketHandler>.Instance);
+        var handler = new UdpPacketHandler(configMock.Object, packetServiceMock.Object, cacheMock.Object, new Mock<IRadiusPacketProcessor>().Object ,NullLogger<IUdpPacketHandler>.Instance);
         var tasks = new List<Task>();
 
         for(int i = 0; i < connectionsCount; i++)
