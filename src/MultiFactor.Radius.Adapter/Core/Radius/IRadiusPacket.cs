@@ -76,5 +76,7 @@ namespace MultiFactor.Radius.Adapter.Core.Radius
         /// <param name="attribute"></param>
         /// <param name="transformedValue"></param>
         void AddTransformation(string attribute, string transformedValue);
+
+        AccountType AccountType { get; }
     }
 }

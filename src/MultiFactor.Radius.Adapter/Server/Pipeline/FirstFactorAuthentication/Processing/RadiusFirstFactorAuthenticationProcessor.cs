@@ -19,11 +19,11 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.FirstFactorAuthentication.P
     /// </summary>
     public class RadiusFirstFactorAuthenticationProcessor : IFirstFactorAuthenticationProcessor
     {
-        private readonly MembershipProcessor _membershipProcessor;
+        private readonly IMembershipProcessor _membershipProcessor;
         private readonly RadiusPacketParser _packetParser;
         private readonly ILogger<RadiusFirstFactorAuthenticationProcessor> _logger;
 
-        public RadiusFirstFactorAuthenticationProcessor(MembershipProcessor membershipProcessor,
+        public RadiusFirstFactorAuthenticationProcessor(IMembershipProcessor membershipProcessor,
             RadiusPacketParser packetParser,
             ILogger<RadiusFirstFactorAuthenticationProcessor> logger)
         {
@@ -39,6 +39,12 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.FirstFactorAuthentication.P
             var code = await ProcessRadiusAuthAsync(context);
             if (code != PacketCode.AccessAccept) return code;
 
+            if (context.RequestPacket.AccountType != AccountType.Domain)
+            {
+                _logger.LogInformation("User '{user}' used '{accountType}' account to log in. Membership check is skipped.", context.UserName, context.RequestPacket.AccountType);
+                return code;
+            }
+            
             if (context.Configuration.ShouldLoadUserProfile || context.Configuration.ShouldLoadUserGroups)
             {
                 var result = await _membershipProcessor.ProcessMembershipAsync(context);

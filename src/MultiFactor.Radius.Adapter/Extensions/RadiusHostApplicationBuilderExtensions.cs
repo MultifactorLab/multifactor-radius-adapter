@@ -41,7 +41,7 @@ internal static class RadiusHostApplicationBuilderExtensions
         builder.Services.AddSingleton<ProfileLoader>();
         builder.Services.AddSingleton<ILdapService, LdapService>();
         builder.Services.AddSingleton<MembershipVerifier>();
-        builder.Services.AddSingleton<MembershipProcessor>();
+        builder.Services.AddSingleton<IMembershipProcessor, MembershipProcessor>();
 
         builder.Services.AddSingleton<IAuthenticatedClientCache, AuthenticatedClientCache>();
 

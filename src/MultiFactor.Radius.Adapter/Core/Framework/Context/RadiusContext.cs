@@ -68,8 +68,21 @@ namespace MultiFactor.Radius.Adapter.Core.Framework.Context
         /// <summary>
         /// Should use for 2FA request to MFA API.
         /// </summary>
-        public string SecondFactorIdentity => Configuration.UseIdentityAttribute ? Profile.SecondFactorIdentity : UserName;
-
+        public string SecondFactorIdentity
+        {
+            get
+            {
+                if (!Configuration.UseIdentityAttribute)
+                    return UserName;
+                
+                var name = string.IsNullOrWhiteSpace(Profile.SecondFactorIdentity) && RequestPacket.AccountType != AccountType.Domain
+                    ? UserName
+                    : Profile.SecondFactorIdentity;
+                
+                return name;
+            }
+        }
+        
         /// <summary>
         /// memberof LDAP attribute value.
         /// </summary>
