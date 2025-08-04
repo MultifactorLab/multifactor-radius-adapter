@@ -36,12 +36,12 @@ public class LdapFirstFactorAuthenticationProcessorTests
         }
         
         [Fact]
-        public async Task WinLogonAccount_ShouldInvokeVerifyMembership()
+        public async Task WinLogonAccount_Domain_ShouldInvokeVerifyMembership()
         {
             var packetMock = new Mock<IRadiusPacket>();
             packetMock.Setup(x => x.UserName).Returns("user");
             packetMock.Setup(x => x.TryGetUserPassword()).Returns("password");
-            packetMock.Setup(x => x.AccountType).Returns(AccountType.Domain);
+            packetMock.Setup(x => x.AccountType).Returns(AccountType.Domain); 
             var configMock = new Mock<IClientConfiguration>();
             configMock.Setup(x => x.UserNameTransformRules).Returns(new UserNameTransformRules());
             configMock.Setup(x => x.SplittedActiveDirectoryDomains).Returns(new[]{"localhost"});

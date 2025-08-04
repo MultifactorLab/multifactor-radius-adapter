@@ -43,7 +43,11 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.FirstFactorAuthentication
                 return;
             }
 
-            if (context.RequestPacket.AccountType == AccountType.Domain)
+            if (context.RequestPacket.AccountType != AccountType.Domain)
+            {
+                _logger.LogInformation("User '{user}' used '{accountType}' account to log in. Membership check is skipped.", context.UserName, context.RequestPacket.AccountType);
+            }
+            else
             {
                 if (context.Configuration.ShouldLoadUserProfile || context.Configuration.ShouldLoadUserGroups)
                 {
@@ -78,10 +82,6 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.FirstFactorAuthentication
                     profile.SetIdentityAttribute(context.Configuration.TwoFAIdentityAttribute);
                     context.UpdateProfile(profile);
                 }
-            }
-            else
-            {
-                _logger.LogInformation("User '{user}' used '{accountType}' account to log in. Membership check is skipped.", context.UserName, context.RequestPacket.AccountType);
             }
 
             if (isNoneFirstFactorSource)
