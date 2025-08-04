@@ -66,14 +66,19 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.FirstFactorAuthentication
                     }
                 }
 
-                if (context.Configuration.UseIdentityAttribute)
+            if (context.Configuration.UseIdentityAttribute)
+            {
+                var profile = context.Profile;
+                
+                if (profile is null || !profile.Attributes.Has(context.Configuration.TwoFAIdentityAttribute))
                 {
-                    var profile = await _membershipProcessor.LoadProfileWithRequiredAttributeAsync(context, context.Configuration.TwoFAIdentityAttribute);
-                    if (profile == null)
-                    {
-                        _logger.LogWarning("User profile and attribute '{TwoFAIdentityAttribyte}' was not loaded",
-                            context.Configuration.TwoFAIdentityAttribute);
-                        _logger.LogError("Failed to validate user profile.");
+                    profile = await _membershipProcessor.LoadProfileWithRequiredAttributeAsync(context, context.Configuration.TwoFAIdentityAttribute);
+                }
+
+                if (profile is null)
+                {
+                    _logger.LogWarning("User profile and attribute '{TwoFAIdentityAttribyte}' was not loaded", context.Configuration.TwoFAIdentityAttribute);
+                    _logger.LogError("Failed to validate user profile.");
 
                         context.SetFirstFactorAuth(AuthenticationCode.Reject);
                         return;

@@ -56,7 +56,13 @@ namespace MultiFactor.Radius.Adapter.Server.Pipeline.FirstFactorAuthentication.P
 
             if (context.Configuration.UseIdentityAttribute)
             {
-                var profile = await _membershipProcessor.LoadProfileWithRequiredAttributeAsync(context, context.Configuration.TwoFAIdentityAttribute);
+                var profile = context.Profile;
+                
+                if (profile is null || !profile.Attributes.Has(context.Configuration.TwoFAIdentityAttribute))
+                {
+                    profile = await _membershipProcessor.LoadProfileWithRequiredAttributeAsync(context, context.Configuration.TwoFAIdentityAttribute);
+                }
+                
                 if (profile == null)
                 {
                     _logger.LogWarning("Attribute '{TwoFAIdentityAttribyte}' was not loaded", context.Configuration.TwoFAIdentityAttribute);

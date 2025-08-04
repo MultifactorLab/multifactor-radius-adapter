@@ -55,6 +55,8 @@
         <None Remove="Assets\root-invalid-ldap-bind-timeout.config" />
         <None Remove="Assets\root-no-ldap-bind-timeout.config"/>
         <None Remove="Assets\root-zero-ldap-bind-timeout.config"/>
+        <None Remove="Assets\root-ip-white-list.config"/>
+        
     </ItemGroup>
 
     <ItemGroup>
@@ -217,6 +219,9 @@
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </Content>
         <Content Include="Assets\root-zero-ldap-bind-timeout.config">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
+        <Content Include="Assets\root-ip-white-list.config">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </Content>
     </ItemGroup>

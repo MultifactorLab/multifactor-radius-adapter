@@ -7,6 +7,7 @@ using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Features.PreAuthMo
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Features.PrivacyModeFeature;
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Features.RandomWaiterFeature;
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Features.UserNameTransform;
+using NetTools;
 
 namespace MultiFactor.Radius.Adapter.Infrastructure.Configuration.ClientLevel;
 
@@ -44,4 +45,5 @@ public interface IClientConfiguration
     public TimeSpan LdapBindTimeout { get; }
     public bool ShouldLoadUserProfile { get; }
     public bool ShouldLoadUserGroups { get; }
+    public IReadOnlyCollection<IPAddressRange> IpWhiteAddressRanges { get; }
 }

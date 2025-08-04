@@ -59,7 +59,7 @@ namespace MultiFactor.Radius.Adapter.Services.MultiFactorApi
             var calledStationId = context.RequestPacket.CalledStationId; //only for winlogon yet
             
             //try to get authenticated client to bypass second factor if configured
-            if (_authenticatedClientCache.TryHitCache(callingStationId, identity, context.Configuration))
+            if (_authenticatedClientCache.TryHitCache(callingStationId, identity, context.Configuration, context.Profile.MemberOf))
             {
                 _logger.LogInformation("Bypass second factor for user '{user:l}' with calling-station-id {csi:l} from {host:l}:{port}",
                     identity,

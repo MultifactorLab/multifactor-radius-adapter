@@ -75,7 +75,7 @@ namespace MultiFactor.Radius.Adapter.Tests
                 builder.Services.ReplaceService(api.Object);
                  
                 var cache = new Mock<IAuthenticatedClientCache>();
-                cache.Setup(x => x.TryHitCache(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IClientConfiguration>())).Returns(true);
+                cache.Setup(x => x.TryHitCache(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IClientConfiguration>(), It.IsAny<IReadOnlyCollection<string>>())).Returns(true);
                 builder.Services.ReplaceService(cache.Object);
             });
 
@@ -115,7 +115,7 @@ namespace MultiFactor.Radius.Adapter.Tests
                 builder.Services.ReplaceService(api.Object);
 
                 var cache = new Mock<IAuthenticatedClientCache>();
-                cache.Setup(x => x.TryHitCache(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IClientConfiguration>())).Returns(false);
+                cache.Setup(x => x.TryHitCache(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IClientConfiguration>(), It.IsAny<IReadOnlyCollection<string>>())).Returns(false);
                 builder.Services.ReplaceService(cache.Object);
             });
 

@@ -114,6 +114,9 @@ public class AppSettingsSection
     [Description("invalid-credential-delay")]
     public string InvalidCredentialDelay { get; init; }
 
+    [Description("authentication-cache-groups")]
+    public string AuthenticationCacheGroups { get; init; }
+
 
 
     [Description("logging-format")]
@@ -133,4 +136,7 @@ public class AppSettingsSection
     
     [Description("ldap-bind-timeout")]
     public string LdapBindTimeout { get; set; }
+    
+    [Description("ip-white-list")]
+    public string IpWhiteList { get; init; }
 }
