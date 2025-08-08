@@ -219,16 +219,15 @@ public class ClientConfigurationFactory : IClientConfigurationFactory
                 builder.Name);
         }
 
-        if (!IPEndPointFactory.TryParse(appSettings.NpsServerEndpoint, out var npsEndpoint))
+        var npsServers = Utils.SplitString(appSettings.NpsServerEndpoint);
+        foreach (var server in npsServers)
         {
-            throw InvalidConfigurationException.For(
-                x => x.AppSettings.NpsServerEndpoint,
-                "Can't parse '{prop}' value. Config name: '{0}'",
-                builder.Name);
+            if (!IPEndPointFactory.TryParse(server, out var npsEndpoint))
+                throw new InvalidConfigurationException($"Config name: '{builder.Name}'. Invalid NPS server endpoint: '{server}'"); 
+            builder.AddNpsServerEndpoint(npsEndpoint);
         }
 
         builder.SetServiceClientEndpoint(serviceClientEndpoint);
-        builder.SetNpsServerEndpoint(npsEndpoint);
     }
 
     private static void ReadSignUpGroupsSettings(ClientConfiguration builder, AppSettingsSection appSettings)

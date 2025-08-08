@@ -33,7 +33,7 @@ public interface IRadiusPipelineExecutionContext
     bool BypassSecondFactorWhenApiUnreachable { get; }
     AuthenticationSource FirstFactorAuthenticationSource { get; }
     ApiCredential ApiCredential { get; }
-    IPEndPoint NpsServerEndpoint { get; }
+    IReadOnlyList<IPEndPoint> NpsServerEndpoints { get; }
     PrivacyModeDescriptor PrivacyMode { get; }
     IReadOnlyDictionary<string, RadiusReplyAttributeValue[]> RadiusReplyAttributes { get; }
     IPEndPoint ServiceClientEndpoint { get; }

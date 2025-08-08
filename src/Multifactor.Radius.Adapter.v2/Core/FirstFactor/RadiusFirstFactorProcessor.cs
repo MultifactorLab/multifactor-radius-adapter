@@ -1,7 +1,7 @@
+using System.Net;
 using Microsoft.Extensions.Logging;
 using Multifactor.Core.Ldap.LangFeatures;
 using Multifactor.Radius.Adapter.v2.Core.Auth;
-using Multifactor.Radius.Adapter.v2.Core.Auth.PreAuthMode;
 using Multifactor.Radius.Adapter.v2.Core.Radius.Packet;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Context;
 using Multifactor.Radius.Adapter.v2.Services.Radius;
@@ -11,16 +11,15 @@ namespace Multifactor.Radius.Adapter.v2.Core.FirstFactor;
 public class RadiusFirstFactorProcessor : IFirstFactorProcessor
 {
     private readonly IRadiusPacketService _radiusPacketService;
+    private readonly IRadiusClientFactory _radiusClientFactory;
     private readonly ILogger<RadiusFirstFactorProcessor> _logger;
 
     public AuthenticationSource AuthenticationSource => AuthenticationSource.Radius;
 
-    public RadiusFirstFactorProcessor(IRadiusPacketService radiusPacketService, ILogger<RadiusFirstFactorProcessor> logger)
+    public RadiusFirstFactorProcessor(IRadiusPacketService radiusPacketService, IRadiusClientFactory radiusClientFactory, ILogger<RadiusFirstFactorProcessor> logger)
     {
-        Throw.IfNull(radiusPacketService, nameof(radiusPacketService));
-        Throw.IfNull(logger, nameof(logger));
-
         _radiusPacketService = radiusPacketService;
+        _radiusClientFactory = radiusClientFactory;
         _logger = logger;
     }
 
@@ -30,7 +29,7 @@ public class RadiusFirstFactorProcessor : IFirstFactorProcessor
 
         var requestPacket = context.RequestPacket;
         Throw.IfNull(requestPacket, nameof(requestPacket));
-
+        
         if (string.IsNullOrWhiteSpace(requestPacket.UserName))
         {
             _logger.LogWarning("Can't find User-Name in message id={id} from {host:l}:{port}", context.RequestPacket.Identifier, context.RemoteEndpoint.Address, context.RemoteEndpoint.Port);
@@ -44,13 +43,19 @@ public class RadiusFirstFactorProcessor : IFirstFactorProcessor
             var authPacket = PreparePacket(requestPacket, transformedName, context.Passphrase);
 
             var authBytes = _radiusPacketService.GetBytes(authPacket, context.RadiusSharedSecret);
-            using var client = new RadiusClient(context.ServiceClientEndpoint, _logger);
-            _logger.LogDebug("Sending AccessRequest message with id={id} to Remote Radius Server {endpoint:l}", requestPacket.Identifier, context.NpsServerEndpoint);
-            var response = await client.SendPacketAsync(authPacket.Identifier, authBytes, context.NpsServerEndpoint, TimeSpan.FromSeconds(5));
+            using var client = _radiusClientFactory.CreateRadiusClient(context.ServiceClientEndpoint);
+
+            byte[]? response = null;
+            foreach (var endpoint in context.NpsServerEndpoints)
+            {
+                response = await SendRequestToNpsServer(client, endpoint, authPacket.Identifier, requestPacket.Identifier, authBytes);
+                if (response is not null)
+                    break;
+                _logger.LogWarning("Remote Radius Server did not respond on message with id={id}", authPacket.Identifier);
+            }
 
             if (response is null)
             {
-                _logger.LogWarning("Remote Radius Server did not respond on message with id={id}", authPacket.Identifier);
                 context.AuthenticationState.FirstFactorStatus = GetAuthState(PacketCode.AccessReject);
                 return;
             }
@@ -60,8 +65,8 @@ public class RadiusFirstFactorProcessor : IFirstFactorProcessor
 
             if (responsePacket.Code == PacketCode.AccessAccept)
             {
-                var userName = context.RequestPacket.UserName;
-                _logger.LogInformation("User '{user:l}' credential and status verified successfully at {endpoint:l}", userName, context.NpsServerEndpoint);
+                var userName = requestPacket.UserName;
+                _logger.LogInformation("User '{user:l}' credential and status verified successfully at {endpoint:l}", userName, context.NpsServerEndpoints);
             }
 
             context.ResponsePacket = responsePacket;
@@ -74,6 +79,12 @@ public class RadiusFirstFactorProcessor : IFirstFactorProcessor
         }
 
         context.AuthenticationState.FirstFactorStatus = GetAuthState(PacketCode.AccessReject);
+    }
+
+    private async Task<byte[]?> SendRequestToNpsServer(IRadiusClient client, IPEndPoint npsServerEndpoint, byte authIdentifier, byte requestIdentifier, byte[] payload)
+    {
+        _logger.LogDebug("Sending AccessRequest message with id={id} to Remote Radius Server {endpoint:l}", requestIdentifier, npsServerEndpoint);
+        return await client.SendPacketAsync(authIdentifier, payload, npsServerEndpoint, TimeSpan.FromSeconds(5));
     }
 
     private IRadiusPacket PreparePacket(IRadiusPacket radiusPacket, string userName, UserPassphrase passphrase)

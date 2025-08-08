@@ -6,7 +6,7 @@ using Multifactor.Core.Ldap.LangFeatures;
 
 namespace Multifactor.Radius.Adapter.v2.Services.Radius;
 
-public sealed class RadiusClient : IDisposable
+public sealed class RadiusClient : IRadiusClient
 {
     private readonly UdpClient _udpClient; 
     

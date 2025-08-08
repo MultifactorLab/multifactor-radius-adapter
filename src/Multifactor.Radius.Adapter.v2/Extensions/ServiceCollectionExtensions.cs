@@ -191,7 +191,7 @@ public static class ServiceCollectionExtensions
     public static void AddServices(this IServiceCollection services)
     {
         services.AddTransient<IRadiusPacketService, RadiusPacketService>();
-        
+        services.AddSingleton<IRadiusClientFactory, RadiusClientFactory>();
         services.AddSingleton<IAuthenticatedClientCache, AuthenticatedClientCache>();
         
         services.AddSingleton(LdapConnectionFactory.Create());

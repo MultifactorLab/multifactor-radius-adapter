@@ -19,11 +19,11 @@ public class RadiusFirstFactorProcessorTests
     public async Task ProcessFirstFactor_ShouldAccept()
     {
         var sensitiveData = GetConfig();
-        
+        var factory = new RadiusClientFactory(NullLogger<RadiusClientFactory>.Instance);
         var dictionary = TestUtils.GetRadiusDictionary();
         var packetService = new RadiusPacketService(NullLogger<RadiusPacketService>.Instance, dictionary);
         var secret = new SharedSecret(sensitiveData["Secret"]);
-        var processor = new RadiusFirstFactorProcessor(packetService, NullLogger<RadiusFirstFactorProcessor>.Instance);
+        var processor = new RadiusFirstFactorProcessor(packetService, factory, NullLogger<RadiusFirstFactorProcessor>.Instance);
         
         var contextMock = new Mock<IRadiusPipelineExecutionContext>();
         var authState = new AuthenticationState();
@@ -37,7 +37,7 @@ public class RadiusFirstFactorProcessorTests
         contextMock.Setup(x => x.RequestPacket).Returns(packet);
         contextMock.Setup(x => x.AuthenticationState).Returns(authState);
         contextMock.Setup(x => x.UserNameTransformRules).Returns(transformRules);
-        contextMock.Setup(x => x.NpsServerEndpoint).Returns(IPEndPoint.Parse(sensitiveData["NpsServerEndpoint"]));
+        contextMock.Setup(x => x.NpsServerEndpoints).Returns([IPEndPoint.Parse(sensitiveData["NpsServerEndpoint"])]);
         contextMock.Setup(x => x.ServiceClientEndpoint).Returns(IPEndPoint.Parse(sensitiveData["ServiceClientEndpoint"]));
         contextMock.Setup(x => x.PreAuthnMode).Returns(PreAuthModeDescriptor.Default);
         contextMock.Setup(x => x.RadiusSharedSecret).Returns(secret);
@@ -54,7 +54,8 @@ public class RadiusFirstFactorProcessorTests
         var dictionary = TestUtils.GetRadiusDictionary();
         var packetService = new RadiusPacketService(NullLogger<RadiusPacketService>.Instance, dictionary);
         var secret = new SharedSecret(sensitiveData["Secret"]);
-        var processor = new RadiusFirstFactorProcessor(packetService, NullLogger<RadiusFirstFactorProcessor>.Instance);
+        var factory = new RadiusClientFactory(NullLogger<RadiusClientFactory>.Instance);
+        var processor = new RadiusFirstFactorProcessor(packetService, factory, NullLogger<RadiusFirstFactorProcessor>.Instance);
         
         var contextMock = new Mock<IRadiusPipelineExecutionContext>();
         var authState = new AuthenticationState();
@@ -68,7 +69,7 @@ public class RadiusFirstFactorProcessorTests
         contextMock.Setup(x => x.RequestPacket).Returns(packet);
         contextMock.Setup(x => x.AuthenticationState).Returns(authState);
         contextMock.Setup(x => x.UserNameTransformRules).Returns(transformRules);
-        contextMock.Setup(x => x.NpsServerEndpoint).Returns(IPEndPoint.Parse(sensitiveData["NpsServerEndpoint"]));
+        contextMock.Setup(x => x.NpsServerEndpoints).Returns([IPEndPoint.Parse(sensitiveData["NpsServerEndpoint"])]);
         contextMock.Setup(x => x.ServiceClientEndpoint).Returns(IPEndPoint.Parse(sensitiveData["ServiceClientEndpoint"]));
         contextMock.Setup(x => x.PreAuthnMode).Returns(PreAuthModeDescriptor.Default);
         contextMock.Setup(x => x.RadiusSharedSecret).Returns(secret);
@@ -81,11 +82,11 @@ public class RadiusFirstFactorProcessorTests
     public async Task ProcessFirstFactor_InvalidLogin_ShouldReject()
     {
         var sensitiveData = GetConfig();
-        
         var dictionary = TestUtils.GetRadiusDictionary();
         var packetService = new RadiusPacketService(NullLogger<RadiusPacketService>.Instance, dictionary);
         var secret = new SharedSecret(sensitiveData["Secret"]);
-        var processor = new RadiusFirstFactorProcessor(packetService, NullLogger<RadiusFirstFactorProcessor>.Instance);
+        var factory = new RadiusClientFactory(NullLogger<RadiusClientFactory>.Instance);
+        var processor = new RadiusFirstFactorProcessor(packetService, factory, NullLogger<RadiusFirstFactorProcessor>.Instance);
         
         var contextMock = new Mock<IRadiusPipelineExecutionContext>();
         var authState = new AuthenticationState();
@@ -99,7 +100,7 @@ public class RadiusFirstFactorProcessorTests
         contextMock.Setup(x => x.RequestPacket).Returns(packet);
         contextMock.Setup(x => x.AuthenticationState).Returns(authState);
         contextMock.Setup(x => x.UserNameTransformRules).Returns(transformRules);
-        contextMock.Setup(x => x.NpsServerEndpoint).Returns(IPEndPoint.Parse(sensitiveData["NpsServerEndpoint"]));
+        contextMock.Setup(x => x.NpsServerEndpoints).Returns([IPEndPoint.Parse(sensitiveData["NpsServerEndpoint"])]);
         contextMock.Setup(x => x.ServiceClientEndpoint).Returns(IPEndPoint.Parse(sensitiveData["ServiceClientEndpoint"]));
         contextMock.Setup(x => x.PreAuthnMode).Returns(PreAuthModeDescriptor.Default);
         contextMock.Setup(x => x.RadiusSharedSecret).Returns(secret);

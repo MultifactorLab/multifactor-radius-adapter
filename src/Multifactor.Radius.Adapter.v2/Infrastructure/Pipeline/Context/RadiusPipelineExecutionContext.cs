@@ -36,7 +36,7 @@ public class RadiusPipelineExecutionContext : IRadiusPipelineExecutionContext
     public bool BypassSecondFactorWhenApiUnreachable => _settings.BypassSecondFactorWhenApiUnreachable;
     public AuthenticationSource FirstFactorAuthenticationSource => _settings.FirstFactorAuthenticationSource;
     public ApiCredential ApiCredential => _settings.ApiCredential;
-    public IPEndPoint NpsServerEndpoint => _settings.NpsServerEndpoint;
+    public IReadOnlyList<IPEndPoint> NpsServerEndpoints  => _settings.NpsServerEndpoints;
     public PrivacyModeDescriptor PrivacyMode => _settings.PrivacyMode;
     public IReadOnlyDictionary<string, RadiusReplyAttributeValue[]> RadiusReplyAttributes => _settings.RadiusReplyAttributes;
     public IPEndPoint ServiceClientEndpoint => _settings.ServiceClientEndpoint;

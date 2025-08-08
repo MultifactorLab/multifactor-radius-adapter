@@ -23,7 +23,7 @@ public class RadiusPacketService : IRadiusPacketService
         _radiusDictionary = radiusDictionary;
     }
 
-    public RadiusPacket Parse(
+    public IRadiusPacket Parse(
         byte[] packetBytes,
         SharedSecret sharedSecret,
         RadiusAuthenticator requestAuthenticator = null)
