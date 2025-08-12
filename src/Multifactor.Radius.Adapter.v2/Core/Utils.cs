@@ -56,18 +56,18 @@ namespace Multifactor.Radius.Adapter.v2.Core
         /// <summary>
         /// User name without domain
         /// </summary>
-        public static string CanonicalizeUserName(string userName)
+        public static string CanonicalizeUserName(string? userName)
         {
             if (string.IsNullOrWhiteSpace(userName))
-                throw new ArgumentNullException(nameof(userName));
+                return string.Empty;
 
             var identity = userName.ToLower();
 
-            var index = identity.IndexOf("\\");
+            var index = identity.IndexOf('\\', StringComparison.Ordinal);
             if (index > 0)
                 identity = identity[(index + 1)..];
 
-            index = identity.IndexOf("@");
+            index = identity.IndexOf('@', StringComparison.Ordinal);
             if (index > 0)
                 identity = identity[..index];
 
@@ -77,12 +77,12 @@ namespace Multifactor.Radius.Adapter.v2.Core
         /// <summary>
         /// Check if username does not contains domain prefix or suffix
         /// </summary>
-        public static bool IsCanicalUserName(string userName)
+        public static bool IsCanicalUserName(string? userName)
         {
             if (string.IsNullOrWhiteSpace(userName))
-                throw new ArgumentNullException(nameof(userName));
+                return true;
 
-            return userName.IndexOfAny(new[] { '\\', '@' }) == -1;
+            return userName.IndexOfAny(['\\', '@']) == -1;
         }
 
         public static string[] SplitString(string? target, string separator = ";") => target
