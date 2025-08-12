@@ -17,6 +17,7 @@ public interface IClientConfiguration
     ApiCredential ApiCredential { get; }
     string Name { get; }
     IReadOnlyList<IPEndPoint> NpsServerEndpoints { get; }
+    TimeSpan NpsServerTimeout { get; }
     PrivacyModeDescriptor PrivacyMode { get; }
     IReadOnlyDictionary<string, RadiusReplyAttributeValue[]> RadiusReplyAttributes { get; }
     string RadiusSharedSecret { get; }

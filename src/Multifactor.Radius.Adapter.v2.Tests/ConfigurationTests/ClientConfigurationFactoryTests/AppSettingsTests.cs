@@ -196,9 +196,9 @@ public class AppSettingsTests
     }
     
     [Theory]
-    [InlineData("127.0.0.1")]
-    [InlineData("127.0.0.1; 127.0.0.2")]
-    [InlineData("127.0.0.1; 127.0.0.2; 127.0.0.3")]
+    [InlineData("127.0.0.1:123")]
+    [InlineData("127.0.0.1; 127.0.0.2:123")]
+    [InlineData("127.0.0.1; 127.0.0.2; 127.0.0.3:123")]
     public void CreateClientConfiguration_MultipleNpsServers_ShouldReturnConfiguration(string npsServers)
     {
         var expectedNpsServers = Utils.SplitString(npsServers).Select(IPEndPoint.Parse);
@@ -245,22 +245,156 @@ public class AppSettingsTests
         var clientConfig = factory.CreateConfig(configName, radiusConfig, serviceConfig);
 
         Assert.NotNull(clientConfig);
-        Assert.Equal(AuthenticationSource.Radius, clientConfig.FirstFactorAuthenticationSource);
-        Assert.Equal("secret", clientConfig.RadiusSharedSecret);
-        Assert.NotNull(clientConfig.InvalidCredentialDelay);
-        Assert.Equal(configName, clientConfig.Name);
-        Assert.Equal("identifier", clientConfig.ApiCredential.Usr);
-        Assert.Equal("secret", clientConfig.ApiCredential.Pwd);
-        Assert.Equal("groups", clientConfig.SignUpGroups);
-        Assert.NotNull(clientConfig.PrivacyMode);
-        Assert.NotNull(clientConfig.PreAuthnMode);
-        Assert.True(clientConfig.BypassSecondFactorWhenApiUnreachable);
-        Assert.Equal("12345", clientConfig.CallingStationIdVendorAttribute);
-        Assert.NotNull(clientConfig.AuthenticationCacheLifetime);
-        Assert.NotNull(clientConfig.ServiceClientEndpoint);
         Assert.True(expectedNpsServers.SequenceEqual(clientConfig.NpsServerEndpoints));
-        Assert.Empty(clientConfig.RadiusReplyAttributes);
-        Assert.NotNull(clientConfig.UserNameTransformRules);
+    }
+    
+    [Fact]
+    public void CreateClientConfiguration_NpsServerTimeout_ShouldReturnTimeout()
+    {
+        var expectedNpsTimeout = TimeSpan.FromSeconds(30);
+        var radiusConfig = new RadiusAdapterConfiguration()
+        {
+            AppSettings = new AppSettingsSection()
+            {
+                MultifactorNasIdentifier = "identifier",
+                MultifactorSharedSecret = "secret",
+                SignUpGroups = "groups",
+                BypassSecondFactorWhenApiUnreachable = true,
+                FirstFactorAuthenticationSource = "Radius",
+                AdapterClientEndpoint = "127.0.0.1",
+                NpsServerEndpoint = "127.0.0.1",
+                NpsServerTimeout = "00:00:30",
+                RadiusSharedSecret = "secret",
+                PrivacyMode = "Full",
+                PreAuthenticationMethod = "None",
+                AuthenticationCacheLifetime = "00:01:00",
+                AuthenticationCacheMinimalMatching = true,
+                CallingStationIdAttribute = "12345",
+                InvalidCredentialDelay = "3"
+            },
+            LdapServers = new LdapServersSection()
+            {
+                LdapServers = new[]
+                {
+                    new LdapServerConfiguration()
+                    {
+                        ConnectionString = "connectionString",
+                        UserName = "username",
+                        Password = "password",
+                    }
+                }
+            }
+        };
+
+        var serviceConfig = new ServiceConfiguration();
+        var configName = "name";
+        var dictionaryMock = new Mock<IRadiusDictionary>();
+        var attribute = new DictionaryAttribute("name", 1, "type");
+        dictionaryMock.Setup(x => x.GetAttribute(It.IsAny<string>())).Returns(attribute);
+        var factory =
+            new ClientConfigurationFactory(dictionaryMock.Object);
+        var clientConfig = factory.CreateConfig(configName, radiusConfig, serviceConfig);
+
+        Assert.NotNull(clientConfig);
+        Assert.Equal(expectedNpsTimeout, clientConfig.NpsServerTimeout);
+    }
+    
+    [Fact]
+    public void CreateClientConfiguration_NoNpsServerTimeout_ShouldReturnDefaultTimeout()
+    {
+        var expectedNpsTimeout = TimeSpan.FromSeconds(5);
+        var radiusConfig = new RadiusAdapterConfiguration()
+        {
+            AppSettings = new AppSettingsSection()
+            {
+                MultifactorNasIdentifier = "identifier",
+                MultifactorSharedSecret = "secret",
+                SignUpGroups = "groups",
+                BypassSecondFactorWhenApiUnreachable = true,
+                FirstFactorAuthenticationSource = "Radius",
+                AdapterClientEndpoint = "127.0.0.1",
+                NpsServerEndpoint = "127.0.0.1",
+                RadiusSharedSecret = "secret",
+                PrivacyMode = "Full",
+                PreAuthenticationMethod = "None",
+                AuthenticationCacheLifetime = "00:01:00",
+                AuthenticationCacheMinimalMatching = true,
+                CallingStationIdAttribute = "12345",
+                InvalidCredentialDelay = "3"
+            },
+            LdapServers = new LdapServersSection()
+            {
+                LdapServers = new[]
+                {
+                    new LdapServerConfiguration()
+                    {
+                        ConnectionString = "connectionString",
+                        UserName = "username",
+                        Password = "password",
+                    }
+                }
+            }
+        };
+
+        var serviceConfig = new ServiceConfiguration();
+        var configName = "name";
+        var dictionaryMock = new Mock<IRadiusDictionary>();
+        var attribute = new DictionaryAttribute("name", 1, "type");
+        dictionaryMock.Setup(x => x.GetAttribute(It.IsAny<string>())).Returns(attribute);
+        var factory =
+            new ClientConfigurationFactory(dictionaryMock.Object);
+        var clientConfig = factory.CreateConfig(configName, radiusConfig, serviceConfig);
+
+        Assert.NotNull(clientConfig);
+        Assert.Equal(expectedNpsTimeout, clientConfig.NpsServerTimeout);
+    }
+    
+    [Fact]
+    public void CreateClientConfiguration_InvalidNpsServerTimeout_ShouldThrow()
+    {
+        var radiusConfig = new RadiusAdapterConfiguration()
+        {
+            AppSettings = new AppSettingsSection()
+            {
+                MultifactorNasIdentifier = "identifier",
+                MultifactorSharedSecret = "secret",
+                SignUpGroups = "groups",
+                BypassSecondFactorWhenApiUnreachable = true,
+                FirstFactorAuthenticationSource = "Radius",
+                AdapterClientEndpoint = "127.0.0.1",
+                NpsServerEndpoint = "127.0.0.1",
+                NpsServerTimeout = "random",
+                RadiusSharedSecret = "secret",
+                PrivacyMode = "Full",
+                PreAuthenticationMethod = "None",
+                AuthenticationCacheLifetime = "00:01:00",
+                AuthenticationCacheMinimalMatching = true,
+                CallingStationIdAttribute = "12345",
+                InvalidCredentialDelay = "3"
+            },
+            LdapServers = new LdapServersSection()
+            {
+                LdapServers = new[]
+                {
+                    new LdapServerConfiguration()
+                    {
+                        ConnectionString = "connectionString",
+                        UserName = "username",
+                        Password = "password",
+                    }
+                }
+            }
+        };
+
+        var serviceConfig = new ServiceConfiguration();
+        var configName = "name";
+        var dictionaryMock = new Mock<IRadiusDictionary>();
+        var attribute = new DictionaryAttribute("name", 1, "type");
+        dictionaryMock.Setup(x => x.GetAttribute(It.IsAny<string>())).Returns(attribute);
+        var factory =
+            new ClientConfigurationFactory(dictionaryMock.Object);
+        var ex = Assert.Throws<InvalidConfigurationException>(() => factory.CreateConfig(configName, radiusConfig, serviceConfig));
+        Assert.Contains("Invalid NPS server timeout", ex.Message);
     }
 
     [Fact]

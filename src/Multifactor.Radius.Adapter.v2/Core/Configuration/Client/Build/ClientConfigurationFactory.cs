@@ -1,4 +1,5 @@
-﻿using System.Net;
+﻿using System.Globalization;
+using System.Net;
 using System.Text.RegularExpressions;
 using Multifactor.Radius.Adapter.v2.Core.Auth;
 using Multifactor.Radius.Adapter.v2.Core.Auth.PreAuthMode;
@@ -226,7 +227,20 @@ public class ClientConfigurationFactory : IClientConfigurationFactory
                 throw new InvalidConfigurationException($"Config name: '{builder.Name}'. Invalid NPS server endpoint: '{server}'"); 
             builder.AddNpsServerEndpoint(npsEndpoint);
         }
-
+        
+        var timeoutStr = appSettings.NpsServerTimeout;
+        if (!string.IsNullOrWhiteSpace(timeoutStr))
+        {
+            if (TimeSpan.TryParseExact(timeoutStr, @"hh\:mm\:ss", null, TimeSpanStyles.None, out var npsServerTimeout))
+            {
+                builder.SetNpsServerTimeout(npsServerTimeout);
+            }
+            else
+            {
+                throw new InvalidConfigurationException($"Config name: '{builder.Name}'. Invalid NPS server timeout: '{timeoutStr}'"); 
+            }
+        }
+        
         builder.SetServiceClientEndpoint(serviceClientEndpoint);
     }
 

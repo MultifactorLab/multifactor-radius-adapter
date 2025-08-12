@@ -20,6 +20,7 @@ public class PipelineExecutionSettings : IPipelineExecutionSettings
     public AuthenticationSource FirstFactorAuthenticationSource => _configuration.FirstFactorAuthenticationSource;
     public ApiCredential ApiCredential => _configuration.ApiCredential;
     public IReadOnlyList<IPEndPoint> NpsServerEndpoints => _configuration.NpsServerEndpoints;
+    public TimeSpan NpsServerTimeout => _configuration.NpsServerTimeout;
     public PrivacyModeDescriptor PrivacyMode => _configuration.PrivacyMode;
     public IReadOnlyDictionary<string, RadiusReplyAttributeValue[]> RadiusReplyAttributes => _configuration.RadiusReplyAttributes;
     public IPEndPoint ServiceClientEndpoint => _configuration.ServiceClientEndpoint;

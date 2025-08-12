@@ -63,6 +63,8 @@ public class ClientConfiguration : IClientConfiguration
     /// </summary>
     public bool BypassSecondFactorWhenApiUnreachable { get; private set; }
 
+    public TimeSpan NpsServerTimeout { get; private set; } = TimeSpan.FromSeconds(5);
+    
     public PrivacyModeDescriptor PrivacyMode { get; private set; } = PrivacyModeDescriptor.Default;
 
     /// <summary>
@@ -132,6 +134,15 @@ public class ClientConfiguration : IClientConfiguration
     {
         ArgumentNullException.ThrowIfNull(val);
         _npsServers.Add(val);
+        return this;
+    }
+
+    public ClientConfiguration SetNpsServerTimeout(TimeSpan val)
+    {
+        if (val.TotalMilliseconds <= 0)
+            throw new ArgumentException($"Invalid NPS server timeout: {val}");
+        
+        NpsServerTimeout = val;
         return this;
     }
 

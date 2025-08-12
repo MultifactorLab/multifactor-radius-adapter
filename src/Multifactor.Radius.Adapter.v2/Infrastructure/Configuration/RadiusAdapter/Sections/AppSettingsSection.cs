@@ -36,6 +36,9 @@ public class AppSettingsSection
 
     [Description("nps-server-endpoint")]
     public string NpsServerEndpoint { get; init; } = string.Empty;
+    
+    [Description("nps-server-timeout")]
+    public string NpsServerTimeout { get; init; } = "00:00:05";
 
     [Description("radius-client-ip")]
     public string RadiusClientIp { get; init; } = string.Empty;

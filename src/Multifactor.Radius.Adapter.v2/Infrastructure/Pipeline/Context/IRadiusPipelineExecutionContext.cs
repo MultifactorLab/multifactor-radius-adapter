@@ -34,6 +34,7 @@ public interface IRadiusPipelineExecutionContext
     AuthenticationSource FirstFactorAuthenticationSource { get; }
     ApiCredential ApiCredential { get; }
     IReadOnlyList<IPEndPoint> NpsServerEndpoints { get; }
+    TimeSpan NpsServerTimeout { get; }
     PrivacyModeDescriptor PrivacyMode { get; }
     IReadOnlyDictionary<string, RadiusReplyAttributeValue[]> RadiusReplyAttributes { get; }
     IPEndPoint ServiceClientEndpoint { get; }
