@@ -4,6 +4,7 @@ using Multifactor.Core.Ldap.Attributes;
 using Multifactor.Radius.Adapter.v2.Core.Configuration.Client;
 using Multifactor.Radius.Adapter.v2.Core.Radius.Attributes;
 using Multifactor.Radius.Adapter.v2.Services.Radius;
+using Multifactor.Radius.Adapter.v2.Tests.Fixture;
 
 namespace Multifactor.Radius.Adapter.v2.Tests.Unit;
 
@@ -229,6 +230,32 @@ public class RadiusReplyAttributeServiceTests
         var result = service.GetReplyAttributes(request);
         var attr = result.First().Value;
         
+        Assert.Empty(attr);
+    }
+
+    [Theory]
+    [ClassData(typeof(EmptyStringsListInput))]
+    public void GetReplyAttributes_UserNameConditionAndEmptyUserName_ShouldReturnEmptyAttributes(string emptyString)
+    {
+        //Arrange
+        var replyAttributes = new Dictionary<string, RadiusReplyAttributeValue[]>();
+        replyAttributes.Add("key", [new RadiusReplyAttributeValue("const", "UserName=userName")]);
+        var request = new GetReplyAttributesRequest(
+            emptyString,
+            new HashSet<string>(),
+            replyAttributes,
+            new List<LdapAttribute>());
+        var radiusDictionaryMock = new Mock<IRadiusDictionary>();
+        radiusDictionaryMock.Setup(x => x.GetAttribute("key")).Returns(new DictionaryAttribute("key", 1, "string"));
+        var converterMock = new RadiusAttributeTypeConverter(radiusDictionaryMock.Object);
+        var service = new RadiusReplyAttributeService(converterMock, NullLogger<RadiusReplyAttributeService>.Instance);
+        
+        // Act
+        var result = service.GetReplyAttributes(request);
+        
+        //Assert
+        Assert.Single(result);
+        var attr = result.First().Value;
         Assert.Empty(attr);
     }
 }
