@@ -19,7 +19,7 @@ public class PipelineExecutionSettings : IPipelineExecutionSettings
     public bool BypassSecondFactorWhenApiUnreachable => _configuration.BypassSecondFactorWhenApiUnreachable;
     public AuthenticationSource FirstFactorAuthenticationSource => _configuration.FirstFactorAuthenticationSource;
     public ApiCredential ApiCredential => _configuration.ApiCredential;
-    public IReadOnlyList<IPEndPoint> NpsServerEndpoints => _configuration.NpsServerEndpoints;
+    public IReadOnlySet<IPEndPoint> NpsServerEndpoints => _configuration.NpsServerEndpoints;
     public TimeSpan NpsServerTimeout => _configuration.NpsServerTimeout;
     public PrivacyModeDescriptor PrivacyMode => _configuration.PrivacyMode;
     public IReadOnlyDictionary<string, RadiusReplyAttributeValue[]> RadiusReplyAttributes => _configuration.RadiusReplyAttributes;

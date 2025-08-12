@@ -16,7 +16,7 @@ public interface IClientConfiguration
     AuthenticationSource FirstFactorAuthenticationSource { get; }
     ApiCredential ApiCredential { get; }
     string Name { get; }
-    IReadOnlyList<IPEndPoint> NpsServerEndpoints { get; }
+    IReadOnlySet<IPEndPoint> NpsServerEndpoints { get; }
     TimeSpan NpsServerTimeout { get; }
     PrivacyModeDescriptor PrivacyMode { get; }
     IReadOnlyDictionary<string, RadiusReplyAttributeValue[]> RadiusReplyAttributes { get; }

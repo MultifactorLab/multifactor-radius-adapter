@@ -10,7 +10,7 @@ namespace Multifactor.Radius.Adapter.v2.Core.Configuration.Client;
 public class ClientConfiguration : IClientConfiguration
 {
     private readonly List<ILdapServerConfiguration> _ldapServers = new();
-    private readonly List<IPEndPoint> _npsServers = new();
+    private readonly HashSet<IPEndPoint> _npsServers = new();
 
     public IReadOnlyList<ILdapServerConfiguration> LdapServers => _ldapServers;
 
@@ -75,7 +75,7 @@ public class ClientConfiguration : IClientConfiguration
     /// <summary>
     /// Network Policy Service RADIUS UDP Server endpoint
     /// </summary>
-    public IReadOnlyList<IPEndPoint> NpsServerEndpoints => _npsServers;
+    public IReadOnlySet<IPEndPoint> NpsServerEndpoints => _npsServers;
 
     /// <summary>
     /// Groups to assign to the registered user.Specified groups will be assigned to a new user.

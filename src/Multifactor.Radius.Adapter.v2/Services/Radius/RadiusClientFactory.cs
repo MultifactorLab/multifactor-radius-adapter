@@ -5,9 +5,9 @@ namespace Multifactor.Radius.Adapter.v2.Services.Radius;
 
 public class RadiusClientFactory : IRadiusClientFactory
 {
-    private readonly ILogger<RadiusClientFactory> _logger;
+    private readonly ILogger<RadiusClient> _logger;
     
-    public RadiusClientFactory(ILogger<RadiusClientFactory> logger)
+    public RadiusClientFactory(ILogger<RadiusClient> logger)
     {
         _logger = logger;
     }

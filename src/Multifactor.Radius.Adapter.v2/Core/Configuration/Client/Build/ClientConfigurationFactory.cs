@@ -225,6 +225,7 @@ public class ClientConfigurationFactory : IClientConfigurationFactory
         {
             if (!IPEndPointFactory.TryParse(server, out var npsEndpoint))
                 throw new InvalidConfigurationException($"Config name: '{builder.Name}'. Invalid NPS server endpoint: '{server}'"); 
+            
             builder.AddNpsServerEndpoint(npsEndpoint);
         }
         

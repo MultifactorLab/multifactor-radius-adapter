@@ -139,7 +139,7 @@ public class AppSettingsTests
         Assert.NotNull(clientConfig.ServiceClientEndpoint);
         Assert.NotNull(clientConfig.NpsServerEndpoints);
         Assert.Single(clientConfig.NpsServerEndpoints);
-        var nps = clientConfig.NpsServerEndpoints[0];
+        var nps = clientConfig.NpsServerEndpoints.First();
         Assert.Equal(IPEndPoint.Parse("127.0.0.1"), nps);
         Assert.Empty(clientConfig.RadiusReplyAttributes);
         Assert.NotNull(clientConfig.UserNameTransformRules);

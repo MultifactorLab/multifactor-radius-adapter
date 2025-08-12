@@ -43,8 +43,7 @@ public class RadiusFirstFactorProcessor : IFirstFactorProcessor
             var authPacket = PreparePacket(requestPacket, transformedName, context.Passphrase);
 
             var authBytes = _radiusPacketService.GetBytes(authPacket, context.RadiusSharedSecret);
-
-
+            
             byte[]? response = null;
             IPEndPoint? endPoint = null;
             using var client = _radiusClientFactory.CreateRadiusClient(context.ServiceClientEndpoint);

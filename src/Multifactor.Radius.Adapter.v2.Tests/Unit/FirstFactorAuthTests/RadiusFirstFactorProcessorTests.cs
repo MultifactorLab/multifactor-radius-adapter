@@ -45,7 +45,7 @@ public class RadiusFirstFactorProcessorTests
         contextMock.Setup(x => x.RequestPacket).Returns(requestPacketMock.Object);
         contextMock.Setup(x => x.AuthenticationState).Returns(authState);
         contextMock.Setup(x => x.UserNameTransformRules).Returns(transformRules);
-        contextMock.Setup(x => x.NpsServerEndpoints).Returns([IPEndPoint.Parse("127.0.0.1")]);
+        contextMock.Setup(x => x.NpsServerEndpoints).Returns(new HashSet<IPEndPoint>([IPEndPoint.Parse("127.0.0.1")]));
         contextMock.Setup(x => x.ServiceClientEndpoint).Returns(IPEndPoint.Parse("127.0.0.1"));
         contextMock.Setup(x => x.PreAuthnMode).Returns(PreAuthModeDescriptor.Default);
         contextMock.Setup(x => x.RadiusSharedSecret).Returns(new SharedSecret("123"));
@@ -92,7 +92,7 @@ public class RadiusFirstFactorProcessorTests
         contextMock.Setup(x => x.RequestPacket).Returns(requestPacketMock.Object);
         contextMock.Setup(x => x.AuthenticationState).Returns(authState);
         contextMock.Setup(x => x.UserNameTransformRules).Returns(transformRules);
-        contextMock.Setup(x => x.NpsServerEndpoints).Returns([IPEndPoint.Parse("127.0.0.1")]);
+        contextMock.Setup(x => x.NpsServerEndpoints).Returns(new HashSet<IPEndPoint>([IPEndPoint.Parse("127.0.0.1")]));
         contextMock.Setup(x => x.ServiceClientEndpoint).Returns(IPEndPoint.Parse("127.0.0.1"));
         contextMock.Setup(x => x.PreAuthnMode).Returns(PreAuthModeDescriptor.Default);
         contextMock.Setup(x => x.RadiusSharedSecret).Returns(new SharedSecret("123"));
@@ -131,7 +131,7 @@ public class RadiusFirstFactorProcessorTests
         contextMock.Setup(x => x.RequestPacket).Returns(requestPacketMock.Object);
         contextMock.Setup(x => x.AuthenticationState).Returns(authState);
         contextMock.Setup(x => x.UserNameTransformRules).Returns(transformRules);
-        contextMock.Setup(x => x.NpsServerEndpoints).Returns([IPEndPoint.Parse("127.0.0.1")]);
+        contextMock.Setup(x => x.NpsServerEndpoints).Returns(new HashSet<IPEndPoint>([IPEndPoint.Parse("127.0.0.1")]));
         contextMock.Setup(x => x.ServiceClientEndpoint).Returns(IPEndPoint.Parse("127.0.0.1"));
         contextMock.Setup(x => x.PreAuthnMode).Returns(PreAuthModeDescriptor.Default);
         contextMock.Setup(x => x.RadiusSharedSecret).Returns(new SharedSecret("123"));
@@ -170,7 +170,7 @@ public class RadiusFirstFactorProcessorTests
         contextMock.Setup(x => x.RequestPacket).Returns(requestPacketMock.Object);
         contextMock.Setup(x => x.AuthenticationState).Returns(authState);
         contextMock.Setup(x => x.UserNameTransformRules).Returns(transformRules);
-        contextMock.Setup(x => x.NpsServerEndpoints).Returns([IPEndPoint.Parse("127.0.0.1"), IPEndPoint.Parse("127.0.0.2")]);
+        contextMock.Setup(x => x.NpsServerEndpoints).Returns(new HashSet<IPEndPoint>([IPEndPoint.Parse("127.0.0.1"), IPEndPoint.Parse("127.0.0.2")]));
         contextMock.Setup(x => x.ServiceClientEndpoint).Returns(IPEndPoint.Parse("127.0.0.1"));
         contextMock.Setup(x => x.PreAuthnMode).Returns(PreAuthModeDescriptor.Default);
         contextMock.Setup(x => x.RadiusSharedSecret).Returns(new SharedSecret("123"));
@@ -217,7 +217,7 @@ public class RadiusFirstFactorProcessorTests
         contextMock.Setup(x => x.RequestPacket).Returns(requestPacketMock.Object);
         contextMock.Setup(x => x.AuthenticationState).Returns(authState);
         contextMock.Setup(x => x.UserNameTransformRules).Returns(transformRules);
-        contextMock.Setup(x => x.NpsServerEndpoints).Returns([nps1, nps2]);
+        contextMock.Setup(x => x.NpsServerEndpoints).Returns(new HashSet<IPEndPoint>([nps1, nps2]));
         contextMock.Setup(x => x.ServiceClientEndpoint).Returns(IPEndPoint.Parse("127.0.0.1"));
         contextMock.Setup(x => x.PreAuthnMode).Returns(PreAuthModeDescriptor.Default);
         contextMock.Setup(x => x.RadiusSharedSecret).Returns(new SharedSecret("123"));
