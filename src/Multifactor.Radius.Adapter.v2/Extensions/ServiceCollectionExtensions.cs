@@ -2,6 +2,7 @@ using System.Runtime.InteropServices;
 using System.Security.Authentication;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Http.Resilience;
 using Multifactor.Core.Ldap.Connection.LdapConnectionFactory;
 using Multifactor.Core.Ldap.LdapGroup.Load;
 using Multifactor.Core.Ldap.LdapGroup.Membership;
@@ -27,6 +28,7 @@ using Multifactor.Radius.Adapter.v2.Services.LdapForest;
 using Multifactor.Radius.Adapter.v2.Services.MultifactorApi;
 using Multifactor.Radius.Adapter.v2.Services.NetBios;
 using Multifactor.Radius.Adapter.v2.Services.Radius;
+using Polly;
 using Serilog;
 using ILdapConnectionFactory = Multifactor.Radius.Adapter.v2.Core.Ldap.ILdapConnectionFactory;
 
@@ -108,28 +110,38 @@ public static class ServiceCollectionExtensions
     {
         services.AddSingleton<IHttpClient, MultifactorHttpClient>();
         services.AddHttpClient(nameof(MultifactorHttpClient), (prov, client) =>
-        {
-            var config = prov.GetRequiredService<IServiceConfiguration>();
-            client.Timeout = config.ApiTimeout;
-        }).ConfigurePrimaryHttpMessageHandler(prov =>
-        {
-            var config = prov.GetRequiredService<IServiceConfiguration>();
-            var handler = new HttpClientHandler
             {
-                MaxConnectionsPerServer = 100,
-                SslProtocols = SslProtocols.Tls13 | SslProtocols.Tls12
-            };
-            
-            if (string.IsNullOrWhiteSpace(config.ApiProxy))
+                var config = prov.GetRequiredService<IServiceConfiguration>();
+                client.Timeout = config.ApiTimeout;
+            }).ConfigurePrimaryHttpMessageHandler(prov =>
+            {
+                var config = prov.GetRequiredService<IServiceConfiguration>();
+                var handler = new HttpClientHandler
+                {
+                    MaxConnectionsPerServer = 100,
+                    SslProtocols = SslProtocols.Tls13 | SslProtocols.Tls12
+                };
+
+                if (string.IsNullOrWhiteSpace(config.ApiProxy))
+                    return handler;
+
+                if (!WebProxyFactory.TryCreateWebProxy(config.ApiProxy, out var webProxy))
+                    throw new Exception(
+                        "Unable to initialize WebProxy. Please, check whether multifactor-api-proxy URI is valid.");
+
+                handler.Proxy = webProxy;
+
                 return handler;
-            
-            if (!WebProxyFactory.TryCreateWebProxy(config.ApiProxy, out var webProxy))
-                throw new Exception("Unable to initialize WebProxy. Please, check whether multifactor-api-proxy URI is valid.");
-
-            handler.Proxy = webProxy;
-
-            return handler;
-        });
+            })
+            .AddResilienceHandler("mf-api-pipeline", x =>
+            {
+                x.AddRetry(new HttpRetryStrategyOptions
+                {
+                    MaxRetryAttempts = 2,
+                    Delay = TimeSpan.FromSeconds(1),
+                    BackoffType = DelayBackoffType.Exponential
+                });
+            });
     }
 
     public static void AddRadiusDictionary(this IServiceCollection services)
@@ -190,16 +202,16 @@ public static class ServiceCollectionExtensions
     public static void AddServices(this IServiceCollection services)
     {
         services.AddTransient<IRadiusPacketService, RadiusPacketService>();
-        
+
         services.AddSingleton<IAuthenticatedClientCache, AuthenticatedClientCache>();
-        
+
         services.AddSingleton(LdapConnectionFactory.Create());
         services.AddSingleton<ILdapConnectionFactory, CustomLdapConnectionFactory>((prov) => new CustomLdapConnectionFactory());
-        
+
         services.AddSingleton<ILdapGroupLoaderFactory, LdapGroupLoaderFactory>();
         services.AddSingleton<IMembershipCheckerFactory, MembershipCheckerFactory>();
         services.AddTransient<ILdapGroupService, LdapGroupService>();
-        
+
         services.AddSingleton<IForestMetadataCache, ForestMetadataCache>();
         services.AddTransient<ILdapProfileService, LdapProfileService>();
 

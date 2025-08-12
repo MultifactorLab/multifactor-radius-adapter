@@ -82,8 +82,7 @@ public class MultifactorApiService : IMultifactorApiService
                 if (responseCode == AuthenticationStatus.Accept && !(response?.Bypassed ?? false))
                 {
                     LogGrantedInfo(personalData.Identity, response, request.RequestPacket.CallingStationIdAttribute);
-                    _authenticatedClientCache.SetCache(callingStationId, personalData.Identity, request.ConfigName,
-                        request.AuthenticationCacheLifetime);
+                    _authenticatedClientCache.SetCache(callingStationId, personalData.Identity, request.ConfigName, request.AuthenticationCacheLifetime);
                 }
 
                 return new MultifactorResponse(responseCode, response?.Id, response?.ReplyMessage);
@@ -100,8 +99,7 @@ public class MultifactorApiService : IMultifactorApiService
         }
 
         if (cloudResponse.Code == AuthenticationStatus.Bypass)
-            _logger.LogWarning("Bypass second factor for user '{user:l}' from {host:l}:{port}", personalData.Identity,
-                request.RemoteEndpoint.Address, request.RemoteEndpoint.Port);
+            _logger.LogWarning("Bypass second factor for user '{user:l}' from {host:l}:{port}", personalData.Identity, request.RemoteEndpoint.Address, request.RemoteEndpoint.Port);
 
         return cloudResponse;
     }
@@ -112,8 +110,8 @@ public class MultifactorApiService : IMultifactorApiService
         ArgumentException.ThrowIfNullOrWhiteSpace(request.RequestId, nameof(request.RequestId));
         ArgumentException.ThrowIfNullOrWhiteSpace(request.Answer, nameof(request.Answer));
 
-        var identity = GetSecondFactorIdentity(request.IdentityAttribute, request.RequestPacket.UserName,
-            request.UserProfile?.Attributes ?? []);
+        var identity = GetSecondFactorIdentity(request.IdentityAttribute, request.RequestPacket.UserName, request.UserProfile?.Attributes ?? []);
+        
         if (string.IsNullOrWhiteSpace(identity))
             throw new InvalidOperationException("The identity is empty.");
 
@@ -132,18 +130,18 @@ public class MultifactorApiService : IMultifactorApiService
             {
                 var response = await _api.SendChallengeAsync(apiUrl, payload, request.ApiCredential);
                 var responseCode = ConvertToAuthCode(response);
+                
                 if (responseCode != AuthenticationStatus.Accept || response.Bypassed)
                     return new MultifactorResponse(responseCode, response?.ReplyMessage);
+                
                 LogGrantedInfo(identity, response, request.RequestPacket.CallingStationIdAttribute);
-                _authenticatedClientCache.SetCache(request.RequestPacket.CallingStationIdAttribute, identity,
-                    request.ConfigName, request.AuthenticationCacheLifetime);
+                _authenticatedClientCache.SetCache(request.RequestPacket.CallingStationIdAttribute, identity, request.ConfigName, request.AuthenticationCacheLifetime);
 
                 return new MultifactorResponse(responseCode, response?.ReplyMessage);
             }
             catch (MultifactorApiUnreachableException apiEx)
             {
-                cloudResponse = ProcessMfException(apiEx, identity, request.BypassSecondFactorWhenApiUnreachable,
-                    request.RemoteEndpoint);
+                cloudResponse = ProcessMfException(apiEx, identity, request.BypassSecondFactorWhenApiUnreachable, request.RemoteEndpoint);
             }
             catch (Exception ex)
             {
@@ -157,33 +155,6 @@ public class MultifactorApiService : IMultifactorApiService
 
         return cloudResponse;
     }
-
-    /*private async Task<MultifactorResponse> ProcessMultifactorApiUrl(string apiUrl, AccessRequest payload, CreateSecondFactorRequest request, PersonalData personalData, string? callingStationId)
-    {
-        var response = await CreateAccessRequestAsync(apiUrl, payload, request.ApiCredential);
-        var responseCode = ConvertToAuthCode(response);
-
-        if (responseCode == AuthenticationStatus.Reject)
-        {
-            var reason = response?.ReplyMessage;
-            var phone = response?.Phone;
-            _logger.LogWarning(
-                "Second factor verification for user '{user:l}' from {host:l}:{port} failed with reason='{reason:l}'. User phone {phone:l}",
-                personalData.Identity,
-                request.RemoteEndpoint.Address,
-                request.RemoteEndpoint.Port,
-                reason,
-                phone);
-        }
-
-        if (responseCode == AuthenticationStatus.Accept && !(response?.Bypassed ?? false))
-        {
-            LogGrantedInfo(personalData.Identity, response, request.RequestPacket.CallingStationIdAttribute);
-            _authenticatedClientCache.SetCache(callingStationId, personalData.Identity, request.ConfigName, request.AuthenticationCacheLifetime);
-        }
-
-        return new MultifactorResponse(responseCode, response?.Id, response?.ReplyMessage);
-    }*/
 
     private AuthenticationStatus ConvertToAuthCode(AccessRequestResponse? multifactorAccessRequest)
     {
@@ -269,8 +240,7 @@ public class MultifactorApiService : IMultifactorApiService
         return passphrase.Otp ?? passphrase.ProviderCode;
     }
 
-    private async Task<AccessRequestResponse?> CreateAccessRequestAsync(string address, AccessRequest payload,
-        ApiCredential apiCredential)
+    private async Task<AccessRequestResponse?> CreateAccessRequestAsync(string address, AccessRequest payload, ApiCredential apiCredential)
     {
         var response = await _api.CreateAccessRequest(address, payload, apiCredential);
         return response;
@@ -328,8 +298,7 @@ public class MultifactorApiService : IMultifactorApiService
     {
         return new AccessRequest
         {
-            Identity = UserNameTransformation.Transform(personalData.Identity,
-                context.UserNameTransformRules.BeforeSecondFactor),
+            Identity = UserNameTransformation.Transform(personalData.Identity, context.UserNameTransformRules.BeforeSecondFactor),
             Name = personalData.DisplayName,
             Email = personalData.Email,
             Phone = personalData.Phone,
@@ -379,8 +348,7 @@ public class MultifactorApiService : IMultifactorApiService
         }
     }
 
-    private MultifactorResponse ProcessMfException(MultifactorApiUnreachableException apiEx, string identity,
-        bool bypassSecondFactorWhenApiUnreachable, IPEndPoint remoteEndpoint)
+    private MultifactorResponse ProcessMfException(MultifactorApiUnreachableException apiEx, string identity, bool bypassSecondFactorWhenApiUnreachable, IPEndPoint remoteEndpoint)
     {
         _logger.LogError(apiEx,
             "Error occured while requesting API for user '{user:l}' from {host:l}:{port}, {msg:l}",

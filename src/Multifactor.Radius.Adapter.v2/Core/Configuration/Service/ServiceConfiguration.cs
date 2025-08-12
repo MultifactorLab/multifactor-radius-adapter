@@ -83,8 +83,10 @@ public class ServiceConfiguration : IServiceConfiguration
     {
         if (string.IsNullOrWhiteSpace(val))
             throw new ArgumentException($"'{nameof(val)}' cannot be null or whitespace.", nameof(val));
-
-        _apiUrls.Add(val);
+        
+        if (!_apiUrls.Contains(val))
+            _apiUrls.Add(val);
+        
         return this;
     }
 

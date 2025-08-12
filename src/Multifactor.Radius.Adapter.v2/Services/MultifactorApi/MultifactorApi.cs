@@ -26,6 +26,7 @@ public class MultifactorApi : IMultifactorApi
         ArgumentNullException.ThrowIfNull(payload, nameof(payload));
         ArgumentNullException.ThrowIfNull(apiCredentials, nameof(apiCredentials));
         ArgumentException.ThrowIfNullOrWhiteSpace(address);
+        
         return SendRequestAsync($"{address}/access/requests/ra", payload, apiCredentials);
     }
 
@@ -34,6 +35,7 @@ public class MultifactorApi : IMultifactorApi
         ArgumentNullException.ThrowIfNull(payload, nameof(payload));
         ArgumentNullException.ThrowIfNull(apiCredentials, nameof(apiCredentials));
         ArgumentException.ThrowIfNullOrWhiteSpace(address);
+        
         return SendRequestAsync($"{address}/access/requests/ra/challenge", payload, apiCredentials);
     }
 
