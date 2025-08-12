@@ -76,8 +76,8 @@ public class RadiusReplyAttributeService : IRadiusReplyAttributeService
 
         if (attributeValue.UserNameCondition.Count != 0)
         {
-            var userName = request.UserName;
-            var canonicalUserName = Utils.CanonicalizeUserName(userName!);
+            var userName = string.IsNullOrWhiteSpace(request.UserName) ? string.Empty : request.UserName;
+            var canonicalUserName = Utils.CanonicalizeUserName(userName);
             return attributeValue.UserNameCondition.Any(x => CompareUserName(x, userName, canonicalUserName));
         }
 

@@ -9,15 +9,14 @@ public class GetReplyAttributesRequest
     public IReadOnlyDictionary<string, RadiusReplyAttributeValue[]> ReplyAttributes { get; }
     public HashSet<string> UserGroups { get; }
     private IReadOnlyCollection<LdapAttribute> Attributes { get; }    
-    public string UserName { get; }
+    public string? UserName { get; }
 
     public GetReplyAttributesRequest(
-        string userName,
+        string? userName,
         HashSet<string> userGroups,
         IReadOnlyDictionary<string, RadiusReplyAttributeValue[]> replyAttributes,
         IReadOnlyCollection<LdapAttribute> attributes)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(userName);
         ArgumentNullException.ThrowIfNull(userGroups);
         ArgumentNullException.ThrowIfNull(replyAttributes);
         ArgumentNullException.ThrowIfNull(attributes);
