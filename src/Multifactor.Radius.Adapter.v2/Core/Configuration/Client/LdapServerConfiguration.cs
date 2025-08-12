@@ -163,8 +163,11 @@ public class LdapServerConfiguration : ILdapServerConfiguration
     private LdapServerConfiguration AddToList<T>(IList<T> target, IEnumerable<T> items)
     {
         foreach (var item in items)
-            target.Add(item);
-
+        {
+            if (!target.Contains(item))
+                target.Add(item);
+        }
+        
         return this;
     }
 }

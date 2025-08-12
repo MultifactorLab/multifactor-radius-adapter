@@ -5,5 +5,5 @@ namespace Multifactor.Radius.Adapter.v2.Services.Ldap.Forest;
 
 public interface ILdapForestService
 {
-    IReadOnlyCollection<LdapForestEntry>? LoadLdapForest(LdapConnectionOptions connectionOptions, bool loadTrustedDomains, bool loadSuffixes);
+    IReadOnlyCollection<LdapForestEntry> LoadLdapForest(LdapConnectionOptions connectionOptions, bool loadTrustedDomains, bool loadSuffixes);
 }

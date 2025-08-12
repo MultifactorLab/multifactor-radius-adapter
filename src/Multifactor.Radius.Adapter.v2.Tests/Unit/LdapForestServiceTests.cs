@@ -15,7 +15,7 @@ namespace Multifactor.Radius.Adapter.v2.Tests.Unit;
 public class LdapForestServiceTests
 {
     [Fact]
-    public void LoadLdapForest_EmptyMainSchema_ShouldReturnNull()
+    public void LoadLdapForest_EmptyMainSchema_ShouldReturnEmptyForest()
     {
         //Arrange
         var ldapSchemaLoaderMock = new Mock<ILdapSchemaLoader>();
@@ -33,7 +33,7 @@ public class LdapForestServiceTests
         var result = forestService.LoadLdapForest(options, true, true);
         
         //Assert
-        Assert.Null(result);
+        Assert.Empty(result);
     }
     
     [Theory]

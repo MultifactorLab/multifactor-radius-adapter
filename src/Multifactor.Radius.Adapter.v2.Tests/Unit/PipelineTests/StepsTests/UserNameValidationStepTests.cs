@@ -13,30 +13,53 @@ public class UserNameValidationStepTests
 {
     [Theory]
     [ClassData(typeof(EmptyStringsListInput))]
-    public async Task ExecuteAsync_EmptyUserName_ShouldThrow(string userName)
+    public async Task ExecuteAsync_EmptyUserName_ShouldCompleteStep(string userName)
     {
         //Arrange
+        var execState = new ExecutionState();
+        var authState = new AuthenticationState();
+        var responseInfo = new ResponseInformation();
         var step = new UserNameValidationStep(NullLogger<UserNameValidationStep>.Instance);
-        var context = new Mock<IRadiusPipelineExecutionContext>();
-        context.Setup(x=> x.RequestPacket.UserName).Returns(userName);
-
+        var contextMock = new Mock<IRadiusPipelineExecutionContext>();
+        contextMock.Setup(x=> x.RequestPacket.UserName).Returns(userName);
+        contextMock.Setup(x => x.ResponseInformation).Returns(responseInfo);
+        contextMock.Setup(x => x.AuthenticationState).Returns(authState);
+        contextMock.Setup(x => x.ExecutionState).Returns(execState);
+        var context = contextMock.Object;
+        
         //Act
+        await step.ExecuteAsync(context);
+        
         //Assert
-        await Assert.ThrowsAsync<InvalidOperationException>(() => step.ExecuteAsync(context.Object));
+        Assert.False(execState.IsTerminated);
+        Assert.Equal(AuthenticationStatus.Awaiting, authState.FirstFactorStatus);
+        Assert.Equal(AuthenticationStatus.Awaiting, authState.SecondFactorStatus);
     }
     
     [Fact]
-    public async Task ExecuteAsync_NoServerConfiguration_ShouldThrow()
+    public async Task ExecuteAsync_NoServerConfiguration_ShouldCompleteStep()
     {
         //Arrange
+        var execState = new ExecutionState();
+        var authState = new AuthenticationState();
+        var responseInfo = new ResponseInformation();
         var step = new UserNameValidationStep(NullLogger<UserNameValidationStep>.Instance);
-        var context = new Mock<IRadiusPipelineExecutionContext>();
-        context.Setup(x=> x.RequestPacket.UserName).Returns("userName");
-        context.Setup(x=> x.LdapServerConfiguration).Returns(() => null);
+        var contextMock = new Mock<IRadiusPipelineExecutionContext>();
+        contextMock.Setup(x=> x.RequestPacket.UserName).Returns("userName");
+        contextMock.Setup(x=> x.LdapServerConfiguration).Returns(() => null);
+        contextMock.Setup(x => x.ResponseInformation).Returns(responseInfo);
+        contextMock.Setup(x => x.AuthenticationState).Returns(authState);
+        contextMock.Setup(x => x.ExecutionState).Returns(execState);
 
+        var context = contextMock.Object;
+        
         //Act
+        await step.ExecuteAsync(context);
+        
         //Assert
-        await Assert.ThrowsAsync<InvalidOperationException>(() => step.ExecuteAsync(context.Object));
+        Assert.False(execState.IsTerminated);
+        Assert.Equal(AuthenticationStatus.Awaiting, authState.FirstFactorStatus);
+        Assert.Equal(AuthenticationStatus.Awaiting, authState.SecondFactorStatus);
     }
     
     [Theory]
@@ -66,7 +89,7 @@ public class UserNameValidationStepTests
         //Assert
         Assert.True(execState.IsTerminated);
         Assert.Equal(AuthenticationStatus.Reject, authState.FirstFactorStatus);
-        Assert.Equal(AuthenticationStatus.Reject, authState.SecondFactorStatus);
+        Assert.Equal(AuthenticationStatus.Awaiting, authState.SecondFactorStatus);
     }
     
     [Theory]
@@ -156,6 +179,6 @@ public class UserNameValidationStepTests
         //Assert
         Assert.True(execState.IsTerminated);
         Assert.Equal(AuthenticationStatus.Reject, authState.FirstFactorStatus);
-        Assert.Equal(AuthenticationStatus.Reject, authState.SecondFactorStatus);
+        Assert.Equal(AuthenticationStatus.Awaiting, authState.SecondFactorStatus);
     }
 }

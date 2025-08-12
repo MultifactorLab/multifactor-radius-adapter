@@ -40,32 +40,32 @@ public class RadiusPacketProcessor : IRadiusPacketProcessor
         if (clientConfiguration.LdapServers.Count <= 0)
         {
             await ExecutePipeline(clientConfiguration, requestPacket);
+            return;
         }
-        else
+        
+        foreach (var serverConfig in clientConfiguration.LdapServers)
         {
-            foreach (var serverConfig in clientConfiguration.LdapServers)
+            var forest = _ldapForestService.LoadLdapForest(
+                Utils.CreateLdapConnectionOptions(serverConfig),
+                serverConfig.TrustedDomainsEnabled,
+                serverConfig.AlternativeSuffixesEnabled);
+            
+            if (!forest.Any())
             {
-                var forest = _ldapForestService.LoadLdapForest(
-                    Utils.CreateLdapConnectionOptions(serverConfig),
-                    serverConfig.TrustedDomainsEnabled,
-                    serverConfig.AlternativeSuffixesEnabled);
-
-                if (forest is null)
-                {
-                    _logger.LogWarning("Failed to load LDAP forest for '{domain}'", serverConfig.ConnectionString);
-                    continue;
-                }
-
-                var filteredForest = ApplyPermissions(forest, serverConfig.DomainPermissions, serverConfig.SuffixesPermissions);
-
-                var configs = GetLdapServerConfigurations(filteredForest, serverConfig);
+                _logger.LogWarning("Failed to load LDAP forest for '{domain}'", serverConfig.ConnectionString);
+                continue;
+            }
+            
+            var filteredForest = ApplyPermissions(forest, serverConfig.DomainPermissions, serverConfig.SuffixesPermissions);
+            
+            var configs = GetLdapServerConfigurations(filteredForest, serverConfig);
+            
+            foreach (var config in configs)
+            {
+                var isSuccessful = await ExecutePipeline(clientConfiguration, requestPacket, config);
+                if (isSuccessful)
+                    return;
                 
-                foreach (var config in configs)
-                {
-                    var isSuccessful = await ExecutePipeline(clientConfiguration, requestPacket, config);
-                    if (isSuccessful)
-                        return;
-                }
             }
         }
     }

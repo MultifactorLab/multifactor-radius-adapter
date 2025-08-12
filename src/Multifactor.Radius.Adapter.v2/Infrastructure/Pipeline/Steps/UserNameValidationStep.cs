@@ -17,15 +17,23 @@ public class UserNameValidationStep : IRadiusPipelineStep
 
     public Task ExecuteAsync(IRadiusPipelineExecutionContext context)
     {
+        _logger.LogDebug("'{name}' started", nameof(UserNameValidationStep));
+        
         var userName = context.RequestPacket.UserName;
         if (string.IsNullOrWhiteSpace(userName))
-            throw new InvalidOperationException("Empty user name");
-        
+        {
+            _logger.LogDebug("User name is empty");
+            return Task.CompletedTask;
+        }
+
         var serverSettings = context.LdapServerConfiguration;
-        
+
         if (serverSettings is null)
-            throw new InvalidOperationException("No LDAP server configuration");
-        
+        {
+            _logger.LogDebug("No LDAP server configuration provided. User name validation will be skipped.");
+            return Task.CompletedTask;
+        }
+
         var identity = new UserIdentity(userName);
 
         if (serverSettings.UpnRequired && identity.Format != UserIdentityFormat.UserPrincipalName)
@@ -53,7 +61,7 @@ public class UserNameValidationStep : IRadiusPipelineStep
     private void TerminateWithError(IRadiusPipelineExecutionContext context, string replyMessage)
     {
         context.AuthenticationState.FirstFactorStatus = AuthenticationStatus.Reject;
-        context.AuthenticationState.SecondFactorStatus = AuthenticationStatus.Reject;
+        context.AuthenticationState.SecondFactorStatus = AuthenticationStatus.Awaiting;
         context.ExecutionState.Terminate();
         context.ResponseInformation.ReplyMessage = replyMessage;
     }

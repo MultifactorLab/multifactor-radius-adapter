@@ -30,12 +30,12 @@ public class LdapForestService : ILdapForestService
     /// <summary>
     /// Loads root and trusted domains
     /// </summary>
-    public IReadOnlyCollection<LdapForestEntry>? LoadLdapForest(LdapConnectionOptions connectionOptions, bool loadTrustedDomains, bool loadSuffixes)
+    public IReadOnlyCollection<LdapForestEntry> LoadLdapForest(LdapConnectionOptions connectionOptions, bool loadTrustedDomains, bool loadSuffixes)
     {
         var mainSchema = LoadSchema(connectionOptions);
 
         if (mainSchema is null)
-            return null;
+            return Array.Empty<LdapForestEntry>();
 
         var domain  = connectionOptions.ConnectionString.Host;
 
