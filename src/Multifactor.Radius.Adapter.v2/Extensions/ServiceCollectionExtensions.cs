@@ -110,7 +110,6 @@ public static class ServiceCollectionExtensions
         services.AddHttpClient(nameof(MultifactorHttpClient), (prov, client) =>
         {
             var config = prov.GetRequiredService<IServiceConfiguration>();
-            client.BaseAddress = new Uri(config.ApiUrl);
             client.Timeout = config.ApiTimeout;
         }).ConfigurePrimaryHttpMessageHandler(prov =>
         {

@@ -39,18 +39,9 @@ public class ServiceConfigurationFactory : IServiceConfigurationFactory
         }
 
         var appSettings = rootConfiguration.AppSettings;
-
-        var apiUrlSetting = appSettings.MultifactorApiUrl;
+        
         var apiProxySetting = appSettings.MultifactorApiProxy;
         var apiTimeoutSetting = appSettings.MultifactorApiTimeout;
-        
-        if (string.IsNullOrWhiteSpace(apiUrlSetting))
-        {
-            throw InvalidConfigurationException.For(
-                x => x.AppSettings.MultifactorApiUrl,
-                "'{prop}' element not found. Config name: '{0}'",
-                RadiusAdapterConfigurationFile.ConfigName);
-        }
 
         IPEndPoint serviceServerEndpoint = ParseAdapterServerEndpoint(appSettings);
         
@@ -79,13 +70,12 @@ public class ServiceConfigurationFactory : IServiceConfigurationFactory
         
         var builder = new ServiceConfiguration()
             .SetServiceServerEndpoint(serviceServerEndpoint)
-            .SetApiUrl(apiUrlSetting)
             .SetApiTimeout(apiTimeout);
-
+        
+        ReadMultifactorApiUrlSetting(appSettings, builder);
+        
         if (!string.IsNullOrWhiteSpace(apiProxySetting))
-        {
             builder.SetApiProxy(apiProxySetting);
-        }
 
         ReadInvalidCredDelaySetting(appSettings, builder);
 
@@ -98,9 +88,7 @@ public class ServiceConfigurationFactory : IServiceConfigurationFactory
         }
 
         foreach (var clientConfig in clientConfigs)
-        {
             AddClient(clientConfig, builder);
-        }
 
         return builder;
     }
@@ -193,5 +181,21 @@ public class ServiceConfigurationFactory : IServiceConfigurationFactory
                 "Can't parse '{prop}' value. Config name: '{0}'",
                 RadiusAdapterConfigurationFile.ConfigName);            
         }
+    }
+
+    private static void ReadMultifactorApiUrlSetting(AppSettingsSection appSettings, ServiceConfiguration builder)
+    {
+        var apiUrlSetting = appSettings.MultifactorApiUrl;
+        if (string.IsNullOrWhiteSpace(apiUrlSetting))
+        {
+            throw InvalidConfigurationException.For(
+                x => x.AppSettings.MultifactorApiUrl,
+                "'{prop}' element not found. Config name: '{0}'",
+                RadiusAdapterConfigurationFile.ConfigName);
+        }
+
+        var urls = Utils.SplitString(apiUrlSetting);
+        foreach (var url in urls)
+            builder.AddApiUrl(url);
     }
 }

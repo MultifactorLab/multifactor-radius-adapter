@@ -28,6 +28,7 @@ public class PipelineExecutionSettings : IPipelineExecutionSettings
     public RandomWaiterConfig InvalidCredentialDelay => _configuration.InvalidCredentialDelay;
     public PreAuthModeDescriptor PreAuthnMode => _configuration.PreAuthnMode;
     public SharedSecret RadiusSharedSecret => _sharedSecret;
+    public IReadOnlyList<string> ApiUrls => _configuration.ApiUrls;
     public string ClientConfigurationName => _configuration.Name;
     
     public PipelineExecutionSettings(IClientConfiguration clientConfiguration, ILdapServerConfiguration? ldapServerConfiguration = null)
