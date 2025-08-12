@@ -125,7 +125,7 @@ public class AdapterResponseSender : IResponseSender
     private void AddReplyAttributes(RadiusPacket target, SendAdapterResponseRequest request)
     {
         var replyAttributesRequest = new GetReplyAttributesRequest(
-            request.RequestPacket.UserName!,
+            request.RequestPacket.UserName,
             request.UserGroups,
             request.RadiusReplyAttributes,
             request.Attributes);
