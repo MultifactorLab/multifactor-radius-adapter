@@ -1,5 +1,4 @@
 using System.Net;
-using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Multifactor.Core.Ldap.Attributes;
@@ -9,6 +8,7 @@ using Multifactor.Radius.Adapter.v2.Core.Configuration.Client;
 using Multifactor.Radius.Adapter.v2.Core.Ldap;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Context;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Steps;
+using Multifactor.Radius.Adapter.v2.Services.Cache;
 using Multifactor.Radius.Adapter.v2.Services.Ldap;
 using Multifactor.Radius.Adapter.v2.Tests.Fixture;
 
@@ -37,9 +37,9 @@ public class ProfileLoadingTests
         contextMock.Setup(x => x.ClientConfigurationName).Returns("name");
         contextMock.SetupProperty(x => x.UserLdapProfile);
         var context = contextMock.Object;
-        var cacheMock = new CacheMock();
+        var cacheMock = new Mock<ICacheService>();
         
-        var step = new ProfileLoadingStep(loaderMock.Object, cacheMock, NullLogger<ProfileLoadingStep>.Instance);
+        var step = new ProfileLoadingStep(loaderMock.Object, cacheMock.Object, NullLogger<ProfileLoadingStep>.Instance);
         await step.ExecuteAsync(context);
 
         Assert.NotNull(context.UserLdapProfile);
@@ -62,8 +62,8 @@ public class ProfileLoadingTests
         contextMock.SetupProperty(x => x.UserLdapProfile);
         contextMock.Setup(x => x.LdapServerConfiguration).Returns(new Mock<ILdapServerConfiguration>().Object);
         var context = contextMock.Object;
-        var cacheMock = new CacheMock();
-        var step = new ProfileLoadingStep(loaderMock.Object, cacheMock, NullLogger<ProfileLoadingStep>.Instance);
+        var cacheMock = new Mock<ICacheService>();
+        var step = new ProfileLoadingStep(loaderMock.Object, cacheMock.Object, NullLogger<ProfileLoadingStep>.Instance);
         await step.ExecuteAsync(context);
 
         Assert.Null(context.UserLdapProfile);
@@ -88,8 +88,8 @@ public class ProfileLoadingTests
         contextMock.Setup(x => x.LdapServerConfiguration).Returns(serverConfig.Object);
         contextMock.SetupProperty(x => x.UserLdapProfile);
         var context = contextMock.Object;
-        var cacheMock = new CacheMock();
-        var step = new ProfileLoadingStep(loaderMock.Object, cacheMock, NullLogger<ProfileLoadingStep>.Instance);
+        var cacheMock = new Mock<ICacheService>();
+        var step = new ProfileLoadingStep(loaderMock.Object, cacheMock.Object, NullLogger<ProfileLoadingStep>.Instance);
         await step.ExecuteAsync(context);
 
         Assert.Null(context.UserLdapProfile);
@@ -110,8 +110,8 @@ public class ProfileLoadingTests
         contextMock.Setup(x => x.LdapServerConfiguration).Returns(new Mock<ILdapServerConfiguration>().Object);
         contextMock.SetupProperty(x => x.UserLdapProfile);
         var context = contextMock.Object;
-        var cacheMock = new CacheMock();
-        var step = new ProfileLoadingStep(loaderMock.Object, cacheMock, NullLogger<ProfileLoadingStep>.Instance);
+        var cacheMock = new Mock<ICacheService>();
+        var step = new ProfileLoadingStep(loaderMock.Object, cacheMock.Object, NullLogger<ProfileLoadingStep>.Instance);
         await step.ExecuteAsync(context);
 
         Assert.Null(context.UserLdapProfile);
@@ -132,39 +132,6 @@ public class ProfileLoadingTests
             MemberOf = [];
             Attributes = [];
             Dn = new DistinguishedName("dc=test,dc=example,dc=com");
-        }
-    }
-    
-    private class CacheMock() : IMemoryCache
-    {
-        private object? _val;
-
-        public CacheMock(object? val = null) : this()
-        {
-            _val = val;
-        }
-
-        public void Dispose()
-        {
-            throw new NotImplementedException();
-        }
-
-        public bool TryGetValue(object key, out object? value)
-        {
-            value = _val;
-            return value is not null;
-        }
-
-        public ICacheEntry CreateEntry(object key)
-        {
-            var entry = new Mock<ICacheEntry>();
-            entry.SetupProperty(x => x.AbsoluteExpiration);
-            entry.SetupProperty(x => x.Value);
-            return entry.Object;
-        }
-
-        public void Remove(object key)
-        {
         }
     }
 }

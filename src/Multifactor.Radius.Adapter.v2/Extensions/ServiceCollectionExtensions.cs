@@ -21,6 +21,7 @@ using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Builder;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Steps;
 using Multifactor.Radius.Adapter.v2.Server.Udp;
 using Multifactor.Radius.Adapter.v2.Services.AuthenticatedClientCache;
+using Multifactor.Radius.Adapter.v2.Services.Cache;
 using Multifactor.Radius.Adapter.v2.Services.DataProtection;
 using Multifactor.Radius.Adapter.v2.Services.Ldap;
 using Multifactor.Radius.Adapter.v2.Services.LdapForest;
@@ -211,6 +212,7 @@ public static class ServiceCollectionExtensions
 
         services.AddTransient<IRadiusReplyAttributeService, RadiusReplyAttributeService>();
         services.AddTransient<IRadiusAttributeTypeConverter, RadiusAttributeTypeConverter>();
+        services.AddSingleton<ICacheService, CacheService>();
     }
 
     public static void AddAdapterLogging(this IServiceCollection services)
