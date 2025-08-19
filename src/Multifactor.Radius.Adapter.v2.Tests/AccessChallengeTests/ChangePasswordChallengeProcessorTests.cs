@@ -11,6 +11,7 @@ using Multifactor.Radius.Adapter.v2.Core.Ldap;
 using Multifactor.Radius.Adapter.v2.Core.MultifactorApi;
 using Multifactor.Radius.Adapter.v2.Core.Pipeline;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Context;
+using Multifactor.Radius.Adapter.v2.Services.Cache;
 using Multifactor.Radius.Adapter.v2.Services.DataProtection;
 using Multifactor.Radius.Adapter.v2.Services.Ldap;
 using Multifactor.Radius.Adapter.v2.Tests.Fixture;
@@ -22,23 +23,29 @@ public class ChangePasswordChallengeProcessorTests
     [Fact]
     public void ShouldReturnCorrectChallengeType()
     {
-        var memCacheMock = new Mock<IMemoryCache>();
+        //Arrange
+        var memCacheMock = new Mock<ICacheService>();
         var service = new Mock<ILdapProfileService>();
         var dataProtectionService = new Mock<IDataProtectionService>();
-        var processor = new ChangePasswordChallengeProcessor(memCacheMock.Object, service.Object,
-            dataProtectionService.Object, NullLogger<ChangePasswordChallengeProcessor>.Instance);
+        
+        //Act
+        var processor = new ChangePasswordChallengeProcessor(memCacheMock.Object, service.Object, dataProtectionService.Object, NullLogger<ChangePasswordChallengeProcessor>.Instance);
+        
+        //Assert
         Assert.Equal(ChallengeType.PasswordChange, processor.ChallengeType);
     }
 
     [Fact]
     public void AddChallengeContext_NoContext_ShouldThrowArgumentNullException()
     {
-        var memCacheMock = new Mock<IMemoryCache>();
+        //Arrange
+        var memCacheMock = new Mock<ICacheService>();
         var service = new Mock<ILdapProfileService>();
         var dataProtectionService = new Mock<IDataProtectionService>();
-        var processor = new ChangePasswordChallengeProcessor(memCacheMock.Object, service.Object,
-            dataProtectionService.Object, NullLogger<ChangePasswordChallengeProcessor>.Instance);
+        var processor = new ChangePasswordChallengeProcessor(memCacheMock.Object, service.Object, dataProtectionService.Object, NullLogger<ChangePasswordChallengeProcessor>.Instance);
 
+        //Act
+        //Assert
         Assert.Throws<ArgumentNullException>(() => processor.AddChallengeContext(null));
     }
 
@@ -46,16 +53,19 @@ public class ChangePasswordChallengeProcessorTests
     [ClassData(typeof(EmptyStringsListInput))]
     public void AddChallengeContext_NoPassword_ShouldThrowArgumentNullException(string emptyString)
     {
-        var memCacheMock = new Mock<IMemoryCache>();
+        //Arrange
+        var memCacheMock = new Mock<ICacheService>();
         var service = new Mock<ILdapProfileService>();
         var dataProtectionService = new Mock<IDataProtectionService>();
-        var processor = new ChangePasswordChallengeProcessor(memCacheMock.Object, service.Object,
-            dataProtectionService.Object, NullLogger<ChangePasswordChallengeProcessor>.Instance);
+        var processor = new ChangePasswordChallengeProcessor(memCacheMock.Object, service.Object, dataProtectionService.Object, NullLogger<ChangePasswordChallengeProcessor>.Instance);
 
         var contextMock = new Mock<IRadiusPipelineExecutionContext>();
         var passphrase = UserPassphrase.Parse(emptyString, PreAuthModeDescriptor.Default);
         contextMock.Setup(x => x.Passphrase).Returns(passphrase);
         var context = contextMock.Object;
+        
+        //Act
+        //Assert
         Assert.Throws<InvalidOperationException>(() => processor.AddChallengeContext(context));
     }
 
@@ -64,29 +74,33 @@ public class ChangePasswordChallengeProcessorTests
     [ClassData(typeof(EmptyStringsListInput))]
     public void AddChallengeContext_NoDomain_ShouldThrowArgumentNullException(string emptyString)
     {
-        var memCacheMock = new Mock<IMemoryCache>();
+        //Arrange
+        var memCacheMock = new Mock<ICacheService>();
         var service = new Mock<ILdapProfileService>();
         var dataProtectionService = new Mock<IDataProtectionService>();
-        var processor = new ChangePasswordChallengeProcessor(memCacheMock.Object, service.Object,
-            dataProtectionService.Object, NullLogger<ChangePasswordChallengeProcessor>.Instance);
+        var processor = new ChangePasswordChallengeProcessor(memCacheMock.Object, service.Object, dataProtectionService.Object, NullLogger<ChangePasswordChallengeProcessor>.Instance);
 
         var contextMock = new Mock<IRadiusPipelineExecutionContext>();
         var passphrase = UserPassphrase.Parse("123456", PreAuthModeDescriptor.Default);
         contextMock.Setup(x => x.Passphrase).Returns(passphrase);
         contextMock.Setup(x => x.MustChangePasswordDomain).Returns(emptyString);
         var context = contextMock.Object;
+        
+        //Act
+        //Assert
         Assert.Throws<InvalidOperationException>(() => processor.AddChallengeContext(context));
     }
 
     [Fact]
     public void AddChallengeContext_ShouldAdd()
     {
+        //Arrange
         var service = new Mock<ILdapProfileService>();
         var dataProtectionServiceMock = new Mock<IDataProtectionService>();
         dataProtectionServiceMock.Setup(x => x.Protect(It.IsAny<string>(), It.IsAny<string>())).Returns("password");
         var dataProtectionService = dataProtectionServiceMock.Object;
-        var processor = new ChangePasswordChallengeProcessor(new CacheMock(), service.Object, dataProtectionService,
-            NullLogger<ChangePasswordChallengeProcessor>.Instance);
+        var memCacheMock = new Mock<ICacheService>();
+        var processor = new ChangePasswordChallengeProcessor(memCacheMock.Object, service.Object, dataProtectionService, NullLogger<ChangePasswordChallengeProcessor>.Instance);
         var contextMock = new Mock<IRadiusPipelineExecutionContext>();
         var passphrase = UserPassphrase.Parse("123456", PreAuthModeDescriptor.Default);
         contextMock.Setup(x => x.Passphrase).Returns(passphrase);
@@ -97,37 +111,47 @@ public class ChangePasswordChallengeProcessorTests
         var context = contextMock.Object;
         context.ResponseInformation = new ResponseInformation();
 
+        //Act
         var id = processor.AddChallengeContext(context);
 
+        //Assert
         Assert.NotNull(id);
         Assert.NotNull(context.ResponseInformation.State);
         Assert.NotNull(context.ResponseInformation.ReplyMessage);
         Assert.NotEmpty(context.ResponseInformation.State);
         Assert.NotEmpty(context.ResponseInformation.ReplyMessage);
+        memCacheMock.Verify(x => x.Set(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<DateTimeOffset>()), Times.Once);
     }
 
     [Fact]
     public async Task ProcessChallenge_EmptyContext_ShouldThrowArgumentNullException()
     {
+        //Arrange
         var service = new Mock<ILdapProfileService>();
         var dataProtectionServiceMock = new Mock<IDataProtectionService>();
         dataProtectionServiceMock.Setup(x => x.Protect(It.IsAny<string>(), It.IsAny<string>())).Returns("password");
         var dataProtectionService = dataProtectionServiceMock.Object;
-        var processor = new ChangePasswordChallengeProcessor(new CacheMock(), service.Object, dataProtectionService, NullLogger<ChangePasswordChallengeProcessor>.Instance);
+        var memCacheMock = new Mock<ICacheService>();
+        var processor = new ChangePasswordChallengeProcessor(memCacheMock.Object, service.Object, dataProtectionService, NullLogger<ChangePasswordChallengeProcessor>.Instance);
         var id = new ChallengeIdentifier("1", "2");
         
+        //Act
+        //Assert
         await Assert.ThrowsAsync<ArgumentNullException>(() => processor.ProcessChallengeAsync(id, null));
     }
 
     [Fact]
     public async Task ProcessChallenge_NoRequest_ShouldReturnAccept()
     {
+        //Arrange
         var service = new Mock<ILdapProfileService>();
         var dataProtectionServiceMock = new Mock<IDataProtectionService>();
         dataProtectionServiceMock.Setup(x => x.Protect(It.IsAny<string>(), It.IsAny<string>())).Returns("password");
         var dataProtectionService = dataProtectionServiceMock.Object;
-        var processor = new ChangePasswordChallengeProcessor(new CacheMock(), service.Object, dataProtectionService,
-            NullLogger<ChangePasswordChallengeProcessor>.Instance);
+        var memCacheMock = new Mock<ICacheService>();
+        PasswordChangeRequest obj = null;
+        memCacheMock.Setup(x => x.TryGetValue(It.IsAny<string>(), out obj)).Returns(false);
+        var processor = new ChangePasswordChallengeProcessor(memCacheMock.Object, service.Object, dataProtectionService, NullLogger<ChangePasswordChallengeProcessor>.Instance);
         var contextMock = new Mock<IRadiusPipelineExecutionContext>();
         var passphrase = UserPassphrase.Parse("123456", PreAuthModeDescriptor.Default);
         contextMock.Setup(x => x.Passphrase).Returns(passphrase);
@@ -141,20 +165,25 @@ public class ChangePasswordChallengeProcessorTests
         context.ResponseInformation = new ResponseInformation();
         var request = new ChallengeIdentifier("1", "2");
         
+        //Act
         var status = await processor.ProcessChallengeAsync(request, context);
         
+        //Assert
         Assert.Equal(ChallengeStatus.Accept, status);
     }
 
     [Fact]
     public async Task ProcessChallenge_NoPassword_ShouldReturnReject()
     {
+        //Arrange
         var service = new Mock<ILdapProfileService>();
         var dataProtectionServiceMock = new Mock<IDataProtectionService>();
         dataProtectionServiceMock.Setup(x => x.Protect(It.IsAny<string>(), It.IsAny<string>())).Returns("password");
         var dataProtectionService = dataProtectionServiceMock.Object;
-        var processor = new ChangePasswordChallengeProcessor(new CacheMock(new PasswordChangeRequest()), service.Object,
-            dataProtectionService, NullLogger<ChangePasswordChallengeProcessor>.Instance);
+        var memCacheMock = new Mock<ICacheService>();
+        var passwordRequest = new PasswordChangeRequest();
+        memCacheMock.Setup(x => x.TryGetValue(It.IsAny<string>(), out passwordRequest)).Returns(true);
+        var processor = new ChangePasswordChallengeProcessor(memCacheMock.Object, service.Object, dataProtectionService, NullLogger<ChangePasswordChallengeProcessor>.Instance);
         var contextMock = new Mock<IRadiusPipelineExecutionContext>();
         var passphrase = UserPassphrase.Parse(null, PreAuthModeDescriptor.Default);
         contextMock.Setup(x => x.Passphrase).Returns(passphrase);
@@ -170,8 +199,10 @@ public class ChangePasswordChallengeProcessorTests
         context.ResponseInformation = new ResponseInformation();
         var request = new ChallengeIdentifier("1", "2");
 
+        //Act
         var status = await processor.ProcessChallengeAsync(request, context);
 
+        //Assert
         Assert.Equal(ChallengeStatus.Reject, status);
         Assert.Equal(AuthenticationStatus.Reject, context.AuthenticationState.FirstFactorStatus);
     }
@@ -179,13 +210,15 @@ public class ChangePasswordChallengeProcessorTests
     [Fact]
     public async Task ProcessChallenge_NoNewPassword_ShouldReturnInProcess()
     {
+        //Arrange
         var service = new Mock<ILdapProfileService>();
         var dataProtectionServiceMock = new Mock<IDataProtectionService>();
         dataProtectionServiceMock.Setup(x => x.Protect(It.IsAny<string>(), It.IsAny<string>())).Returns("password");
         var dataProtectionService = dataProtectionServiceMock.Object;
-        var processor = new ChangePasswordChallengeProcessor(
-            new CacheMock(new PasswordChangeRequest()), service.Object,
-            dataProtectionService, NullLogger<ChangePasswordChallengeProcessor>.Instance);
+        var memCacheMock = new Mock<ICacheService>();
+        var passwordRequest = new PasswordChangeRequest();
+        memCacheMock.Setup(x => x.TryGetValue(It.IsAny<string>(), out passwordRequest)).Returns(true);
+        var processor = new ChangePasswordChallengeProcessor(memCacheMock.Object, service.Object, dataProtectionService, NullLogger<ChangePasswordChallengeProcessor>.Instance);
         var contextMock = new Mock<IRadiusPipelineExecutionContext>();
         var passphrase = UserPassphrase.Parse("123456", PreAuthModeDescriptor.Default);
         contextMock.Setup(x => x.Passphrase).Returns(passphrase);
@@ -202,8 +235,10 @@ public class ChangePasswordChallengeProcessorTests
         context.ResponseInformation = new ResponseInformation();
         var request = new ChallengeIdentifier("1", "2");
 
+        //Act
         var status = await processor.ProcessChallengeAsync(request, context);
 
+        //Assert
         Assert.Equal(ChallengeStatus.InProcess, status);
         Assert.Equal(AuthenticationStatus.Awaiting, context.AuthenticationState.FirstFactorStatus);
     }
@@ -211,13 +246,15 @@ public class ChangePasswordChallengeProcessorTests
     [Fact]
     public async Task ProcessChallenge_NotMatchChallenge_ShouldReturnInProcess()
     {
+        //Arrange
         var service = new Mock<ILdapProfileService>();
         var dataProtectionServiceMock = new Mock<IDataProtectionService>();
         dataProtectionServiceMock.Setup(x => x.Protect(It.IsAny<string>(), It.IsAny<string>())).Returns("password");
         var dataProtectionService = dataProtectionServiceMock.Object;
-        var processor = new ChangePasswordChallengeProcessor(
-            new CacheMock(new PasswordChangeRequest() { NewPasswordEncryptedData = "password" }), service.Object,
-            dataProtectionService, NullLogger<ChangePasswordChallengeProcessor>.Instance);
+        var memCacheMock = new Mock<ICacheService>();
+        var passwordRequest = new PasswordChangeRequest() { NewPasswordEncryptedData = "password" };
+        memCacheMock.Setup(x => x.TryGetValue(It.IsAny<string>(), out passwordRequest)).Returns(true);
+        var processor = new ChangePasswordChallengeProcessor(memCacheMock.Object, service.Object, dataProtectionService, NullLogger<ChangePasswordChallengeProcessor>.Instance);
         var contextMock = new Mock<IRadiusPipelineExecutionContext>();
         var passphrase = UserPassphrase.Parse("123456", PreAuthModeDescriptor.Default);
         contextMock.Setup(x => x.Passphrase).Returns(passphrase);
@@ -234,8 +271,10 @@ public class ChangePasswordChallengeProcessorTests
         context.ResponseInformation = new ResponseInformation();
         var request = new ChallengeIdentifier("1", "2");
 
+        //Act
         var status = await processor.ProcessChallengeAsync(request, context);
 
+        //Assert
         Assert.Equal(ChallengeStatus.InProcess, status);
         Assert.Equal(AuthenticationStatus.Awaiting, context.AuthenticationState.FirstFactorStatus);
         Assert.StartsWith("Passwords not match", context.ResponseInformation.ReplyMessage);
@@ -244,6 +283,7 @@ public class ChangePasswordChallengeProcessorTests
     [Fact]
     public async Task ProcessChallenge_SuccessfulPasswordChange_ShouldReturnAccept()
     {
+        //Arrange
         var service = new Mock<ILdapProfileService>();
         service
             .Setup(x => x.ChangeUserPasswordAsync(It.IsAny<ChangeUserPasswordRequest>()))
@@ -253,9 +293,12 @@ public class ChangePasswordChallengeProcessorTests
         dataProtectionServiceMock.Setup(x => x.Protect(It.IsAny<string>(), It.IsAny<string>())).Returns("password");
         dataProtectionServiceMock.Setup(x => x.Unprotect(It.IsAny<string>(), It.IsAny<string>())).Returns("1234567");
         var dataProtectionService = dataProtectionServiceMock.Object;
-        var processor = new ChangePasswordChallengeProcessor(
-            new CacheMock(new PasswordChangeRequest() { NewPasswordEncryptedData = "1234567" }), service.Object,
-            dataProtectionService, NullLogger<ChangePasswordChallengeProcessor>.Instance);
+        
+        var memCacheMock = new Mock<ICacheService>();
+        var passwordRequest = new PasswordChangeRequest() { NewPasswordEncryptedData = "1234567" };
+        memCacheMock.Setup(x => x.TryGetValue(It.IsAny<string>(), out passwordRequest)).Returns(true);
+        
+        var processor = new ChangePasswordChallengeProcessor(memCacheMock.Object, service.Object, dataProtectionService, NullLogger<ChangePasswordChallengeProcessor>.Instance);
         var contextMock = new Mock<IRadiusPipelineExecutionContext>();
         var passphrase = UserPassphrase.Parse("1234567", PreAuthModeDescriptor.Default);
         contextMock.Setup(x => x.Passphrase).Returns(passphrase);
@@ -272,8 +315,10 @@ public class ChangePasswordChallengeProcessorTests
         context.ResponseInformation = new ResponseInformation();
         var request = new ChallengeIdentifier("1", "2");
 
+        //Act
         var status = await processor.ProcessChallengeAsync(request, context);
 
+        //Assert
         Assert.Equal(ChallengeStatus.Accept, status);
         Assert.Equal(AuthenticationStatus.Awaiting, context.AuthenticationState.FirstFactorStatus);
         Assert.Null(context.ResponseInformation.State);
@@ -282,6 +327,7 @@ public class ChangePasswordChallengeProcessorTests
     [Fact]
     public async Task ProcessChallenge_UnsuccessfulPasswordChange_ShouldReturnReject()
     {
+        //Arrange
         var service = new Mock<ILdapProfileService>();
         service
             .Setup(x => x.ChangeUserPasswordAsync(It.IsAny<ChangeUserPasswordRequest>()))
@@ -291,9 +337,12 @@ public class ChangePasswordChallengeProcessorTests
         dataProtectionServiceMock.Setup(x => x.Protect(It.IsAny<string>(), It.IsAny<string>())).Returns("password");
         dataProtectionServiceMock.Setup(x => x.Unprotect(It.IsAny<string>(), It.IsAny<string>())).Returns("1234567");
         var dataProtectionService = dataProtectionServiceMock.Object;
-        var processor = new ChangePasswordChallengeProcessor(
-            new CacheMock(new PasswordChangeRequest() { NewPasswordEncryptedData = "1234567" }), service.Object,
-            dataProtectionService, NullLogger<ChangePasswordChallengeProcessor>.Instance);
+        
+        var memCacheMock = new Mock<ICacheService>();
+        var passwordRequest = new PasswordChangeRequest() { NewPasswordEncryptedData = "1234567" };
+        memCacheMock.Setup(x => x.TryGetValue(It.IsAny<string>(), out passwordRequest)).Returns(true);
+        
+        var processor = new ChangePasswordChallengeProcessor(memCacheMock.Object, service.Object, dataProtectionService, NullLogger<ChangePasswordChallengeProcessor>.Instance);
         var contextMock = new Mock<IRadiusPipelineExecutionContext>();
         var passphrase = UserPassphrase.Parse("1234567", PreAuthModeDescriptor.Default);
         contextMock.Setup(x => x.Passphrase).Returns(passphrase);
@@ -310,43 +359,12 @@ public class ChangePasswordChallengeProcessorTests
         context.ResponseInformation = new ResponseInformation();
         var request = new ChallengeIdentifier("1", "2");
 
+        //Act
         var status = await processor.ProcessChallengeAsync(request, context);
 
+        //Assert
         Assert.Equal(ChallengeStatus.Reject, status);
         Assert.Equal(AuthenticationStatus.Reject, context.AuthenticationState.FirstFactorStatus);
         Assert.Null(context.ResponseInformation.State);
-    }
-    
-    private class CacheMock() : IMemoryCache
-    {
-        private object? _val;
-
-        public CacheMock(object? val = null) : this()
-        {
-            _val = val;
-        }
-
-        public void Dispose()
-        {
-            throw new NotImplementedException();
-        }
-
-        public bool TryGetValue(object key, out object? value)
-        {
-            value = _val;
-            return value is null;
-        }
-
-        public ICacheEntry CreateEntry(object key)
-        {
-            var entry = new Mock<ICacheEntry>();
-            entry.SetupProperty(x => x.AbsoluteExpiration);
-            entry.SetupProperty(x => x.Value);
-            return entry.Object;
-        }
-
-        public void Remove(object key)
-        {
-        }
     }
 }

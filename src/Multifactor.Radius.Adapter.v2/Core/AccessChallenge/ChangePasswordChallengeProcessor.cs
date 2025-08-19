@@ -1,7 +1,7 @@
-using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Multifactor.Radius.Adapter.v2.Core.Auth;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Context;
+using Multifactor.Radius.Adapter.v2.Services.Cache;
 using Multifactor.Radius.Adapter.v2.Services.DataProtection;
 using Multifactor.Radius.Adapter.v2.Services.Ldap;
 
@@ -9,18 +9,18 @@ namespace Multifactor.Radius.Adapter.v2.Core.AccessChallenge;
 
 public class ChangePasswordChallengeProcessor : IChallengeProcessor
 {
-    private readonly IMemoryCache _cache;
+    private readonly ICacheService _cache;
     private readonly ILdapProfileService _ldapService;
     private readonly IDataProtectionService _dataProtectionService;
     private readonly ILogger<ChangePasswordChallengeProcessor> _logger;
 
     public ChangePasswordChallengeProcessor(
-        IMemoryCache memoryCache,
+        ICacheService cache,
         ILdapProfileService ldapService,
         IDataProtectionService dataProtectionService,
         ILogger<ChangePasswordChallengeProcessor> logger)
     {
-        _cache = memoryCache;
+        _cache = cache;
         _ldapService = ldapService;
         _dataProtectionService = dataProtectionService;
         _logger = logger;
@@ -52,7 +52,7 @@ public class ChangePasswordChallengeProcessor : IChallengeProcessor
         return new ChallengeIdentifier(context.ClientConfigurationName, context.ResponseInformation.State);
     }
 
-    public bool HasChallengeContext(ChallengeIdentifier identifier) => _cache.TryGetValue(identifier.RequestId, out _);
+    public bool HasChallengeContext(ChallengeIdentifier identifier) => _cache.TryGetValue<object>(identifier.RequestId, out _);
 
     public async Task<ChallengeStatus> ProcessChallengeAsync(ChallengeIdentifier identifier, IRadiusPipelineExecutionContext context)
     {
@@ -97,9 +97,13 @@ public class ChangePasswordChallengeProcessor : IChallengeProcessor
 
         return ChallengeStatus.Reject;
     }
-    
-    private PasswordChangeRequest? GetPasswordChangeRequest(string id) => _cache.Get(id) as PasswordChangeRequest;
-    
+
+    private PasswordChangeRequest? GetPasswordChangeRequest(string id)
+    {
+        _cache.TryGetValue(id, out PasswordChangeRequest? passwordChangeRequest);
+        return passwordChangeRequest;
+    }
+
     private ChallengeStatus PasswordsNotMatchChallenge(IRadiusPipelineExecutionContext request, PasswordChangeRequest passwordChangeRequest)
     {
         passwordChangeRequest.NewPasswordEncryptedData = null;

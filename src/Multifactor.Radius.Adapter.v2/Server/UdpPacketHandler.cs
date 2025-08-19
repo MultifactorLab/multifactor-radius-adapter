@@ -1,7 +1,6 @@
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
-using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Multifactor.Radius.Adapter.v2.Core;
 using Multifactor.Radius.Adapter.v2.Core.Configuration.Client;
@@ -14,6 +13,7 @@ using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Context;
 using Multifactor.Radius.Adapter.v2.Server.Udp;
 using Multifactor.Radius.Adapter.v2.Services.AdapterResponseSender;
+using Multifactor.Radius.Adapter.v2.Services.Cache;
 using Multifactor.Radius.Adapter.v2.Services.Radius;
 
 namespace Multifactor.Radius.Adapter.v2.Server;
@@ -25,14 +25,14 @@ public class UdpPacketHandler : IUdpPacketHandler
     private readonly IRadiusPacketService _radiusPacketService;
     private readonly IPipelineProvider _pipelineProvider;
     private readonly IResponseSender _responseSender;
-    private readonly IMemoryCache _memoryCache;
+    private readonly ICacheService _cache;
 
     public UdpPacketHandler(
         IServiceConfiguration serviceConfiguration,
         IRadiusPacketService packetService,
         IPipelineProvider pipelineProvider,
         IResponseSender responseSender,
-        IMemoryCache memoryCache,
+        ICacheService cache,
         ILogger<IUdpPacketHandler> logger)
     {
         _serviceConfiguration = serviceConfiguration;
@@ -40,7 +40,7 @@ public class UdpPacketHandler : IUdpPacketHandler
         _pipelineProvider = pipelineProvider;
         _logger = logger;
         _responseSender = responseSender;
-        _memoryCache = memoryCache;
+        _cache = cache;
     }
     
     public async Task HandleUdpPacket(UdpReceiveResult udpPacket)
@@ -168,10 +168,10 @@ public class UdpPacketHandler : IUdpPacketHandler
     private bool IsRetransmission(IRadiusPacket requestPacket, IPEndPoint remoteEndpoint)
     {
         var packetKey = CreateUniquePacketKey(requestPacket, remoteEndpoint);
-        if (_memoryCache.TryGetValue(packetKey, out _))
+        if (_cache.TryGetValue<object>(packetKey, out _))
             return true;
 
-        _memoryCache.Set(packetKey, 1, DateTimeOffset.UtcNow.AddMinutes(1));
+        _cache.Set(packetKey, 1, DateTimeOffset.UtcNow.AddMinutes(1));
 
         return false;
     }
