@@ -41,6 +41,7 @@ public class LdapProfileService : ILdapProfileService
         }
 
         var filter = GetFilter(identityToSearch, request.LdapSchema);
+        _logger.LogDebug("Search base = '{searchBase}'. Filter for search = '{filter}'", request.SearchBase.StringRepresentation, filter);
         var loader = new LdapProfileLoader(request.SearchBase, connection, request.LdapSchema);
         return loader.LoadLdapProfile(filter, attributeNames: request.AttributeNames ?? []);
     }
