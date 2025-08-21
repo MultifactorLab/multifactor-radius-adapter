@@ -111,7 +111,7 @@ public class UdpPacketHandler : IUdpPacketHandler
 
     private bool IsRetransmission(IRadiusPacket requestPacket)
     {
-        var packetKey = CreateUniquePacketKey(requestPacket, remoteEndpoint);
+        var packetKey = CreateUniquePacketKey(requestPacket);
         if (_cache.TryGetValue<object>(packetKey, out _))
             return true;
 

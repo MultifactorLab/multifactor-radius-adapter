@@ -105,6 +105,7 @@ public class LdapProfileServiceTests
     }
 }
 
+[Collection("ActiveDirectory")]
 public class FreeIpaLdapProfileServiceTests
 {
     [Fact]
@@ -113,11 +114,10 @@ public class FreeIpaLdapProfileServiceTests
         var sensitiveData = GetConfig();
         var searchBase = new DistinguishedName(sensitiveData["SearchBase"]);
         var targetUser = new UserIdentity(sensitiveData["TargetUserUid"]);
-        var netBiosServiceMock = new Mock<INetBiosService>();
         var serverConfig = GetServerConfig(sensitiveData);
         var schema =  LdapSchemaBuilder.Create();
         schema.LdapServerImplementation = LdapImplementation.FreeIPA;
-        var service = new LdapProfileService(new CustomLdapConnectionFactory(), netBiosServiceMock.Object, NullLogger<LdapProfileService>.Instance);
+        var service = new LdapProfileService(new CustomLdapConnectionFactory(), NullLogger<LdapProfileService>.Instance);
         var ldapProfile = service.FindUserProfile(new FindUserProfileRequest("clientKey", serverConfig, schema, searchBase, targetUser));
         
         Assert.NotNull(ldapProfile);

@@ -365,6 +365,7 @@ public class LdapSettingsTests
         {
             AppSettings = new AppSettingsSection()
             {
+                MultifactorApiUrl = "http://127.0.0.1",
                 MultifactorNasIdentifier = "identifier",
                 MultifactorSharedSecret = "secret",
                 SignUpGroups = "groups",
@@ -408,6 +409,7 @@ public class LdapSettingsTests
         {
             AppSettings = new AppSettingsSection()
             {
+                MultifactorApiUrl = "http://127.0.0.1",
                 MultifactorNasIdentifier = "identifier",
                 MultifactorSharedSecret = "secret",
                 SignUpGroups = "groups",
@@ -451,6 +453,7 @@ public class LdapSettingsTests
         {
             AppSettings = new AppSettingsSection()
             {
+                MultifactorApiUrl = "http://127.0.0.1",
                 MultifactorNasIdentifier = "identifier",
                 MultifactorSharedSecret = "secret",
                 SignUpGroups = "groups",
@@ -494,6 +497,7 @@ public class LdapSettingsTests
         {
             AppSettings = new AppSettingsSection()
             {
+                MultifactorApiUrl = "http://127.0.0.1",
                 MultifactorNasIdentifier = "identifier",
                 MultifactorSharedSecret = "secret",
                 SignUpGroups = "groups",
@@ -539,6 +543,7 @@ public class LdapSettingsTests
         {
             AppSettings = new AppSettingsSection()
             {
+                MultifactorApiUrl = "http://127.0.0.1",
                 MultifactorNasIdentifier = "identifier",
                 MultifactorSharedSecret = "secret",
                 SignUpGroups = "groups",
@@ -584,6 +589,7 @@ public class LdapSettingsTests
         {
             AppSettings = new AppSettingsSection()
             {
+                MultifactorApiUrl = "http://127.0.0.1",
                 MultifactorNasIdentifier = "identifier",
                 MultifactorSharedSecret = "secret",
                 SignUpGroups = "groups",
@@ -629,6 +635,7 @@ public class LdapSettingsTests
         {
             AppSettings = new AppSettingsSection()
             {
+                MultifactorApiUrl = "http://127.0.0.1",
                 MultifactorNasIdentifier = "identifier",
                 MultifactorSharedSecret = "secret",
                 SignUpGroups = "groups",
