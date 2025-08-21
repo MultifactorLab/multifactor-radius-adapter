@@ -8,6 +8,7 @@ namespace Multifactor.Radius.Adapter.v2.Core.Configuration.Service;
 
 public class ServiceConfiguration : IServiceConfiguration
 {
+    private readonly List<string> _apiUrls = new();
     /// <summary>
     /// List of clients with identification by client ip
     /// </summary>
@@ -52,9 +53,9 @@ public class ServiceConfiguration : IServiceConfiguration
     public IPEndPoint ServiceServerEndpoint { get; private set; }
 
     /// <summary>
-    /// Multifactor API URL
+    /// Multifactor API URLs
     /// </summary>
-    public string ApiUrl { get; private set; }
+    public IReadOnlyList<string> ApiUrls => _apiUrls;
 
     /// <summary>
     /// HTTP Proxy for API
@@ -78,12 +79,14 @@ public class ServiceConfiguration : IServiceConfiguration
         return this;
     }
 
-    public ServiceConfiguration SetApiUrl(string val)
+    public ServiceConfiguration AddApiUrl(string val)
     {
         if (string.IsNullOrWhiteSpace(val))
             throw new ArgumentException($"'{nameof(val)}' cannot be null or whitespace.", nameof(val));
-
-        ApiUrl = val;
+        
+        if (!_apiUrls.Contains(val))
+            _apiUrls.Add(val);
+        
         return this;
     }
 
