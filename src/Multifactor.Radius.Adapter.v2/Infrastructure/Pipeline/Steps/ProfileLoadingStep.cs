@@ -1,10 +1,10 @@
-using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Multifactor.Core.Ldap.Attributes;
 using Multifactor.Core.Ldap.Name;
 using Multifactor.Radius.Adapter.v2.Core.Ldap;
 using Multifactor.Radius.Adapter.v2.Core.Ldap.Identity;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Context;
+using Multifactor.Radius.Adapter.v2.Services.Cache;
 using Multifactor.Radius.Adapter.v2.Services.Ldap;
 
 namespace Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Steps;
@@ -13,12 +13,12 @@ public class ProfileLoadingStep : IRadiusPipelineStep
 {
     private readonly ILdapProfileService _ldapProfileService;
     private readonly ILogger<ProfileLoadingStep> _logger;
-    private readonly IMemoryCache _memoryCache;
+    private readonly ICacheService _cache;
 
-    public ProfileLoadingStep(ILdapProfileService ldapProfileService, IMemoryCache memoryCache, ILogger<ProfileLoadingStep> logger)
+    public ProfileLoadingStep(ILdapProfileService ldapProfileService, ICacheService cache, ILogger<ProfileLoadingStep> logger)
     {
         _ldapProfileService = ldapProfileService;
-        _memoryCache = memoryCache;
+        _cache = cache;
         _logger = logger;
     }
 
@@ -62,7 +62,7 @@ public class ProfileLoadingStep : IRadiusPipelineStep
     private ILdapProfile? TryGetUserProfile(UserIdentity userIdentity, DistinguishedName domain, LdapAttributeName[] attributes, IRadiusPipelineExecutionContext context)
     {
         var cacheKey = $"{userIdentity.Identity}-{domain.StringRepresentation}";
-        if (_memoryCache.TryGetValue(cacheKey, out ILdapProfile? profile))
+        if (_cache.TryGetValue(cacheKey, out ILdapProfile? profile))
         {
             _logger.LogDebug("Loaded '{user}' profile from cache.", userIdentity.Identity);
             return profile;
@@ -100,6 +100,6 @@ public class ProfileLoadingStep : IRadiusPipelineStep
 
     private void SaveToCache(string cacheKey, ILdapProfile profile, DateTimeOffset expirationDate)
     {
-        _memoryCache.Set(cacheKey, profile, expirationDate);
+        _cache.Set(cacheKey, profile, expirationDate);
     }
 }

@@ -28,8 +28,8 @@ public class AccessRequestAttributesTests(RadiusFixtures radiusFixtures) : E2ETe
         var mfAPiMock = new Mock<IMultifactorApi>();
         AccessRequest? payload = null;
         mfAPiMock
-            .Setup(x => x.CreateAccessRequest(It.IsAny<AccessRequest>(), It.IsAny<ApiCredential>()))
-            .Callback((AccessRequest x, ApiCredential y) => payload = x)
+            .Setup(x => x.CreateAccessRequest(It.IsAny<string>(), It.IsAny<AccessRequest>(), It.IsAny<ApiCredential>()))
+            .Callback((string a, AccessRequest x, ApiCredential y) => payload = x)
             .ReturnsAsync(new AccessRequestResponse() { Status = RequestStatus.Granted} );
 
         var hostConfiguration = (HostApplicationBuilder builder) =>
@@ -74,8 +74,8 @@ public class AccessRequestAttributesTests(RadiusFixtures radiusFixtures) : E2ETe
         var mfAPiMock = new Mock<IMultifactorApi>();
         AccessRequest? payload = null;
         mfAPiMock
-            .Setup(x => x.CreateAccessRequest(It.IsAny<AccessRequest>(), It.IsAny<ApiCredential>()))
-            .Callback((AccessRequest x, ApiCredential y) => payload = x)
+            .Setup(x => x.CreateAccessRequest(It.IsAny<string>(), It.IsAny<AccessRequest>(), It.IsAny<ApiCredential>()))
+            .Callback((string a, AccessRequest x, ApiCredential y) => payload = x)
             .ReturnsAsync(new AccessRequestResponse() { Status = RequestStatus.Granted} );
 
         var hostConfiguration = (HostApplicationBuilder builder) =>

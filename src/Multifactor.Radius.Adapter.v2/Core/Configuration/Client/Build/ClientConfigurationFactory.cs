@@ -44,13 +44,16 @@ public class ClientConfigurationFactory : IClientConfigurationFactory
         var firstFactorAuthenticationSource = Enum.Parse<AuthenticationSource>(
             appSettings.FirstFactorAuthenticationSource,
             true);
-
+        
+        var appSettingsUrls = Utils.SplitString(appSettings.MultifactorApiUrl);
+        var mfUrls = serviceConfig.ApiUrls.Count > 0 ? serviceConfig.ApiUrls : appSettingsUrls;
         var builder = new ClientConfiguration(
             name,
             appSettings.RadiusSharedSecret,
             firstFactorAuthenticationSource,
             appSettings.MultifactorNasIdentifier,
-            appSettings.MultifactorSharedSecret);
+            appSettings.MultifactorSharedSecret,
+            mfUrls);
 
         builder.SetBypassSecondFactorWhenApiUnreachable(appSettings.BypassSecondFactorWhenApiUnreachable);
 
