@@ -9,7 +9,7 @@ using Multifactor.Radius.Adapter.v2.Tests.Fixture;
 
 namespace Multifactor.Radius.Adapter.v2.Tests.LdapForest;
 
-[Collection("ActiveDirectory")]
+[Collection("LDAP")]
 public class LdapForestLoaderTests
 {
     [Fact]

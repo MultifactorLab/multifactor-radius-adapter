@@ -602,6 +602,7 @@ public class AppSettingsTests
         {
             AppSettings = new AppSettingsSection()
             {
+                MultifactorApiUrl = "http://127.0.0.1",
                 MultifactorNasIdentifier = "nasIdentifier",
                 MultifactorSharedSecret = "Secret",
                 SignUpGroups = "group",
@@ -636,6 +637,7 @@ public class AppSettingsTests
         {
             AppSettings = new AppSettingsSection()
             {
+                MultifactorApiUrl = "http://127.0.0.1",
                 MultifactorNasIdentifier = "nasIdentifier",
                 MultifactorSharedSecret = "Secret",
                 SignUpGroups = "group",
@@ -670,6 +672,7 @@ public class AppSettingsTests
         {
             AppSettings = new AppSettingsSection()
             {
+                MultifactorApiUrl = "http://127.0.0.1",
                 MultifactorNasIdentifier = "nasIdentifier",
                 MultifactorSharedSecret = "Secret",
                 SignUpGroups = "group",
