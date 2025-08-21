@@ -26,4 +26,5 @@ public interface IClientConfiguration
     UserNameTransformRules UserNameTransformRules { get; }
     RandomWaiterConfig InvalidCredentialDelay { get; }
     PreAuthModeDescriptor PreAuthnMode { get; }
+    IReadOnlyList<string> ApiUrls { get; }
 }

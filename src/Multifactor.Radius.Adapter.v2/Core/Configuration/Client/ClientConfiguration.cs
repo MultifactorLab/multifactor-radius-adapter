@@ -13,12 +13,14 @@ public class ClientConfiguration : IClientConfiguration
     private readonly HashSet<IPEndPoint> _npsServers = new();
 
     public IReadOnlyList<ILdapServerConfiguration> LdapServers => _ldapServers;
+    public IReadOnlyList<string> ApiUrls { get; }
 
     public ClientConfiguration(string name,
         string rdsSharedSecret,
         AuthenticationSource firstFactorAuthSource,
         string apiKey,
-        string apiSecret)
+        string apiSecret,
+        IEnumerable<string> apiUrls)
     {
         if (string.IsNullOrWhiteSpace(name))
             throw new ArgumentException($"'{nameof(name)}' cannot be null or whitespace.", nameof(name));
@@ -32,6 +34,10 @@ public class ClientConfiguration : IClientConfiguration
 
         if (string.IsNullOrWhiteSpace(apiSecret))
             throw new ArgumentException($"'{nameof(apiSecret)}' cannot be null or whitespace.", nameof(apiSecret));
+        
+        var urls = apiUrls?.ToList();
+        if (urls is null || urls.Count == 0)
+            throw new ArgumentException($"'{nameof(apiUrls)}' cannot be null or empty.", nameof(apiUrls));
 
         BypassSecondFactorWhenApiUnreachable = true; //by default
 
@@ -39,6 +45,7 @@ public class ClientConfiguration : IClientConfiguration
         RadiusSharedSecret = rdsSharedSecret;
         FirstFactorAuthenticationSource = firstFactorAuthSource;
         ApiCredential = new ApiCredential(apiKey, apiSecret);
+        ApiUrls = urls;
     }
 
     /// <summary>

@@ -4,6 +4,7 @@ using Moq;
 using Multifactor.Radius.Adapter.v2.Core.Auth.PreAuthMode;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Steps;
+using Multifactor.Radius.Adapter.v2.Services.Cache;
 
 namespace Multifactor.Radius.Adapter.v2.Tests.PipelineTests;
 
@@ -14,12 +15,11 @@ public class PipelineConfigurationFactoryTests
     {
         var config = new PipelineStepsConfiguration("name", PreAuthMode.None);
         
-        var cacheMock = new Mock<IMemoryCache>();
-        var outVal = new object(); 
-        cacheMock.Setup(x => x.CreateEntry(It.IsAny<object>())).Returns(new Entry());
-        cacheMock.Setup(x => x.TryGetValue(It.IsAny<string>(), out outVal)).Returns(false);
+        var cache = new Mock<ICacheService>();
+        var outVal = new PipelineConfiguration([]);
+        cache.Setup(x => x.TryGetValue(It.IsAny<string>(), out outVal)).Returns(false);
         
-        var factory = new PipelineConfigurationFactory(cacheMock.Object);
+        var factory = new PipelineConfigurationFactory(cache.Object);
         
         var pipelineConfiguration = factory.CreatePipelineConfiguration(config);
         
@@ -33,12 +33,11 @@ public class PipelineConfigurationFactoryTests
     {
         var config = new PipelineStepsConfiguration("name", PreAuthMode.None, hasLdapServers: true);
         
-        var cacheMock = new Mock<IMemoryCache>();
-        var outVal = new object(); 
-        cacheMock.Setup(x => x.CreateEntry(It.IsAny<object>())).Returns(new Entry());
-        cacheMock.Setup(x => x.TryGetValue(It.IsAny<string>(), out outVal)).Returns(false);
+        var cache = new Mock<ICacheService>();
+        var outVal = new PipelineConfiguration([]);
+        cache.Setup(x => x.TryGetValue(It.IsAny<string>(), out outVal)).Returns(false);
         
-        var pipelineConfigurationFactory = new PipelineConfigurationFactory(cacheMock.Object);
+        var pipelineConfigurationFactory = new PipelineConfigurationFactory(cache.Object);
         
         var pipelineConfiguration = pipelineConfigurationFactory.CreatePipelineConfiguration(config);
         Assert.Collection(
@@ -58,12 +57,11 @@ public class PipelineConfigurationFactoryTests
     {
         var config = new PipelineStepsConfiguration("name", PreAuthMode.None, true, true);
         
-        var cacheMock = new Mock<IMemoryCache>();
-        var outVal = new object(); 
-        cacheMock.Setup(x => x.CreateEntry(It.IsAny<object>())).Returns(new Entry());
-        cacheMock.Setup(x => x.TryGetValue(It.IsAny<string>(), out outVal)).Returns(false);
+        var cache = new Mock<ICacheService>();
+        var outVal = new PipelineConfiguration([]);
+        cache.Setup(x => x.TryGetValue(It.IsAny<string>(), out outVal)).Returns(false);
         
-        var pipelineConfigurationFactory = new PipelineConfigurationFactory(cacheMock.Object);
+        var pipelineConfigurationFactory = new PipelineConfigurationFactory(cache.Object);
         
         var pipelineConfiguration = pipelineConfigurationFactory.CreatePipelineConfiguration(config);
         Assert.Collection(
@@ -87,12 +85,11 @@ public class PipelineConfigurationFactoryTests
     {
         var config = new PipelineStepsConfiguration("name", mode, hasLdapServers: true);
         
-        var cacheMock = new Mock<IMemoryCache>();
-        var outVal = new object(); 
-        cacheMock.Setup(x => x.CreateEntry(It.IsAny<object>())).Returns(new Entry());
-        cacheMock.Setup(x => x.TryGetValue(It.IsAny<string>(), out outVal)).Returns(false);
+        var cache = new Mock<ICacheService>();
+        var outVal = new PipelineConfiguration([]);
+        cache.Setup(x => x.TryGetValue(It.IsAny<string>(), out outVal)).Returns(false);
         
-        var pipelineConfigurationFactory = new PipelineConfigurationFactory(cacheMock.Object);
+        var pipelineConfigurationFactory = new PipelineConfigurationFactory(cache.Object);
         
         var pipelineConfiguration = pipelineConfigurationFactory.CreatePipelineConfiguration(config);
         Assert.Collection(
@@ -114,12 +111,11 @@ public class PipelineConfigurationFactoryTests
     {
         var config = new PipelineStepsConfiguration("name", PreAuthMode.None, hasLdapServers: true);
         
-        var cacheMock = new Mock<IMemoryCache>();
-        var outVal = new object(); 
-        cacheMock.Setup(x => x.CreateEntry(It.IsAny<object>())).Returns(new Entry());
-        cacheMock.Setup(x => x.TryGetValue(It.IsAny<string>(), out outVal)).Returns(false);
+        var cache = new Mock<ICacheService>();
+        var outVal = new PipelineConfiguration([]); 
+        cache.Setup(x => x.TryGetValue(It.IsAny<string>(), out outVal)).Returns(false);
         
-        var pipelineConfigurationFactory = new PipelineConfigurationFactory(cacheMock.Object);
+        var pipelineConfigurationFactory = new PipelineConfigurationFactory(cache.Object);
         
         var pipelineConfiguration = pipelineConfigurationFactory.CreatePipelineConfiguration(config);
         Assert.Collection(
@@ -139,12 +135,11 @@ public class PipelineConfigurationFactoryTests
     {
         var config = new PipelineStepsConfiguration("name", PreAuthMode.None, hasLdapServers: false);
         
-        var cacheMock = new Mock<IMemoryCache>();
-        var outVal = new object(); 
-        cacheMock.Setup(x => x.CreateEntry(It.IsAny<object>())).Returns(new Entry());
-        cacheMock.Setup(x => x.TryGetValue(It.IsAny<string>(), out outVal)).Returns(false);
+        var cache = new Mock<ICacheService>();
+        var outVal = new PipelineConfiguration([]); 
+        cache.Setup(x => x.TryGetValue(It.IsAny<string>(), out outVal)).Returns(false);
         
-        var pipelineConfigurationFactory = new PipelineConfigurationFactory(cacheMock.Object);
+        var pipelineConfigurationFactory = new PipelineConfigurationFactory(cache.Object);
         
         var pipelineConfiguration = pipelineConfigurationFactory.CreatePipelineConfiguration(config);
         Assert.Collection(
@@ -165,12 +160,11 @@ public class PipelineConfigurationFactoryTests
     {
         var config = new PipelineStepsConfiguration("name", mode, hasLdapServers: false);
         
-        var cacheMock = new Mock<IMemoryCache>();
-        var outVal = new object(); 
-        cacheMock.Setup(x => x.CreateEntry(It.IsAny<object>())).Returns(new Entry());
-        cacheMock.Setup(x => x.TryGetValue(It.IsAny<string>(), out outVal)).Returns(false);
+        var cache = new Mock<ICacheService>();
+        var outVal = new PipelineConfiguration([]); 
+        cache.Setup(x => x.TryGetValue(It.IsAny<string>(), out outVal)).Returns(false);
         
-        var pipelineConfigurationFactory = new PipelineConfigurationFactory(cacheMock.Object);
+        var pipelineConfigurationFactory = new PipelineConfigurationFactory(cache.Object);
         
         var pipelineConfiguration = pipelineConfigurationFactory.CreatePipelineConfiguration(config);
         Assert.Collection(

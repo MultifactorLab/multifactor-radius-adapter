@@ -1,16 +1,16 @@
 using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Steps;
-using Microsoft.Extensions.Caching.Memory;
 using Multifactor.Radius.Adapter.v2.Core.Auth.PreAuthMode;
+using Multifactor.Radius.Adapter.v2.Services.Cache;
 
 namespace Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline;
 
 public class PipelineConfigurationFactory : IPipelineConfigurationFactory
 {
-    private readonly IMemoryCache _memoryCache;
+    private readonly ICacheService _cache;
 
-    public PipelineConfigurationFactory(IMemoryCache memoryCache)
+    public PipelineConfigurationFactory(ICacheService cache)
     {
-        _memoryCache = memoryCache;
+        _cache = cache;
     }
 
     public PipelineConfiguration CreatePipelineConfiguration(IPipelineStepsConfiguration pipelineStepsConfiguration)
@@ -22,13 +22,13 @@ public class PipelineConfigurationFactory : IPipelineConfigurationFactory
         }
 
         PipelineConfiguration newPipeline = BuildNewPipeline(pipelineStepsConfiguration);
-        _memoryCache.Set(pipelineStepsConfiguration.ConfigurationName, newPipeline);
+        _cache.Set(pipelineStepsConfiguration.ConfigurationName, newPipeline);
         return newPipeline;
     }
 
     private PipelineConfiguration? GetExistedPipeline(string pipelineName)
     {
-        if (!_memoryCache.TryGetValue(pipelineName, out PipelineConfiguration? pipeline))
+        if (!_cache.TryGetValue(pipelineName, out PipelineConfiguration? pipeline))
             return null;
 
         return pipeline;

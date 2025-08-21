@@ -44,4 +44,5 @@ public interface IRadiusPipelineExecutionContext
     PreAuthModeDescriptor PreAuthnMode { get; }
     string ClientConfigurationName { get; }
     SharedSecret RadiusSharedSecret { get; }
+    IReadOnlyList<string> ApiUrls { get; }
 }

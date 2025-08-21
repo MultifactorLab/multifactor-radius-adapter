@@ -4,6 +4,6 @@ namespace Multifactor.Radius.Adapter.v2.Services.MultifactorApi;
 
 public interface IMultifactorApi
 {
-    Task<AccessRequestResponse> CreateAccessRequest(AccessRequest payload, ApiCredential apiCredentials);
-    Task<AccessRequestResponse> SendChallengeAsync(ChallengeRequest payload, ApiCredential apiCredentials);
+    Task<AccessRequestResponse> CreateAccessRequest(string address, AccessRequest payload, ApiCredential apiCredentials);
+    Task<AccessRequestResponse> SendChallengeAsync(string address, ChallengeRequest payload, ApiCredential apiCredentials);
 }
