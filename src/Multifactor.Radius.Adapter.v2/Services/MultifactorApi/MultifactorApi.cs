@@ -21,20 +21,22 @@ public class MultifactorApi : IMultifactorApi
         _httpClient = httpClient;
     }
 
-    public Task<AccessRequestResponse> CreateAccessRequest(AccessRequest payload, ApiCredential apiCredentials)
+    public Task<AccessRequestResponse> CreateAccessRequest(string address, AccessRequest payload, ApiCredential apiCredentials)
     {
         ArgumentNullException.ThrowIfNull(payload, nameof(payload));
         ArgumentNullException.ThrowIfNull(apiCredentials, nameof(apiCredentials));
-
-        return SendRequestAsync("access/requests/ra", payload, apiCredentials);
+        ArgumentException.ThrowIfNullOrWhiteSpace(address);
+        
+        return SendRequestAsync($"{address}/access/requests/ra", payload, apiCredentials);
     }
 
-    public Task<AccessRequestResponse> SendChallengeAsync(ChallengeRequest payload, ApiCredential apiCredentials)
+    public Task<AccessRequestResponse> SendChallengeAsync(string address, ChallengeRequest payload, ApiCredential apiCredentials)
     {
         ArgumentNullException.ThrowIfNull(payload, nameof(payload));
         ArgumentNullException.ThrowIfNull(apiCredentials, nameof(apiCredentials));
-
-        return SendRequestAsync("access/requests/ra/challenge", payload, apiCredentials);
+        ArgumentException.ThrowIfNullOrWhiteSpace(address);
+        
+        return SendRequestAsync($"{address}/access/requests/ra/challenge", payload, apiCredentials);
     }
 
     private async Task<AccessRequestResponse> SendRequestAsync(string url, object payload, ApiCredential credentials)

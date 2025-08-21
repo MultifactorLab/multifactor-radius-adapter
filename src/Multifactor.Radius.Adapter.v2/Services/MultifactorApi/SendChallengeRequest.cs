@@ -19,6 +19,7 @@ public class SendChallengeRequest
     public IPEndPoint RemoteEndpoint { get;  }
     public string Answer { get; }
     public string RequestId { get; }
+    public IReadOnlyList<string> ApiUrls { get; }
 
     public SendChallengeRequest(IRadiusPipelineExecutionContext context, string answer, string requestId)
     {
@@ -41,5 +42,6 @@ public class SendChallengeRequest
         RemoteEndpoint = context.RemoteEndpoint;
         Answer = answer;
         RequestId = requestId;
+        ApiUrls = context.ApiUrls;
     }
 }

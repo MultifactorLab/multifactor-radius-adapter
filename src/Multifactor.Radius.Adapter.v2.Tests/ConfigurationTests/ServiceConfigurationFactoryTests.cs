@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
+using Multifactor.Radius.Adapter.v2.Core;
 using Multifactor.Radius.Adapter.v2.Core.Configuration.Client;
 using Multifactor.Radius.Adapter.v2.Core.Configuration.Client.Build;
 using Multifactor.Radius.Adapter.v2.Core.Configuration.Service;
@@ -41,7 +42,7 @@ public class ServiceConfigurationFactoryTests
         var serviceConfiguration = serviceFactory.CreateConfig(GetConfiguration());
 
         Assert.NotNull(serviceConfiguration);
-        Assert.Equal("url", serviceConfiguration.ApiUrl);
+        Assert.Equal("url", serviceConfiguration.ApiUrls[0]);
         Assert.Equal("proxy", serviceConfiguration.ApiProxy);
         Assert.Equal(TimeSpan.FromMinutes(2), serviceConfiguration.ApiTimeout);
         Assert.True(serviceConfiguration.SingleClientMode);
@@ -58,6 +59,7 @@ public class ServiceConfigurationFactoryTests
         {
             AppSettings = new AppSettingsSection()
             {
+                MultifactorApiUrl = "http://127.0.0.1",
                 RadiusClientNasIdentifier = "clientNasIdentifier1",
             }
         };
@@ -66,6 +68,7 @@ public class ServiceConfigurationFactoryTests
         {
             AppSettings = new AppSettingsSection()
             {
+                MultifactorApiUrl = "http://127.0.0.1",
                 RadiusClientNasIdentifier = "clientNasIdentifier2",
             }
         };
@@ -96,7 +99,7 @@ public class ServiceConfigurationFactoryTests
         var serviceConfiguration = serviceFactory.CreateConfig(GetConfiguration());
 
         Assert.NotNull(serviceConfiguration);
-        Assert.Equal("url", serviceConfiguration.ApiUrl);
+        Assert.Equal("url", serviceConfiguration.ApiUrls[0]);
         Assert.Equal("proxy", serviceConfiguration.ApiProxy);
         Assert.Equal(TimeSpan.FromMinutes(2), serviceConfiguration.ApiTimeout);
         Assert.False(serviceConfiguration.SingleClientMode);
@@ -113,6 +116,7 @@ public class ServiceConfigurationFactoryTests
         {
             AppSettings = new AppSettingsSection()
             {
+                MultifactorApiUrl = "http://127.0.0.1",
                 RadiusClientIp = "127.0.0.1",
             }
         };
@@ -121,6 +125,7 @@ public class ServiceConfigurationFactoryTests
         {
             AppSettings = new AppSettingsSection()
             {
+                MultifactorApiUrl = "http://127.0.0.1",
                 RadiusClientNasIdentifier = "127.0.0.2",
             }
         };
@@ -155,7 +160,7 @@ public class ServiceConfigurationFactoryTests
         var serviceConfiguration = serviceFactory.CreateConfig(GetConfiguration());
 
         Assert.NotNull(serviceConfiguration);
-        Assert.Equal("url", serviceConfiguration.ApiUrl);
+        Assert.Equal("url", serviceConfiguration.ApiUrls[0]);
         Assert.Equal("proxy", serviceConfiguration.ApiProxy);
         Assert.Equal(TimeSpan.FromMinutes(2), serviceConfiguration.ApiTimeout);
         Assert.False(serviceConfiguration.SingleClientMode);
@@ -163,12 +168,45 @@ public class ServiceConfigurationFactoryTests
         Assert.NotNull(serviceConfiguration.ServiceServerEndpoint);
         Assert.Equal(2, serviceConfiguration.Clients.Count);
     }
+    
+    [Theory]
+    [InlineData("url")]
+    [InlineData("url1;url2")]
+    [InlineData("url;url2;url3")]
+    public void CreateServiceConfiguration_MultipleMfApiUrls_ShouldCreate(string urls)
+    {
+        var clientConfigurationProviderMock = new Mock<IClientConfigurationsProvider>();
+        clientConfigurationProviderMock.Setup(x => x.GetClientConfigurations()).Returns([]);
+        var dictionaryMock = new Mock<IRadiusDictionary>();
+        var attribute = new DictionaryAttribute("name", 1, "type");
+        dictionaryMock.Setup(x => x.GetAttribute(It.IsAny<string>())).Returns(attribute);
 
-    private RadiusAdapterConfiguration GetConfiguration() => new RadiusAdapterConfiguration()
+        var clientFactoryMock = new Mock<IClientConfigurationFactory>();
+        clientFactoryMock
+            .Setup(
+                x => x.CreateConfig(
+                    It.IsAny<string>(),
+                    It.IsAny<RadiusAdapterConfiguration>(),
+                    It.IsAny<IServiceConfiguration>()))
+            .Returns(new Mock<IClientConfiguration>().Object);
+
+        var serviceFactory = new ServiceConfigurationFactory(
+            clientConfigurationProviderMock.Object,
+            clientFactoryMock.Object,
+            NullLogger<ServiceConfigurationFactory>.Instance);
+        var config = GetConfiguration(urls);
+        var serviceConfiguration = serviceFactory.CreateConfig(config);
+
+        var expectedUrls = Utils.SplitString(urls);
+        var actualUrls = serviceConfiguration.ApiUrls;
+        Assert.True(expectedUrls.SequenceEqual(actualUrls));
+    }
+
+    private RadiusAdapterConfiguration GetConfiguration(string apiUrls = "url") => new RadiusAdapterConfiguration()
     {
         AppSettings = new AppSettingsSection()
         {
-            MultifactorApiUrl = "url",
+            MultifactorApiUrl = apiUrls,
             MultifactorApiProxy = "proxy",
             MultifactorApiTimeout = "00:02:00",
             AdapterServerEndpoint = "127.0.0.1",

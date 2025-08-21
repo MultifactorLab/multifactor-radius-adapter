@@ -31,7 +31,7 @@ public class ChangePasswordTests(RadiusFixtures radiusFixtures) : E2ETestBase(ra
         var mfAPiMock = new Mock<IMultifactorApi>();
         
         mfAPiMock
-            .Setup(x => x.CreateAccessRequest(It.IsAny<AccessRequest>(), It.IsAny<ApiCredential>()))
+            .Setup(x => x.CreateAccessRequest(It.IsAny<string>(), It.IsAny<AccessRequest>(), It.IsAny<ApiCredential>()))
             .ReturnsAsync(new AccessRequestResponse() { Status = RequestStatus.Granted });
         
         var hostConfiguration = (HostApplicationBuilder builder) =>
@@ -74,7 +74,7 @@ public class ChangePasswordTests(RadiusFixtures radiusFixtures) : E2ETestBase(ra
         var mfAPiMock = new Mock<IMultifactorApi>();
         
         mfAPiMock
-            .Setup(x => x.CreateAccessRequest(It.IsAny<AccessRequest>(), It.IsAny<ApiCredential>()))
+            .Setup(x => x.CreateAccessRequest(It.IsAny<string>(), It.IsAny<AccessRequest>(), It.IsAny<ApiCredential>()))
             .ReturnsAsync(new AccessRequestResponse() { Status = RequestStatus.Granted });
         
         var hostConfiguration = (HostApplicationBuilder builder) =>
