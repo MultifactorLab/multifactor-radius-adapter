@@ -115,6 +115,7 @@ public class LdapProfileServiceTests
     }
 }
 
+[Collection("ActiveDirectory")]
 public class FreeIpaLdapProfileServiceTests
 {
     [Fact]
