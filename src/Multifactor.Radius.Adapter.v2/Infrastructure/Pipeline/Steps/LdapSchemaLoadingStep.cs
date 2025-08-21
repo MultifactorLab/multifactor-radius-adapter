@@ -1,11 +1,11 @@
 using System.DirectoryServices.Protocols;
-using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Multifactor.Core.Ldap;
 using Multifactor.Core.Ldap.Connection;
 using Multifactor.Core.Ldap.Schema;
 using Multifactor.Radius.Adapter.v2.Core.Configuration.Client;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Context;
+using Multifactor.Radius.Adapter.v2.Services.Cache;
 using Multifactor.Radius.Adapter.v2.Services.Ldap;
 
 namespace Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Steps;
@@ -13,13 +13,13 @@ namespace Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Steps;
 public class LdapSchemaLoadingStep: IRadiusPipelineStep
 {
     private readonly ILdapSchemaLoader _ldapSchemaLoader;
-    private readonly IMemoryCache _memoryCache;
+    private readonly ICacheService _cache;
     private readonly ILogger<LdapSchemaLoadingStep> _logger;
     
-    public LdapSchemaLoadingStep(ILdapSchemaLoader ldapSchemaLoader, IMemoryCache memoryCache, ILogger<LdapSchemaLoadingStep> logger)
+    public LdapSchemaLoadingStep(ILdapSchemaLoader ldapSchemaLoader, ICacheService cache, ILogger<LdapSchemaLoadingStep> logger)
     {
         _ldapSchemaLoader = ldapSchemaLoader;
-        _memoryCache = memoryCache;
+        _cache = cache;
         _logger = logger;
     }
     
@@ -43,7 +43,7 @@ public class LdapSchemaLoadingStep: IRadiusPipelineStep
     private ILdapSchema? TryGetLdapSchema(IRadiusPipelineExecutionContext context)
     {
         var cacheKey = context.LdapServerConfiguration.ConnectionString;
-        if (_memoryCache.TryGetValue(cacheKey, out ILdapSchema? schema))
+        if (_cache.TryGetValue(cacheKey, out ILdapSchema? schema))
         {
             _logger.LogDebug("Loaded LDAP schema for '{domain}' from cache.", cacheKey);
             return schema;
@@ -74,6 +74,6 @@ public class LdapSchemaLoadingStep: IRadiusPipelineStep
 
     private void SaveToCache(string cacheKey, ILdapSchema schema, DateTimeOffset expirationDate)
     {
-        _memoryCache.Set(cacheKey, schema, expirationDate);
+        _cache.Set(cacheKey, schema, expirationDate);
     }
 }

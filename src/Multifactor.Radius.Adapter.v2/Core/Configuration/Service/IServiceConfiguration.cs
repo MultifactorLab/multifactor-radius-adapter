@@ -8,7 +8,7 @@ namespace Multifactor.Radius.Adapter.v2.Core.Configuration.Service;
 public interface IServiceConfiguration
 {
     string ApiProxy { get; }
-    string ApiUrl { get; }
+    IReadOnlyList<string> ApiUrls { get; }
     TimeSpan ApiTimeout { get; }
     ReadOnlyCollection<IClientConfiguration> Clients { get; }
     RandomWaiterConfig InvalidCredentialDelay { get; }

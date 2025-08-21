@@ -20,6 +20,7 @@ public class LdapSettingsTests
         {
             AppSettings = new AppSettingsSection()
             {
+                MultifactorApiUrl = "http://127.0.0.1",
                 MultifactorNasIdentifier = "identifier",
                 MultifactorSharedSecret = "secret",
                 SignUpGroups = "groups",
@@ -78,6 +79,7 @@ public class LdapSettingsTests
         {
             AppSettings = new AppSettingsSection()
             {
+                MultifactorApiUrl = "http://127.0.0.1",
                 MultifactorNasIdentifier = "identifier",
                 MultifactorSharedSecret = "secret",
                 SignUpGroups = "groups",
@@ -153,6 +155,7 @@ public class LdapSettingsTests
         {
             AppSettings = new AppSettingsSection()
             {
+                MultifactorApiUrl = "http://127.0.0.1",
                 MultifactorNasIdentifier = "identifier",
                 MultifactorSharedSecret = "secret",
                 SignUpGroups = "groups",
@@ -205,6 +208,7 @@ public class LdapSettingsTests
         {
             AppSettings = new AppSettingsSection()
             {
+                MultifactorApiUrl = "http://127.0.0.1",
                 MultifactorNasIdentifier = "identifier",
                 MultifactorSharedSecret = "secret",
                 SignUpGroups = "groups",
@@ -234,6 +238,7 @@ public class LdapSettingsTests
         {
             AppSettings = new AppSettingsSection()
             {
+                MultifactorApiUrl = "http://127.0.0.1",
                 MultifactorNasIdentifier = "identifier",
                 MultifactorSharedSecret = "secret",
                 SignUpGroups = "groups",
@@ -243,7 +248,7 @@ public class LdapSettingsTests
                 AdapterServerEndpoint = "127.0.0.1",
                 RadiusSharedSecret = "secret",
                 InvalidCredentialDelay = "3",
-                NpsServerEndpoint = "127.0.0.1"
+                NpsServerEndpoint = "127.0.0.1",
             },
             LdapServers = new LdapServersSection()
             {
@@ -276,6 +281,7 @@ public class LdapSettingsTests
         {
             AppSettings = new AppSettingsSection()
             {
+                MultifactorApiUrl = "http://127.0.0.1",
                 MultifactorNasIdentifier = "identifier",
                 MultifactorSharedSecret = "secret",
                 SignUpGroups = "groups",
@@ -285,7 +291,7 @@ public class LdapSettingsTests
                 AdapterServerEndpoint = "127.0.0.1",
                 RadiusSharedSecret = "secret",
                 InvalidCredentialDelay = "3",
-                NpsServerEndpoint = "127.0.0.1"
+                NpsServerEndpoint = "127.0.0.1",
             },
             LdapServers = new LdapServersSection()
             {
@@ -318,6 +324,7 @@ public class LdapSettingsTests
         {
             AppSettings = new AppSettingsSection()
             {
+                MultifactorApiUrl = "http://127.0.0.1",
                 MultifactorNasIdentifier = "identifier",
                 MultifactorSharedSecret = "secret",
                 SignUpGroups = "groups",
@@ -327,7 +334,7 @@ public class LdapSettingsTests
                 AdapterServerEndpoint = "127.0.0.1",
                 RadiusSharedSecret = "secret",
                 InvalidCredentialDelay = "3",
-                NpsServerEndpoint = "127.0.0.1"
+                NpsServerEndpoint = "127.0.0.1",
             },
             LdapServers = new LdapServersSection()
             {

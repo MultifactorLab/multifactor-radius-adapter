@@ -48,6 +48,7 @@ public class RadiusPipelineExecutionContext : IRadiusPipelineExecutionContext
     public string ClientConfigurationName => _settings.ClientConfigurationName;
     public SharedSecret RadiusSharedSecret => _settings.RadiusSharedSecret;
     public IReadOnlyCollection<IPAddressRange> IpWhiteList => _settings.LdapServerConfiguration?.IpWhiteList.Count > 0 ? _settings.LdapServerConfiguration.IpWhiteList : _settings.IpWhiteList; 
+    public IReadOnlyList<string> ApiUrls => _settings.ApiUrls;
 
     public RadiusPipelineExecutionContext(IPipelineExecutionSettings settings, IRadiusPacket requestPacket)
     {

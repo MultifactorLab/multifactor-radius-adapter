@@ -60,7 +60,8 @@ public class MultifactorApiServiceTests
         contextMock.Setup(x => x.UserNameTransformRules).Returns(new UserNameTransformRules());
         contextMock.Setup(x => x.BypassSecondFactorWhenApiUnreachable).Returns(true);
         contextMock.Setup(x => x.Passphrase).Returns(UserPassphrase.Parse("123456", PreAuthModeDescriptor.Default));
-        
+        contextMock.Setup(x => x.ApiUrls).Returns(["url"]);
+
         var context = contextMock.Object;
         var response = await service.CreateSecondFactorRequestAsync(new CreateSecondFactorRequest(context));
         Assert.NotNull(response);
@@ -104,11 +105,13 @@ public class MultifactorApiServiceTests
     {
         var apiMock = new Mock<IMultifactorApi>();
         var cacheMock = new Mock<IAuthenticatedClientCache>();
-        cacheMock.Setup(x => x.TryHitCache(It.IsAny<string?>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<AuthenticatedClientCacheConfig>())).Returns(true);
-        var service = new MultifactorApiService(apiMock.Object, cacheMock.Object, NullLogger<MultifactorApiService>.Instance);
+        cacheMock.Setup(x => x.TryHitCache(It.IsAny<string?>(), It.IsAny<string>(), It.IsAny<string>(),
+            It.IsAny<AuthenticatedClientCacheConfig>())).Returns(true);
+        var service =
+            new MultifactorApiService(apiMock.Object, cacheMock.Object, NullLogger<MultifactorApiService>.Instance);
 
         var contextMock = new Mock<IRadiusPipelineExecutionContext>();
-        
+
         contextMock.Setup(x => x.BypassSecondFactorWhenApiUnreachable).Returns(true);
         contextMock.Setup(x => x.LdapServerConfiguration.IdentityAttribute).Returns(string.Empty);
         contextMock.Setup(x => x.RequestPacket.UserName).Returns("username");
@@ -126,7 +129,7 @@ public class MultifactorApiServiceTests
         contextMock.Setup(x => x.PreAuthnMode).Returns(PreAuthModeDescriptor.Default);
         contextMock.Setup(x => x.UserNameTransformRules).Returns(new UserNameTransformRules());
         contextMock.Setup(x => x.ApiCredential).Returns(new ApiCredential("123", "123"));
-        
+
         var context = contextMock.Object;
         var response = await service.CreateSecondFactorRequestAsync(new CreateSecondFactorRequest(context));
         Assert.NotNull(response);
@@ -143,12 +146,13 @@ public class MultifactorApiServiceTests
     {
         var apiMock = new Mock<IMultifactorApi>();
         apiMock
-            .Setup(x => x.CreateAccessRequest(It.IsAny<AccessRequest>(), It.IsAny<ApiCredential>()))
+            .Setup(x => x.CreateAccessRequest(It.IsAny<string>(), It.IsAny<AccessRequest>(), It.IsAny<ApiCredential>()))
             .ReturnsAsync(new AccessRequestResponse() { Status = status, Bypassed = bypass });
 
         var cacheMock = new Mock<IAuthenticatedClientCache>();
         cacheMock
-            .Setup(x => x.TryHitCache(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<AuthenticatedClientCacheConfig>()))
+            .Setup(x => x.TryHitCache(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
+                It.IsAny<AuthenticatedClientCacheConfig>()))
             .Returns(false);
         var service =
             new MultifactorApiService(apiMock.Object, cacheMock.Object, NullLogger<MultifactorApiService>.Instance);
@@ -171,7 +175,8 @@ public class MultifactorApiServiceTests
         contextMock.Setup(x => x.ClientConfigurationName).Returns("configName");
         contextMock.Setup(x => x.AuthenticationCacheLifetime).Returns(AuthenticatedClientCacheConfig.Create("08:08:08", false));
         contextMock.Setup(x => x.ApiCredential).Returns(new ApiCredential("123", "123"));
-        
+        contextMock.Setup(x => x.ApiUrls).Returns(["url"]);
+
         var context = contextMock.Object;
         var response = await service.CreateSecondFactorRequestAsync(new CreateSecondFactorRequest(context));
         Assert.NotNull(response);
@@ -183,18 +188,19 @@ public class MultifactorApiServiceTests
     {
         var apiMock = new Mock<IMultifactorApi>();
         apiMock
-            .Setup(x => x.CreateAccessRequest(It.IsAny<AccessRequest>(), It.IsAny<ApiCredential>()))
+            .Setup(x => x.CreateAccessRequest(It.IsAny<string>(), It.IsAny<AccessRequest>(), It.IsAny<ApiCredential>()))
             .ThrowsAsync(new MultifactorApiUnreachableException());
 
         var cacheMock = new Mock<IAuthenticatedClientCache>();
         cacheMock
-            .Setup(x => x.TryHitCache(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<AuthenticatedClientCacheConfig>()))
+            .Setup(x => x.TryHitCache(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
+                It.IsAny<AuthenticatedClientCacheConfig>()))
             .Returns(false);
         var service =
             new MultifactorApiService(apiMock.Object, cacheMock.Object, NullLogger<MultifactorApiService>.Instance);
 
         var contextMock = new Mock<IRadiusPipelineExecutionContext>();
-        
+
         contextMock.Setup(x => x.BypassSecondFactorWhenApiUnreachable).Returns(true);
         contextMock.Setup(x => x.Passphrase).Returns(UserPassphrase.Parse("123456", PreAuthModeDescriptor.Default));
         contextMock.Setup(x => x.ClientConfigurationName).Returns("configName");
@@ -215,6 +221,7 @@ public class MultifactorApiServiceTests
         contextMock.Setup(x => x.UserNameTransformRules).Returns(new UserNameTransformRules());
         contextMock.Setup(x => x.BypassSecondFactorWhenApiUnreachable).Returns(false);
         contextMock.Setup(x => x.Passphrase).Returns(UserPassphrase.Parse("123456", PreAuthModeDescriptor.Default));
+        contextMock.Setup(x => x.ApiUrls).Returns(["url"]);
 
         var context = contextMock.Object;
         var response = await service.CreateSecondFactorRequestAsync(new CreateSecondFactorRequest(context));
@@ -227,12 +234,13 @@ public class MultifactorApiServiceTests
     {
         var apiMock = new Mock<IMultifactorApi>();
         apiMock
-            .Setup(x => x.CreateAccessRequest(It.IsAny<AccessRequest>(), It.IsAny<ApiCredential>()))
+            .Setup(x => x.CreateAccessRequest(It.IsAny<string>(), It.IsAny<AccessRequest>(), It.IsAny<ApiCredential>()))
             .ThrowsAsync(new MultifactorApiUnreachableException());
 
         var cacheMock = new Mock<IAuthenticatedClientCache>();
         cacheMock
-            .Setup(x => x.TryHitCache(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<AuthenticatedClientCacheConfig>()))
+            .Setup(x => x.TryHitCache(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
+                It.IsAny<AuthenticatedClientCacheConfig>()))
             .Returns(false);
         var service =
             new MultifactorApiService(apiMock.Object, cacheMock.Object, NullLogger<MultifactorApiService>.Instance);
@@ -256,6 +264,7 @@ public class MultifactorApiServiceTests
         contextMock.Setup(x => x.UserNameTransformRules).Returns(new UserNameTransformRules());
         contextMock.Setup(x => x.BypassSecondFactorWhenApiUnreachable).Returns(true);
         contextMock.Setup(x => x.Passphrase).Returns(UserPassphrase.Parse("123456", PreAuthModeDescriptor.Default));
+        contextMock.Setup(x => x.ApiUrls).Returns(["url"]);
 
         var context = contextMock.Object;
         var response = await service.CreateSecondFactorRequestAsync(new CreateSecondFactorRequest(context));
@@ -268,12 +277,13 @@ public class MultifactorApiServiceTests
     {
         var apiMock = new Mock<IMultifactorApi>();
         apiMock
-            .Setup(x => x.CreateAccessRequest(It.IsAny<AccessRequest>(), It.IsAny<ApiCredential>()))
+            .Setup(x => x.CreateAccessRequest(It.IsAny<string>(), It.IsAny<AccessRequest>(), It.IsAny<ApiCredential>()))
             .ThrowsAsync(new Exception());
 
         var cacheMock = new Mock<IAuthenticatedClientCache>();
         cacheMock
-            .Setup(x => x.TryHitCache(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<AuthenticatedClientCacheConfig>()))
+            .Setup(x => x.TryHitCache(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
+                It.IsAny<AuthenticatedClientCacheConfig>()))
             .Returns(false);
         var service =
             new MultifactorApiService(apiMock.Object, cacheMock.Object, NullLogger<MultifactorApiService>.Instance);
@@ -295,12 +305,258 @@ public class MultifactorApiServiceTests
         contextMock.Setup(x => x.BypassSecondFactorWhenApiUnreachable).Returns(true);
         contextMock.Setup(x => x.Passphrase).Returns(UserPassphrase.Parse("123456", PreAuthModeDescriptor.Default));
         contextMock.Setup(x => x.ClientConfigurationName).Returns("configName");
-        contextMock.Setup(x => x.AuthenticationCacheLifetime).Returns(AuthenticatedClientCacheConfig.Create("08:08:08", false));
+        contextMock.Setup(x => x.AuthenticationCacheLifetime)
+            .Returns(AuthenticatedClientCacheConfig.Create("08:08:08", false));
         contextMock.Setup(x => x.ApiCredential).Returns(new ApiCredential("123", "123"));
+        contextMock.Setup(x => x.ApiUrls).Returns(["url"]);
         var context = contextMock.Object;
         var response = await service.CreateSecondFactorRequestAsync(new CreateSecondFactorRequest(context));
         Assert.NotNull(response);
         Assert.Equal(AuthenticationStatus.Reject, response.Code);
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task CreateSecondFactorRequestAsync_MultipleUrlsWithUnreachableUrl_ShouldAccept(bool bypass)
+    {
+        // Arrange
+        var brokenUrl = "broken-url.com";
+        var mfUrl = "mf-url.dev";
+        var apiMock = new Mock<IMultifactorApi>();
+        apiMock
+            .Setup(x => x.CreateAccessRequest(It.Is<string>(u => u == brokenUrl), It.IsAny<AccessRequest>(),
+                It.IsAny<ApiCredential>()))
+            .Throws<MultifactorApiUnreachableException>();
+
+        apiMock
+            .Setup(x => x.CreateAccessRequest(It.Is<string>(u => u == mfUrl), It.IsAny<AccessRequest>(),
+                It.IsAny<ApiCredential>()))
+            .ReturnsAsync(new AccessRequestResponse() { Status = RequestStatus.Granted });
+
+        var cacheMock = new Mock<IAuthenticatedClientCache>();
+        cacheMock
+            .Setup(x => x.TryHitCache(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
+                It.IsAny<AuthenticatedClientCacheConfig>()))
+            .Returns(false);
+        var service =
+            new MultifactorApiService(apiMock.Object, cacheMock.Object, NullLogger<MultifactorApiService>.Instance);
+
+        var contextMock = new Mock<IRadiusPipelineExecutionContext>();
+        contextMock.Setup(x => x.LdapServerConfiguration.IdentityAttribute).Returns(string.Empty);
+        contextMock.Setup(x => x.RequestPacket.UserName).Returns("username");
+        contextMock.Setup(x => x.RequestPacket.TryGetChallenge()).Returns(() => null);
+        contextMock.Setup(x => x.RequestPacket.CalledStationIdAttribute).Returns("CalledStationIdAttribute");
+        contextMock.Setup(x => x.RequestPacket.CallingStationIdAttribute).Returns("CallingStationIdAttribute");
+        contextMock.Setup(x => x.RemoteEndpoint).Returns(IPEndPoint.Parse("127.0.0.1:8080"));
+        contextMock.Setup(x => x.UserLdapProfile.DisplayName).Returns("123");
+        contextMock.Setup(x => x.UserLdapProfile.Email).Returns("email");
+        contextMock.Setup(x => x.UserLdapProfile.Phone).Returns("phone");
+        contextMock.Setup(x => x.UserLdapProfile.Attributes).Returns([]);
+        contextMock.Setup(x => x.PrivacyMode).Returns(PrivacyModeDescriptor.Default);
+        contextMock.Setup(x => x.PreAuthnMode).Returns(PreAuthModeDescriptor.Default);
+        contextMock.Setup(x => x.UserNameTransformRules).Returns(new UserNameTransformRules());
+        contextMock.Setup(x => x.Passphrase).Returns(UserPassphrase.Parse("123456", PreAuthModeDescriptor.Default));
+        contextMock.Setup(x => x.ClientConfigurationName).Returns("configName");
+        contextMock.Setup(x => x.AuthenticationCacheLifetime)
+            .Returns(AuthenticatedClientCacheConfig.Create("08:08:08", false));
+        contextMock.Setup(x => x.ApiCredential).Returns(new ApiCredential("123", "123"));
+        contextMock.Setup(x => x.ApiUrls).Returns([brokenUrl, mfUrl]);
+        contextMock.Setup(x => x.BypassSecondFactorWhenApiUnreachable).Returns(bypass);
+
+        var context = contextMock.Object;
+
+        // Act
+        var response = await service.CreateSecondFactorRequestAsync(new CreateSecondFactorRequest(context));
+
+        // Assert
+        Assert.NotNull(response);
+        Assert.Equal(AuthenticationStatus.Accept, response.Code);
+        apiMock.Verify(
+            x => x.CreateAccessRequest(It.IsAny<string>(), It.IsAny<AccessRequest>(), It.IsAny<ApiCredential>()),
+            Times.Exactly(2));
+    }
+
+    [Fact]
+    public async Task CreateSecondFactorRequestAsync_MultipleUrlsWithAllUnreachableUrls_ShouldReject()
+    {
+        // Arrange
+        var brokenUrl = "broken-url.com";
+        var mfUrl = "mf-url.dev";
+        var apiMock = new Mock<IMultifactorApi>();
+        apiMock
+            .Setup(x => x.CreateAccessRequest(It.Is<string>(u => u == brokenUrl), It.IsAny<AccessRequest>(),
+                It.IsAny<ApiCredential>()))
+            .Throws<MultifactorApiUnreachableException>();
+
+        apiMock
+            .Setup(x => x.CreateAccessRequest(It.Is<string>(u => u == mfUrl), It.IsAny<AccessRequest>(),
+                It.IsAny<ApiCredential>()))
+            .Throws<MultifactorApiUnreachableException>();
+
+        var cacheMock = new Mock<IAuthenticatedClientCache>();
+        cacheMock
+            .Setup(x => x.TryHitCache(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
+                It.IsAny<AuthenticatedClientCacheConfig>()))
+            .Returns(false);
+        var service =
+            new MultifactorApiService(apiMock.Object, cacheMock.Object, NullLogger<MultifactorApiService>.Instance);
+
+        var contextMock = new Mock<IRadiusPipelineExecutionContext>();
+        contextMock.Setup(x => x.LdapServerConfiguration.IdentityAttribute).Returns(string.Empty);
+        contextMock.Setup(x => x.RequestPacket.UserName).Returns("username");
+        contextMock.Setup(x => x.RequestPacket.TryGetChallenge()).Returns(() => null);
+        contextMock.Setup(x => x.RequestPacket.CalledStationIdAttribute).Returns("CalledStationIdAttribute");
+        contextMock.Setup(x => x.RequestPacket.CallingStationIdAttribute).Returns("CallingStationIdAttribute");
+        contextMock.Setup(x => x.RemoteEndpoint).Returns(IPEndPoint.Parse("127.0.0.1:8080"));
+        contextMock.Setup(x => x.UserLdapProfile.DisplayName).Returns("123");
+        contextMock.Setup(x => x.UserLdapProfile.Email).Returns("email");
+        contextMock.Setup(x => x.UserLdapProfile.Phone).Returns("phone");
+        contextMock.Setup(x => x.UserLdapProfile.Attributes).Returns([]);
+        contextMock.Setup(x => x.PrivacyMode).Returns(PrivacyModeDescriptor.Default);
+        contextMock.Setup(x => x.PreAuthnMode).Returns(PreAuthModeDescriptor.Default);
+        contextMock.Setup(x => x.UserNameTransformRules).Returns(new UserNameTransformRules());
+        contextMock.Setup(x => x.Passphrase).Returns(UserPassphrase.Parse("123456", PreAuthModeDescriptor.Default));
+        contextMock.Setup(x => x.ClientConfigurationName).Returns("configName");
+        contextMock.Setup(x => x.AuthenticationCacheLifetime)
+            .Returns(AuthenticatedClientCacheConfig.Create("08:08:08", false));
+        contextMock.Setup(x => x.ApiCredential).Returns(new ApiCredential("123", "123"));
+        contextMock.Setup(x => x.ApiUrls).Returns([brokenUrl, mfUrl]);
+        contextMock.Setup(x => x.BypassSecondFactorWhenApiUnreachable).Returns(false);
+
+        var context = contextMock.Object;
+
+        // Act
+        var response = await service.CreateSecondFactorRequestAsync(new CreateSecondFactorRequest(context));
+
+        // Assert
+        Assert.NotNull(response);
+        Assert.Equal(AuthenticationStatus.Reject, response.Code);
+        apiMock.Verify(
+            x => x.CreateAccessRequest(It.IsAny<string>(), It.IsAny<AccessRequest>(), It.IsAny<ApiCredential>()),
+            Times.Exactly(2));
+    }
+
+    [Fact]
+    public async Task CreateSecondFactorRequestAsync_MultipleUrlsWithException_ShouldReject()
+    {
+        // Arrange
+        var brokenUrl = "broken-url.com";
+        var mfUrl = "mf-url.dev";
+        var apiMock = new Mock<IMultifactorApi>();
+        apiMock
+            .Setup(x => x.CreateAccessRequest(It.Is<string>(u => u == brokenUrl), It.IsAny<AccessRequest>(),
+                It.IsAny<ApiCredential>()))
+            .Throws<Exception>();
+
+        apiMock
+            .Setup(x => x.CreateAccessRequest(It.Is<string>(u => u == mfUrl), It.IsAny<AccessRequest>(),
+                It.IsAny<ApiCredential>()))
+            .Throws<Exception>();
+
+        var cacheMock = new Mock<IAuthenticatedClientCache>();
+        cacheMock
+            .Setup(x => x.TryHitCache(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
+                It.IsAny<AuthenticatedClientCacheConfig>()))
+            .Returns(false);
+        var service =
+            new MultifactorApiService(apiMock.Object, cacheMock.Object, NullLogger<MultifactorApiService>.Instance);
+
+        var contextMock = new Mock<IRadiusPipelineExecutionContext>();
+        contextMock.Setup(x => x.LdapServerConfiguration.IdentityAttribute).Returns(string.Empty);
+        contextMock.Setup(x => x.RequestPacket.UserName).Returns("username");
+        contextMock.Setup(x => x.RequestPacket.TryGetChallenge()).Returns(() => null);
+        contextMock.Setup(x => x.RequestPacket.CalledStationIdAttribute).Returns("CalledStationIdAttribute");
+        contextMock.Setup(x => x.RequestPacket.CallingStationIdAttribute).Returns("CallingStationIdAttribute");
+        contextMock.Setup(x => x.RemoteEndpoint).Returns(IPEndPoint.Parse("127.0.0.1:8080"));
+        contextMock.Setup(x => x.UserLdapProfile.DisplayName).Returns("123");
+        contextMock.Setup(x => x.UserLdapProfile.Email).Returns("email");
+        contextMock.Setup(x => x.UserLdapProfile.Phone).Returns("phone");
+        contextMock.Setup(x => x.UserLdapProfile.Attributes).Returns([]);
+        contextMock.Setup(x => x.PrivacyMode).Returns(PrivacyModeDescriptor.Default);
+        contextMock.Setup(x => x.PreAuthnMode).Returns(PreAuthModeDescriptor.Default);
+        contextMock.Setup(x => x.UserNameTransformRules).Returns(new UserNameTransformRules());
+        contextMock.Setup(x => x.Passphrase).Returns(UserPassphrase.Parse("123456", PreAuthModeDescriptor.Default));
+        contextMock.Setup(x => x.ClientConfigurationName).Returns("configName");
+        contextMock.Setup(x => x.AuthenticationCacheLifetime)
+            .Returns(AuthenticatedClientCacheConfig.Create("08:08:08", false));
+        contextMock.Setup(x => x.ApiCredential).Returns(new ApiCredential("123", "123"));
+        contextMock.Setup(x => x.ApiUrls).Returns([brokenUrl, mfUrl]);
+        contextMock.Setup(x => x.BypassSecondFactorWhenApiUnreachable).Returns(false);
+
+        var context = contextMock.Object;
+
+        // Act
+        var response = await service.CreateSecondFactorRequestAsync(new CreateSecondFactorRequest(context));
+
+        // Assert
+        Assert.NotNull(response);
+        Assert.Equal(AuthenticationStatus.Reject, response.Code);
+        apiMock.Verify(
+            x => x.CreateAccessRequest(It.IsAny<string>(), It.IsAny<AccessRequest>(), It.IsAny<ApiCredential>()),
+            Times.Exactly(2));
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task CreateSecondFactorRequestAsync_MultipleUrlsFirstResponse_ShouldAccept(bool bypass)
+    {
+        // Arrange
+        var brokenUrl = "broken-url.com";
+        var mfUrl = "mf-url.dev";
+        var apiMock = new Mock<IMultifactorApi>();
+        apiMock
+            .Setup(x => x.CreateAccessRequest(It.Is<string>(u => u == brokenUrl), It.IsAny<AccessRequest>(),
+                It.IsAny<ApiCredential>()))
+            .Throws<Exception>();
+
+        apiMock
+            .Setup(x => x.CreateAccessRequest(It.Is<string>(u => u == mfUrl), It.IsAny<AccessRequest>(),
+                It.IsAny<ApiCredential>()))
+            .ReturnsAsync(new AccessRequestResponse() { Status = RequestStatus.Granted });
+
+        var cacheMock = new Mock<IAuthenticatedClientCache>();
+        cacheMock
+            .Setup(x => x.TryHitCache(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
+                It.IsAny<AuthenticatedClientCacheConfig>()))
+            .Returns(false);
+        var service =
+            new MultifactorApiService(apiMock.Object, cacheMock.Object, NullLogger<MultifactorApiService>.Instance);
+
+        var contextMock = new Mock<IRadiusPipelineExecutionContext>();
+        contextMock.Setup(x => x.LdapServerConfiguration.IdentityAttribute).Returns(string.Empty);
+        contextMock.Setup(x => x.RequestPacket.UserName).Returns("username");
+        contextMock.Setup(x => x.RequestPacket.TryGetChallenge()).Returns(() => null);
+        contextMock.Setup(x => x.RequestPacket.CalledStationIdAttribute).Returns("CalledStationIdAttribute");
+        contextMock.Setup(x => x.RequestPacket.CallingStationIdAttribute).Returns("CallingStationIdAttribute");
+        contextMock.Setup(x => x.RemoteEndpoint).Returns(IPEndPoint.Parse("127.0.0.1:8080"));
+        contextMock.Setup(x => x.UserLdapProfile.DisplayName).Returns("123");
+        contextMock.Setup(x => x.UserLdapProfile.Email).Returns("email");
+        contextMock.Setup(x => x.UserLdapProfile.Phone).Returns("phone");
+        contextMock.Setup(x => x.UserLdapProfile.Attributes).Returns([]);
+        contextMock.Setup(x => x.PrivacyMode).Returns(PrivacyModeDescriptor.Default);
+        contextMock.Setup(x => x.PreAuthnMode).Returns(PreAuthModeDescriptor.Default);
+        contextMock.Setup(x => x.UserNameTransformRules).Returns(new UserNameTransformRules());
+        contextMock.Setup(x => x.Passphrase).Returns(UserPassphrase.Parse("123456", PreAuthModeDescriptor.Default));
+        contextMock.Setup(x => x.ClientConfigurationName).Returns("configName");
+        contextMock.Setup(x => x.AuthenticationCacheLifetime)
+            .Returns(AuthenticatedClientCacheConfig.Create("08:08:08", false));
+        contextMock.Setup(x => x.ApiCredential).Returns(new ApiCredential("123", "123"));
+        contextMock.Setup(x => x.ApiUrls).Returns([mfUrl, brokenUrl]);
+        contextMock.Setup(x => x.BypassSecondFactorWhenApiUnreachable).Returns(bypass);
+
+        var context = contextMock.Object;
+
+        // Act
+        var response = await service.CreateSecondFactorRequestAsync(new CreateSecondFactorRequest(context));
+
+        // Assert
+        Assert.NotNull(response);
+        Assert.Equal(AuthenticationStatus.Accept, response.Code);
+        apiMock.Verify(
+            x => x.CreateAccessRequest(It.IsAny<string>(), It.IsAny<AccessRequest>(), It.IsAny<ApiCredential>()),
+            Times.Exactly(1));
     }
 
     [Fact]
@@ -308,63 +564,72 @@ public class MultifactorApiServiceTests
     {
         var apiMock = new Mock<IMultifactorApi>();
         var cacheMock = new Mock<IAuthenticatedClientCache>();
-        var service = new MultifactorApiService(apiMock.Object, cacheMock.Object, NullLogger<MultifactorApiService>.Instance);
+        var service =
+            new MultifactorApiService(apiMock.Object, cacheMock.Object, NullLogger<MultifactorApiService>.Instance);
 
         await Assert.ThrowsAsync<ArgumentNullException>(() => service.SendChallengeAsync(null));
     }
-    
+
     [Theory]
     [ClassData(typeof(EmptyStringsListInput))]
     public async Task SendChallenge_NoAnswer_ShouldThrowException(string answer)
     {
         var apiMock = new Mock<IMultifactorApi>();
         var cacheMock = new Mock<IAuthenticatedClientCache>();
-        var service = new MultifactorApiService(apiMock.Object, cacheMock.Object, NullLogger<MultifactorApiService>.Instance);
+        var service =
+            new MultifactorApiService(apiMock.Object, cacheMock.Object, NullLogger<MultifactorApiService>.Instance);
         var context = new Mock<IRadiusPipelineExecutionContext>().Object;
-        await Assert.ThrowsAnyAsync<ArgumentException>(() => service.SendChallengeAsync(new SendChallengeRequest(context, answer, "requestId")));
+        await Assert.ThrowsAnyAsync<ArgumentException>(() =>
+            service.SendChallengeAsync(new SendChallengeRequest(context, answer, "requestId")));
     }
-    
+
     [Theory]
     [ClassData(typeof(EmptyStringsListInput))]
     public async Task SendChallenge_NoRequestId_ShouldThrowException(string requestId)
     {
         var apiMock = new Mock<IMultifactorApi>();
         var cacheMock = new Mock<IAuthenticatedClientCache>();
-        var service = new MultifactorApiService(apiMock.Object, cacheMock.Object, NullLogger<MultifactorApiService>.Instance);
+        var service =
+            new MultifactorApiService(apiMock.Object, cacheMock.Object, NullLogger<MultifactorApiService>.Instance);
         var context = new Mock<IRadiusPipelineExecutionContext>().Object;
-        await Assert.ThrowsAnyAsync<ArgumentException>(() => service.SendChallengeAsync(new SendChallengeRequest(context, "answer", requestId)));
+        await Assert.ThrowsAnyAsync<ArgumentException>(() =>
+            service.SendChallengeAsync(new SendChallengeRequest(context, "answer", requestId)));
     }
-    
+
     [Theory]
     [ClassData(typeof(EmptyStringsListInput))]
     public async Task SendChallenge_NoIdentity_ShouldThrow(string identity)
     {
         var apiMock = new Mock<IMultifactorApi>();
         var cacheMock = new Mock<IAuthenticatedClientCache>();
-        var service = new MultifactorApiService(apiMock.Object, cacheMock.Object, NullLogger<MultifactorApiService>.Instance);
-        
+        var service =
+            new MultifactorApiService(apiMock.Object, cacheMock.Object, NullLogger<MultifactorApiService>.Instance);
+
         var contextMock = new Mock<IRadiusPipelineExecutionContext>();
-        contextMock.Setup(x => x.AuthenticationCacheLifetime).Returns(AuthenticatedClientCacheConfig.Create("08:08:08", false));
+        contextMock.Setup(x => x.AuthenticationCacheLifetime)
+            .Returns(AuthenticatedClientCacheConfig.Create("08:08:08", false));
         contextMock.Setup(x => x.UserLdapProfile).Returns(new Mock<ILdapProfile>().Object);
         contextMock.Setup(x => x.ClientConfigurationName).Returns("config");
         contextMock.Setup(x => x.ApiCredential).Returns(new ApiCredential("key", "secret"));
         contextMock.Setup(x => x.BypassSecondFactorWhenApiUnreachable).Returns(false);
         contextMock.Setup(x => x.RemoteEndpoint).Returns(IPEndPoint.Parse("127.0.0.1:8080"));
-        
+
         contextMock.Setup(x => x.LdapServerConfiguration.IdentityAttribute).Returns(identity);
         contextMock.Setup(x => x.RequestPacket.UserName).Returns(identity);
+        contextMock.Setup(x => x.ApiUrls).Returns(["url"]);
         var context = contextMock.Object;
         await Assert.ThrowsAnyAsync<InvalidOperationException>(() => service.SendChallengeAsync(new SendChallengeRequest(context, "answer", "requestId")));
     }
-    
+
     [Theory]
     [ClassData(typeof(EmptyStringsListInput))]
     public async Task SendChallenge_EmptyIdentityAttributeValue_ShouldThrow(string identity)
     {
         var apiMock = new Mock<IMultifactorApi>();
         var cacheMock = new Mock<IAuthenticatedClientCache>();
-        var service = new MultifactorApiService(apiMock.Object, cacheMock.Object, NullLogger<MultifactorApiService>.Instance);
-        
+        var service =
+            new MultifactorApiService(apiMock.Object, cacheMock.Object, NullLogger<MultifactorApiService>.Instance);
+
         var contextMock = new Mock<IRadiusPipelineExecutionContext>();
         contextMock.Setup(x => x.RequestPacket.UserName).Returns("username");
         contextMock.Setup(x => x.RequestPacket.CalledStationIdAttribute).Returns("CalledStationIdAttribute");
@@ -381,26 +646,32 @@ public class MultifactorApiServiceTests
         contextMock.Setup(x => x.UserNameTransformRules).Returns(new UserNameTransformRules());
         contextMock.Setup(x => x.ApiCredential).Returns(new ApiCredential("123", "123"));
         contextMock.Setup(x => x.LdapServerConfiguration.IdentityAttribute).Returns("test");
-        contextMock.Setup(x => x.UserLdapProfile.Attributes).Returns([new LdapAttribute(new LdapAttributeName("test"), [identity])]);
-        
+        contextMock.Setup(x => x.UserLdapProfile.Attributes)
+            .Returns([new LdapAttribute(new LdapAttributeName("test"), [identity])]);
+        contextMock.Setup(x => x.ApiUrls).Returns(["url"]);
+
         var context = contextMock.Object;
-        await Assert.ThrowsAnyAsync<InvalidOperationException>(() => service.SendChallengeAsync(new SendChallengeRequest(context, "answer", "requestId")));
+        await Assert.ThrowsAnyAsync<InvalidOperationException>(() =>
+            service.SendChallengeAsync(new SendChallengeRequest(context, "answer", "requestId")));
     }
 
     [Theory]
     [InlineData(RequestStatus.Denied, AuthenticationStatus.Reject)]
-    [InlineData(RequestStatus.Granted,  AuthenticationStatus.Accept)]
-    [InlineData(RequestStatus.Granted,  AuthenticationStatus.Bypass, true)]
+    [InlineData(RequestStatus.Granted, AuthenticationStatus.Accept)]
+    [InlineData(RequestStatus.Granted, AuthenticationStatus.Bypass, true)]
     [InlineData(RequestStatus.AwaitingAuthentication, AuthenticationStatus.Awaiting)]
-    public async Task SendChallenge_ShouldReturnResponseCode(RequestStatus requestStatus, AuthenticationStatus expectedStatus, bool bypassed = false)
+    public async Task SendChallenge_ShouldReturnResponseCode(RequestStatus requestStatus,
+        AuthenticationStatus expectedStatus, bool bypassed = false)
     {
         var apiMock = new Mock<IMultifactorApi>();
         apiMock
-            .Setup(x => x.SendChallengeAsync(It.IsAny<ChallengeRequest>(), It.IsAny<ApiCredential>()))
-            .ReturnsAsync(() => new AccessRequestResponse() { Status = requestStatus, Bypassed = bypassed});
+            .Setup(x => x.SendChallengeAsync(It.IsAny<string>(), It.IsAny<ChallengeRequest>(),
+                It.IsAny<ApiCredential>()))
+            .ReturnsAsync(() => new AccessRequestResponse() { Status = requestStatus, Bypassed = bypassed });
         var cacheMock = new Mock<IAuthenticatedClientCache>();
-        var service = new MultifactorApiService(apiMock.Object, cacheMock.Object, NullLogger<MultifactorApiService>.Instance);
-        
+        var service =
+            new MultifactorApiService(apiMock.Object, cacheMock.Object, NullLogger<MultifactorApiService>.Instance);
+
         var contextMock = new Mock<IRadiusPipelineExecutionContext>();
         contextMock.Setup(x => x.RequestPacket.UserName).Returns("username");
         contextMock.Setup(x => x.RequestPacket.CalledStationIdAttribute).Returns("CalledStationIdAttribute");
@@ -410,17 +681,20 @@ public class MultifactorApiServiceTests
         contextMock.Setup(x => x.UserLdapProfile.Email).Returns("email");
         contextMock.Setup(x => x.UserLdapProfile.Phone).Returns("phone");
         contextMock.Setup(x => x.ClientConfigurationName).Returns("config");
-        contextMock.Setup(x => x.AuthenticationCacheLifetime).Returns(AuthenticatedClientCacheConfig.Create("08:08:08", false));
+        contextMock.Setup(x => x.AuthenticationCacheLifetime)
+            .Returns(AuthenticatedClientCacheConfig.Create("08:08:08", false));
         contextMock.Setup(x => x.PrivacyMode).Returns(PrivacyModeDescriptor.Default);
         contextMock.Setup(x => x.Passphrase).Returns(UserPassphrase.Parse("123", PreAuthModeDescriptor.Default));
         contextMock.Setup(x => x.PreAuthnMode).Returns(PreAuthModeDescriptor.Default);
         contextMock.Setup(x => x.UserNameTransformRules).Returns(new UserNameTransformRules());
-        
+
         contextMock.Setup(x => x.LdapServerConfiguration.IdentityAttribute).Returns(string.Empty);
         contextMock.Setup(x => x.RequestPacket.UserName).Returns("username");
         contextMock.Setup(x => x.ApiCredential).Returns(new ApiCredential("key", "secret"));
-        
-        var response = await service.SendChallengeAsync(new SendChallengeRequest(contextMock.Object, "answer", "requestId"));
+        contextMock.Setup(x => x.ApiUrls).Returns(["url"]);
+
+        var response =
+            await service.SendChallengeAsync(new SendChallengeRequest(contextMock.Object, "answer", "requestId"));
         Assert.NotNull(response);
         Assert.Equal(expectedStatus, response.Code);
     }
@@ -430,13 +704,16 @@ public class MultifactorApiServiceTests
     {
         var apiMock = new Mock<IMultifactorApi>();
         apiMock
-            .Setup(x => x.SendChallengeAsync(It.IsAny<ChallengeRequest>(), It.IsAny<ApiCredential>()))
+            .Setup(x => x.SendChallengeAsync(It.IsAny<string>(), It.IsAny<ChallengeRequest>(),
+                It.IsAny<ApiCredential>()))
             .ThrowsAsync(new MultifactorApiUnreachableException());
         var cacheMock = new Mock<IAuthenticatedClientCache>();
-        var service = new MultifactorApiService(apiMock.Object, cacheMock.Object, NullLogger<MultifactorApiService>.Instance);
-        
+        var service =
+            new MultifactorApiService(apiMock.Object, cacheMock.Object, NullLogger<MultifactorApiService>.Instance);
+
         var contextMock = new Mock<IRadiusPipelineExecutionContext>();
-        contextMock.Setup(x => x.AuthenticationCacheLifetime).Returns(AuthenticatedClientCacheConfig.Create("08:08:08", false));
+        contextMock.Setup(x => x.AuthenticationCacheLifetime)
+            .Returns(AuthenticatedClientCacheConfig.Create("08:08:08", false));
         contextMock.Setup(x => x.UserLdapProfile).Returns(new Mock<ILdapProfile>().Object);
         contextMock.Setup(x => x.ClientConfigurationName).Returns("config");
         contextMock.Setup(x => x.LdapServerConfiguration.IdentityAttribute).Returns(string.Empty);
@@ -444,24 +721,29 @@ public class MultifactorApiServiceTests
         contextMock.Setup(x => x.ApiCredential).Returns(new ApiCredential("key", "secret"));
         contextMock.Setup(x => x.BypassSecondFactorWhenApiUnreachable).Returns(false);
         contextMock.Setup(x => x.RemoteEndpoint).Returns(IPEndPoint.Parse("127.0.0.1:8080"));
-        
-        var response = await service.SendChallengeAsync(new SendChallengeRequest(contextMock.Object, "answer", "requestId"));
+        contextMock.Setup(x => x.ApiUrls).Returns(["url"]);
+
+        var response =
+            await service.SendChallengeAsync(new SendChallengeRequest(contextMock.Object, "answer", "requestId"));
         Assert.NotNull(response);
         Assert.Equal(AuthenticationStatus.Reject, response.Code);
     }
-    
+
     [Fact]
     public async Task SendChallenge_MultifactorApiUnreachableExceptionBypass_ShouldReturnBypass()
     {
         var apiMock = new Mock<IMultifactorApi>();
         apiMock
-            .Setup(x => x.SendChallengeAsync(It.IsAny<ChallengeRequest>(), It.IsAny<ApiCredential>()))
+            .Setup(x => x.SendChallengeAsync(It.IsAny<string>(), It.IsAny<ChallengeRequest>(),
+                It.IsAny<ApiCredential>()))
             .ThrowsAsync(new MultifactorApiUnreachableException());
         var cacheMock = new Mock<IAuthenticatedClientCache>();
-        var service = new MultifactorApiService(apiMock.Object, cacheMock.Object, NullLogger<MultifactorApiService>.Instance);
-        
+        var service =
+            new MultifactorApiService(apiMock.Object, cacheMock.Object, NullLogger<MultifactorApiService>.Instance);
+
         var contextMock = new Mock<IRadiusPipelineExecutionContext>();
-        contextMock.Setup(x => x.AuthenticationCacheLifetime).Returns(AuthenticatedClientCacheConfig.Create("08:08:08", false));
+        contextMock.Setup(x => x.AuthenticationCacheLifetime)
+            .Returns(AuthenticatedClientCacheConfig.Create("08:08:08", false));
         contextMock.Setup(x => x.UserLdapProfile).Returns(new Mock<ILdapProfile>().Object);
         contextMock.Setup(x => x.ClientConfigurationName).Returns("config");
         contextMock.Setup(x => x.LdapServerConfiguration.IdentityAttribute).Returns(string.Empty);
@@ -469,24 +751,29 @@ public class MultifactorApiServiceTests
         contextMock.Setup(x => x.ApiCredential).Returns(new ApiCredential("key", "secret"));
         contextMock.Setup(x => x.BypassSecondFactorWhenApiUnreachable).Returns(true);
         contextMock.Setup(x => x.RemoteEndpoint).Returns(IPEndPoint.Parse("127.0.0.1:8080"));
-        
-        var response = await service.SendChallengeAsync(new SendChallengeRequest(contextMock.Object, "answer", "requestId"));
+        contextMock.Setup(x => x.ApiUrls).Returns(["url"]);
+
+        var response =
+            await service.SendChallengeAsync(new SendChallengeRequest(contextMock.Object, "answer", "requestId"));
         Assert.NotNull(response);
         Assert.Equal(AuthenticationStatus.Bypass, response.Code);
     }
-    
+
     [Fact]
     public async Task SendChallenge_Exception_ShouldReturnReject()
     {
         var apiMock = new Mock<IMultifactorApi>();
         apiMock
-            .Setup(x => x.SendChallengeAsync(It.IsAny<ChallengeRequest>(), It.IsAny<ApiCredential>()))
+            .Setup(x => x.SendChallengeAsync(It.IsAny<string>(), It.IsAny<ChallengeRequest>(),
+                It.IsAny<ApiCredential>()))
             .ThrowsAsync(new Exception());
         var cacheMock = new Mock<IAuthenticatedClientCache>();
-        var service = new MultifactorApiService(apiMock.Object, cacheMock.Object, NullLogger<MultifactorApiService>.Instance);
-        
+        var service =
+            new MultifactorApiService(apiMock.Object, cacheMock.Object, NullLogger<MultifactorApiService>.Instance);
+
         var contextMock = new Mock<IRadiusPipelineExecutionContext>();
-        contextMock.Setup(x => x.AuthenticationCacheLifetime).Returns(AuthenticatedClientCacheConfig.Create("08:08:08", false));
+        contextMock.Setup(x => x.AuthenticationCacheLifetime)
+            .Returns(AuthenticatedClientCacheConfig.Create("08:08:08", false));
         contextMock.Setup(x => x.UserLdapProfile).Returns(new Mock<ILdapProfile>().Object);
         contextMock.Setup(x => x.ClientConfigurationName).Returns("config");
         contextMock.Setup(x => x.LdapServerConfiguration.IdentityAttribute).Returns(string.Empty);
@@ -494,10 +781,233 @@ public class MultifactorApiServiceTests
         contextMock.Setup(x => x.ApiCredential).Returns(new ApiCredential("key", "secret"));
         contextMock.Setup(x => x.BypassSecondFactorWhenApiUnreachable).Returns(true);
         contextMock.Setup(x => x.RemoteEndpoint).Returns(IPEndPoint.Parse("127.0.0.1:8080"));
-        
-        var response = await service.SendChallengeAsync(new SendChallengeRequest(contextMock.Object, "answer", "requestId"));
+        contextMock.Setup(x => x.ApiUrls).Returns(["url"]);
+        contextMock.Setup(x => x.ApiUrls).Returns(["url"]);
+
+        var response =
+            await service.SendChallengeAsync(new SendChallengeRequest(contextMock.Object, "answer", "requestId"));
         Assert.NotNull(response);
         Assert.Equal(AuthenticationStatus.Reject, response.Code);
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task SendChallenge_MultipleUrlsWithUnreachableUrl_ShouldAccept(bool bypass)
+    {
+        // Arrange
+        var brokenUrl = "broken-url.com";
+        var mfUrl = "mf-url.dev";
+        var apiMock = new Mock<IMultifactorApi>();
+        apiMock
+            .Setup(x => x.SendChallengeAsync(It.Is<string>(u => u == brokenUrl), It.IsAny<ChallengeRequest>(),
+                It.IsAny<ApiCredential>()))
+            .Throws<MultifactorApiUnreachableException>();
+
+        apiMock
+            .Setup(x => x.SendChallengeAsync(It.Is<string>(u => u == mfUrl), It.IsAny<ChallengeRequest>(),
+                It.IsAny<ApiCredential>()))
+            .ReturnsAsync(() => new AccessRequestResponse() { Status = RequestStatus.Granted });
+
+        var cacheMock = new Mock<IAuthenticatedClientCache>();
+        var service =
+            new MultifactorApiService(apiMock.Object, cacheMock.Object, NullLogger<MultifactorApiService>.Instance);
+
+        var contextMock = new Mock<IRadiusPipelineExecutionContext>();
+        contextMock.Setup(x => x.RequestPacket.UserName).Returns("username");
+        contextMock.Setup(x => x.RequestPacket.CalledStationIdAttribute).Returns("CalledStationIdAttribute");
+        contextMock.Setup(x => x.RequestPacket.CallingStationIdAttribute).Returns("CallingStationIdAttribute");
+        contextMock.Setup(x => x.RemoteEndpoint).Returns(IPEndPoint.Parse("127.0.0.1:8080"));
+        contextMock.Setup(x => x.UserLdapProfile.DisplayName).Returns("123");
+        contextMock.Setup(x => x.UserLdapProfile.Email).Returns("email");
+        contextMock.Setup(x => x.UserLdapProfile.Phone).Returns("phone");
+        contextMock.Setup(x => x.ClientConfigurationName).Returns("config");
+        contextMock.Setup(x => x.AuthenticationCacheLifetime)
+            .Returns(AuthenticatedClientCacheConfig.Create("08:08:08", false));
+        contextMock.Setup(x => x.PrivacyMode).Returns(PrivacyModeDescriptor.Default);
+        contextMock.Setup(x => x.Passphrase).Returns(UserPassphrase.Parse("123", PreAuthModeDescriptor.Default));
+        contextMock.Setup(x => x.PreAuthnMode).Returns(PreAuthModeDescriptor.Default);
+        contextMock.Setup(x => x.UserNameTransformRules).Returns(new UserNameTransformRules());
+        contextMock.Setup(x => x.BypassSecondFactorWhenApiUnreachable).Returns(bypass);
+        contextMock.Setup(x => x.LdapServerConfiguration.IdentityAttribute).Returns(string.Empty);
+        contextMock.Setup(x => x.RequestPacket.UserName).Returns("username");
+        contextMock.Setup(x => x.ApiCredential).Returns(new ApiCredential("key", "secret"));
+        contextMock.Setup(x => x.ApiUrls).Returns([brokenUrl, mfUrl]);
+
+        var response =
+            await service.SendChallengeAsync(new SendChallengeRequest(contextMock.Object, "answer", "requestId"));
+        Assert.NotNull(response);
+        Assert.Equal(AuthenticationStatus.Accept, response.Code);
+        apiMock.Verify(
+            x => x.SendChallengeAsync(It.IsAny<string>(), It.IsAny<ChallengeRequest>(), It.IsAny<ApiCredential>()),
+            Times.Exactly(2));
+    }
+
+    [Fact]
+    public async Task SendChallenge_MultipleUrlsWithAllUnreachableUrls_ShouldReject()
+    {
+        // Arrange
+        var brokenUrl = "broken-url.com";
+        var mfUrl = "mf-url.dev";
+        var apiMock = new Mock<IMultifactorApi>();
+        apiMock
+            .Setup(x => x.SendChallengeAsync(It.Is<string>(u => u == brokenUrl), It.IsAny<ChallengeRequest>(),
+                It.IsAny<ApiCredential>()))
+            .Throws<MultifactorApiUnreachableException>();
+
+        apiMock
+            .Setup(x => x.SendChallengeAsync(It.Is<string>(u => u == mfUrl), It.IsAny<ChallengeRequest>(),
+                It.IsAny<ApiCredential>()))
+            .Throws<MultifactorApiUnreachableException>();
+
+        var cacheMock = new Mock<IAuthenticatedClientCache>();
+        var service =
+            new MultifactorApiService(apiMock.Object, cacheMock.Object, NullLogger<MultifactorApiService>.Instance);
+
+        var contextMock = new Mock<IRadiusPipelineExecutionContext>();
+        contextMock.Setup(x => x.RequestPacket.UserName).Returns("username");
+        contextMock.Setup(x => x.RequestPacket.CalledStationIdAttribute).Returns("CalledStationIdAttribute");
+        contextMock.Setup(x => x.RequestPacket.CallingStationIdAttribute).Returns("CallingStationIdAttribute");
+        contextMock.Setup(x => x.RemoteEndpoint).Returns(IPEndPoint.Parse("127.0.0.1:8080"));
+        contextMock.Setup(x => x.UserLdapProfile.DisplayName).Returns("123");
+        contextMock.Setup(x => x.UserLdapProfile.Email).Returns("email");
+        contextMock.Setup(x => x.UserLdapProfile.Phone).Returns("phone");
+        contextMock.Setup(x => x.ClientConfigurationName).Returns("config");
+        contextMock.Setup(x => x.AuthenticationCacheLifetime)
+            .Returns(AuthenticatedClientCacheConfig.Create("08:08:08", false));
+        contextMock.Setup(x => x.PrivacyMode).Returns(PrivacyModeDescriptor.Default);
+        contextMock.Setup(x => x.Passphrase).Returns(UserPassphrase.Parse("123", PreAuthModeDescriptor.Default));
+        contextMock.Setup(x => x.PreAuthnMode).Returns(PreAuthModeDescriptor.Default);
+        contextMock.Setup(x => x.UserNameTransformRules).Returns(new UserNameTransformRules());
+        contextMock.Setup(x => x.LdapServerConfiguration.IdentityAttribute).Returns(string.Empty);
+        contextMock.Setup(x => x.RequestPacket.UserName).Returns("username");
+        contextMock.Setup(x => x.ApiCredential).Returns(new ApiCredential("key", "secret"));
+        contextMock.Setup(x => x.ApiUrls).Returns([brokenUrl, mfUrl]);
+
+        // Act
+        var response =
+            await service.SendChallengeAsync(new SendChallengeRequest(contextMock.Object, "answer", "requestId"));
+
+        // Assert
+        Assert.NotNull(response);
+        Assert.Equal(AuthenticationStatus.Reject, response.Code);
+        apiMock.Verify(
+            x => x.SendChallengeAsync(It.IsAny<string>(), It.IsAny<ChallengeRequest>(), It.IsAny<ApiCredential>()),
+            Times.Exactly(2));
+    }
+
+    [Fact]
+    public async Task SendChallenge_MultipleUrlsWithException_ShouldReject()
+    {
+        // Arrange
+        var brokenUrl = "broken-url.com";
+        var mfUrl = "mf-url.dev";
+        var apiMock = new Mock<IMultifactorApi>();
+        apiMock
+            .Setup(x => x.SendChallengeAsync(It.Is<string>(u => u == brokenUrl), It.IsAny<ChallengeRequest>(),
+                It.IsAny<ApiCredential>()))
+            .Throws<Exception>();
+
+        apiMock
+            .Setup(x => x.SendChallengeAsync(It.Is<string>(u => u == mfUrl), It.IsAny<ChallengeRequest>(),
+                It.IsAny<ApiCredential>()))
+            .Throws<Exception>();
+
+        var cacheMock = new Mock<IAuthenticatedClientCache>();
+        var service =
+            new MultifactorApiService(apiMock.Object, cacheMock.Object, NullLogger<MultifactorApiService>.Instance);
+
+        var contextMock = new Mock<IRadiusPipelineExecutionContext>();
+        contextMock.Setup(x => x.RequestPacket.UserName).Returns("username");
+        contextMock.Setup(x => x.RequestPacket.CalledStationIdAttribute).Returns("CalledStationIdAttribute");
+        contextMock.Setup(x => x.RequestPacket.CallingStationIdAttribute).Returns("CallingStationIdAttribute");
+        contextMock.Setup(x => x.RemoteEndpoint).Returns(IPEndPoint.Parse("127.0.0.1:8080"));
+        contextMock.Setup(x => x.UserLdapProfile.DisplayName).Returns("123");
+        contextMock.Setup(x => x.UserLdapProfile.Email).Returns("email");
+        contextMock.Setup(x => x.UserLdapProfile.Phone).Returns("phone");
+        contextMock.Setup(x => x.ClientConfigurationName).Returns("config");
+        contextMock.Setup(x => x.AuthenticationCacheLifetime)
+            .Returns(AuthenticatedClientCacheConfig.Create("08:08:08", false));
+        contextMock.Setup(x => x.PrivacyMode).Returns(PrivacyModeDescriptor.Default);
+        contextMock.Setup(x => x.Passphrase).Returns(UserPassphrase.Parse("123", PreAuthModeDescriptor.Default));
+        contextMock.Setup(x => x.PreAuthnMode).Returns(PreAuthModeDescriptor.Default);
+        contextMock.Setup(x => x.UserNameTransformRules).Returns(new UserNameTransformRules());
+        contextMock.Setup(x => x.LdapServerConfiguration.IdentityAttribute).Returns(string.Empty);
+        contextMock.Setup(x => x.RequestPacket.UserName).Returns("username");
+        contextMock.Setup(x => x.ApiCredential).Returns(new ApiCredential("key", "secret"));
+        contextMock.Setup(x => x.ApiUrls).Returns([brokenUrl, mfUrl]);
+
+        // Act
+        var response =
+            await service.SendChallengeAsync(new SendChallengeRequest(contextMock.Object, "answer", "requestId"));
+
+        // Assert
+        Assert.NotNull(response);
+        Assert.Equal(AuthenticationStatus.Reject, response.Code);
+        apiMock.Verify(
+            x => x.SendChallengeAsync(It.IsAny<string>(), It.IsAny<ChallengeRequest>(), It.IsAny<ApiCredential>()),
+            Times.Exactly(2));
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task SendChallenge_MultipleUrlsFirstResponse_ShouldAccept(bool bypass)
+    {
+        // Arrange
+        var brokenUrl = "broken-url.com";
+        var mfUrl = "mf-url.dev";
+        var apiMock = new Mock<IMultifactorApi>();
+
+        apiMock
+            .Setup(x => x.SendChallengeAsync(It.Is<string>(u => u == brokenUrl), It.IsAny<ChallengeRequest>(),
+                It.IsAny<ApiCredential>()))
+            .Throws<MultifactorApiUnreachableException>();
+
+        apiMock
+            .Setup(x => x.SendChallengeAsync(It.Is<string>(u => u == mfUrl), It.IsAny<ChallengeRequest>(),
+                It.IsAny<ApiCredential>()))
+            .ReturnsAsync(() => new AccessRequestResponse()
+            {
+                Status = RequestStatus.Granted
+            });
+
+        var cacheMock = new Mock<IAuthenticatedClientCache>();
+
+        var service =
+            new MultifactorApiService(apiMock.Object, cacheMock.Object, NullLogger<MultifactorApiService>.Instance);
+
+        var contextMock = new Mock<IRadiusPipelineExecutionContext>();
+        contextMock.Setup(x => x.RequestPacket.UserName).Returns("username");
+        contextMock.Setup(x => x.RequestPacket.CalledStationIdAttribute).Returns("CalledStationIdAttribute");
+        contextMock.Setup(x => x.RequestPacket.CallingStationIdAttribute).Returns("CallingStationIdAttribute");
+        contextMock.Setup(x => x.RemoteEndpoint).Returns(IPEndPoint.Parse("127.0.0.1:8080"));
+        contextMock.Setup(x => x.UserLdapProfile.DisplayName).Returns("123");
+        contextMock.Setup(x => x.UserLdapProfile.Email).Returns("email");
+        contextMock.Setup(x => x.UserLdapProfile.Phone).Returns("phone");
+        contextMock.Setup(x => x.ClientConfigurationName).Returns("config");
+        contextMock.Setup(x => x.AuthenticationCacheLifetime)
+            .Returns(AuthenticatedClientCacheConfig.Create("08:08:08", false));
+        contextMock.Setup(x => x.PrivacyMode).Returns(PrivacyModeDescriptor.Default);
+        contextMock.Setup(x => x.Passphrase).Returns(UserPassphrase.Parse("123", PreAuthModeDescriptor.Default));
+        contextMock.Setup(x => x.PreAuthnMode).Returns(PreAuthModeDescriptor.Default);
+        contextMock.Setup(x => x.UserNameTransformRules).Returns(new UserNameTransformRules());
+        contextMock.Setup(x => x.BypassSecondFactorWhenApiUnreachable).Returns(bypass);
+        contextMock.Setup(x => x.LdapServerConfiguration.IdentityAttribute).Returns(string.Empty);
+        contextMock.Setup(x => x.RequestPacket.UserName).Returns("username");
+        contextMock.Setup(x => x.ApiCredential).Returns(new ApiCredential("key", "secret"));
+        contextMock.Setup(x => x.ApiUrls).Returns([mfUrl, brokenUrl]);
+
+        // Act
+        var response =
+            await service.SendChallengeAsync(new SendChallengeRequest(contextMock.Object, "answer", "requestId"));
+
+        // Assert
+        Assert.NotNull(response);
+        Assert.Equal(AuthenticationStatus.Accept, response.Code);
+        apiMock.Verify(
+            x => x.SendChallengeAsync(It.IsAny<string>(), It.IsAny<ChallengeRequest>(), It.IsAny<ApiCredential>()),
+            Times.Exactly(1));
     }
 
     [Fact]

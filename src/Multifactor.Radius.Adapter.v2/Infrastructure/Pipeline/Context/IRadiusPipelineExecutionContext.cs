@@ -45,4 +45,5 @@ public interface IRadiusPipelineExecutionContext
     string ClientConfigurationName { get; }
     SharedSecret RadiusSharedSecret { get; }
     IReadOnlyCollection<IPAddressRange> IpWhiteList { get; }
+    IReadOnlyList<string> ApiUrls { get; }
 }

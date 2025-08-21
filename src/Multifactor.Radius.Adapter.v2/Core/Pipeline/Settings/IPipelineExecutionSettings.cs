@@ -28,4 +28,5 @@ public interface IPipelineExecutionSettings
     string ClientConfigurationName { get; }
     SharedSecret RadiusSharedSecret { get; }
     IReadOnlyList<IPAddressRange> IpWhiteList { get; }
+    IReadOnlyList<string> ApiUrls { get; }
 }

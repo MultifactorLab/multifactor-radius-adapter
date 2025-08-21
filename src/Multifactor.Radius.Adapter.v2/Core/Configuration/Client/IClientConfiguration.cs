@@ -27,4 +27,5 @@ public interface IClientConfiguration
     RandomWaiterConfig InvalidCredentialDelay { get; }
     PreAuthModeDescriptor PreAuthnMode { get; }
     IReadOnlyList<IPAddressRange> IpWhiteList { get; }
+    IReadOnlyList<string> ApiUrls { get; }
 }
