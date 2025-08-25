@@ -16,7 +16,7 @@ using Multifactor.Radius.Adapter.v2.Tests.Fixture;
 
 namespace Multifactor.Radius.Adapter.v2.Tests.FirstFactorAuthTests;
 
-[Collection("ActiveDirectory")]
+[Collection("LDAP")]
 public class LdapFirstFactorProcessorTests
 {
     [Theory]
