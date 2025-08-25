@@ -10,7 +10,7 @@ using Multifactor.Radius.Adapter.v2.Tests.Fixture;
 
 namespace Multifactor.Radius.Adapter.v2.Tests;
 
-[Collection("ActiveDirectory")]
+[Collection("LDAP")]
 public class LdapPasswordChangerTests
 {
     [Fact]

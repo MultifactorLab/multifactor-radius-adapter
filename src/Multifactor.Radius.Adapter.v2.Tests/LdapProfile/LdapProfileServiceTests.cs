@@ -10,7 +10,7 @@ using Multifactor.Radius.Adapter.v2.Tests.Fixture;
 
 namespace Multifactor.Radius.Adapter.v2.Tests.LdapProfile;
 
-[Collection("ActiveDirectory")]
+[Collection("LDAP")]
 public class LdapProfileServiceTests
 {
     [Fact]
@@ -105,7 +105,7 @@ public class LdapProfileServiceTests
     }
 }
 
-[Collection("ActiveDirectory")]
+[Collection("LDAP")]
 public class FreeIpaLdapProfileServiceTests
 {
     [Fact]
