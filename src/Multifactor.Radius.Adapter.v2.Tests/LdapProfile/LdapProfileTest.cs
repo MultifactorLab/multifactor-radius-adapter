@@ -4,7 +4,7 @@ using Multifactor.Core.Ldap.Name;
 
 namespace Multifactor.Radius.Adapter.v2.Tests.LdapProfile;
 
-[Collection("ActiveDirectory")]
+[Collection("LDAP")]
 public class LdapProfileTest
 {
     [Fact]

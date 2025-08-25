@@ -17,7 +17,7 @@ using ILdapConnectionFactory = Multifactor.Core.Ldap.Connection.LdapConnectionFa
 
 namespace Multifactor.Radius.Adapter.v2.Tests.FirstFactorAuthTests;
 
-[Collection("ActiveDirectory")]
+[Collection("LDAP")]
 public class LdapFirstFactorProcessorTests
 {
     [Fact]
