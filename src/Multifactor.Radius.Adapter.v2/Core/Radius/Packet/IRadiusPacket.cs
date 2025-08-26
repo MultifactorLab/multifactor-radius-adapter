@@ -4,28 +4,29 @@ namespace Multifactor.Radius.Adapter.v2.Core.Radius.Packet;
 
 public interface IRadiusPacket
 {
-    public PacketCode Code { get; }
-    public byte Identifier { get; }
-    public RadiusAuthenticator Authenticator { get; }
-    public RadiusAuthenticator? RequestAuthenticator { get; }
-    public AuthenticationType AuthenticationType { get; }
-    public string? UserName { get; }
-    public bool IsEapMessageChallenge { get; }
-    public bool IsVendorAclRequest { get; }
-    public bool IsWinLogon { get; }
-    public bool IsOpenVpnStaticChallenge { get; }
-    public string? MsClientMachineAccountNameAttribute { get; }
-    public string? MsRasClientNameAttribute { get; }
-    public string? CallingStationIdAttribute { get; }
-    public string? RemoteHostName { get; }
-    public string? CalledStationIdAttribute { get; }
-    public string? NasIdentifierAttribute { get; }
-    public string? State { get; }
-    public string? TryGetUserPassword();
-    public string? TryGetChallenge();
-    public IReadOnlyDictionary<string, RadiusAttribute> Attributes { get; }
-    public T GetAttribute<T>(string name);
-    public List<T> GetAttributes<T>(string name);
-    public string? GetAttributeValueAsString(string name);
-    public string CreateUniqueKey(IPEndPoint remoteEndpoint);
+    PacketCode Code { get; }
+    byte Identifier { get; }
+    RadiusAuthenticator Authenticator { get; }
+    RadiusAuthenticator? RequestAuthenticator { get; }
+    AuthenticationType AuthenticationType { get; }
+    string? UserName { get; }
+    bool IsEapMessageChallenge { get; }
+    bool IsVendorAclRequest { get; }
+    bool IsWinLogon { get; }
+    bool IsOpenVpnStaticChallenge { get; }
+    string? MsClientMachineAccountNameAttribute { get; }
+    string? MsRasClientNameAttribute { get; }
+    string? CallingStationIdAttribute { get; }
+    string? RemoteHostName { get; }
+    string? CalledStationIdAttribute { get; }
+    string? NasIdentifierAttribute { get; }
+    string? State { get; }
+    string? TryGetUserPassword();
+    string? TryGetChallenge();
+    IReadOnlyDictionary<string, RadiusAttribute> Attributes { get; }
+    T GetAttribute<T>(string name);
+    List<T> GetAttributes<T>(string name);
+    string? GetAttributeValueAsString(string name);
+    string CreateUniqueKey(IPEndPoint remoteEndpoint);
+    AccountType AccountType { get; }
 }

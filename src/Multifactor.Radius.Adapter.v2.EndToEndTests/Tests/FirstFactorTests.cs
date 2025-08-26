@@ -63,6 +63,59 @@ public class FirstFactorTests(RadiusFixtures radiusFixtures) : E2ETestBase(radiu
         Assert.Single(mfAPiMock.Invocations);
         Assert.Equal(PacketCode.AccessAccept, response.Code);
     }
+    
+    [Theory]
+    [InlineData("ad-root-conf.env", AccountType.Microsoft)]
+    [InlineData("radius-root-conf.env", AccountType.Microsoft)]
+    [InlineData("ad-root-conf.env", AccountType.Local)]
+    [InlineData("radius-root-conf.env", AccountType.Local)]
+    [InlineData("ad-root-conf.env", AccountType.Unknown)]
+    [InlineData("radius-root-conf.env", AccountType.Unknown)]
+    public async Task BST016_NotDomainAccount_ShouldAccept(string configName, AccountType accountType)
+    {
+        var sensitiveData =
+            E2ETestsUtils.GetConfigSensitiveData(configName);
+
+        var mfAPiMock = new Mock<IMultifactorApiService>();
+
+        mfAPiMock
+            .Setup(x => x.CreateSecondFactorRequestAsync(It.IsAny<CreateSecondFactorRequest>()))
+            .ReturnsAsync(new MultifactorResponse(AuthenticationStatus.Accept));
+
+        var hostConfiguration = (HostApplicationBuilder builder) =>
+        {
+            builder.Services.ReplaceService(mfAPiMock.Object);
+        };
+        
+        var serverSection = new LdapServersSection()
+        {
+            LdapServer = new LdapServerConfiguration()
+            {
+                ConnectionString =
+                    sensitiveData.GetConfigValue("root", nameof(LdapServerConfiguration.ConnectionString))!,
+                UserName = RadiusAdapterConstants.AdminUserName,
+                Password = RadiusAdapterConstants.AdminUserPassword,
+            }
+        };
+        
+        var rootConfig = CreateRadiusConfiguration(sensitiveData, serverSection);
+
+        await StartHostAsync(
+            rootConfig,
+            configure: hostConfiguration);
+
+        var accessRequest = CreateRadiusPacket(PacketCode.AccessRequest);
+        accessRequest.AddAttributeValue("NAS-Identifier", RadiusAdapterConstants.DefaultNasIdentifier);
+        accessRequest.AddAttributeValue("User-Name", RadiusAdapterConstants.BindUserName);
+        accessRequest.AddAttributeValue("User-Password", RadiusAdapterConstants.BindUserPassword);
+        accessRequest.AddAttributeValue("Acct-Authentic", (uint)accountType);
+        
+        var response = SendPacketAsync(accessRequest);
+
+        Assert.NotNull(response);
+        Assert.Single(mfAPiMock.Invocations);
+        Assert.Equal(PacketCode.AccessAccept, response.Code);
+    }
 
     [Theory]
     [InlineData("ad-root-conf.env")]

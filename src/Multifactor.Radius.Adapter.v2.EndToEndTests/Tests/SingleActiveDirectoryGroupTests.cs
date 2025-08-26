@@ -123,6 +123,86 @@ public class SingleActiveDirectoryGroupTests(RadiusFixtures radiusFixtures) : E2
         Assert.Empty(secondFactorMock.Invocations);
         Assert.Equal(PacketCode.AccessReject, response.Code);
     }
+    
+    [Theory]
+    [InlineData("ad-root-conf.env")]
+    [InlineData("none-root-conf.env")]
+    public async Task BST008_DomainUser_ShouldReject(string configName)
+    {
+        var sensitiveData =
+            E2ETestsUtils.GetConfigSensitiveData(configName);
+
+        var secondFactorMock = new Mock<IMultifactorApiService>();
+
+        secondFactorMock
+            .Setup(x => x.CreateSecondFactorRequestAsync(It.IsAny<CreateSecondFactorRequest>()))
+            .ReturnsAsync(new MultifactorResponse(AuthenticationStatus.Accept));
+
+        var hostConfiguration = (HostApplicationBuilder builder) =>
+        {
+            builder.Services.ReplaceService(secondFactorMock.Object);
+        };
+        
+        var rootConfig = CreateRadiusConfiguration(sensitiveData, "cn=Not,dc=Existed,dc=Group");
+        
+        await StartHostAsync(
+            rootConfig,
+            configure: hostConfiguration);
+
+        var accessRequest = CreateRadiusPacket(PacketCode.AccessRequest);
+        accessRequest.AddAttributeValue("NAS-Identifier", RadiusAdapterConstants.DefaultNasIdentifier);
+        accessRequest.AddAttributeValue("User-Name", RadiusAdapterConstants.BindUserName);
+        accessRequest.AddAttributeValue("User-Password", RadiusAdapterConstants.BindUserPassword);
+        //Should check groups
+        accessRequest.AddAttributeValue("Acct-Authentic", (uint)AccountType.Domain);
+        
+        var response = SendPacketAsync(accessRequest);
+
+        Assert.NotNull(response);
+        Assert.Empty(secondFactorMock.Invocations);
+        Assert.Equal(PacketCode.AccessReject, response.Code);
+    }
+    
+    [Theory]
+    [InlineData("ad-root-conf.env", AccountType.Microsoft)]
+    [InlineData("ad-root-conf.env", AccountType.Local)]
+    [InlineData("none-root-conf.env", AccountType.Microsoft)]
+    [InlineData("none-root-conf.env", AccountType.Local)]
+    public async Task BST008_NotDomainUser_ShouldAccept(string configName, AccountType accountType)
+    {
+        var sensitiveData =
+            E2ETestsUtils.GetConfigSensitiveData(configName);
+
+        var secondFactorMock = new Mock<IMultifactorApiService>();
+
+        secondFactorMock
+            .Setup(x => x.CreateSecondFactorRequestAsync(It.IsAny<CreateSecondFactorRequest>()))
+            .ReturnsAsync(new MultifactorResponse(AuthenticationStatus.Accept));
+
+        var hostConfiguration = (HostApplicationBuilder builder) =>
+        {
+            builder.Services.ReplaceService(secondFactorMock.Object);
+        };
+        
+        var rootConfig = CreateRadiusConfiguration(sensitiveData, "cn=Not,dc=Existed,dc=Group");
+        
+        await StartHostAsync(
+            rootConfig,
+            configure: hostConfiguration);
+
+        var accessRequest = CreateRadiusPacket(PacketCode.AccessRequest);
+        accessRequest.AddAttributeValue("NAS-Identifier", RadiusAdapterConstants.DefaultNasIdentifier);
+        accessRequest.AddAttributeValue("User-Name", RadiusAdapterConstants.BindUserName);
+        accessRequest.AddAttributeValue("User-Password", RadiusAdapterConstants.BindUserPassword);
+        //Should not check groups
+        accessRequest.AddAttributeValue("Acct-Authentic", (uint)accountType);
+        
+        var response = SendPacketAsync(accessRequest);
+
+        Assert.NotNull(response);
+        Assert.Single(secondFactorMock.Invocations);
+        Assert.Equal(PacketCode.AccessAccept, response.Code);
+    }
 
     private RadiusAdapterConfiguration CreateRadiusConfiguration(
         ConfigSensitiveData[] sensitiveData,

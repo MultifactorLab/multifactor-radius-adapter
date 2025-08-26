@@ -44,4 +44,5 @@ public interface IRadiusPipelineExecutionContext
     string ClientConfigurationName { get; }
     SharedSecret RadiusSharedSecret { get; }
     IReadOnlyList<string> ApiUrls { get; }
+    bool IsDomainAccount { get; }
 }

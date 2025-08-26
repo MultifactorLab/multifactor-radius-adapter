@@ -53,13 +53,15 @@ public class SecondFactorStep : IRadiusPipelineStep
             return false;
         }
 
-        if (ShouldBypassByGroups(context))
-        {
-            _logger.LogInformation("Second factor is bypassed for user {user:l} at '{domain:l}'", context.RequestPacket.UserName, context.LdapServerConfiguration.ConnectionString);
-            return false;
-        }
+        if (UnsupportedAccountType(context))
+            return true;
         
-        return true;
+        if (!ShouldBypassByGroups(context))
+            return true;
+        
+        _logger.LogInformation("Second factor is bypassed for user {user:l} at '{domain:l}'", context.RequestPacket.UserName, context.LdapServerConfiguration.ConnectionString);
+        
+        return false;
     }
 
     private bool ShouldBypassByRequest(IRadiusPipelineExecutionContext context)
@@ -123,5 +125,18 @@ public class SecondFactorStep : IRadiusPipelineStep
         var groupDns = targetGroupsNames.Select(x => new DistinguishedName(x)).ToArray();
         
         return new MembershipRequest(context, groupDns);
+    }
+    
+    private bool UnsupportedAccountType(IRadiusPipelineExecutionContext context)
+    {
+        if (context.IsDomainAccount)
+            return false;
+        
+        _logger.LogInformation(
+            "User '{user}' used '{accountType}' account to log in. Second factor groups check is skipped.",
+            context.RequestPacket.UserName,
+            context.RequestPacket.AccountType);
+
+        return true;
     }
 }

@@ -47,6 +47,7 @@ public class RadiusPipelineExecutionContext : IRadiusPipelineExecutionContext
     public string ClientConfigurationName => _settings.ClientConfigurationName;
     public SharedSecret RadiusSharedSecret => _settings.RadiusSharedSecret;
     public IReadOnlyList<string> ApiUrls => _settings.ApiUrls;
+    public bool IsDomainAccount => RequestPacket.AccountType == AccountType.Domain;
 
     public RadiusPipelineExecutionContext(IPipelineExecutionSettings settings, IRadiusPacket requestPacket)
     {

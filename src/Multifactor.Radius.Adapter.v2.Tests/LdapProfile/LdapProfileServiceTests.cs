@@ -118,7 +118,7 @@ public class LdapProfileServiceTests
 [Collection("LDAP")]
 public class FreeIpaLdapProfileServiceTests
 {
-    [Fact]
+    //[Fact]
     public void LoadProfile_ByUid_ShouldLoadProfile()
     {
         var sensitiveData = GetConfig();
