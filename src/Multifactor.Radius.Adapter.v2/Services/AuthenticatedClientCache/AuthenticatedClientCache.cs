@@ -8,7 +8,7 @@ namespace Multifactor.Radius.Adapter.v2.Services.AuthenticatedClientCache;
     {
         // TODO ConcurrentDictionary -> MemoryCache
         private readonly ConcurrentDictionary<string, AuthenticatedClient> _authenticatedClients = new();
-        private readonly ILogger _logger;
+        private readonly ILogger<AuthenticatedClientCache> _logger;
 
         public AuthenticatedClientCache(ILogger<AuthenticatedClientCache> logger)
         {
@@ -25,7 +25,7 @@ namespace Multifactor.Radius.Adapter.v2.Services.AuthenticatedClientCache;
 
             if (!cacheConfig.MinimalMatching && string.IsNullOrWhiteSpace(callingStationId))
             {
-                _logger.LogWarning("Remote host parameter miss for user {userName:l}", userName);
+                _logger.LogWarning("Remote host parameter miss for user {userName:l}. Skip authentication cache check.", userName);
                 return false;
             }
 
@@ -52,7 +52,16 @@ namespace Multifactor.Radius.Adapter.v2.Services.AuthenticatedClientCache;
                 return;
 
             var client = AuthenticatedClient.Create(callingStationId, clientName, userName);
+            var added = false;
             if (!_authenticatedClients.ContainsKey(client.Id))
-                _authenticatedClients.TryAdd(client.Id, client);
+                added = _authenticatedClients.TryAdd(client.Id, client);
+
+            if (added)
+            {
+                var expirationDate = DateTimeOffset.Now.Add(cacheConfig.Lifetime);
+                _logger.LogDebug("Authentication for user '{userName}' is saved in cache till '{expiration}' with key '{key}'", userName, expirationDate.ToString(), client.Id);
+            }
+            else
+                _logger.LogWarning("Failed to save user '{userName}' with key '{key}' to cache", userName, client.Id);
         }
     }
