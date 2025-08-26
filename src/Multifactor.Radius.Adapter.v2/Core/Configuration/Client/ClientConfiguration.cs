@@ -10,6 +10,7 @@ namespace Multifactor.Radius.Adapter.v2.Core.Configuration.Client;
 public class ClientConfiguration : IClientConfiguration
 {
     private readonly List<ILdapServerConfiguration> _ldapServers = new();
+    private readonly HashSet<IPEndPoint> _npsServers = new();
 
     public IReadOnlyList<ILdapServerConfiguration> LdapServers => _ldapServers;
     public IReadOnlyList<string> ApiUrls { get; }
@@ -69,6 +70,8 @@ public class ClientConfiguration : IClientConfiguration
     /// </summary>
     public bool BypassSecondFactorWhenApiUnreachable { get; private set; }
 
+    public TimeSpan NpsServerTimeout { get; private set; } = TimeSpan.FromSeconds(5);
+    
     public PrivacyModeDescriptor PrivacyMode { get; private set; } = PrivacyModeDescriptor.Default;
 
     /// <summary>
@@ -79,7 +82,7 @@ public class ClientConfiguration : IClientConfiguration
     /// <summary>
     /// Network Policy Service RADIUS UDP Server endpoint
     /// </summary>
-    public IPEndPoint NpsServerEndpoint { get; private set; }
+    public IReadOnlySet<IPEndPoint> NpsServerEndpoints => _npsServers;
 
     /// <summary>
     /// Groups to assign to the registered user.Specified groups will be assigned to a new user.
@@ -134,9 +137,19 @@ public class ClientConfiguration : IClientConfiguration
         return this;
     }
 
-    public ClientConfiguration SetNpsServerEndpoint(IPEndPoint val)
+    public ClientConfiguration AddNpsServerEndpoint(IPEndPoint val)
     {
-        NpsServerEndpoint = val;
+        ArgumentNullException.ThrowIfNull(val);
+        _npsServers.Add(val);
+        return this;
+    }
+
+    public ClientConfiguration SetNpsServerTimeout(TimeSpan val)
+    {
+        if (val.TotalMilliseconds <= 0)
+            throw new ArgumentException($"Invalid NPS server timeout: {val}");
+        
+        NpsServerTimeout = val;
         return this;
     }
 

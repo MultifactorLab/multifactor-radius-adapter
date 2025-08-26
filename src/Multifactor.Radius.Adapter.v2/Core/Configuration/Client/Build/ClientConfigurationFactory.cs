@@ -1,4 +1,5 @@
-﻿using System.Net;
+﻿using System.Globalization;
+using System.Net;
 using System.Text.RegularExpressions;
 using Multifactor.Radius.Adapter.v2.Core.Auth;
 using Multifactor.Radius.Adapter.v2.Core.Auth.PreAuthMode;
@@ -222,16 +223,29 @@ public class ClientConfigurationFactory : IClientConfigurationFactory
                 builder.Name);
         }
 
-        if (!IPEndPointFactory.TryParse(appSettings.NpsServerEndpoint, out var npsEndpoint))
+        var npsServers = Utils.SplitString(appSettings.NpsServerEndpoint);
+        foreach (var server in npsServers)
         {
-            throw InvalidConfigurationException.For(
-                x => x.AppSettings.NpsServerEndpoint,
-                "Can't parse '{prop}' value. Config name: '{0}'",
-                builder.Name);
+            if (!IPEndPointFactory.TryParse(server, out var npsEndpoint))
+                throw new InvalidConfigurationException($"Config name: '{builder.Name}'. Invalid NPS server endpoint: '{server}'"); 
+            
+            builder.AddNpsServerEndpoint(npsEndpoint);
         }
-
+        
+        var timeoutStr = appSettings.NpsServerTimeout;
+        if (!string.IsNullOrWhiteSpace(timeoutStr))
+        {
+            if (TimeSpan.TryParseExact(timeoutStr, @"hh\:mm\:ss", null, TimeSpanStyles.None, out var npsServerTimeout))
+            {
+                builder.SetNpsServerTimeout(npsServerTimeout);
+            }
+            else
+            {
+                throw new InvalidConfigurationException($"Config name: '{builder.Name}'. Invalid NPS server timeout: '{timeoutStr}'"); 
+            }
+        }
+        
         builder.SetServiceClientEndpoint(serviceClientEndpoint);
-        builder.SetNpsServerEndpoint(npsEndpoint);
     }
 
     private static void ReadSignUpGroupsSettings(ClientConfiguration builder, AppSettingsSection appSettings)

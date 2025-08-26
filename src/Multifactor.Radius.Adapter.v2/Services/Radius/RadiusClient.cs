@@ -6,7 +6,7 @@ using Multifactor.Core.Ldap.LangFeatures;
 
 namespace Multifactor.Radius.Adapter.v2.Services.Radius;
 
-public sealed class RadiusClient : IDisposable
+public sealed class RadiusClient : IRadiusClient
 {
     private readonly UdpClient _udpClient; 
     
@@ -14,12 +14,12 @@ public sealed class RadiusClient : IDisposable
     private readonly ConcurrentDictionary<Tuple<byte, IPEndPoint>, TaskCompletionSource<UdpReceiveResult>> _pendingRequests = new();
 
     private readonly CancellationTokenSource _cancellationTokenSource;
-    private readonly ILogger _logger;
+    private readonly ILogger<RadiusClient> _logger;
 
     /// <summary>
     /// Create a radius client which sends and receives responses on localEndpoint
     /// </summary>
-    public RadiusClient(IPEndPoint localEndpoint, ILogger logger)
+    public RadiusClient(IPEndPoint localEndpoint, ILogger<RadiusClient> logger)
     {
         Throw.IfNull(localEndpoint);
         Throw.IfNull(logger);
@@ -74,6 +74,10 @@ public sealed class RadiusClient : IDisposable
             catch (ObjectDisposedException)
             {
                 // This is thrown when udpclient is disposed, can be safely ignored
+            }
+            catch (TaskCanceledException)
+            {
+                
             }
 
             await Task.Delay(TimeSpan.FromMilliseconds(5), cancellationToken);
