@@ -28,5 +28,7 @@ public interface IRadiusPacket
     List<T> GetAttributes<T>(string name);
     string? GetAttributeValueAsString(string name);
     string CreateUniqueKey(IPEndPoint remoteEndpoint);
+    void ReplaceAttribute(string name, params object[] values);
+    void AddAttributeValue(string name, object? value);
     AccountType AccountType { get; }
 }
