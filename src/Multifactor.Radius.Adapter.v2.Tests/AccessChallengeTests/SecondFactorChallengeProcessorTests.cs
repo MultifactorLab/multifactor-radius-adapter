@@ -193,7 +193,7 @@ public class SecondFactorChallengeProcessorTests
         contextMock.Setup(x => x.ApiCredential).Returns(new ApiCredential("1", "2"));
         contextMock.Setup(x => x.LdapServerConfiguration).Returns(new Mock<ILdapServerConfiguration>().Object);
         contextMock.Setup(x => x.UserLdapProfile).Returns(new Mock<ILdapProfile>().Object);
-        contextMock.Setup(x => x.AuthenticationCacheLifetime).Returns(AuthenticatedClientCacheConfig.Create("08:08:08", false));
+        contextMock.Setup(x => x.AuthenticationCacheLifetime).Returns(AuthenticatedClientCacheConfig.Create("08:08:08"));
         var context = contextMock.Object;
         
         context.ResponseInformation.State = "2";
@@ -229,7 +229,7 @@ public class SecondFactorChallengeProcessorTests
         contextMock.Setup(x => x.ApiCredential).Returns(new ApiCredential("1", "2"));
         contextMock.Setup(x => x.LdapServerConfiguration).Returns(new Mock<ILdapServerConfiguration>().Object);
         contextMock.Setup(x => x.UserLdapProfile).Returns(new Mock<ILdapProfile>().Object);
-        contextMock.Setup(x => x.AuthenticationCacheLifetime).Returns(AuthenticatedClientCacheConfig.Create("08:08:08", false));
+        contextMock.Setup(x => x.AuthenticationCacheLifetime).Returns(AuthenticatedClientCacheConfig.Create("08:08:08"));
         var context = contextMock.Object;
         
         context.ResponseInformation.State = "2";
@@ -267,7 +267,7 @@ public class SecondFactorChallengeProcessorTests
         contextMock.Setup(x => x.ApiCredential).Returns(new ApiCredential("1", "2"));
         contextMock.Setup(x => x.LdapServerConfiguration).Returns(new Mock<ILdapServerConfiguration>().Object);
         contextMock.Setup(x => x.UserLdapProfile).Returns(new Mock<ILdapProfile>().Object);
-        contextMock.Setup(x => x.AuthenticationCacheLifetime).Returns(AuthenticatedClientCacheConfig.Create("08:08:08", false));
+        contextMock.Setup(x => x.AuthenticationCacheLifetime).Returns(AuthenticatedClientCacheConfig.Create("08:08:08"));
         var context = contextMock.Object;
         
         context.ResponseInformation.State = "2";
