@@ -110,6 +110,16 @@ public class SecondFactorStep : IRadiusPipelineStep
         if (context.LdapServerConfiguration is null || context.LdapServerConfiguration.AuthenticationCacheGroups.Count == 0)
             return true;
         
+        //TODO add tests
+        if (!context.IsDomainAccount)
+        {
+            _logger.LogInformation(
+                "User '{user}' used '{accountType}' account to log in. Authentication cache groups check is skipped.",
+                context.RequestPacket.UserName,
+                context.RequestPacket.AccountType);
+            return false;
+        }
+
         var cacheGroups = context.LdapServerConfiguration.AuthenticationCacheGroups;
         var isMember = _ldapGroupService.IsMemberOf(GetMembershipRequest(context, cacheGroups));
         var groupsStr = string.Join(',', cacheGroups);
