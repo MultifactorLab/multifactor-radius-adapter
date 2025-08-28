@@ -24,8 +24,8 @@ public interface IRadiusPipelineExecutionContext
     IResponseInformation ResponseInformation { get; set; }
     IExecutionState ExecutionState { get; }
     string? MustChangePasswordDomain { get; set; }
-    IPEndPoint RemoteEndpoint { get; set; }
-    IPEndPoint? ProxyEndpoint { get; set; }
+    IPEndPoint RemoteEndpoint { get; }
+    IPEndPoint? ProxyEndpoint { get; }
     ILdapSchema? LdapSchema { get; set; }
     UserPassphrase Passphrase { get; set; }
     HashSet<string> UserGroups { get; set; }

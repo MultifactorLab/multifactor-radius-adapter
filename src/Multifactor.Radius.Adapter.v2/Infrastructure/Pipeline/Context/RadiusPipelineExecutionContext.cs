@@ -27,8 +27,8 @@ public class RadiusPipelineExecutionContext : IRadiusPipelineExecutionContext
     public IAuthenticationState AuthenticationState { get; set; } = new AuthenticationState();
     public IResponseInformation ResponseInformation { get; set; } = new ResponseInformation();
     public string MustChangePasswordDomain { get; set; }
-    public IPEndPoint RemoteEndpoint { get; set; }
-    public IPEndPoint? ProxyEndpoint { get; set; }
+    public IPEndPoint RemoteEndpoint => RequestPacket.RemoteEndpoint;
+    public IPEndPoint? ProxyEndpoint => RequestPacket.ProxyEndpoint;
     public ILdapSchema? LdapSchema { get; set; }
     public UserPassphrase Passphrase { get; set; }
     public HashSet<string> UserGroups { get; set; } = new();

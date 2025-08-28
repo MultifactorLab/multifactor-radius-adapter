@@ -5,6 +5,7 @@ using static Multifactor.Radius.Adapter.v2.Core.Interop.NativeMethods;
 
 namespace Multifactor.Radius.Adapter.v2.Core.Interop
 {
+    //TODO remove
     public class NameTranslator : IDisposable
     {
         private readonly SafeDsHandle _handle;

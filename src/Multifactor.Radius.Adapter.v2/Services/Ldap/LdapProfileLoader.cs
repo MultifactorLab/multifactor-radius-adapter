@@ -1,7 +1,5 @@
 using System.DirectoryServices.Protocols;
 using Multifactor.Core.Ldap.Attributes;
-using Multifactor.Core.Ldap.Connection;
-using Multifactor.Core.Ldap.Extensions;
 using Multifactor.Core.Ldap.LangFeatures;
 using Multifactor.Core.Ldap.Name;
 using Multifactor.Core.Ldap.Schema;

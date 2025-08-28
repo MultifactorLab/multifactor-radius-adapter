@@ -15,9 +15,13 @@ public interface ILdapServerConfiguration
     IReadOnlyList<string> SecondFaBypassGroups { get; }
     IReadOnlyList<string> NestedGroupsBaseDns { get; }
     IReadOnlyList<string> PhoneAttributes { get; }
-    IDomainPermissionRules? DomainPermissionRules { get; }
     IReadOnlyList<IPAddressRange> IpWhiteList { get; }
     IReadOnlyList<string> AuthenticationCacheGroups { get; }
     int LdapSchemaCacheLifeTimeInHours { get; }
     int UserProfileCacheLifeTimeInHours { get; }
+    IPermissionRules DomainPermissions { get; }
+    IPermissionRules SuffixesPermissions { get; }
+    bool TrustedDomainsEnabled { get; }
+    bool AlternativeSuffixesEnabled { get; }
+    bool UpnRequired { get; }
 }

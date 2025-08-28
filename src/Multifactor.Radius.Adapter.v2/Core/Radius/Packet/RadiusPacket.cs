@@ -13,6 +13,8 @@ public class RadiusPacket : IRadiusPacket
     public PacketCode Code => _header.Code;
     public byte Identifier => _header.Identifier;
     public RadiusAuthenticator Authenticator => _header.Authenticator;
+    public IPEndPoint? ProxyEndpoint { get; set; }
+    public IPEndPoint RemoteEndpoint { get; set; }
     
     /// <summary>
     /// Used for response packets
@@ -186,7 +188,7 @@ public class RadiusPacket : IRadiusPacket
         var base64Authenticator = Authenticator.Value.Base64();
         return $"{Code:d}:{Identifier}:{remoteEndpoint}:{UserName}:{base64Authenticator}";
     }
-
+    
     public void AddAttributeValue(string name, object? value)
     {
         if (string.IsNullOrWhiteSpace(name))

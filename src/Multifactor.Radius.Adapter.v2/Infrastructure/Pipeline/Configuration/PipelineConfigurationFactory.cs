@@ -71,6 +71,7 @@ public class PipelineConfigurationFactory : IPipelineConfigurationFactory
         pipeline.Add(typeof(StatusServerFilteringStep));
         pipeline.Add(typeof(IpWhiteListStep));
         pipeline.Add(typeof(AccessRequestFilteringStep));
+        pipeline.Add(typeof(UserNameValidationStep));
         pipeline.Add(typeof(LdapSchemaLoadingStep));
         pipeline.Add(typeof(ProfileLoadingStep));
         pipeline.Add(typeof(AccessGroupsCheckingStep));

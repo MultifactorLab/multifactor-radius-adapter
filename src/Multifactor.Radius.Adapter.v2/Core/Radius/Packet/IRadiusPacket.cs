@@ -21,6 +21,8 @@ public interface IRadiusPacket
     string? CalledStationIdAttribute { get; }
     string? NasIdentifierAttribute { get; }
     string? State { get; }
+    public IPEndPoint? ProxyEndpoint { get; set; }
+    public IPEndPoint RemoteEndpoint { get; set; }
     string? TryGetUserPassword();
     string? TryGetChallenge();
     IReadOnlyDictionary<string, RadiusAttribute> Attributes { get; }

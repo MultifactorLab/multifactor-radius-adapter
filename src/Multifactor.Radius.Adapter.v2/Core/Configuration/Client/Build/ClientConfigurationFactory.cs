@@ -10,11 +10,11 @@ using Multifactor.Radius.Adapter.v2.Core.RandomWaiterFeature;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configuration;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configuration.Exceptions;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configuration.RadiusAdapter;
-using Multifactor.Radius.Adapter.v2.Infrastructure.Configuration.RadiusAdapter.Sections;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configuration.RadiusAdapter.Sections.LdapServer;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configuration.RadiusAdapter.Sections.RadiusReply;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configuration.RadiusAdapter.Sections.UserNameTransform;
 using NetTools;
+using AppSettingsSection = Multifactor.Radius.Adapter.v2.Infrastructure.Configuration.RadiusAdapter.Sections.AppSettingsSection;
 
 namespace Multifactor.Radius.Adapter.v2.Core.Configuration.Client.Build;
 
@@ -98,17 +98,8 @@ public class ClientConfigurationFactory : IClientConfigurationFactory
                 ldapSettings.ConnectionString,
                 ldapSettings.UserName,
                 ldapSettings.Password);
-
-            ldapConfig
-                .AddPhoneAttributes(Utils.SplitString(ldapSettings.PhoneAttributes.ToLower()))
-                .AddAccessGroups(Utils.SplitString(ldapSettings.AccessGroups.ToLower()))
-                .AddSecondFaGroups(Utils.SplitString(ldapSettings.SecondFaGroups.ToLower()))
-                .AddSecondFaBypassGroups(Utils.SplitString(ldapSettings.SecondFaBypassGroups.ToLower()))
-                .AddNestedGroupBaseDns(Utils.SplitString(ldapSettings.NestedGroupsBaseDn.ToLower()))
-                .AddAuthenticationCacheGroups(Utils.SplitString(ldapSettings.AuthenticationCacheGroups))
-                .SetIdentityAttribute(ldapSettings.IdentityAttribute)
-                .SetLoadNestedGroups(ldapSettings.LoadNestedGroups)
-                .SetBindTimeoutInSeconds(ldapSettings.BindTimeoutInSeconds);
+            var settings = new LdapServerInitializeRequest(ldapSettings);
+            ldapConfig.Initialize(settings);
 
             builder.AddLdapServers(ldapConfig);
         }
@@ -441,6 +432,16 @@ public class ClientConfigurationFactory : IClientConfigurationFactory
                     "Can't parse '{prop}' value. Config name: '{0}'",
                     configName);
             }
+            
+            var serverName = server.ConnectionString;
+            if (server is { EnableTrustedDomains: true, RequiresUpn: false })
+                throw new InvalidConfigurationException($"Config name: '{configName}', LDAP server: '{serverName}'. To use trusted domains also set 'requires-upn' to 'true'."); 
+
+            if (!string.IsNullOrWhiteSpace(server.IncludedDomains) && !string.IsNullOrWhiteSpace(server.ExcludedDomains))
+                throw new InvalidConfigurationException($"Config name: '{configName}', LDAP server: '{serverName}'. Simultaneous use of 'included-domains' and 'excluded-domains' is not allowed."); 
+
+            if (!string.IsNullOrWhiteSpace(server.IncludedSuffixes) && !string.IsNullOrWhiteSpace(server.ExcludedSuffixes))
+                throw new InvalidConfigurationException($"Config name: '{configName}', LDAP server: '{serverName}'. Simultaneous use of 'included-suffixes' and 'excluded-suffixes' is not allowed.");
         }
     }
 

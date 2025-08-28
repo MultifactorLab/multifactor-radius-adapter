@@ -9,6 +9,7 @@ using Multifactor.Radius.Adapter.v2.Core.Ldap;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Context;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Steps;
 using Multifactor.Radius.Adapter.v2.Services.Ldap;
+using ILdapConnection = Multifactor.Radius.Adapter.v2.Core.Ldap.ILdapConnection;
 
 namespace Multifactor.Radius.Adapter.v2.Tests.PipelineTests.StepsTests;
 
