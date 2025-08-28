@@ -67,7 +67,8 @@ public class LdapServerConfiguration : ILdapServerConfiguration
             .EnableTrustedDomains(settings.EnableTrustedDomains)
             .EnableAlternativeSuffixes(settings.EnableAlternativeSuffixes)
             .SetDomainRules(settings.DomainPermissions)
-            .SetAlternativeSuffixesRules(settings.SuffixesPermissions);
+            .SetAlternativeSuffixesRules(settings.SuffixesPermissions)
+            .AddAuthenticationCacheGroups(settings.AuthenticationCacheGroups);
     }
 
     public LdapServerConfiguration EnableTrustedDomains(bool enable = true)

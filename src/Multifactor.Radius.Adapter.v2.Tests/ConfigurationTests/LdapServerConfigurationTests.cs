@@ -229,7 +229,8 @@ public class LdapServerConfigurationTests
             EnableTrustedDomains = true,
             EnableAlternativeSuffixes = true,
             DomainPermissions = rules,
-            SuffixesPermissions = rules
+            SuffixesPermissions = rules,
+            AuthenticationCacheGroups = ["authentication"]
         };
         
         config.Initialize(request);
@@ -238,6 +239,7 @@ public class LdapServerConfigurationTests
         Assert.True(config.SecondFaGroups.SequenceEqual(request.SecondFaGroups));
         Assert.True(config.SecondFaBypassGroups.SequenceEqual(request.SecondFaBypassGroups));
         Assert.True(config.NestedGroupsBaseDns.SequenceEqual(request.NestedGroupsBaseDns));
+        Assert.True(config.AuthenticationCacheGroups.SequenceEqual(request.AuthenticationCacheGroups));
         Assert.Equal(request.IdentityAttribute, config.IdentityAttribute);
         Assert.Equal(request.LoadNestedGroups, config.LoadNestedGroups);
         Assert.Equal(request.BindTimeoutInSeconds, config.BindTimeoutInSeconds);

@@ -7,6 +7,7 @@ public class LdapServerInitializeRequest
     public IEnumerable<string> SecondFaGroups { get; set; } = Array.Empty<string>();
     public IEnumerable<string> SecondFaBypassGroups { get; set; } = Array.Empty<string>();
     public IEnumerable<string> NestedGroupsBaseDns { get; set; } = Array.Empty<string>();
+    public IEnumerable<string> AuthenticationCacheGroups { get; set; } = Array.Empty<string>();
     public string? IdentityAttribute { get; set; } = string.Empty;
     public bool LoadNestedGroups { get; set; } = true;
     public int BindTimeoutInSeconds { get; set; } = 30;
@@ -35,6 +36,7 @@ public class LdapServerInitializeRequest
         EnableAlternativeSuffixes = config.AlternativeSuffixesEnabled;
         DomainPermissions = config.DomainPermissions;
         SuffixesPermissions = config.SuffixesPermissions;
+        AuthenticationCacheGroups = config.AuthenticationCacheGroups;
     }
 
     public LdapServerInitializeRequest(Multifactor.Radius.Adapter.v2.Infrastructure.Configuration.RadiusAdapter.Sections.LdapServer.LdapServerConfiguration config)
@@ -44,6 +46,7 @@ public class LdapServerInitializeRequest
         SecondFaGroups = Split(config.SecondFaGroups);
         SecondFaBypassGroups = Split(config.SecondFaBypassGroups);
         NestedGroupsBaseDns = Split(config.NestedGroupsBaseDn);
+        AuthenticationCacheGroups = Split(config.AuthenticationCacheGroups);
         IdentityAttribute = config.IdentityAttribute;
         LoadNestedGroups = config.LoadNestedGroups;
         BindTimeoutInSeconds = config.BindTimeoutInSeconds;
