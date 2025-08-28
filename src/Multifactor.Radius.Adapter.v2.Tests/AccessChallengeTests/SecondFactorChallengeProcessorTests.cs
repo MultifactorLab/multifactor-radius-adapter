@@ -205,7 +205,7 @@ public class SecondFactorChallengeProcessorTests
         ldapConfigMock.Setup(x => x.AuthenticationCacheGroups).Returns([]);
         contextMock.Setup(x => x.LdapServerConfiguration).Returns(ldapConfigMock.Object);
         contextMock.Setup(x => x.UserLdapProfile).Returns(new Mock<ILdapProfile>().Object);
-        contextMock.Setup(x => x.AuthenticationCacheLifetime).Returns(AuthenticatedClientCacheConfig.Create("08:08:08", false));
+        contextMock.Setup(x => x.AuthenticationCacheLifetime).Returns(AuthenticatedClientCacheConfig.Create("08:08:08"));
         var context = contextMock.Object;
         
         context.ResponseInformation.State = "2";
@@ -244,7 +244,7 @@ public class SecondFactorChallengeProcessorTests
         ldapConfigMock.Setup(x => x.AuthenticationCacheGroups).Returns([]);
         contextMock.Setup(x => x.LdapServerConfiguration).Returns(ldapConfigMock.Object);
         contextMock.Setup(x => x.UserLdapProfile).Returns(new Mock<ILdapProfile>().Object);
-        contextMock.Setup(x => x.AuthenticationCacheLifetime).Returns(AuthenticatedClientCacheConfig.Create("08:08:08", false));
+        contextMock.Setup(x => x.AuthenticationCacheLifetime).Returns(AuthenticatedClientCacheConfig.Create("08:08:08"));
         var context = contextMock.Object;
         
         context.ResponseInformation.State = "2";
@@ -285,7 +285,7 @@ public class SecondFactorChallengeProcessorTests
         ldapConfigMock.Setup(x => x.AuthenticationCacheGroups).Returns([]);
         contextMock.Setup(x => x.LdapServerConfiguration).Returns(ldapConfigMock.Object);
         contextMock.Setup(x => x.UserLdapProfile).Returns(new Mock<ILdapProfile>().Object);
-        contextMock.Setup(x => x.AuthenticationCacheLifetime).Returns(AuthenticatedClientCacheConfig.Create("08:08:08", false));
+        contextMock.Setup(x => x.AuthenticationCacheLifetime).Returns(AuthenticatedClientCacheConfig.Create("08:08:08"));
         var context = contextMock.Object;
         
         context.ResponseInformation.State = "2";

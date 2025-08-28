@@ -40,15 +40,14 @@ public class MultifactorApiService : IMultifactorApiService
         }
 
         var personalData = GetPersonalData(request);
-        var callingStationId = request.RequestPacket.CallingStationIdAttribute;
 
         //try to get authenticated client to bypass second factor if configured
-        if (_authenticatedClientCache.TryHitCache(callingStationId, personalData.Identity, request.ConfigName, request.AuthenticationCacheLifetime))
+        if (_authenticatedClientCache.TryHitCache(personalData.CallingStationId, personalData.Identity, request.ConfigName, request.AuthenticationCacheLifetime))
         {
             _logger.LogInformation(
                 "Bypass second factor for user '{user:l}' with calling-station-id {csi:l} from {host:l}:{port}",
                 personalData.Identity,
-                callingStationId,
+                personalData.CallingStationId,
                 request.RemoteEndpoint.Address,
                 request.RemoteEndpoint.Port);
             return new MultifactorResponse(AuthenticationStatus.Bypass);
@@ -86,7 +85,7 @@ public class MultifactorApiService : IMultifactorApiService
                 }
                 
                 LogGrantedInfo(personalData.Identity, response, request.RequestPacket.CallingStationIdAttribute);
-                _authenticatedClientCache.SetCache(callingStationId, personalData.Identity, request.ConfigName, request.AuthenticationCacheLifetime);
+                _authenticatedClientCache.SetCache(personalData.CallingStationId, personalData.Identity, request.ConfigName, request.AuthenticationCacheLifetime);
 
                 return new MultifactorResponse(responseCode, response?.Id, response?.ReplyMessage);
             }
@@ -125,7 +124,10 @@ public class MultifactorApiService : IMultifactorApiService
             RequestId = request.RequestId
         };
 
+        var callingStationIdAttr = request.RequestPacket.CallingStationIdAttribute;
+        var callingStationId = GetCallingStationId(callingStationIdAttr, request.RemoteEndpoint);
         MultifactorResponse cloudResponse = new MultifactorResponse(AuthenticationStatus.Reject);
+        
         foreach (var apiUrl in request.ApiUrls)
         {
             // TODO move to method
@@ -140,8 +142,8 @@ public class MultifactorApiService : IMultifactorApiService
                     return new MultifactorResponse(responseCode, response?.ReplyMessage);
                 }
                 
-                LogGrantedInfo(identity, response, request.RequestPacket.CallingStationIdAttribute);
-                _authenticatedClientCache.SetCache(request.RequestPacket.CallingStationIdAttribute, identity, request.ConfigName, request.AuthenticationCacheLifetime);
+                LogGrantedInfo(identity, response, callingStationId);
+                _authenticatedClientCache.SetCache(callingStationId, identity, request.ConfigName, request.AuthenticationCacheLifetime);
 
                 return new MultifactorResponse(responseCode, response?.ReplyMessage);
             }
@@ -277,10 +279,8 @@ public class MultifactorApiService : IMultifactorApiService
     {
         var secondFactorIdentity = GetSecondFactorIdentity(request);
         var callingStationId = request.RequestPacket.CallingStationIdAttribute;
-        // CallingStationId may contain hostname. For IP policy to work correctly in MF cloud we need IP instead of hostname
-        var callingStationIdForApiRequest = IPAddress.TryParse(callingStationId ?? string.Empty, out _)
-            ? callingStationId
-            : request.RemoteEndpoint.Address.ToString();
+
+        var callingStationIdForApiRequest = GetCallingStationId(callingStationId, request.RemoteEndpoint);
 
         var phone = request.UserProfile?.Attributes
             .Where(x => request.PhoneAttributesNames.Contains(x.Name.Value))
@@ -298,6 +298,14 @@ public class MultifactorApiService : IMultifactorApiService
         };
 
         return personalData;
+    }
+
+    private string? GetCallingStationId(string? callingStationIdAttributeValue, IPEndPoint remoteEndPoint)
+    {
+        // CallingStationId may contain hostname. For IP policy to work correctly in MF cloud we need IP instead of hostname
+        return IPAddress.TryParse(callingStationIdAttributeValue ?? string.Empty, out _)
+            ? callingStationIdAttributeValue
+            : remoteEndPoint.Address.ToString();
     }
 
     private AccessRequest GetRequestPayload(PersonalData personalData, CreateSecondFactorRequest context)

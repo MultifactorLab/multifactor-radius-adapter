@@ -268,9 +268,7 @@ public class ClientConfigurationFactory : IClientConfigurationFactory
     {
         try
         {
-            var ltConf = AuthenticatedClientCacheConfig.Create(
-                appSettings.AuthenticationCacheLifetime,
-                appSettings.AuthenticationCacheMinimalMatching);
+            var ltConf = AuthenticatedClientCacheConfig.Create(appSettings.AuthenticationCacheLifetime);
             builder.SetAuthenticationCacheLifetime(ltConf);
         }
         catch

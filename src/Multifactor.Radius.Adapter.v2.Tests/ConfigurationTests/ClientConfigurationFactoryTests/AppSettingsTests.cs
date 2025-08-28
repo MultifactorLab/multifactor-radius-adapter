@@ -34,7 +34,6 @@ public class AppSettingsTests
                 PrivacyMode = "Full",
                 PreAuthenticationMethod = "None",
                 AuthenticationCacheLifetime = "00:01:00",
-                AuthenticationCacheMinimalMatching = true,
                 CallingStationIdAttribute = "12345",
                 InvalidCredentialDelay = "3"
             },
@@ -99,7 +98,6 @@ public class AppSettingsTests
                 PrivacyMode = "Full",
                 PreAuthenticationMethod = "None",
                 AuthenticationCacheLifetime = "00:01:00",
-                AuthenticationCacheMinimalMatching = true,
                 CallingStationIdAttribute = "12345",
                 InvalidCredentialDelay = "3"
             },
@@ -170,7 +168,6 @@ public class AppSettingsTests
                 PrivacyMode = "Full",
                 PreAuthenticationMethod = "None",
                 AuthenticationCacheLifetime = "00:01:00",
-                AuthenticationCacheMinimalMatching = true,
                 CallingStationIdAttribute = "12345",
                 InvalidCredentialDelay = "3"
             },
@@ -222,7 +219,6 @@ public class AppSettingsTests
                 PrivacyMode = "Full",
                 PreAuthenticationMethod = "None",
                 AuthenticationCacheLifetime = "00:01:00",
-                AuthenticationCacheMinimalMatching = true,
                 CallingStationIdAttribute = "12345",
                 InvalidCredentialDelay = "3"
             },
@@ -274,7 +270,6 @@ public class AppSettingsTests
                 PrivacyMode = "Full",
                 PreAuthenticationMethod = "None",
                 AuthenticationCacheLifetime = "00:01:00",
-                AuthenticationCacheMinimalMatching = true,
                 CallingStationIdAttribute = "12345",
                 InvalidCredentialDelay = "3"
             },
@@ -325,7 +320,6 @@ public class AppSettingsTests
                 PrivacyMode = "Full",
                 PreAuthenticationMethod = "None",
                 AuthenticationCacheLifetime = "00:01:00",
-                AuthenticationCacheMinimalMatching = true,
                 CallingStationIdAttribute = "12345",
                 InvalidCredentialDelay = "3"
             },
@@ -376,7 +370,6 @@ public class AppSettingsTests
                 PrivacyMode = "Full",
                 PreAuthenticationMethod = "None",
                 AuthenticationCacheLifetime = "00:01:00",
-                AuthenticationCacheMinimalMatching = true,
                 CallingStationIdAttribute = "12345",
                 InvalidCredentialDelay = "3"
             },
@@ -422,7 +415,6 @@ public class AppSettingsTests
                 PrivacyMode = "Full",
                 PreAuthenticationMethod = "None",
                 AuthenticationCacheLifetime = "00:01:00",
-                AuthenticationCacheMinimalMatching = true,
                 CallingStationIdAttribute = "12345",
                 InvalidCredentialDelay = "3"
             },
@@ -484,7 +476,6 @@ public class AppSettingsTests
                 PrivacyMode = "Full",
                 PreAuthenticationMethod = "None",
                 AuthenticationCacheLifetime = "00:01:00",
-                AuthenticationCacheMinimalMatching = true,
                 CallingStationIdAttribute = "12345",
                 InvalidCredentialDelay = "3"
             }
@@ -518,7 +509,6 @@ public class AppSettingsTests
                 PrivacyMode = "Full",
                 PreAuthenticationMethod = "None",
                 AuthenticationCacheLifetime = "00:01:00",
-                AuthenticationCacheMinimalMatching = true,
                 CallingStationIdAttribute = "12345",
                 InvalidCredentialDelay = "3"
             },
@@ -555,7 +545,6 @@ public class AppSettingsTests
                 PrivacyMode = "Full",
                 PreAuthenticationMethod = "None",
                 AuthenticationCacheLifetime = "00:01:00",
-                AuthenticationCacheMinimalMatching = true,
                 CallingStationIdAttribute = "12345",
                 InvalidCredentialDelay = "3"
             }
@@ -591,7 +580,6 @@ public class AppSettingsTests
                 PrivacyMode = "Full",
                 PreAuthenticationMethod = "None",
                 AuthenticationCacheLifetime = "00:01:00",
-                AuthenticationCacheMinimalMatching = true,
                 CallingStationIdAttribute = "12345",
                 InvalidCredentialDelay = "3"
             }
@@ -625,7 +613,6 @@ public class AppSettingsTests
                 PrivacyMode = "Full",
                 PreAuthenticationMethod = "None",
                 AuthenticationCacheLifetime = "00:01:00",
-                AuthenticationCacheMinimalMatching = true,
                 CallingStationIdAttribute = "12345",
                 InvalidCredentialDelay = "3"
             }
@@ -659,7 +646,6 @@ public class AppSettingsTests
                 PrivacyMode = "Full",
                 PreAuthenticationMethod = "None",
                 AuthenticationCacheLifetime = "00:01:00",
-                AuthenticationCacheMinimalMatching = true,
                 CallingStationIdAttribute = "12345",
                 InvalidCredentialDelay = "3"
             }
@@ -693,7 +679,6 @@ public class AppSettingsTests
                 PrivacyMode = "Full",
                 PreAuthenticationMethod = "None",
                 AuthenticationCacheLifetime = "00:01:00",
-                AuthenticationCacheMinimalMatching = true,
                 CallingStationIdAttribute = "12345",
                 InvalidCredentialDelay = "3"
             }
@@ -728,7 +713,6 @@ public class AppSettingsTests
                 PrivacyMode = privacyMode,
                 PreAuthenticationMethod = "None",
                 AuthenticationCacheLifetime = "00:01:00",
-                AuthenticationCacheMinimalMatching = true,
                 CallingStationIdAttribute = "12345",
                 InvalidCredentialDelay = "3"
             }
@@ -765,7 +749,6 @@ public class AppSettingsTests
                 PrivacyMode = "None",
                 PreAuthenticationMethod = "None",
                 AuthenticationCacheLifetime = "00:01:00",
-                AuthenticationCacheMinimalMatching = true,
                 CallingStationIdAttribute = "12345",
                 InvalidCredentialDelay = delay
             }
@@ -801,7 +784,6 @@ public class AppSettingsTests
                 PrivacyMode = "None",
                 PreAuthenticationMethod = "None",
                 AuthenticationCacheLifetime = "00:01:00",
-                AuthenticationCacheMinimalMatching = true,
                 CallingStationIdAttribute = "12345",
                 InvalidCredentialDelay = "1"
             }
@@ -840,7 +822,6 @@ public class AppSettingsTests
                 PrivacyMode = "None",
                 PreAuthenticationMethod = "None",
                 AuthenticationCacheLifetime = lifetime,
-                AuthenticationCacheMinimalMatching = true,
                 CallingStationIdAttribute = "12345",
                 InvalidCredentialDelay = "1"
             }
