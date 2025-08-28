@@ -14,6 +14,7 @@ using Multifactor.Radius.Adapter.v2.Infrastructure.Configuration.RadiusAdapter.S
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configuration.RadiusAdapter.Sections.LdapServer;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configuration.RadiusAdapter.Sections.RadiusReply;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configuration.RadiusAdapter.Sections.UserNameTransform;
+using NetTools;
 
 namespace Multifactor.Radius.Adapter.v2.Core.Configuration.Client.Build;
 
@@ -67,7 +68,8 @@ public class ClientConfigurationFactory : IClientConfigurationFactory
         
         ReadLdapServersSettings(builder, configuration.LdapServers);
         ReadRadiusReplyAttributes(builder, _dictionary, configuration.RadiusReply);
-
+        ReadIpWhiteListSetting(builder, configuration.AppSettings.IpWhiteList);    
+        
         LoadUserNameTransformRulesSection(configuration, builder);
 
         ReadSignUpGroupsSettings(builder, appSettings);
@@ -103,6 +105,7 @@ public class ClientConfigurationFactory : IClientConfigurationFactory
                 .AddSecondFaGroups(Utils.SplitString(ldapSettings.SecondFaGroups.ToLower()))
                 .AddSecondFaBypassGroups(Utils.SplitString(ldapSettings.SecondFaBypassGroups.ToLower()))
                 .AddNestedGroupBaseDns(Utils.SplitString(ldapSettings.NestedGroupsBaseDn.ToLower()))
+                .AddAuthenticationCacheGroups(Utils.SplitString(ldapSettings.AuthenticationCacheGroups))
                 .SetIdentityAttribute(ldapSettings.IdentityAttribute)
                 .SetLoadNestedGroups(ldapSettings.LoadNestedGroups)
                 .SetBindTimeoutInSeconds(ldapSettings.BindTimeoutInSeconds);
@@ -348,6 +351,18 @@ public class ClientConfigurationFactory : IClientConfigurationFactory
             DictionaryAttribute.TypeOctet => Utils.StringToByteArray(value),
             _ => throw new Exception($"Unknown type {attribute.Type}")
         };
+    }
+
+    private static void ReadIpWhiteListSetting(ClientConfiguration builder, string ipWhiteList)
+    {
+        var splittedRanges = Utils.SplitString(ipWhiteList);
+        
+        foreach (var range in splittedRanges)
+        {
+            if (!IPAddressRange.TryParse(range, out var ipAddressRange))
+                throw new InvalidConfigurationException($"Invalid IP address range: '{range}' in '{builder.Name}' config");
+            builder.AddWhiteIpRange(ipAddressRange);
+        }
     }
 
     private void ValidateAppSettings(AppSettingsSection appSettings, string configName)

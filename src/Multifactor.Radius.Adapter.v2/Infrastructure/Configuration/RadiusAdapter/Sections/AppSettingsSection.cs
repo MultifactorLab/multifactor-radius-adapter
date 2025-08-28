@@ -78,4 +78,7 @@ public class AppSettingsSection
 
     [Description("file-log-output-template")]
     public string FileLogOutputTemplate { get; init; } = string.Empty;
+    
+    [Description("ip-white-list")]
+    public string IpWhiteList { get; init; } = string.Empty;
 }

@@ -103,6 +103,7 @@ public class SecondFactorStepTests
         var ldapConfig = new Mock<ILdapServerConfiguration>();
         ldapConfig.Setup(x => x.SecondFaGroups).Returns(new List<string>());
         ldapConfig.Setup(x => x.SecondFaBypassGroups).Returns(new List<string>());
+        ldapConfig.Setup(x => x.AuthenticationCacheGroups).Returns(new List<string>());
         contextMock.Setup(x => x.LdapServerConfiguration).Returns(ldapConfig.Object); 
         
         var context = contextMock.Object;
@@ -152,6 +153,7 @@ public class SecondFactorStepTests
         var ldapConfig = new Mock<ILdapServerConfiguration>();
         ldapConfig.Setup(x => x.SecondFaGroups).Returns(new List<string>());
         ldapConfig.Setup(x => x.SecondFaBypassGroups).Returns(new List<string>());
+        ldapConfig.Setup(x => x.AuthenticationCacheGroups).Returns(new List<string>());
         contextMock.Setup(x => x.LdapServerConfiguration).Returns(ldapConfig.Object); 
         
         var context = contextMock.Object;

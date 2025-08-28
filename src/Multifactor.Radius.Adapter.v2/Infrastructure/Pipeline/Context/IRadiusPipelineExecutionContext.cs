@@ -11,6 +11,7 @@ using Multifactor.Radius.Adapter.v2.Core.Pipeline;
 using Multifactor.Radius.Adapter.v2.Core.Radius;
 using Multifactor.Radius.Adapter.v2.Core.Radius.Packet;
 using Multifactor.Radius.Adapter.v2.Core.RandomWaiterFeature;
+using NetTools;
 
 namespace Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Context;
 
@@ -44,5 +45,6 @@ public interface IRadiusPipelineExecutionContext
     PreAuthModeDescriptor PreAuthnMode { get; }
     string ClientConfigurationName { get; }
     SharedSecret RadiusSharedSecret { get; }
+    IReadOnlyCollection<IPAddressRange> IpWhiteList { get; }
     IReadOnlyList<string> ApiUrls { get; }
 }

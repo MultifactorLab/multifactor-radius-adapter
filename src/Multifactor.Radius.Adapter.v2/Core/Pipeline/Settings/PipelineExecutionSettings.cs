@@ -7,6 +7,7 @@ using Multifactor.Radius.Adapter.v2.Core.MultifactorApi;
 using Multifactor.Radius.Adapter.v2.Core.MultifactorApi.PrivacyMode;
 using Multifactor.Radius.Adapter.v2.Core.Radius;
 using Multifactor.Radius.Adapter.v2.Core.RandomWaiterFeature;
+using NetTools;
 
 namespace Multifactor.Radius.Adapter.v2.Core.Pipeline.Settings;
 
@@ -30,6 +31,7 @@ public class PipelineExecutionSettings : IPipelineExecutionSettings
     public PreAuthModeDescriptor PreAuthnMode => _configuration.PreAuthnMode;
     public SharedSecret RadiusSharedSecret => _sharedSecret;
     public IReadOnlyList<string> ApiUrls => _configuration.ApiUrls;
+    public IReadOnlyList<IPAddressRange> IpWhiteList => _configuration.IpWhiteList;
     public string ClientConfigurationName => _configuration.Name;
     
     public PipelineExecutionSettings(IClientConfiguration clientConfiguration, ILdapServerConfiguration? ldapServerConfiguration = null)
