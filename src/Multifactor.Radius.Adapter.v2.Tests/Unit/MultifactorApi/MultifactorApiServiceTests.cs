@@ -1078,7 +1078,7 @@ public class MultifactorApiServiceTests
         contextMock.Setup(x => x.UserNameTransformRules).Returns(new UserNameTransformRules());
         contextMock.Setup(x => x.Passphrase).Returns(UserPassphrase.Parse("123456", PreAuthModeDescriptor.Default));
         contextMock.Setup(x => x.ClientConfigurationName).Returns("configName");
-        contextMock.Setup(x => x.AuthenticationCacheLifetime).Returns(AuthenticatedClientCacheConfig.Create("08:08:08", false));
+        contextMock.Setup(x => x.AuthenticationCacheLifetime).Returns(AuthenticatedClientCacheConfig.Create("08:08:08"));
         contextMock.Setup(x => x.ApiCredential).Returns(new ApiCredential("123", "123"));
         contextMock.Setup(x => x.LdapServerConfiguration.AuthenticationCacheGroups).Returns([]);
         contextMock.Setup(x => x.ApiUrls).Returns(["url"]);
@@ -1119,7 +1119,7 @@ public class MultifactorApiServiceTests
         contextMock.Setup(x => x.UserNameTransformRules).Returns(new UserNameTransformRules());
         contextMock.Setup(x => x.Passphrase).Returns(UserPassphrase.Parse("123456", PreAuthModeDescriptor.Default));
         contextMock.Setup(x => x.ClientConfigurationName).Returns("configName");
-        contextMock.Setup(x => x.AuthenticationCacheLifetime).Returns(AuthenticatedClientCacheConfig.Create("08:08:08", false));
+        contextMock.Setup(x => x.AuthenticationCacheLifetime).Returns(AuthenticatedClientCacheConfig.Create("08:08:08"));
         contextMock.Setup(x => x.ApiCredential).Returns(new ApiCredential("123", "123"));
         contextMock.Setup(x => x.LdapServerConfiguration.AuthenticationCacheGroups).Returns([]);
         contextMock.Setup(x => x.ApiUrls).Returns(["url"]);
@@ -1150,7 +1150,7 @@ public class MultifactorApiServiceTests
         contextMock.Setup(x => x.UserLdapProfile.Email).Returns("email");
         contextMock.Setup(x => x.UserLdapProfile.Phone).Returns("phone");
         contextMock.Setup(x => x.ClientConfigurationName).Returns("config");
-        contextMock.Setup(x => x.AuthenticationCacheLifetime).Returns(AuthenticatedClientCacheConfig.Create("08:08:08", false));
+        contextMock.Setup(x => x.AuthenticationCacheLifetime).Returns(AuthenticatedClientCacheConfig.Create("08:08:08"));
         contextMock.Setup(x => x.PrivacyMode).Returns(PrivacyModeDescriptor.Default);
         contextMock.Setup(x => x.Passphrase).Returns(UserPassphrase.Parse("123", PreAuthModeDescriptor.Default));
         contextMock.Setup(x => x.PreAuthnMode).Returns(PreAuthModeDescriptor.Default);
@@ -1184,7 +1184,7 @@ public class MultifactorApiServiceTests
         contextMock.Setup(x => x.UserLdapProfile.Email).Returns("email");
         contextMock.Setup(x => x.UserLdapProfile.Phone).Returns("phone");
         contextMock.Setup(x => x.ClientConfigurationName).Returns("config");
-        contextMock.Setup(x => x.AuthenticationCacheLifetime).Returns(AuthenticatedClientCacheConfig.Create("08:08:08", false));
+        contextMock.Setup(x => x.AuthenticationCacheLifetime).Returns(AuthenticatedClientCacheConfig.Create("08:08:08"));
         contextMock.Setup(x => x.PrivacyMode).Returns(PrivacyModeDescriptor.Default);
         contextMock.Setup(x => x.Passphrase).Returns(UserPassphrase.Parse("123", PreAuthModeDescriptor.Default));
         contextMock.Setup(x => x.PreAuthnMode).Returns(PreAuthModeDescriptor.Default);
