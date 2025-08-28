@@ -5,6 +5,7 @@ using Multifactor.Core.Ldap.Connection;
 using Multifactor.Core.Ldap.LangFeatures;
 using Multifactor.Radius.Adapter.v2.Core.Auth;
 using Multifactor.Radius.Adapter.v2.Core.Configuration.Client;
+using Multifactor.Radius.Adapter.v2.Core.FirstFactor.BindNameFormat;
 using Multifactor.Radius.Adapter.v2.Core.Ldap;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Context;
 using ILdapConnection = Multifactor.Radius.Adapter.v2.Core.Ldap.ILdapConnection;
@@ -14,19 +15,20 @@ namespace Multifactor.Radius.Adapter.v2.Core.FirstFactor;
 
 public class LdapFirstFactorProcessor : IFirstFactorProcessor
 {
-    private ILdapConnectionFactory _ldapConnectionFactory;
-    private ILogger _logger;
+    private readonly ILdapConnectionFactory _ldapConnectionFactory;
+    private readonly ILdapBindNameFormatterProvider _ldapBindNameFormatterProvider;
+    private readonly ILogger<LdapFirstFactorProcessor> _logger;
 
     public AuthenticationSource AuthenticationSource => AuthenticationSource.Ldap;
 
-    public LdapFirstFactorProcessor(ILdapConnectionFactory ldapConnectionFactory,
-        ILogger<LdapFirstFactorProcessor> logger)
+    public LdapFirstFactorProcessor(ILdapConnectionFactory ldapConnectionFactory, ILdapBindNameFormatterProvider ldapBindNameFormatterProvider, ILogger<LdapFirstFactorProcessor> logger)
     {
         Throw.IfNull(ldapConnectionFactory, nameof(ldapConnectionFactory));
         Throw.IfNull(logger, nameof(logger));
 
         _ldapConnectionFactory = ldapConnectionFactory;
         _logger = logger;
+        _ldapBindNameFormatterProvider = ldapBindNameFormatterProvider;
     }
 
     public Task ProcessFirstFactor(IRadiusPipelineExecutionContext context)
@@ -81,11 +83,28 @@ public class LdapFirstFactorProcessor : IFirstFactorProcessor
         string password)
     {
         var serverConfig = context.LdapServerConfiguration;
+        if (serverConfig is null)
+            throw new InvalidOperationException("No Ldap servers configured.");
+        
+        var bindName = string.Empty;
+        
         try
         {
+            var ldapImpl = context.LdapSchema!.LdapServerImplementation;
+            var formatter = _ldapBindNameFormatterProvider.GetLdapBindNameFormatter(ldapImpl);
+            if (formatter is null)
+                _logger.LogWarning("No LDAP bind name formatter configured for '{implementation}' implementation.", ldapImpl);
+
+            var formatted = string.Empty;
+            if (context.UserLdapProfile is not null)
+                formatted = formatter?.FormatName(login, context.UserLdapProfile);
+            
+            bindName = string.IsNullOrWhiteSpace(formatted) ? login : formatted;
+            
+            _logger.LogDebug("Use '{name}' for LDAP bind.", bindName);
             using var connection = GetConnection(
                 serverConfig.ConnectionString,
-                login,
+                bindName,
                 password,
                 serverConfig.BindTimeoutInSeconds);
 
@@ -95,7 +114,7 @@ public class LdapFirstFactorProcessor : IFirstFactorProcessor
         {
             if (ex is not LdapException ldapException)
             {
-                _logger.LogError(ex, "Verification user '{user:l}' at {ldapUri:l} failed", login, serverConfig.ConnectionString);
+                _logger.LogError(ex, "Verification user '{user:l}' at {ldapUri:l} failed", bindName, serverConfig.ConnectionString);
                 return false;
             }
 
@@ -103,7 +122,7 @@ public class LdapFirstFactorProcessor : IFirstFactorProcessor
             if (info != null)
                 ProcessErrorReason(info, context, serverConfig);
 
-            _logger.LogWarning(ldapException, "Verification user '{user:l}' at {ldapUri:l} failed: {dataReason:l}", login, serverConfig.ConnectionString, info?.ReasonText);
+            _logger.LogWarning(ldapException, "Verification user '{user:l}' at {ldapUri:l} failed: {dataReason:l}", bindName, serverConfig.ConnectionString, info?.ReasonText);
         }
 
         return false;

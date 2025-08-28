@@ -12,6 +12,7 @@ using Multifactor.Radius.Adapter.v2.Core.Configuration.Client.Build;
 using Multifactor.Radius.Adapter.v2.Core.Configuration.Service;
 using Multifactor.Radius.Adapter.v2.Core.Configuration.Service.Build;
 using Multifactor.Radius.Adapter.v2.Core.FirstFactor;
+using Multifactor.Radius.Adapter.v2.Core.FirstFactor.BindNameFormat;
 using Multifactor.Radius.Adapter.v2.Core.Ldap;
 using Multifactor.Radius.Adapter.v2.Core.Radius.Attributes;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configuration.RadiusAdapter.Build;
@@ -228,6 +229,7 @@ public static class ServiceCollectionExtensions
         services.AddTransient<IRadiusPacketProcessor, RadiusPacketProcessor>();
         AddTrustedDomains(services);
         services.AddSingleton<ICacheService, CacheService>();
+        AddLdapBindNameFormation(services);
     }
 
     public static void AddAdapterLogging(this IServiceCollection services)
@@ -237,6 +239,16 @@ public static class ServiceCollectionExtensions
         Log.Logger = logger;
 
         services.AddSerilog();
+    }
+
+    private static void AddLdapBindNameFormation(IServiceCollection services)
+    {
+        services.AddSingleton<ILdapBindNameFormatterProvider, LdapBindNameFormatterProvider>();
+        services.AddTransient<ILdapBindNameFormatter, ActiveDirectoryFormatter>();
+        services.AddTransient<ILdapBindNameFormatter, FreeIpaFormatter>();
+        services.AddTransient<ILdapBindNameFormatter, MultiDirectoryFormatter>();
+        services.AddTransient<ILdapBindNameFormatter, OpenLdapFormatter>();
+        services.AddTransient<ILdapBindNameFormatter, SambaFormatter>();
     }
 
     private static void AddTrustedDomains(this IServiceCollection services)
