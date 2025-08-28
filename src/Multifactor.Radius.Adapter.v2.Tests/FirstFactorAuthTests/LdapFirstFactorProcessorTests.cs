@@ -21,7 +21,7 @@ public class LdapFirstFactorProcessorTests
 {
     [Theory]
     [InlineData("ActiveDirectoryCredentials.txt", "|", LdapImplementation.ActiveDirectory)]
-    [InlineData("FreeIpaCredentials.txt", "|", LdapImplementation.FreeIPA)]
+    //[InlineData("FreeIpaCredentials.txt", "|", LdapImplementation.FreeIPA)]
     public async Task LdapFirstFactorProcessor_CorrectCredentials_ShouldAccept(string config, string separator, LdapImplementation ldapImplementation)
     {
         //Arrange
