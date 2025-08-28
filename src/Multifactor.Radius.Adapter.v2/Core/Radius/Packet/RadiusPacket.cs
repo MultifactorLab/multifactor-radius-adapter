@@ -24,6 +24,15 @@ public class RadiusPacket : IRadiusPacket
     public IReadOnlyDictionary<string, RadiusAttribute> Attributes => _attributes;
 
     public string? UserName => GetAttributeValueAsString("User-Name");
+    
+    public AccountType AccountType
+    {
+        get
+        {
+            var attrValue = AcctAuthentic ?? 0;
+            return UintToAccountType(attrValue);
+        }
+    }
 
     public AuthenticationType AuthenticationType
     {
@@ -220,4 +229,26 @@ public class RadiusPacket : IRadiusPacket
 
         _attributes.Remove(name);
     }
+    
+    private int? AcctAuthentic
+    {
+        get
+        {
+            if (Attributes.TryGetValue("Acct-Authentic", out var attribute))
+            {
+                var attrVal = attribute.Values.FirstOrDefault() as int?;
+                return attrVal;
+            }
+
+            return null;
+        }
+    }
+
+    private static AccountType UintToAccountType(int value) => value switch
+    {
+        1 => AccountType.Domain,
+        2 => AccountType.Local,
+        3 => AccountType.Microsoft,
+        _ => AccountType.Domain
+    };
 }

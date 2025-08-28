@@ -6,6 +6,7 @@ using Multifactor.Radius.Adapter.v2.Core.Auth;
 using Multifactor.Radius.Adapter.v2.Core.Configuration.Client;
 using Multifactor.Radius.Adapter.v2.Core.Ldap;
 using Multifactor.Radius.Adapter.v2.Core.Pipeline;
+using Multifactor.Radius.Adapter.v2.Core.Radius.Packet;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Context;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Steps;
 using Multifactor.Radius.Adapter.v2.Services.Ldap;
@@ -33,6 +34,7 @@ public class AccessGroupsCheckingStepTests
         
         Assert.False(execState.IsTerminated);
         Assert.False(execState.ShouldSkipResponse);
+        groupService.Verify(x => x.LoadUserGroups(It.IsAny<LoadUserGroupsRequest>()), Times.Never);
     }
     
     [Fact]
@@ -63,9 +65,11 @@ public class AccessGroupsCheckingStepTests
         var step = new AccessGroupsCheckingStep(groupService.Object, NullLogger<AccessGroupsCheckingStep>.Instance);
         var contextMock = new Mock<IRadiusPipelineExecutionContext>();
         var serverConfigMock = new Mock<ILdapServerConfiguration>();
+        serverConfigMock.Setup(x => x.AccessGroups).Returns(["group"]);
         contextMock.Setup(x => x.LdapServerConfiguration).Returns(serverConfigMock.Object);
         contextMock.Setup(x => x.UserLdapProfile).Returns(() => null);
         contextMock.Setup(x => x.LdapSchema).Returns(() => new Mock<ILdapSchema>().Object);
+        contextMock.Setup(x => x.IsDomainAccount).Returns(true);
         var context = contextMock.Object;
         
         await Assert.ThrowsAsync<ArgumentNullException>(() => step.ExecuteAsync(context));
@@ -111,6 +115,7 @@ public class AccessGroupsCheckingStepTests
         contextMock.Setup(x => x.LdapSchema).Returns(() => new Mock<ILdapSchema>().Object);
         contextMock.Setup(x => x.ExecutionState).Returns(execState);
         contextMock.SetupProperty(x => x.AuthenticationState);
+        contextMock.Setup(x => x.IsDomainAccount).Returns(true);
         var context = contextMock.Object;
         context.AuthenticationState = new AuthenticationState();
         
@@ -142,6 +147,7 @@ public class AccessGroupsCheckingStepTests
         contextMock.Setup(x => x.LdapServerConfiguration).Returns(serverConfigMock.Object);
         contextMock.Setup(x => x.UserLdapProfile).Returns(() => profileMock.Object);
         contextMock.Setup(x => x.LdapSchema).Returns(() => new Mock<ILdapSchema>().Object);
+        contextMock.Setup(x => x.IsDomainAccount).Returns(true);
         
         var execState = new ExecutionState();
         contextMock.Setup(x => x.ExecutionState).Returns(execState);
@@ -151,5 +157,35 @@ public class AccessGroupsCheckingStepTests
         
         Assert.False(execState.IsTerminated);
         Assert.False(execState.ShouldSkipResponse);
+    }
+    
+    [Fact]
+    public async Task CheckAccessGroups_NotDomainAccount_ShouldSkipGroupCheck()
+    {
+        //Arrange
+        var groupService = new Mock<ILdapGroupService>();
+        var step = new AccessGroupsCheckingStep(groupService.Object, NullLogger<AccessGroupsCheckingStep>.Instance);
+        var contextMock = new Mock<IRadiusPipelineExecutionContext>();
+        var serverConfigMock = new Mock<ILdapServerConfiguration>();
+        var execState = new ExecutionState();
+        serverConfigMock.Setup(x => x.AccessGroups).Returns(["group"]);
+        contextMock.Setup(x => x.LdapServerConfiguration).Returns(serverConfigMock.Object);
+        contextMock.Setup(x => x.UserLdapProfile).Returns(() => new Mock<ILdapProfile>().Object);
+        contextMock.Setup(x => x.LdapSchema).Returns(() => new Mock<ILdapSchema>().Object);
+        contextMock.Setup(x => x.ExecutionState).Returns(execState);
+        contextMock.Setup(x => x.IsDomainAccount).Returns(false);
+        var packetMock = new Mock<IRadiusPacket>();
+        packetMock.Setup(x=> x.AccountType).Returns(AccountType.Unknown);
+        packetMock.Setup(x=> x.UserName).Returns("username");
+        contextMock.Setup(x => x.RequestPacket).Returns(packetMock.Object);
+        var context = contextMock.Object;
+        
+        //Act
+        await step.ExecuteAsync(context);
+        
+        //Assert
+        Assert.False(execState.IsTerminated);
+        Assert.False(execState.ShouldSkipResponse);
+        groupService.Verify(x => x.LoadUserGroups(It.IsAny<LoadUserGroupsRequest>()), Times.Never);
     }
 }

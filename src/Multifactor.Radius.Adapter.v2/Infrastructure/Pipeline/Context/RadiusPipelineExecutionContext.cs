@@ -50,6 +50,7 @@ public class RadiusPipelineExecutionContext : IRadiusPipelineExecutionContext
     public SharedSecret RadiusSharedSecret => _settings.RadiusSharedSecret;
     public IReadOnlyCollection<IPAddressRange> IpWhiteList => _settings.LdapServerConfiguration?.IpWhiteList.Count > 0 ? _settings.LdapServerConfiguration.IpWhiteList : _settings.IpWhiteList; 
     public IReadOnlyList<string> ApiUrls => _settings.ApiUrls;
+    public bool IsDomainAccount => RequestPacket.AccountType == AccountType.Domain;
 
     public RadiusPipelineExecutionContext(IPipelineExecutionSettings settings, IRadiusPacket requestPacket)
     {

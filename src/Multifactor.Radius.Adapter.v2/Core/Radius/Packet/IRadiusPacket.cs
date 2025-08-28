@@ -32,4 +32,5 @@ public interface IRadiusPacket
     string CreateUniqueKey(IPEndPoint remoteEndpoint);
     void ReplaceAttribute(string name, params object[] values);
     void AddAttributeValue(string name, object? value);
+    AccountType AccountType { get; }
 }

@@ -26,6 +26,9 @@ public class ProfileLoadingStep : IRadiusPipelineStep
     {
         _logger.LogDebug("'{name}' started", nameof(ProfileLoadingStep));
         
+        if (ShouldSkipStep(context))
+            return Task.CompletedTask;
+        
         ArgumentNullException.ThrowIfNull(context.LdapServerConfiguration);
         
         if (string.IsNullOrWhiteSpace(context.RequestPacket.UserName))
@@ -101,5 +104,20 @@ public class ProfileLoadingStep : IRadiusPipelineStep
     private void SaveToCache(string cacheKey, ILdapProfile profile, DateTimeOffset expirationDate)
     {
         _cache.Set(cacheKey, profile, expirationDate);
+    }
+    
+    private bool ShouldSkipStep(IRadiusPipelineExecutionContext context)
+    {
+        if (context.IsDomainAccount)
+            return false;
+        
+        var packet = context.RequestPacket;
+        
+        _logger.LogInformation(
+            "User '{user}' used '{accountType}' account to log in. Profile load is skipped.",
+            packet.UserName,
+            context.RequestPacket.AccountType);
+
+        return true;
     }
 }

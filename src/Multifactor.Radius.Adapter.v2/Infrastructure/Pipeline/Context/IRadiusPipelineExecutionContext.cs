@@ -47,4 +47,5 @@ public interface IRadiusPipelineExecutionContext
     SharedSecret RadiusSharedSecret { get; }
     IReadOnlyCollection<IPAddressRange> IpWhiteList { get; }
     IReadOnlyList<string> ApiUrls { get; }
+    bool IsDomainAccount { get; }
 }
