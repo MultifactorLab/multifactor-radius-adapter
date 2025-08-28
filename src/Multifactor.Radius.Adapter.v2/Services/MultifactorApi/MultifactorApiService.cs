@@ -47,7 +47,7 @@ public class MultifactorApiService : IMultifactorApiService
             _logger.LogInformation(
                 "Bypass second factor for user '{user:l}' with calling-station-id {csi:l} from {host:l}:{port}",
                 personalData.Identity,
-                personalData.CalledStationId,
+                personalData.CallingStationId,
                 request.RemoteEndpoint.Address,
                 request.RemoteEndpoint.Port);
             return new MultifactorResponse(AuthenticationStatus.Bypass);
