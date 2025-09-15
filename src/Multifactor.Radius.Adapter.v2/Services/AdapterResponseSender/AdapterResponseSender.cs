@@ -55,7 +55,11 @@ public class AdapterResponseSender : IResponseSender
         
         await SendResponse(responsePacket, request);
         var endpoint = request.ProxyEndpoint ?? request.RemoteEndpoint;
-        _logger.LogInformation("{code:l} sent to {host:l}:{port} id={id} user='{user:l}'", responsePacket.Code.ToString(), endpoint.Address, endpoint.Port, responsePacket.Identifier, request.RequestPacket.UserName);
+        
+        if (!string.IsNullOrWhiteSpace(request.RequestPacket.UserName))
+            _logger.LogInformation("{code:l} sent to {host:l}:{port} id={id} user='{user:l}'", responsePacket.Code.ToString(), endpoint.Address, endpoint.Port, responsePacket.Identifier, request.RequestPacket.UserName);
+        else 
+            _logger.LogInformation("{code:l} sent to {host:l}:{port} id={id}", responsePacket.Code.ToString(), endpoint.Address, endpoint.Port, responsePacket.Identifier);
     }
 
     private RadiusPacket BuildResponsePacket(SendAdapterResponseRequest request)

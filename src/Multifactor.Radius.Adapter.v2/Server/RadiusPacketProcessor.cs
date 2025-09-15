@@ -1,7 +1,6 @@
 using Microsoft.Extensions.Logging;
 using Multifactor.Radius.Adapter.v2.Core;
 using Multifactor.Radius.Adapter.v2.Core.Configuration.Client;
-using Multifactor.Radius.Adapter.v2.Core.Ldap;
 using Multifactor.Radius.Adapter.v2.Core.Ldap.Forest;
 using Multifactor.Radius.Adapter.v2.Core.Pipeline;
 using Multifactor.Radius.Adapter.v2.Core.Pipeline.Settings;
@@ -37,7 +36,8 @@ public class RadiusPacketProcessor : IRadiusPacketProcessor
     
     public async Task ProcessPacketAsync(IRadiusPacket requestPacket, IClientConfiguration clientConfiguration)
     {
-        if (clientConfiguration.LdapServers.Count <= 0)
+        _logger.LogDebug("Start processing '{type}' packet.", requestPacket.Code);
+        if (clientConfiguration.LdapServers.Count <= 0 || requestPacket.Code != PacketCode.AccessRequest)
         {
             await ExecutePipeline(clientConfiguration, requestPacket);
             return;
@@ -65,7 +65,6 @@ public class RadiusPacketProcessor : IRadiusPacketProcessor
                 var isSuccessful = await ExecutePipeline(clientConfiguration, requestPacket, config);
                 if (isSuccessful)
                     return;
-                
             }
         }
     }
