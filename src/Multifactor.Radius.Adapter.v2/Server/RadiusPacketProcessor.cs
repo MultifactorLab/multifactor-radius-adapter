@@ -72,7 +72,7 @@ public class RadiusPacketProcessor : IRadiusPacketProcessor
 
     private async Task<bool> ExecutePipeline(IClientConfiguration clientConfiguration, IRadiusPacket requestPacket, ILdapServerConfiguration? ldapServerConfiguration = null)
     {
-        var context = CreatePipelineContext(clientConfiguration, requestPacket,ldapServerConfiguration);
+        var context = CreatePipelineContext(clientConfiguration, requestPacket, ldapServerConfiguration);
         var pipeline = GetPipeline(clientConfiguration.Name);
         var logMessage = $"Start executing pipeline for '{clientConfiguration.Name}'" + (ldapServerConfiguration is not null ? $" at '{ldapServerConfiguration.ConnectionString}'" : string.Empty);
         _logger.LogDebug(logMessage);

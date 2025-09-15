@@ -34,11 +34,11 @@ public class CustomLdapSchemaLoader : ILdapSchemaLoader
         
         if (schema is null)
         {
-            _logger.LogWarning("Failed to load ldap schema of '{url}'", connectionOptions.ConnectionString.Host);
+            _logger.LogWarning("Failed to load LDAP schema of '{url}'", connectionOptions.ConnectionString.Host);
             return schema;
         }
 
-        _logger.LogDebug("Successfully loaded ldap schema of '{url}'", connectionOptions.ConnectionString.Host);
+        _logger.LogDebug("Successfully loaded LDAP schema of '{url}'", connectionOptions.ConnectionString.Host);
         return schema;
     }
 }
