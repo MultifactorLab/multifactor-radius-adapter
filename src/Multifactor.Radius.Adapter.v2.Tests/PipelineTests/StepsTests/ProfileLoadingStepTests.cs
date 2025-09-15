@@ -72,7 +72,7 @@ public class ProfileLoadingStepTests
     }
     
     [Fact]
-    public async Task ExecStep_NoLdapProfile_ShouldDoNothing()
+    public async Task ExecStep_NoLdapProfile_ShouldThrow()
     {
         var loaderMock = new Mock<ILdapProfileService>();
         loaderMock
@@ -93,9 +93,7 @@ public class ProfileLoadingStepTests
         var context = contextMock.Object;
         var cacheMock = new Mock<ICacheService>();
         var step = new ProfileLoadingStep(loaderMock.Object, cacheMock.Object, NullLogger<ProfileLoadingStep>.Instance);
-        await step.ExecuteAsync(context);
-
-        Assert.Null(context.UserLdapProfile);
+        await Assert.ThrowsAsync<InvalidOperationException>(() => step.ExecuteAsync(context));
     }
     
     [Fact]

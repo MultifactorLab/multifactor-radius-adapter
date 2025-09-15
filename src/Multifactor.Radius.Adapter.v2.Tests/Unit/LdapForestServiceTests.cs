@@ -6,6 +6,8 @@ using Multifactor.Core.Ldap.Connection;
 using Multifactor.Core.Ldap.Name;
 using Multifactor.Core.Ldap.Schema;
 using Multifactor.Radius.Adapter.v2.Core.Ldap;
+using Multifactor.Radius.Adapter.v2.Core.Ldap.Forest;
+using Multifactor.Radius.Adapter.v2.Services.Cache;
 using Multifactor.Radius.Adapter.v2.Services.Ldap;
 using Multifactor.Radius.Adapter.v2.Services.Ldap.Forest;
 using ILdapConnection = Multifactor.Radius.Adapter.v2.Core.Ldap.ILdapConnection;
@@ -22,10 +24,12 @@ public class LdapForestServiceTests
         ldapSchemaLoaderMock.Setup(x => x.Load(It.IsAny<LdapConnectionOptions>())).Returns(() => null);
         var connectionFactoryMock = new Mock<ILdapConnectionFactory>();
         var domainsLoaderProviderMock = new Mock<ILdapForestLoaderProvider>();
+        var cacheMock = new Mock<ICacheService>();
         var forestService = new LdapForestService(
             ldapSchemaLoaderMock.Object,
             connectionFactoryMock.Object,
             domainsLoaderProviderMock.Object,
+            cacheMock.Object,
             NullLogger<LdapForestService>.Instance);
         var options = GetConnectionOptions();
         
@@ -56,11 +60,13 @@ public class LdapForestServiceTests
         var connectionFactoryMock = new Mock<ILdapConnectionFactory>();
         var domainsLoaderProviderMock = new Mock<ILdapForestLoaderProvider>();
         domainsLoaderProviderMock.Setup(x => x.GetTrustedDomainsLoader(ldapImplementation)).Returns(() => null);
+        var cacheMock = new Mock<ICacheService>();
         
         var forestService = new LdapForestService(
             ldapSchemaLoaderMock.Object,
             connectionFactoryMock.Object,
             domainsLoaderProviderMock.Object,
+            cacheMock.Object,
             NullLogger<LdapForestService>.Instance);
         var options = GetConnectionOptions();
         
@@ -89,11 +95,13 @@ public class LdapForestServiceTests
         var domainLoaderMock = new Mock<ILdapForestLoader>();
         var domainsLoaderProviderMock = new Mock<ILdapForestLoaderProvider>();
         domainsLoaderProviderMock.Setup(x => x.GetTrustedDomainsLoader(It.IsAny<LdapImplementation>())).Returns(() => domainLoaderMock.Object);
-        
+        var cacheMock = new Mock<ICacheService>();
+            
         var forestService = new LdapForestService(
             ldapSchemaLoaderMock.Object,
             connectionFactoryMock.Object,
             domainsLoaderProviderMock.Object,
+            cacheMock.Object,
             NullLogger<LdapForestService>.Instance);
         var options = GetConnectionOptions();
         
@@ -139,10 +147,13 @@ public class LdapForestServiceTests
         
         var domainsLoaderProviderMock = new Mock<ILdapForestLoaderProvider>();
         domainsLoaderProviderMock.Setup(x => x.GetTrustedDomainsLoader(LdapImplementation.ActiveDirectory)).Returns(() => domainLoaderMock.Object);
+        var cacheMock = new Mock<ICacheService>();
+        
         var forestService = new LdapForestService(
             ldapSchemaLoaderMock.Object,
             connectionFactoryMock.Object,
             domainsLoaderProviderMock.Object,
+            cacheMock.Object,
             NullLogger<LdapForestService>.Instance);
         
         //Act
@@ -171,11 +182,13 @@ public class LdapForestServiceTests
         var domainLoaderMock = new Mock<ILdapForestLoader>();
         var domainsLoaderProviderMock = new Mock<ILdapForestLoaderProvider>();
         domainsLoaderProviderMock.Setup(x => x.GetTrustedDomainsLoader(It.IsAny<LdapImplementation>())).Returns(() => domainLoaderMock.Object);
+        var cacheMock = new Mock<ICacheService>();
         
         var forestService = new LdapForestService(
             ldapSchemaLoaderMock.Object,
             connectionFactoryMock.Object,
             domainsLoaderProviderMock.Object,
+            cacheMock.Object,
             NullLogger<LdapForestService>.Instance);
         var options = GetConnectionOptions();
         
@@ -216,11 +229,13 @@ public class LdapForestServiceTests
         
         var domainsLoaderProviderMock = new Mock<ILdapForestLoaderProvider>();
         domainsLoaderProviderMock.Setup(x => x.GetTrustedDomainsLoader(It.IsAny<LdapImplementation>())).Returns(() => domainLoaderMock.Object);
+        var cacheMock = new Mock<ICacheService>();
         
         var forestService = new LdapForestService(
             ldapSchemaLoaderMock.Object,
             connectionFactoryMock.Object,
             domainsLoaderProviderMock.Object,
+            cacheMock.Object,
             NullLogger<LdapForestService>.Instance);
         var options = GetConnectionOptions();
         
@@ -270,11 +285,13 @@ public class LdapForestServiceTests
         
         var domainsLoaderProviderMock = new Mock<ILdapForestLoaderProvider>();
         domainsLoaderProviderMock.Setup(x => x.GetTrustedDomainsLoader(It.IsAny<LdapImplementation>())).Returns(() => domainLoaderMock.Object);
+        var cacheMock = new Mock<ICacheService>();
         
         var forestService = new LdapForestService(
             ldapSchemaLoaderMock.Object,
             connectionFactoryMock.Object,
             domainsLoaderProviderMock.Object,
+            cacheMock.Object,
             NullLogger<LdapForestService>.Instance);
         
         //Act
@@ -289,6 +306,33 @@ public class LdapForestServiceTests
         domainLoaderMock.Verify(x => x.LoadTrustedDomains(It.IsAny<ILdapConnection>(), It.IsAny<ILdapSchema>()), Times.Once);
         ldapSchemaLoaderMock.Verify(x => x.Load(It.IsAny<LdapConnectionOptions>()), Times.Exactly(expectedEntitiesCount));
     }
-    
+
+    [Fact]
+    public void LoadLdapForest_ShouldLoadFromCache()
+    {
+        //Arrange
+        var ldapSchemaLoaderMock = new Mock<ILdapSchemaLoader>();
+        var connectionFactoryMock = new Mock<ILdapConnectionFactory>();
+        var domainsLoaderProviderMock = new Mock<ILdapForestLoaderProvider>();
+        var cacheMock = new Mock<ICacheService>();
+        var key = "forest_url";
+        var forest = new List<LdapForestEntry> { new LdapForestEntry(LdapSchemaBuilder.Default) };
+        cacheMock.Setup(x => x.TryGetValue(key, out forest)).Returns(true);
+        var forestService = new LdapForestService(
+            ldapSchemaLoaderMock.Object,
+            connectionFactoryMock.Object,
+            domainsLoaderProviderMock.Object,
+            cacheMock.Object,
+            NullLogger<LdapForestService>.Instance);
+        var options = GetConnectionOptions();
+        
+        //Act
+        var result = forestService.LoadLdapForest(options, true, true);
+        
+        //Assert
+        Assert.Single(result);
+        cacheMock.Verify(x => x.TryGetValue(key, out forest), Times.Once);
+    }
+
     private LdapConnectionOptions GetConnectionOptions() => new(new LdapConnectionString("url"), AuthType.Basic, "name", "password");
 }

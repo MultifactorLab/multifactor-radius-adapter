@@ -53,7 +53,7 @@ public class ProfileLoadingStep : IRadiusPipelineStep
         if (profile is null)
         {
             _logger.LogWarning("Unable to load profile for user '{user}' from '{domain}'", userIdentity.Identity, domain.StringRepresentation);
-            return Task.CompletedTask;
+            throw new InvalidOperationException();
         }
         
         context.UserLdapProfile = profile;

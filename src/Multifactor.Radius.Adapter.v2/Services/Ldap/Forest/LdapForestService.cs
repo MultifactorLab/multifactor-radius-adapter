@@ -4,6 +4,7 @@ using Multifactor.Core.Ldap.Connection;
 using Multifactor.Core.Ldap.Schema;
 using Multifactor.Radius.Adapter.v2.Core.Ldap;
 using Multifactor.Radius.Adapter.v2.Core.Ldap.Forest;
+using Multifactor.Radius.Adapter.v2.Services.Cache;
 using ILdapConnection = Multifactor.Radius.Adapter.v2.Core.Ldap.ILdapConnection;
 
 namespace Multifactor.Radius.Adapter.v2.Services.Ldap.Forest;
@@ -14,16 +15,19 @@ public class LdapForestService : ILdapForestService
     private readonly ILogger<LdapForestService> _logger;
     private readonly ILdapConnectionFactory _connectionFactory;
     private readonly ILdapForestLoaderProvider _ldapForestLoaderProvider;
+    private readonly ICacheService _cache;
     
     public LdapForestService(
         ILdapSchemaLoader ldapSchemaLoader,
         ILdapConnectionFactory connectionFactory,
         ILdapForestLoaderProvider ldapForestLoaderProvider,
+        ICacheService cache,
         ILogger<LdapForestService> logger)
     {
         _ldapSchemaLoader = ldapSchemaLoader;
         _connectionFactory = connectionFactory;
         _ldapForestLoaderProvider = ldapForestLoaderProvider;
+        _cache = cache;
         _logger = logger;
     }
 
@@ -32,13 +36,30 @@ public class LdapForestService : ILdapForestService
     /// </summary>
     public IReadOnlyCollection<LdapForestEntry> LoadLdapForest(LdapConnectionOptions connectionOptions, bool loadTrustedDomains, bool loadSuffixes)
     {
+        var domain  = connectionOptions.ConnectionString.Host;
+        var cacheKey = BuildCacheKey(domain);
+        var forest = TryGetForestFromCache(cacheKey);
+        if (forest != null)
+        {
+            _logger.LogDebug("Loaded LDAP forest for '{domain}' from cache.", domain);
+            return forest;
+        }
+
+        forest = LoadForest(connectionOptions, loadTrustedDomains, loadSuffixes);
+        var expirationDate = DateTimeOffset.Now.AddHours(1);  
+        _cache.Set(cacheKey, forest, expirationDate);
+        
+        return forest;
+    }
+
+    private IReadOnlyCollection<LdapForestEntry> LoadForest(LdapConnectionOptions connectionOptions, bool loadTrustedDomains, bool loadSuffixes)
+    {
+        var domain  = connectionOptions.ConnectionString.Host;
         var mainSchema = LoadSchema(connectionOptions);
 
         if (mainSchema is null)
             return Array.Empty<LdapForestEntry>();
-
-        var domain  = connectionOptions.ConnectionString.Host;
-
+        
         var loader = GetForestLoader(mainSchema.LdapServerImplementation);
         
         if (loader is null)
@@ -76,7 +97,7 @@ public class LdapForestService : ILdapForestService
 
             forestEntry.AddSuffix(suffixes);
         }
-
+        
         return forest;
     }
 
@@ -111,5 +132,16 @@ public class LdapForestService : ILdapForestService
     {
         var schema = _ldapSchemaLoader.Load(connectionOptions);
         return schema;
+    }
+
+    private IReadOnlyCollection<LdapForestEntry>? TryGetForestFromCache(string key)
+    {
+        _cache.TryGetValue(key, out IReadOnlyCollection<LdapForestEntry>? forest);
+        return forest;
+    }
+
+    private string BuildCacheKey(string domain)
+    {
+        return "forest_" + domain;
     }
 }

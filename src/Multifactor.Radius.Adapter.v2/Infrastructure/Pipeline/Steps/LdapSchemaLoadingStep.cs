@@ -41,7 +41,6 @@ public class LdapSchemaLoadingStep: IRadiusPipelineStep
         return Task.CompletedTask;
     }
 
-    //TODO create schema service with cache and loading
     private ILdapSchema? TryGetLdapSchema(IRadiusPipelineExecutionContext context)
     {
         var cacheKey = context.LdapServerConfiguration!.ConnectionString;
