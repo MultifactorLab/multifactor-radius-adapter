@@ -1,4 +1,5 @@
 using System.DirectoryServices.Protocols;
+using System.Text;
 using Microsoft.Extensions.Logging;
 using Multifactor.Core.Ldap;
 using Multifactor.Core.Ldap.Connection;
@@ -54,6 +55,12 @@ public class LdapProfileService : ILdapProfileService
         using var connection = _ldapConnectionFactory.CreateConnection(options);
         var passwordChanger = new LdapPasswordChanger(connection, request.Schema);
         return passwordChanger.ChangeUserPasswordAsync(request.NewPassword, request.Profile);
+    }
+
+    public async Task<byte[]> GetUserPassword(GetUserPasswordRequest request)
+    {
+        await Task.CompletedTask;
+        return Encoding.ASCII.GetBytes("Qwerty123!");
     }
 
     private string GetFilter(UserIdentity identity, ILdapSchema schema)

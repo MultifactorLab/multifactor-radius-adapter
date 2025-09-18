@@ -6,4 +6,5 @@ public interface ILdapProfileService
 {
     ILdapProfile? FindUserProfile(FindUserProfileRequest request);
     Task<PasswordChangeResponse> ChangeUserPasswordAsync(ChangeUserPasswordRequest request);
+    Task<byte[]> GetUserPassword(GetUserPasswordRequest request);
 }
