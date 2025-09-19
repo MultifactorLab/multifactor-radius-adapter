@@ -82,4 +82,42 @@ public class MultifactorApiClientTests
         await Assert.ThrowsAsync<MultifactorApiUnreachableException>(async () =>
             await apiClient.ChallengeAsync(new ChallengeDto(), new BasicAuthHeaderValue("test", "test")));
     }
+    
+    [Fact]
+    public async Task CreateRequest_TaskCanceledException_ShouldReturnReject()
+    {
+        var exception = new TaskCanceledException();
+        var httpClientAdapterMock = new Mock<IHttpClientAdapter>();
+        httpClientAdapterMock
+            .Setup(x => x.PostAsync<MultiFactorApiResponse<AccessRequestDto>>(
+                It.IsAny<string>(),
+                It.IsAny<object>(),
+                It.IsAny<Dictionary<string,string>>()))
+            .Throws(exception);
+        var logger = new Mock<ILogger<MultifactorApiClient>>();
+        var apiClient = new MultifactorApiClient(logger.Object, httpClientAdapterMock.Object);
+        
+        var response = await apiClient.CreateRequestAsync(new CreateRequestDto(), new BasicAuthHeaderValue("test", "test"));
+        
+        Assert.Equal(RequestStatus.Denied, response.Status);
+    }
+    
+    [Fact]
+    public async Task CreateChallenge_TaskCanceledException_ShouldReturnReject()
+    {
+        var exception = new TaskCanceledException();
+        var httpClientAdapterMock = new Mock<IHttpClientAdapter>();
+        httpClientAdapterMock
+            .Setup(x => x.PostAsync<MultiFactorApiResponse<AccessRequestDto>>(
+                It.IsAny<string>(),
+                It.IsAny<object>(),
+                It.IsAny<Dictionary<string,string>>()))
+            .Throws(exception);
+        var logger = new Mock<ILogger<MultifactorApiClient>>();
+        var apiClient = new MultifactorApiClient(logger.Object, httpClientAdapterMock.Object);
+        
+        var response = await apiClient.ChallengeAsync(new ChallengeDto(), new BasicAuthHeaderValue("test", "test"));
+        
+        Assert.Equal(RequestStatus.Denied, response.Status);
+    }
 }
