@@ -58,9 +58,6 @@ public class AppSettingsSection
     [Description("authentication-cache-lifetime")]
     public string AuthenticationCacheLifetime { get; init; } = string.Empty;
 
-    [Description("authentication-cache-minimal-matching")]
-    public bool AuthenticationCacheMinimalMatching { get; init; } = false;
-
     [Description("invalid-credential-delay")]
     public string InvalidCredentialDelay { get; init; } = string.Empty;
 
@@ -78,4 +75,7 @@ public class AppSettingsSection
 
     [Description("file-log-output-template")]
     public string FileLogOutputTemplate { get; init; } = string.Empty;
+    
+    [Description("ip-white-list")]
+    public string IpWhiteList { get; init; } = string.Empty;
 }

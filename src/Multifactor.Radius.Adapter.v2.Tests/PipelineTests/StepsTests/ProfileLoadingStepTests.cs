@@ -14,7 +14,7 @@ using Multifactor.Radius.Adapter.v2.Tests.Fixture;
 
 namespace Multifactor.Radius.Adapter.v2.Tests.PipelineTests.StepsTests;
 
-public class ProfileLoadingTests
+public class ProfileLoadingStepTests
 {
     [Fact]
     public async Task ExecStep_ShouldLoadProfile()
@@ -36,6 +36,7 @@ public class ProfileLoadingTests
         contextMock.Setup(x => x.LdapServerConfiguration).Returns(serverConfig.Object);
         contextMock.Setup(x => x.ClientConfigurationName).Returns("name");
         contextMock.SetupProperty(x => x.UserLdapProfile);
+        contextMock.Setup(x => x.IsDomainAccount).Returns(true);
         var context = contextMock.Object;
         var cacheMock = new Mock<ICacheService>();
         
@@ -61,6 +62,7 @@ public class ProfileLoadingTests
         contextMock.Setup(x => x.RemoteEndpoint).Returns(IPEndPoint.Parse("127.0.0.1:666"));
         contextMock.SetupProperty(x => x.UserLdapProfile);
         contextMock.Setup(x => x.LdapServerConfiguration).Returns(new Mock<ILdapServerConfiguration>().Object);
+        contextMock.Setup(x => x.IsDomainAccount).Returns(true);
         var context = contextMock.Object;
         var cacheMock = new Mock<ICacheService>();
         var step = new ProfileLoadingStep(loaderMock.Object, cacheMock.Object, NullLogger<ProfileLoadingStep>.Instance);
@@ -70,7 +72,7 @@ public class ProfileLoadingTests
     }
     
     [Fact]
-    public async Task ExecStep_NoLdapProfile_ShouldDoNothing()
+    public async Task ExecStep_NoLdapProfile_ShouldThrow()
     {
         var loaderMock = new Mock<ILdapProfileService>();
         loaderMock
@@ -87,12 +89,11 @@ public class ProfileLoadingTests
         serverConfig.Setup(x => x.PhoneAttributes).Returns([]);
         contextMock.Setup(x => x.LdapServerConfiguration).Returns(serverConfig.Object);
         contextMock.SetupProperty(x => x.UserLdapProfile);
+        contextMock.Setup(x => x.IsDomainAccount).Returns(true);
         var context = contextMock.Object;
         var cacheMock = new Mock<ICacheService>();
         var step = new ProfileLoadingStep(loaderMock.Object, cacheMock.Object, NullLogger<ProfileLoadingStep>.Instance);
-        await step.ExecuteAsync(context);
-
-        Assert.Null(context.UserLdapProfile);
+        await Assert.ThrowsAsync<InvalidOperationException>(() => step.ExecuteAsync(context));
     }
     
     [Fact]
@@ -109,12 +110,42 @@ public class ProfileLoadingTests
         contextMock.Setup(x => x.ClientConfigurationName).Returns("name");
         contextMock.Setup(x => x.LdapServerConfiguration).Returns(new Mock<ILdapServerConfiguration>().Object);
         contextMock.SetupProperty(x => x.UserLdapProfile);
+        contextMock.Setup(x => x.IsDomainAccount).Returns(true);
         var context = contextMock.Object;
         var cacheMock = new Mock<ICacheService>();
         var step = new ProfileLoadingStep(loaderMock.Object, cacheMock.Object, NullLogger<ProfileLoadingStep>.Instance);
         await step.ExecuteAsync(context);
 
         Assert.Null(context.UserLdapProfile);
+    }
+    
+    [Fact]
+    public async Task ExecStep_NotDomainAccount_ShouldSkipStep()
+    {
+        //Arrange
+        var loaderMock = new Mock<ILdapProfileService>();
+        loaderMock
+            .Setup(x => x.FindUserProfile(It.IsAny<FindUserProfileRequest>()))
+            .Returns(() => null);
+        var contextMock = new Mock<IRadiusPipelineExecutionContext>();
+        contextMock.Setup(x => x.RequestPacket.UserName).Returns("user@example.com");
+        contextMock.Setup(x => x.RadiusReplyAttributes).Returns(new Dictionary<string, RadiusReplyAttributeValue[]>());
+        contextMock.Setup(x => x.LdapSchema).Returns(new Mock<ILdapSchema>().Object);
+        contextMock.Setup(x => x.ClientConfigurationName).Returns("name");
+        contextMock.Setup(x => x.LdapServerConfiguration).Returns(new Mock<ILdapServerConfiguration>().Object);
+        contextMock.SetupProperty(x => x.UserLdapProfile);
+        contextMock.Setup(x => x.IsDomainAccount).Returns(false);
+        
+        var context = contextMock.Object;
+        var cacheMock = new Mock<ICacheService>();
+        var step = new ProfileLoadingStep(loaderMock.Object, cacheMock.Object, NullLogger<ProfileLoadingStep>.Instance);
+        
+        //Act
+        await step.ExecuteAsync(context);
+
+        //Assert
+        Assert.Null(context.UserLdapProfile);
+        loaderMock.Verify(x => x.FindUserProfile(It.IsAny<FindUserProfileRequest>()), Times.Never);
     }
 
     private class LdapProfileMock : ILdapProfile

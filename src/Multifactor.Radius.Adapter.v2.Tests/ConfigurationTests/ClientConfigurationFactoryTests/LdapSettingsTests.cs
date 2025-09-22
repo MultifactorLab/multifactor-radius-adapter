@@ -7,6 +7,7 @@ using Multifactor.Radius.Adapter.v2.Infrastructure.Configuration.RadiusAdapter;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configuration.RadiusAdapter.Sections;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configuration.RadiusAdapter.Sections.LdapServer;
 using Multifactor.Radius.Adapter.v2.Tests.Fixture;
+using NetTools;
 
 namespace Multifactor.Radius.Adapter.v2.Tests.ConfigurationTests.ClientConfigurationFactoryTests;
 
@@ -356,5 +357,510 @@ public class LdapSettingsTests
         dictionaryMock.Setup(x => x.GetAttribute(It.IsAny<string>())).Returns(attribute);
         var factory = new ClientConfigurationFactory(dictionaryMock.Object);
         Assert.Throws<InvalidConfigurationException>(() => factory.CreateConfig(configName, radiusConfig, serviceConfig));
+    }
+    
+    //[Theory] placeholder for future
+    [InlineData("invalid-ip-address")]
+    [InlineData("1.1.1.1; invalid-ip-address")]
+    [InlineData("1.1.1.1; 2.2.2.2; invalid-ip-address")]
+    public void CreateClientConfiguration_InvalidIpWhiteList_ShouldThrow(string range)
+    {
+        var radiusConfig = new RadiusAdapterConfiguration()
+        {
+            AppSettings = new AppSettingsSection()
+            {
+                MultifactorApiUrl = "http://127.0.0.1",
+                MultifactorNasIdentifier = "identifier",
+                MultifactorSharedSecret = "secret",
+                SignUpGroups = "groups",
+                BypassSecondFactorWhenApiUnreachable = true,
+                FirstFactorAuthenticationSource = "None",
+                AdapterClientEndpoint = "127.0.0.1",
+                AdapterServerEndpoint = "127.0.0.1",
+                RadiusSharedSecret = "secret",
+                InvalidCredentialDelay = "3",
+                NpsServerEndpoint = "127.0.0.1"
+            },
+            LdapServers = new LdapServersSection()
+            {
+                LdapServers = new[]
+                {
+                    new LdapServerConfiguration()
+                    {
+                        ConnectionString = "connection",
+                        UserName = "userName",
+                        Password = "password",
+                        IpWhiteList = range
+                    }
+                }
+            }
+        };
+
+        var serviceConfig = new ServiceConfiguration();
+        var configName = "name";
+        var dictionaryMock = new Mock<IRadiusDictionary>();
+        var attribute = new DictionaryAttribute("name", 1, "type");
+        dictionaryMock.Setup(x => x.GetAttribute(It.IsAny<string>())).Returns(attribute);
+        var factory = new ClientConfigurationFactory(dictionaryMock.Object);
+        
+        var exception = Assert.Throws<InvalidConfigurationException>(() => factory.CreateConfig(configName, radiusConfig, serviceConfig));
+        Assert.Contains("Invalid IP", exception.Message);
+    }
+    
+    //[Fact]
+    public void CreateClientConfiguration_SingleValidWhiteIp_ShouldCreate()
+    {
+        var range = "127.0.0.1";
+        var radiusConfig = new RadiusAdapterConfiguration()
+        {
+            AppSettings = new AppSettingsSection()
+            {
+                MultifactorApiUrl = "http://127.0.0.1",
+                MultifactorNasIdentifier = "identifier",
+                MultifactorSharedSecret = "secret",
+                SignUpGroups = "groups",
+                BypassSecondFactorWhenApiUnreachable = true,
+                FirstFactorAuthenticationSource = "None",
+                AdapterClientEndpoint = "127.0.0.1",
+                AdapterServerEndpoint = "127.0.0.1",
+                RadiusSharedSecret = "secret",
+                InvalidCredentialDelay = "3",
+                NpsServerEndpoint = "127.0.0.1"
+            },
+            LdapServers = new LdapServersSection()
+            {
+                LdapServers = new[]
+                {
+                    new LdapServerConfiguration()
+                    {
+                        ConnectionString = "connection",
+                        UserName = "userName",
+                        Password = "password",
+                        IpWhiteList = range
+                    }
+                }
+            }
+        };
+
+        var serviceConfig = new ServiceConfiguration();
+        var configName = "name";
+        var dictionaryMock = new Mock<IRadiusDictionary>();
+        var attribute = new DictionaryAttribute("name", 1, "type");
+        dictionaryMock.Setup(x => x.GetAttribute(It.IsAny<string>())).Returns(attribute);
+        var factory = new ClientConfigurationFactory(dictionaryMock.Object);
+        var config = factory.CreateConfig(configName, radiusConfig, serviceConfig);
+        
+        Assert.Equal(IPAddressRange.Parse(range), config.LdapServers.First().IpWhiteList.First());
+    }
+    
+        
+    //[Fact]
+    public void CreateClientConfiguration_MultipleValidWhiteIps_ShouldCreate()
+    {
+        var whiteList = "127.0.0.1; 127.0.0.2-128.0.0.1; 127.2.0.0/16";
+        var radiusConfig = new RadiusAdapterConfiguration()
+        {
+            AppSettings = new AppSettingsSection()
+            {
+                MultifactorApiUrl = "http://127.0.0.1",
+                MultifactorNasIdentifier = "identifier",
+                MultifactorSharedSecret = "secret",
+                SignUpGroups = "groups",
+                BypassSecondFactorWhenApiUnreachable = true,
+                FirstFactorAuthenticationSource = "None",
+                AdapterClientEndpoint = "127.0.0.1",
+                AdapterServerEndpoint = "127.0.0.1",
+                RadiusSharedSecret = "secret",
+                InvalidCredentialDelay = "3",
+                NpsServerEndpoint = "127.0.0.1"
+            },
+            LdapServers = new LdapServersSection()
+            {
+                LdapServers = new[]
+                {
+                    new LdapServerConfiguration()
+                    {
+                        ConnectionString = "connection",
+                        UserName = "userName",
+                        Password = "password",
+                        IpWhiteList = whiteList
+                    }
+                }
+            }
+        };
+
+        var serviceConfig = new ServiceConfiguration();
+        var configName = "name";
+        var dictionaryMock = new Mock<IRadiusDictionary>();
+        var attribute = new DictionaryAttribute("name", 1, "type");
+        dictionaryMock.Setup(x => x.GetAttribute(It.IsAny<string>())).Returns(attribute);
+        var factory = new ClientConfigurationFactory(dictionaryMock.Object);
+        var config = factory.CreateConfig(configName, radiusConfig, serviceConfig);
+        
+        var expectedWhiteList = new[] { IPAddressRange.Parse("127.0.0.1"), IPAddressRange.Parse("127.0.0.2-128.0.0.1"), IPAddressRange.Parse("127.2.0.0/16") };
+        Assert.True(expectedWhiteList.SequenceEqual(config.LdapServers.First().IpWhiteList));
+    }
+    
+    [Fact]
+    public void CreateClientConfiguration_AuthenticationCacheGroups_ShouldCreate()
+    {
+        var radiusConfig = new RadiusAdapterConfiguration()
+        {
+            AppSettings = new AppSettingsSection()
+            {
+                MultifactorApiUrl = "http://127.0.0.1",
+                MultifactorNasIdentifier = "identifier",
+                MultifactorSharedSecret = "secret",
+                SignUpGroups = "groups",
+                BypassSecondFactorWhenApiUnreachable = true,
+                FirstFactorAuthenticationSource = "None",
+                AdapterClientEndpoint = "127.0.0.1",
+                AdapterServerEndpoint = "127.0.0.1",
+                RadiusSharedSecret = "secret",
+                InvalidCredentialDelay = "3",
+            },
+            LdapServers = new LdapServersSection()
+            {
+                LdapServers = new[]
+                {
+                    new LdapServerConfiguration()
+                    {
+                        ConnectionString = "connectionString",
+                        UserName = "username",
+                        Password = "password",
+                        AuthenticationCacheGroups = "group1;group2 ;group3; ; ;"
+                    }
+                }
+            }
+        };
+
+        var serviceConfig = new ServiceConfiguration();
+        var configName = "name";
+        var dictionaryMock = new Mock<IRadiusDictionary>();
+        var attribute = new DictionaryAttribute("name", 1, "type");
+        dictionaryMock.Setup(x => x.GetAttribute(It.IsAny<string>())).Returns(attribute);
+        var factory =
+            new ClientConfigurationFactory(dictionaryMock.Object);
+        var clientConfig = factory.CreateConfig(configName, radiusConfig, serviceConfig);
+
+        var serverConfig = clientConfig.LdapServers.First();
+        
+        Assert.True(serverConfig.AuthenticationCacheGroups.SequenceEqual(["group1", "group2", "group3"]));
+    }
+    
+    [Fact]
+    public void CreateClientConfiguration_SimultaneousUseOfDomainRules_ShouldThrow()
+    {
+        var radiusConfig = new RadiusAdapterConfiguration()
+        {
+            AppSettings = new AppSettingsSection()
+            {
+                MultifactorApiUrl = "http://127.0.0.1",
+                MultifactorNasIdentifier = "identifier",
+                MultifactorSharedSecret = "secret",
+                SignUpGroups = "groups",
+                BypassSecondFactorWhenApiUnreachable = true,
+                FirstFactorAuthenticationSource = "None",
+                AdapterClientEndpoint = "127.0.0.1",
+                AdapterServerEndpoint = "127.0.0.1",
+                RadiusSharedSecret = "secret",
+                InvalidCredentialDelay = "3",
+            },
+            LdapServers = new LdapServersSection()
+            {
+                LdapServers = new[]
+                {
+                    new LdapServerConfiguration()
+                    {
+                        ConnectionString = "connectionString",
+                        UserName = "username",
+                        Password = "password",
+                        IncludedDomains = "included domains",
+                        ExcludedDomains = "excluded domains",
+                    }
+                }
+            }
+        };
+
+        var serviceConfig = new ServiceConfiguration();
+        var configName = "name";
+        var dictionaryMock = new Mock<IRadiusDictionary>();
+        var attribute = new DictionaryAttribute("name", 1, "type");
+        dictionaryMock.Setup(x => x.GetAttribute(It.IsAny<string>())).Returns(attribute);
+        var factory =
+            new ClientConfigurationFactory(dictionaryMock.Object);
+        Assert.Throws<InvalidConfigurationException>(() => factory.CreateConfig(configName, radiusConfig, serviceConfig));
+    }
+    
+    [Fact]
+    public void CreateClientConfiguration_SimultaneousUseOfSuffixRules_ShouldThrow()
+    {
+        var radiusConfig = new RadiusAdapterConfiguration()
+        {
+            AppSettings = new AppSettingsSection()
+            {
+                MultifactorApiUrl = "http://127.0.0.1",
+                MultifactorNasIdentifier = "identifier",
+                MultifactorSharedSecret = "secret",
+                SignUpGroups = "groups",
+                BypassSecondFactorWhenApiUnreachable = true,
+                FirstFactorAuthenticationSource = "None",
+                AdapterClientEndpoint = "127.0.0.1",
+                AdapterServerEndpoint = "127.0.0.1",
+                RadiusSharedSecret = "secret",
+                InvalidCredentialDelay = "3",
+            },
+            LdapServers = new LdapServersSection()
+            {
+                LdapServers = new[]
+                {
+                    new LdapServerConfiguration()
+                    {
+                        ConnectionString = "connectionString",
+                        UserName = "username",
+                        Password = "password",
+                        IncludedSuffixes = "included suffixes",
+                        ExcludedSuffixes = "excluded suffixes",
+                    }
+                }
+            }
+        };
+
+        var serviceConfig = new ServiceConfiguration();
+        var configName = "name";
+        var dictionaryMock = new Mock<IRadiusDictionary>();
+        var attribute = new DictionaryAttribute("name", 1, "type");
+        dictionaryMock.Setup(x => x.GetAttribute(It.IsAny<string>())).Returns(attribute);
+        var factory =
+            new ClientConfigurationFactory(dictionaryMock.Object);
+        Assert.Throws<InvalidConfigurationException>(() => factory.CreateConfig(configName, radiusConfig, serviceConfig));
+    }
+    
+    [Fact]
+    public void CreateClientConfiguration_EnableTrustedDomainsAndNoUpnRequirements_ShouldThrow()
+    {
+        var radiusConfig = new RadiusAdapterConfiguration()
+        {
+            AppSettings = new AppSettingsSection()
+            {
+                MultifactorApiUrl = "http://127.0.0.1",
+                MultifactorNasIdentifier = "identifier",
+                MultifactorSharedSecret = "secret",
+                SignUpGroups = "groups",
+                BypassSecondFactorWhenApiUnreachable = true,
+                FirstFactorAuthenticationSource = "None",
+                AdapterClientEndpoint = "127.0.0.1",
+                AdapterServerEndpoint = "127.0.0.1",
+                RadiusSharedSecret = "secret",
+                InvalidCredentialDelay = "3",
+            },
+            LdapServers = new LdapServersSection()
+            {
+                LdapServers = new[]
+                {
+                    new LdapServerConfiguration()
+                    {
+                        ConnectionString = "connectionString",
+                        UserName = "username",
+                        Password = "password",
+                        RequiresUpn = false,
+                        EnableTrustedDomains = true
+                    }
+                }
+            }
+        };
+
+        var serviceConfig = new ServiceConfiguration();
+        var configName = "name";
+        var dictionaryMock = new Mock<IRadiusDictionary>();
+        var attribute = new DictionaryAttribute("name", 1, "type");
+        dictionaryMock.Setup(x => x.GetAttribute(It.IsAny<string>())).Returns(attribute);
+        var factory =
+            new ClientConfigurationFactory(dictionaryMock.Object);
+        Assert.Throws<InvalidConfigurationException>(() => factory.CreateConfig(configName, radiusConfig, serviceConfig));
+    }
+    
+    [Fact]
+    public void CreateClientConfiguration_IncludedDomains_ShouldSet()
+    {
+        var radiusConfig = new RadiusAdapterConfiguration()
+        {
+            AppSettings = new AppSettingsSection()
+            {
+                MultifactorApiUrl = "http://127.0.0.1",
+                MultifactorNasIdentifier = "identifier",
+                MultifactorSharedSecret = "secret",
+                SignUpGroups = "groups",
+                BypassSecondFactorWhenApiUnreachable = true,
+                FirstFactorAuthenticationSource = "None",
+                AdapterClientEndpoint = "127.0.0.1",
+                AdapterServerEndpoint = "127.0.0.1",
+                RadiusSharedSecret = "secret",
+                InvalidCredentialDelay = "3",
+            },
+            LdapServers = new LdapServersSection()
+            {
+                LdapServers = new[]
+                {
+                    new LdapServerConfiguration()
+                    {
+                        ConnectionString = "connectionString",
+                        UserName = "username",
+                        Password = "password",
+                        IncludedDomains = "included domains"
+                    }
+                }
+            }
+        };
+
+        var serviceConfig = new ServiceConfiguration();
+        var configName = "name";
+        var dictionaryMock = new Mock<IRadiusDictionary>();
+        var attribute = new DictionaryAttribute("name", 1, "type");
+        dictionaryMock.Setup(x => x.GetAttribute(It.IsAny<string>())).Returns(attribute);
+        var factory =
+            new ClientConfigurationFactory(dictionaryMock.Object);
+        var config = factory.CreateConfig(configName, radiusConfig, serviceConfig);
+        var serverConfig = config.LdapServers.First();
+        Assert.NotNull(serverConfig.DomainPermissions);
+        Assert.Collection(serverConfig.DomainPermissions.IncludedValues, e => Assert.Equal("included domains", e));
+    }
+    
+    [Fact]
+    public void CreateClientConfiguration_ExcludedDomains_ShouldSet()
+    {
+        var radiusConfig = new RadiusAdapterConfiguration()
+        {
+            AppSettings = new AppSettingsSection()
+            {
+                MultifactorApiUrl = "http://127.0.0.1",
+                MultifactorNasIdentifier = "identifier",
+                MultifactorSharedSecret = "secret",
+                SignUpGroups = "groups",
+                BypassSecondFactorWhenApiUnreachable = true,
+                FirstFactorAuthenticationSource = "None",
+                AdapterClientEndpoint = "127.0.0.1",
+                AdapterServerEndpoint = "127.0.0.1",
+                RadiusSharedSecret = "secret",
+                InvalidCredentialDelay = "3",
+            },
+            LdapServers = new LdapServersSection()
+            {
+                LdapServers = new[]
+                {
+                    new LdapServerConfiguration()
+                    {
+                        ConnectionString = "connectionString",
+                        UserName = "username",
+                        Password = "password",
+                        ExcludedDomains = "excluded domains"
+                    }
+                }
+            }
+        };
+
+        var serviceConfig = new ServiceConfiguration();
+        var configName = "name";
+        var dictionaryMock = new Mock<IRadiusDictionary>();
+        var attribute = new DictionaryAttribute("name", 1, "type");
+        dictionaryMock.Setup(x => x.GetAttribute(It.IsAny<string>())).Returns(attribute);
+        var factory =
+            new ClientConfigurationFactory(dictionaryMock.Object);
+        var config = factory.CreateConfig(configName, radiusConfig, serviceConfig);
+        var serverConfig = config.LdapServers.First();
+        Assert.NotNull(serverConfig.DomainPermissions);
+        Assert.Collection(serverConfig.DomainPermissions.ExcludedValues, e => Assert.Equal("excluded domains", e));
+    }
+    
+    [Fact]
+    public void CreateClientConfiguration_IncludedSuffixes_ShouldSet()
+    {
+        var radiusConfig = new RadiusAdapterConfiguration()
+        {
+            AppSettings = new AppSettingsSection()
+            {
+                MultifactorApiUrl = "http://127.0.0.1",
+                MultifactorNasIdentifier = "identifier",
+                MultifactorSharedSecret = "secret",
+                SignUpGroups = "groups",
+                BypassSecondFactorWhenApiUnreachable = true,
+                FirstFactorAuthenticationSource = "None",
+                AdapterClientEndpoint = "127.0.0.1",
+                AdapterServerEndpoint = "127.0.0.1",
+                RadiusSharedSecret = "secret",
+                InvalidCredentialDelay = "3",
+            },
+            LdapServers = new LdapServersSection()
+            {
+                LdapServers = new[]
+                {
+                    new LdapServerConfiguration()
+                    {
+                        ConnectionString = "connectionString",
+                        UserName = "username",
+                        Password = "password",
+                        IncludedSuffixes = "included suffixes"
+                    }
+                }
+            }
+        };
+
+        var serviceConfig = new ServiceConfiguration();
+        var configName = "name";
+        var dictionaryMock = new Mock<IRadiusDictionary>();
+        var attribute = new DictionaryAttribute("name", 1, "type");
+        dictionaryMock.Setup(x => x.GetAttribute(It.IsAny<string>())).Returns(attribute);
+        var factory =
+            new ClientConfigurationFactory(dictionaryMock.Object);
+        var config = factory.CreateConfig(configName, radiusConfig, serviceConfig);
+        var serverConfig = config.LdapServers.First();
+        Assert.NotNull(serverConfig.DomainPermissions);
+        Assert.Collection(serverConfig.SuffixesPermissions.IncludedValues, e => Assert.Equal("included suffixes", e));
+    }
+    
+    [Fact]
+    public void CreateClientConfiguration_ExcludedSuffixes_ShouldSet()
+    {
+        var radiusConfig = new RadiusAdapterConfiguration()
+        {
+            AppSettings = new AppSettingsSection()
+            {
+                MultifactorApiUrl = "http://127.0.0.1",
+                MultifactorNasIdentifier = "identifier",
+                MultifactorSharedSecret = "secret",
+                SignUpGroups = "groups",
+                BypassSecondFactorWhenApiUnreachable = true,
+                FirstFactorAuthenticationSource = "None",
+                AdapterClientEndpoint = "127.0.0.1",
+                AdapterServerEndpoint = "127.0.0.1",
+                RadiusSharedSecret = "secret",
+                InvalidCredentialDelay = "3",
+            },
+            LdapServers = new LdapServersSection()
+            {
+                LdapServers = new[]
+                {
+                    new LdapServerConfiguration()
+                    {
+                        ConnectionString = "connectionString",
+                        UserName = "username",
+                        Password = "password",
+                        ExcludedSuffixes = "excluded suffixes"
+                    }
+                }
+            }
+        };
+
+        var serviceConfig = new ServiceConfiguration();
+        var configName = "name";
+        var dictionaryMock = new Mock<IRadiusDictionary>();
+        var attribute = new DictionaryAttribute("name", 1, "type");
+        dictionaryMock.Setup(x => x.GetAttribute(It.IsAny<string>())).Returns(attribute);
+        var factory =
+            new ClientConfigurationFactory(dictionaryMock.Object);
+        var config = factory.CreateConfig(configName, radiusConfig, serviceConfig);
+        var serverConfig = config.LdapServers.First();
+        Assert.NotNull(serverConfig.DomainPermissions);
+        Assert.Collection(serverConfig.SuffixesPermissions.ExcludedValues, e => Assert.Equal("excluded suffixes", e));
     }
 }

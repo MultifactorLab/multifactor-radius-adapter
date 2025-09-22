@@ -34,8 +34,8 @@ public class SecondFactorStep : IRadiusPipelineStep
             await Task.CompletedTask;
             return;
         }
-
-        var apiResponse = await _multifactorApiService.CreateSecondFactorRequestAsync(new CreateSecondFactorRequest(context));
+        var shouldCacheApiResponse = ShouldCacheResponse(context);
+        var apiResponse = await _multifactorApiService.CreateSecondFactorRequestAsync(new CreateSecondFactorRequest(context, shouldCacheApiResponse));
         ProcessApiResponse(context, apiResponse);
     }
 
@@ -53,13 +53,15 @@ public class SecondFactorStep : IRadiusPipelineStep
             return false;
         }
 
-        if (ShouldBypassByGroups(context))
-        {
-            _logger.LogInformation("Second factor is bypassed for user {user:l} at '{domain:l}'", context.RequestPacket.UserName, context.LdapServerConfiguration.ConnectionString);
-            return false;
-        }
+        if (UnsupportedAccountType(context))
+            return true;
         
-        return true;
+        if (!ShouldBypassByGroups(context))
+            return true;
+        
+        _logger.LogInformation("Second factor is bypassed for user {user:l} at '{domain:l}'", context.RequestPacket.UserName, context.LdapServerConfiguration.ConnectionString);
+        
+        return false;
     }
 
     private bool ShouldBypassByRequest(IRadiusPipelineExecutionContext context)
@@ -103,6 +105,33 @@ public class SecondFactorStep : IRadiusPipelineStep
         return false;
     }
 
+    private bool ShouldCacheResponse(IRadiusPipelineExecutionContext context)
+    {
+        if (context.LdapServerConfiguration is null || context.LdapServerConfiguration.AuthenticationCacheGroups.Count == 0)
+            return true;
+        
+        //TODO add tests
+        if (!context.IsDomainAccount)
+        {
+            _logger.LogInformation(
+                "User '{user}' used '{accountType}' account to log in. Authentication cache groups check is skipped.",
+                context.RequestPacket.UserName,
+                context.RequestPacket.AccountType);
+            return false;
+        }
+
+        var cacheGroups = context.LdapServerConfiguration.AuthenticationCacheGroups;
+        var isMember = _ldapGroupService.IsMemberOf(GetMembershipRequest(context, cacheGroups));
+        var groupsStr = string.Join(',', cacheGroups);
+        var username = context.RequestPacket.UserName;
+        if (!isMember)
+            _logger.LogDebug("User '{userName}' is not a member of any authentication cache groups: ({groups})", username, groupsStr);
+        else
+            _logger.LogDebug("User '{userName}' is a member of authentication cache groups: ({groups})", username, groupsStr);
+
+        return isMember;
+    }
+
     private void ProcessApiResponse(IRadiusPipelineExecutionContext context, MultifactorResponse apiResponse)
     {
         context.AuthenticationState.SecondFactorStatus = apiResponse.Code;
@@ -123,5 +152,18 @@ public class SecondFactorStep : IRadiusPipelineStep
         var groupDns = targetGroupsNames.Select(x => new DistinguishedName(x)).ToArray();
         
         return new MembershipRequest(context, groupDns);
+    }
+    
+    private bool UnsupportedAccountType(IRadiusPipelineExecutionContext context)
+    {
+        if (context.IsDomainAccount)
+            return false;
+        
+        _logger.LogInformation(
+            "User '{user}' used '{accountType}' account to log in. Second factor groups check is skipped.",
+            context.RequestPacket.UserName,
+            context.RequestPacket.AccountType);
+
+        return true;
     }
 }

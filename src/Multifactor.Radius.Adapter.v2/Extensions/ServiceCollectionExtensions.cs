@@ -12,6 +12,7 @@ using Multifactor.Radius.Adapter.v2.Core.Configuration.Client.Build;
 using Multifactor.Radius.Adapter.v2.Core.Configuration.Service;
 using Multifactor.Radius.Adapter.v2.Core.Configuration.Service.Build;
 using Multifactor.Radius.Adapter.v2.Core.FirstFactor;
+using Multifactor.Radius.Adapter.v2.Core.FirstFactor.BindNameFormat;
 using Multifactor.Radius.Adapter.v2.Core.Ldap;
 using Multifactor.Radius.Adapter.v2.Core.Radius.Attributes;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configuration.RadiusAdapter.Build;
@@ -20,14 +21,14 @@ using Multifactor.Radius.Adapter.v2.Infrastructure.Logging;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Builder;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Steps;
+using Multifactor.Radius.Adapter.v2.Server;
 using Multifactor.Radius.Adapter.v2.Server.Udp;
 using Multifactor.Radius.Adapter.v2.Services.AuthenticatedClientCache;
 using Multifactor.Radius.Adapter.v2.Services.Cache;
 using Multifactor.Radius.Adapter.v2.Services.DataProtection;
 using Multifactor.Radius.Adapter.v2.Services.Ldap;
-using Multifactor.Radius.Adapter.v2.Services.LdapForest;
+using Multifactor.Radius.Adapter.v2.Services.Ldap.Forest;
 using Multifactor.Radius.Adapter.v2.Services.MultifactorApi;
-using Multifactor.Radius.Adapter.v2.Services.NetBios;
 using Multifactor.Radius.Adapter.v2.Services.Radius;
 using Polly;
 using Serilog;
@@ -177,11 +178,14 @@ public static class ServiceCollectionExtensions
         services.AddTransient<PreAuthCheckStep>();
         services.AddTransient<PreAuthPostCheck>();
         services.AddTransient<UserGroupLoadingStep>();
+        services.AddTransient<UserNameValidationStep>();
+        services.AddTransient<IpWhiteListStep>();
     }
 
     public static void AddLdapSchemaLoader(this IServiceCollection services)
     {
         services.AddSingleton<LdapSchemaLoader>();
+        services.AddTransient<ILdapSchemeLoaderWrapper, LdapSchemaLoaderWrapper>();
         services.AddSingleton<ILdapSchemaLoader, CustomLdapSchemaLoader>();
     }
 
@@ -213,18 +217,19 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<ILdapGroupLoaderFactory, LdapGroupLoaderFactory>();
         services.AddSingleton<IMembershipCheckerFactory, MembershipCheckerFactory>();
         services.AddTransient<ILdapGroupService, LdapGroupService>();
-
-        services.AddSingleton<IForestMetadataCache, ForestMetadataCache>();
+        
         services.AddTransient<ILdapProfileService, LdapProfileService>();
 
         services.AddTransient<IMultifactorApi, MultifactorApi>();
         services.AddSingleton<IAuthenticatedClientCache, AuthenticatedClientCache>();
         services.AddTransient<IMultifactorApiService, MultifactorApiService>();
-        services.AddTransient<INetBiosService, NetBiosService>();
 
         services.AddTransient<IRadiusReplyAttributeService, RadiusReplyAttributeService>();
         services.AddTransient<IRadiusAttributeTypeConverter, RadiusAttributeTypeConverter>();
+        services.AddTransient<IRadiusPacketProcessor, RadiusPacketProcessor>();
+        AddTrustedDomains(services);
         services.AddSingleton<ICacheService, CacheService>();
+        AddLdapBindNameFormation(services);
     }
 
     public static void AddAdapterLogging(this IServiceCollection services)
@@ -234,5 +239,23 @@ public static class ServiceCollectionExtensions
         Log.Logger = logger;
 
         services.AddSerilog();
+    }
+
+    private static void AddLdapBindNameFormation(IServiceCollection services)
+    {
+        services.AddSingleton<ILdapBindNameFormatterProvider, LdapBindNameFormatterProvider>();
+        services.AddTransient<ILdapBindNameFormatter, ActiveDirectoryFormatter>();
+        services.AddTransient<ILdapBindNameFormatter, FreeIpaFormatter>();
+        services.AddTransient<ILdapBindNameFormatter, MultiDirectoryFormatter>();
+        services.AddTransient<ILdapBindNameFormatter, OpenLdapFormatter>();
+        services.AddTransient<ILdapBindNameFormatter, SambaFormatter>();
+    }
+
+    private static void AddTrustedDomains(this IServiceCollection services)
+    {
+        services.AddTransient<ILdapServerConfigurationService, LdapServerConfigurationService>();
+        services.AddTransient<ILdapForestService, LdapForestService>();
+        services.AddSingleton<ILdapForestLoaderProvider, LdapForestLoaderProvider>();
+        services.AddTransient<ILdapForestLoader, ActiveDirectoryLdapForestLoader>();
     }
 }

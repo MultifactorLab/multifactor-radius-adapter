@@ -6,7 +6,6 @@ using Multifactor.Core.Ldap.Schema;
 using Multifactor.Radius.Adapter.v2.Core.Configuration.Client;
 using Multifactor.Radius.Adapter.v2.Core.Ldap;
 using Multifactor.Radius.Adapter.v2.Core.Ldap.Identity;
-using Multifactor.Radius.Adapter.v2.Services.NetBios;
 using ILdapConnectionFactory = Multifactor.Radius.Adapter.v2.Core.Ldap.ILdapConnectionFactory;
 
 namespace Multifactor.Radius.Adapter.v2.Services.Ldap;
@@ -14,13 +13,11 @@ namespace Multifactor.Radius.Adapter.v2.Services.Ldap;
 public class LdapProfileService : ILdapProfileService
 {
     private readonly ILdapConnectionFactory _ldapConnectionFactory;
-    private readonly INetBiosService _netBiosService;
     private readonly ILogger _logger;
 
-    public LdapProfileService(ILdapConnectionFactory ldapConnectionFactory, INetBiosService netBiosService, ILogger<LdapProfileService> logger)
+    public LdapProfileService(ILdapConnectionFactory ldapConnectionFactory, ILogger<LdapProfileService> logger)
     {
         _ldapConnectionFactory = ldapConnectionFactory;
-        _netBiosService = netBiosService;
         _logger = logger;
     }
 
@@ -35,12 +32,12 @@ public class LdapProfileService : ILdapProfileService
         var identityToSearch = request.UserIdentity;
         if (request.UserIdentity.Format == UserIdentityFormat.NetBiosName)
         {
-            var upn = _netBiosService.ConvertNetBiosToUpn(new NetBiosRequest(request.ClientName, identityToSearch, request.SearchBase, connection, request.LdapServerConfiguration.DomainPermissionRules));
-            _logger.LogDebug("Transformed '{netbios}' to '{upn}'", request.UserIdentity.Identity, upn);
-            identityToSearch = new UserIdentity(upn);
+            var parts = new NetBiosParts(request.UserIdentity.Identity);
+            identityToSearch = new UserIdentity(parts.UserName);
         }
 
         var filter = GetFilter(identityToSearch, request.LdapSchema);
+        _logger.LogDebug("Search base = '{searchBase}'. Filter for search = '{filter}'", request.SearchBase.StringRepresentation, filter);
         var loader = new LdapProfileLoader(request.SearchBase, connection, request.LdapSchema);
         return loader.LoadLdapProfile(filter, attributeNames: request.AttributeNames ?? []);
     }
@@ -81,5 +78,21 @@ public class LdapProfileService : ILdapProfileService
             serverConfiguration.UserName,
             serverConfiguration.Password,
             TimeSpan.FromSeconds(serverConfiguration.BindTimeoutInSeconds));
+    }
+    
+    private class NetBiosParts
+    {
+        public string Netbios { get; set; }
+        public string UserName { get; set; }
+
+        public NetBiosParts(string identity)
+        {
+            var index = identity.IndexOf('\\');
+            if (index <= 0)
+                throw new ArgumentException($"Invalid NetBIOS identity: {identity}");
+
+            Netbios = identity[..index];
+            UserName = identity[(index + 1)..];
+        }
     }
 }

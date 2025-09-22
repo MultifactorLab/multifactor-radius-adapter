@@ -6,9 +6,11 @@ using Multifactor.Core.Ldap.Name;
 using Multifactor.Core.Ldap.Schema;
 using Multifactor.Radius.Adapter.v2.Core.Configuration.Client;
 using Multifactor.Radius.Adapter.v2.Core.Ldap;
+using Multifactor.Radius.Adapter.v2.Core.Radius.Packet;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Context;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Steps;
 using Multifactor.Radius.Adapter.v2.Services.Ldap;
+using ILdapConnection = Multifactor.Radius.Adapter.v2.Core.Ldap.ILdapConnection;
 
 namespace Multifactor.Radius.Adapter.v2.Tests.PipelineTests.StepsTests;
 
@@ -52,6 +54,32 @@ public class UserGroupLoadingStepTests
         await step.ExecuteAsync(context);
         
         Assert.Empty(context.UserGroups);
+        groupService.Verify(x=> x.LoadUserGroups(It.IsAny<LoadUserGroupsRequest>()), Times.Never);
+    }
+    
+    [Fact]
+    public async Task LoadGroups_NoDomainUser_ShouldSkipGroupLoad()
+    {
+        var groupService = new Mock<ILdapGroupService>();
+        var connectionFactory = new Mock<ILdapConnectionFactory>();
+
+        var step = new UserGroupLoadingStep(groupService.Object, connectionFactory.Object, NullLogger<UserGroupLoadingStep>.Instance);
+        var contextMock = new Mock<IRadiusPipelineExecutionContext>();
+        var attributes = new Dictionary<string, RadiusReplyAttributeValue[]>();
+        attributes.Add("key", [new RadiusReplyAttributeValue("memberOf")]);
+        contextMock.Setup(x => x.RadiusReplyAttributes).Returns(attributes);
+        contextMock.Setup(x => x.IsDomainAccount).Returns(false);
+        contextMock.Setup(x=> x.RequestPacket.UserName).Returns("user");
+        contextMock.Setup(x=> x.RequestPacket.AccountType).Returns(AccountType.Local);
+        
+        contextMock.SetupProperty(x => x.UserGroups);
+        var context = contextMock.Object;
+        context.UserGroups = new();
+        
+        await step.ExecuteAsync(context);
+        
+        Assert.Empty(context.UserGroups);
+        groupService.Verify(x=> x.LoadUserGroups(It.IsAny<LoadUserGroupsRequest>()), Times.Never);
     }
     
     [Theory]
@@ -73,6 +101,7 @@ public class UserGroupLoadingStepTests
         contextMock.Setup(x => x.UserLdapProfile.MemberOf).Returns(memberOf);
         contextMock.SetupProperty(x => x.UserGroups);
         contextMock.Setup(x => x.LdapServerConfiguration.LoadNestedGroups).Returns(false);
+        contextMock.Setup(x => x.IsDomainAccount).Returns(true);
         
         var context = contextMock.Object;
         context.UserGroups = new();
@@ -114,6 +143,7 @@ public class UserGroupLoadingStepTests
         contextMock.Setup(x => x.UserLdapProfile.Dn).Returns(new DistinguishedName("dc=group1, dc=domain"));
         contextMock.Setup(x => x.LdapServerConfiguration.ConnectionString).Returns("Server=localhost;Port=5432");
         contextMock.Setup(x => x.RequestPacket.UserName).Returns("userName");
+        contextMock.Setup(x => x.IsDomainAccount).Returns(true);
         
         var context = contextMock.Object;
         context.UserGroups = new();
@@ -154,6 +184,7 @@ public class UserGroupLoadingStepTests
         contextMock.Setup(x => x.UserLdapProfile.Dn).Returns(new DistinguishedName("dc=group1, dc=domain"));
         contextMock.Setup(x => x.LdapServerConfiguration.ConnectionString).Returns("Server=localhost;Port=5432");
         contextMock.Setup(x => x.RequestPacket.UserName).Returns("userName");
+        contextMock.Setup(x => x.IsDomainAccount).Returns(true);
         
         var context = contextMock.Object;
         context.UserGroups = new();
@@ -194,6 +225,7 @@ public class UserGroupLoadingStepTests
         contextMock.Setup(x => x.UserLdapProfile.Dn).Returns(new DistinguishedName("dc=group1, dc=domain"));
         contextMock.Setup(x => x.LdapServerConfiguration.ConnectionString).Returns("Server=localhost;Port=5432");
         contextMock.Setup(x => x.RequestPacket.UserName).Returns("userName");
+        contextMock.Setup(x => x.IsDomainAccount).Returns(true);
         
         var context = contextMock.Object;
         context.UserGroups = new();

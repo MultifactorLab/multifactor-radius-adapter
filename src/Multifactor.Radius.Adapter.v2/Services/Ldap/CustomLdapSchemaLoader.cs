@@ -6,10 +6,12 @@ namespace Multifactor.Radius.Adapter.v2.Services.Ldap;
 
 public class CustomLdapSchemaLoader : ILdapSchemaLoader
 {
-    private readonly LdapSchemaLoader _ldapSchemaLoader;
+    private readonly ILdapSchemeLoaderWrapper _ldapSchemaLoader;
     private readonly ILogger<ILdapSchemaLoader> _logger;
 
-    public CustomLdapSchemaLoader(LdapSchemaLoader ldapSchemaLoader, ILogger<ILdapSchemaLoader> logger)
+    public CustomLdapSchemaLoader(
+        ILdapSchemeLoaderWrapper ldapSchemaLoader,
+        ILogger<ILdapSchemaLoader> logger)
     {
         ArgumentNullException.ThrowIfNull(ldapSchemaLoader, nameof(ldapSchemaLoader));
         ArgumentNullException.ThrowIfNull(logger, nameof(logger));
@@ -20,13 +22,23 @@ public class CustomLdapSchemaLoader : ILdapSchemaLoader
 
     public ILdapSchema? Load(LdapConnectionOptions connectionOptions)
     {
-        var schema = _ldapSchemaLoader.Load(connectionOptions);
+        ILdapSchema? schema = null;
+        try
+        {
+            schema = _ldapSchemaLoader.Load(connectionOptions);
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, "Error during loading LDAP schema.");
+        }
+        
         if (schema is null)
         {
-            _logger.LogWarning("Failed to load ldap schema of '{url}'", connectionOptions.ConnectionString.WellFormedLdapUrl);
-            return null;
+            _logger.LogWarning("Failed to load LDAP schema of '{url}'", connectionOptions.ConnectionString.Host);
+            return schema;
         }
-        _logger.LogDebug("Successfully loaded ldap schema of '{url}'", connectionOptions.ConnectionString.WellFormedLdapUrl);
+
+        _logger.LogDebug("Successfully loaded LDAP schema of '{url}'", connectionOptions.ConnectionString.Host);
         return schema;
     }
 }

@@ -93,7 +93,7 @@ public class SecondFactorStepTests
         contextMock.SetupProperty(x => x.ResponseInformation);
         contextMock.Setup(x => x.UserLdapProfile).Returns(new Mock<ILdapProfile>().Object);
         contextMock.Setup(x => x.ClientConfigurationName).Returns("config");
-        contextMock.Setup(x => x.AuthenticationCacheLifetime).Returns(AuthenticatedClientCacheConfig.Create("08:08:08", false));
+        contextMock.Setup(x => x.AuthenticationCacheLifetime).Returns(AuthenticatedClientCacheConfig.Create("08:08:08"));
         contextMock.Setup(x => x.PrivacyMode).Returns(PrivacyModeDescriptor.Default);
         contextMock.Setup(x => x.Passphrase).Returns(UserPassphrase.Parse("123", PreAuthModeDescriptor.Default));
         contextMock.Setup(x => x.PreAuthnMode).Returns(PreAuthModeDescriptor.Default);
@@ -103,6 +103,7 @@ public class SecondFactorStepTests
         var ldapConfig = new Mock<ILdapServerConfiguration>();
         ldapConfig.Setup(x => x.SecondFaGroups).Returns(new List<string>());
         ldapConfig.Setup(x => x.SecondFaBypassGroups).Returns(new List<string>());
+        ldapConfig.Setup(x => x.AuthenticationCacheGroups).Returns(new List<string>());
         contextMock.Setup(x => x.LdapServerConfiguration).Returns(ldapConfig.Object); 
         
         var context = contextMock.Object;
@@ -141,17 +142,19 @@ public class SecondFactorStepTests
         contextMock.Setup(x => x.RemoteEndpoint).Returns(IPEndPoint.Parse("127.0.0.1:1"));
         contextMock.Setup(x => x.UserLdapProfile).Returns(new Mock<ILdapProfile>().Object);
         contextMock.Setup(x => x.ClientConfigurationName).Returns("config");
-        contextMock.Setup(x => x.AuthenticationCacheLifetime).Returns(AuthenticatedClientCacheConfig.Create("08:08:08", false));
+        contextMock.Setup(x => x.AuthenticationCacheLifetime).Returns(AuthenticatedClientCacheConfig.Create("08:08:08"));
         contextMock.Setup(x => x.PrivacyMode).Returns(PrivacyModeDescriptor.Default);
         contextMock.Setup(x => x.Passphrase).Returns(UserPassphrase.Parse("123", PreAuthModeDescriptor.Default));
         contextMock.Setup(x => x.PreAuthnMode).Returns(PreAuthModeDescriptor.Default);
         contextMock.Setup(x => x.UserNameTransformRules).Returns(new UserNameTransformRules());
         contextMock.Setup(x => x.ApiCredential).Returns(new ApiCredential("1","2"));
         contextMock.SetupProperty(x => x.ResponseInformation);
+        contextMock.Setup(x=> x.IsDomainAccount).Returns(true);
         
         var ldapConfig = new Mock<ILdapServerConfiguration>();
         ldapConfig.Setup(x => x.SecondFaGroups).Returns(new List<string>());
         ldapConfig.Setup(x => x.SecondFaBypassGroups).Returns(new List<string>());
+        ldapConfig.Setup(x => x.AuthenticationCacheGroups).Returns(new List<string>());
         contextMock.Setup(x => x.LdapServerConfiguration).Returns(ldapConfig.Object); 
         
         var context = contextMock.Object;
@@ -191,6 +194,7 @@ public class SecondFactorStepTests
         contextMock.Setup(x => x.RequestPacket.UserName).Returns("userName");
         contextMock.Setup(x => x.LdapSchema).Returns(new Mock<ILdapSchema>().Object);
         contextMock.SetupProperty(x => x.AuthenticationState);
+        contextMock.Setup(x => x.IsDomainAccount).Returns(true);
         
         var context = contextMock.Object;
         context.AuthenticationState = new AuthenticationState();
@@ -227,6 +231,7 @@ public class SecondFactorStepTests
         contextMock.Setup(x => x.LdapSchema).Returns(new Mock<ILdapSchema>().Object);
         contextMock.Setup(x => x.RequestPacket.UserName).Returns("userName");
         contextMock.SetupProperty(x => x.AuthenticationState);
+        contextMock.Setup(x => x.IsDomainAccount).Returns(true);
         
         var context = contextMock.Object;
         context.AuthenticationState = new AuthenticationState();
@@ -235,5 +240,58 @@ public class SecondFactorStepTests
         await step.ExecuteAsync(context);
         
         Assert.Equal(AuthenticationStatus.Bypass, context.AuthenticationState.SecondFactorStatus);
+    }
+    
+    [Fact]
+    public async Task ExecuteAsync_NoDomainAccount_ShouldSkipGroupCheck()
+    {
+        //Arrange
+        var apiServiceMock = new Mock<IMultifactorApiService>();
+        apiServiceMock.Setup(x => x.CreateSecondFactorRequestAsync(It.IsAny<CreateSecondFactorRequest>())).ReturnsAsync(new MultifactorResponse(AuthenticationStatus.Awaiting, "state", "message"));
+        
+        var challengeProviderMock = new Mock<IChallengeProcessorProvider>();
+        challengeProviderMock.Setup(x => x.GetChallengeProcessorByType(ChallengeType.SecondFactor)).Returns(new Mock<IChallengeProcessor>().Object);
+        
+        var groupServiceMock = new Mock<ILdapGroupService>();
+        
+        var step = new SecondFactorStep(apiServiceMock.Object, challengeProviderMock.Object, groupServiceMock.Object, NullLogger<SecondFactorStep>.Instance);
+
+        var packetMock = new Mock<IRadiusPacket>();
+        packetMock.Setup(x => x.IsVendorAclRequest).Returns(false);
+        var contextMock = new Mock<IRadiusPipelineExecutionContext>();
+        contextMock.SetupProperty(x => x.AuthenticationState);
+        contextMock.Setup(x => x.RequestPacket).Returns(packetMock.Object);
+        contextMock.Setup(x => x.FirstFactorAuthenticationSource).Returns(AuthenticationSource.Radius);
+        contextMock.Setup(x => x.RequestPacket.UserName).Returns("username");
+        contextMock.Setup(x => x.RemoteEndpoint).Returns(IPEndPoint.Parse("127.0.0.1:1"));
+        contextMock.SetupProperty(x => x.ResponseInformation);
+        contextMock.Setup(x => x.UserLdapProfile).Returns(new Mock<ILdapProfile>().Object);
+        contextMock.Setup(x => x.ClientConfigurationName).Returns("config");
+        contextMock.Setup(x => x.AuthenticationCacheLifetime).Returns(AuthenticatedClientCacheConfig.Create("08:08:08"));
+        contextMock.Setup(x => x.PrivacyMode).Returns(PrivacyModeDescriptor.Default);
+        contextMock.Setup(x => x.Passphrase).Returns(UserPassphrase.Parse("123", PreAuthModeDescriptor.Default));
+        contextMock.Setup(x => x.PreAuthnMode).Returns(PreAuthModeDescriptor.Default);
+        contextMock.Setup(x => x.UserNameTransformRules).Returns(new UserNameTransformRules());
+        contextMock.Setup(x => x.ApiCredential).Returns(new ApiCredential("1","2"));
+        contextMock.Setup(x=> x.IsDomainAccount).Returns(false);
+        
+        var ldapConfig = new Mock<ILdapServerConfiguration>();
+        ldapConfig.Setup(x => x.SecondFaGroups).Returns(new List<string>() { "group" });
+        ldapConfig.Setup(x => x.SecondFaBypassGroups).Returns(new List<string>() { "group" });
+        ldapConfig.Setup(x => x.AuthenticationCacheGroups).Returns(["group"]);
+        contextMock.Setup(x => x.LdapServerConfiguration).Returns(ldapConfig.Object); 
+        
+        var context = contextMock.Object;
+        context.AuthenticationState = new AuthenticationState();
+        context.ResponseInformation = new ResponseInformation();
+        
+        //Act
+        await step.ExecuteAsync(context);
+        
+        //Assert
+        Assert.Equal("state", context.ResponseInformation.State);
+        Assert.Equal("message", context.ResponseInformation.ReplyMessage);
+        groupServiceMock.Verify(x=> x.IsMemberOf(It.IsAny<MembershipRequest>()), Times.Never);
+        apiServiceMock.Verify(x=> x.CreateSecondFactorRequestAsync(It.IsAny<CreateSecondFactorRequest>()), Times.Once);
     }
 }

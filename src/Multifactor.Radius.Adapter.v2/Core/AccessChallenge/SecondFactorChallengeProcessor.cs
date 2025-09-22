@@ -1,10 +1,12 @@
 using System.Collections.Concurrent;
 using System.Text;
 using Microsoft.Extensions.Logging;
+using Multifactor.Core.Ldap.Name;
 using Multifactor.Radius.Adapter.v2.Core.Auth;
 using Multifactor.Radius.Adapter.v2.Core.MultifactorApi;
 using Multifactor.Radius.Adapter.v2.Core.Radius;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Context;
+using Multifactor.Radius.Adapter.v2.Services.Ldap;
 using Multifactor.Radius.Adapter.v2.Services.MultifactorApi;
 
 namespace Multifactor.Radius.Adapter.v2.Core.AccessChallenge;
@@ -14,13 +16,15 @@ public class SecondFactorChallengeProcessor : IChallengeProcessor
     // TODO ConcurrentDictionary -> MemoryCache
     private readonly ConcurrentDictionary<ChallengeIdentifier, IRadiusPipelineExecutionContext> _challengeContexts = new();
     private readonly IMultifactorApiService _apiService;
+    private readonly ILdapGroupService _ldapGroupService;
     private readonly ILogger<SecondFactorChallengeProcessor> _logger;
 
     public ChallengeType ChallengeType => ChallengeType.SecondFactor;
 
-    public SecondFactorChallengeProcessor(IMultifactorApiService apiAdapter, ILogger<SecondFactorChallengeProcessor> logger)
+    public SecondFactorChallengeProcessor(IMultifactorApiService apiAdapter, ILdapGroupService groupService, ILogger<SecondFactorChallengeProcessor> logger)
     {
         _apiService = apiAdapter;
+        _ldapGroupService = groupService;
         _logger = logger;
     }
 
@@ -59,7 +63,8 @@ public class SecondFactorChallengeProcessor : IChallengeProcessor
             return challengeStatus;
 
         var challengeContext = GetChallengeContext(identifier) ?? throw new InvalidOperationException($"Challenge context with identifier '{identifier}' was not found");
-        var response = await _apiService.SendChallengeAsync(new SendChallengeRequest(challengeContext, userAnswer!, identifier.RequestId));
+        var shouldCacheResponse = ShouldCacheResponse(context);
+        var response = await _apiService.SendChallengeAsync(new SendChallengeRequest(challengeContext, userAnswer!, identifier.RequestId, shouldCacheResponse));
 
         return ProcessResponse(context, challengeContext, response, identifier);
     }
@@ -200,5 +205,29 @@ public class SecondFactorChallengeProcessor : IChallengeProcessor
         context.ResponseInformation.State = requestId;
 
         return ChallengeStatus.Reject;
+    }
+    
+    private bool ShouldCacheResponse(IRadiusPipelineExecutionContext context)
+    {
+        if (context.LdapServerConfiguration is null || context.LdapServerConfiguration.AuthenticationCacheGroups.Count == 0)
+            return true;
+        
+        var cacheGroups = context.LdapServerConfiguration.AuthenticationCacheGroups;
+        var isMember = _ldapGroupService.IsMemberOf(GetMembershipRequest(context, cacheGroups));
+        var groupsStr = string.Join(',', cacheGroups);
+        var username = context.RequestPacket.UserName;
+        if (!isMember)
+            _logger.LogDebug("User '{userName}' is not a member of any authentication cache groups: ({groups})", username, groupsStr);
+        else
+            _logger.LogDebug("User '{userName}' is a member of authentication cache groups: ({groups})", username, groupsStr);
+
+        return isMember;
+    }
+    
+    private MembershipRequest GetMembershipRequest(IRadiusPipelineExecutionContext context, IEnumerable<string> targetGroupsNames)
+    {
+        var groupDns = targetGroupsNames.Select(x => new DistinguishedName(x)).ToArray();
+        
+        return new MembershipRequest(context, groupDns);
     }
 }

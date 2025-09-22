@@ -10,6 +10,7 @@ using Multifactor.Radius.Adapter.v2.Core.Ldap;
 using Multifactor.Radius.Adapter.v2.Core.MultifactorApi;
 using Multifactor.Radius.Adapter.v2.Core.Radius;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Context;
+using Multifactor.Radius.Adapter.v2.Services.Ldap;
 using Multifactor.Radius.Adapter.v2.Services.MultifactorApi;
 using Multifactor.Radius.Adapter.v2.Tests.Fixture;
 
@@ -21,9 +22,10 @@ public class SecondFactorChallengeProcessorTests
     public void ShouldReturnCorrectChallengeType()
     {
         var mfServiceMock = new Mock<IMultifactorApiService>();
+        var groupsServiceMock = new Mock<ILdapGroupService>();
         var mfService = mfServiceMock.Object;
         var processor =
-            new SecondFactorChallengeProcessor(mfService, NullLogger<SecondFactorChallengeProcessor>.Instance);
+            new SecondFactorChallengeProcessor(mfService, groupsServiceMock.Object, NullLogger<SecondFactorChallengeProcessor>.Instance);
         Assert.Equal(ChallengeType.SecondFactor, processor.ChallengeType);
     }
 
@@ -32,8 +34,9 @@ public class SecondFactorChallengeProcessorTests
     {
         var mfServiceMock = new Mock<IMultifactorApiService>();
         var mfService = mfServiceMock.Object;
+        var groupsServiceMock = new Mock<ILdapGroupService>();
         var processor =
-            new SecondFactorChallengeProcessor(mfService, NullLogger<SecondFactorChallengeProcessor>.Instance);
+            new SecondFactorChallengeProcessor(mfService, groupsServiceMock.Object, NullLogger<SecondFactorChallengeProcessor>.Instance);
 
         Assert.Throws<ArgumentNullException>(() => processor.AddChallengeContext(null));
     }
@@ -44,8 +47,9 @@ public class SecondFactorChallengeProcessorTests
     {
         var mfServiceMock = new Mock<IMultifactorApiService>();
         var mfService = mfServiceMock.Object;
+        var groupsServiceMock = new Mock<ILdapGroupService>();
         var processor =
-            new SecondFactorChallengeProcessor(mfService, NullLogger<SecondFactorChallengeProcessor>.Instance);
+            new SecondFactorChallengeProcessor(mfService, groupsServiceMock.Object, NullLogger<SecondFactorChallengeProcessor>.Instance);
         var contextMock = new Mock<IRadiusPipelineExecutionContext>();
         contextMock.Setup(x => x.ResponseInformation.State).Returns(emptyString);
         Assert.ThrowsAny<ArgumentException>(() => processor.AddChallengeContext(contextMock.Object));
@@ -56,8 +60,9 @@ public class SecondFactorChallengeProcessorTests
     {
         var mfServiceMock = new Mock<IMultifactorApiService>();
         var mfService = mfServiceMock.Object;
+        var groupsServiceMock = new Mock<ILdapGroupService>();
         var processor =
-            new SecondFactorChallengeProcessor(mfService, NullLogger<SecondFactorChallengeProcessor>.Instance);
+            new SecondFactorChallengeProcessor(mfService, groupsServiceMock.Object, NullLogger<SecondFactorChallengeProcessor>.Instance);
         var contextMock = new Mock<IRadiusPipelineExecutionContext>();
         contextMock.Setup(x => x.ClientConfigurationName).Returns("config");
         contextMock.Setup(x => x.ResponseInformation.State).Returns("state");
@@ -74,8 +79,9 @@ public class SecondFactorChallengeProcessorTests
     {
         var mfServiceMock = new Mock<IMultifactorApiService>();
         var mfService = mfServiceMock.Object;
+        var groupsServiceMock = new Mock<ILdapGroupService>();
         var processor =
-            new SecondFactorChallengeProcessor(mfService, NullLogger<SecondFactorChallengeProcessor>.Instance);
+            new SecondFactorChallengeProcessor(mfService, groupsServiceMock.Object, NullLogger<SecondFactorChallengeProcessor>.Instance);
         var contextMock = new Mock<IRadiusPipelineExecutionContext>();
         contextMock.Setup(x => x.ClientConfigurationName).Returns("config");
         contextMock.Setup(x => x.ResponseInformation.State).Returns("state");
@@ -94,7 +100,8 @@ public class SecondFactorChallengeProcessorTests
     {
         var mfServiceMock = new Mock<IMultifactorApiService>();
         var mfService = mfServiceMock.Object;
-        var processor = new SecondFactorChallengeProcessor(mfService, NullLogger<SecondFactorChallengeProcessor>.Instance);
+        var groupsServiceMock = new Mock<ILdapGroupService>();
+        var processor = new SecondFactorChallengeProcessor(mfService, groupsServiceMock.Object, NullLogger<SecondFactorChallengeProcessor>.Instance);
         var contextMock = new Mock<IRadiusPipelineExecutionContext>();
         var endpoint = IPEndPoint.Parse("127.0.0.1:8080");
         contextMock.Setup(x => x.RequestPacket.UserName).Returns(userName);
@@ -121,7 +128,8 @@ public class SecondFactorChallengeProcessorTests
     {
         var mfServiceMock = new Mock<IMultifactorApiService>();
         var mfService = mfServiceMock.Object;
-        var processor = new SecondFactorChallengeProcessor(mfService, NullLogger<SecondFactorChallengeProcessor>.Instance);
+        var groupsServiceMock = new Mock<ILdapGroupService>();
+        var processor = new SecondFactorChallengeProcessor(mfService, groupsServiceMock.Object, NullLogger<SecondFactorChallengeProcessor>.Instance);
         var contextMock = new Mock<IRadiusPipelineExecutionContext>();
         var endpoint = IPEndPoint.Parse("127.0.0.1:8080");
         contextMock.Setup(x => x.RequestPacket.UserName).Returns("userName");
@@ -150,7 +158,8 @@ public class SecondFactorChallengeProcessorTests
     {
         var mfServiceMock = new Mock<IMultifactorApiService>();
         var mfService = mfServiceMock.Object;
-        var processor = new SecondFactorChallengeProcessor(mfService, NullLogger<SecondFactorChallengeProcessor>.Instance);
+        var groupsServiceMock = new Mock<ILdapGroupService>();
+        var processor = new SecondFactorChallengeProcessor(mfService, groupsServiceMock.Object, NullLogger<SecondFactorChallengeProcessor>.Instance);
         var contextMock = new Mock<IRadiusPipelineExecutionContext>();
         var endpoint = IPEndPoint.Parse("127.0.0.1:8080");
         contextMock.Setup(x => x.RequestPacket.UserName).Returns("userName");
@@ -177,7 +186,8 @@ public class SecondFactorChallengeProcessorTests
             .Setup(x => x.SendChallengeAsync(It.IsAny<SendChallengeRequest>()))
             .ReturnsAsync(new MultifactorResponse(AuthenticationStatus.Accept));
         var mfService = mfServiceMock.Object;
-        var processor = new SecondFactorChallengeProcessor(mfService, NullLogger<SecondFactorChallengeProcessor>.Instance);
+        var groupsServiceMock = new Mock<ILdapGroupService>();
+        var processor = new SecondFactorChallengeProcessor(mfService, groupsServiceMock.Object, NullLogger<SecondFactorChallengeProcessor>.Instance);
         var contextMock = new Mock<IRadiusPipelineExecutionContext>();
         var endpoint = IPEndPoint.Parse("127.0.0.1:8080");
         contextMock.Setup(x => x.RequestPacket.UserName).Returns("userName");
@@ -191,9 +201,11 @@ public class SecondFactorChallengeProcessorTests
         contextMock.SetupProperty(x => x.AuthenticationState.SecondFactorStatus);
         contextMock.SetupProperty(x => x.ResponseInformation.State);
         contextMock.Setup(x => x.ApiCredential).Returns(new ApiCredential("1", "2"));
-        contextMock.Setup(x => x.LdapServerConfiguration).Returns(new Mock<ILdapServerConfiguration>().Object);
+        var ldapConfigMock = new Mock<ILdapServerConfiguration>();
+        ldapConfigMock.Setup(x => x.AuthenticationCacheGroups).Returns([]);
+        contextMock.Setup(x => x.LdapServerConfiguration).Returns(ldapConfigMock.Object);
         contextMock.Setup(x => x.UserLdapProfile).Returns(new Mock<ILdapProfile>().Object);
-        contextMock.Setup(x => x.AuthenticationCacheLifetime).Returns(AuthenticatedClientCacheConfig.Create("08:08:08", false));
+        contextMock.Setup(x => x.AuthenticationCacheLifetime).Returns(AuthenticatedClientCacheConfig.Create("08:08:08"));
         var context = contextMock.Object;
         
         context.ResponseInformation.State = "2";
@@ -213,7 +225,8 @@ public class SecondFactorChallengeProcessorTests
             .Setup(x => x.SendChallengeAsync(It.IsAny<SendChallengeRequest>()))
             .ReturnsAsync(new MultifactorResponse(AuthenticationStatus.Reject));
         var mfService = mfServiceMock.Object;
-        var processor = new SecondFactorChallengeProcessor(mfService, NullLogger<SecondFactorChallengeProcessor>.Instance);
+        var groupsServiceMock = new Mock<ILdapGroupService>();
+        var processor = new SecondFactorChallengeProcessor(mfService, groupsServiceMock.Object, NullLogger<SecondFactorChallengeProcessor>.Instance);
         var contextMock = new Mock<IRadiusPipelineExecutionContext>();
         var endpoint = IPEndPoint.Parse("127.0.0.1:8080");
         contextMock.Setup(x => x.RequestPacket.UserName).Returns("userName");
@@ -227,9 +240,11 @@ public class SecondFactorChallengeProcessorTests
         contextMock.SetupProperty(x => x.AuthenticationState.SecondFactorStatus);
         contextMock.SetupProperty(x => x.ResponseInformation.State);
         contextMock.Setup(x => x.ApiCredential).Returns(new ApiCredential("1", "2"));
-        contextMock.Setup(x => x.LdapServerConfiguration).Returns(new Mock<ILdapServerConfiguration>().Object);
+        var ldapConfigMock = new Mock<ILdapServerConfiguration>();
+        ldapConfigMock.Setup(x => x.AuthenticationCacheGroups).Returns([]);
+        contextMock.Setup(x => x.LdapServerConfiguration).Returns(ldapConfigMock.Object);
         contextMock.Setup(x => x.UserLdapProfile).Returns(new Mock<ILdapProfile>().Object);
-        contextMock.Setup(x => x.AuthenticationCacheLifetime).Returns(AuthenticatedClientCacheConfig.Create("08:08:08", false));
+        contextMock.Setup(x => x.AuthenticationCacheLifetime).Returns(AuthenticatedClientCacheConfig.Create("08:08:08"));
         var context = contextMock.Object;
         
         context.ResponseInformation.State = "2";
@@ -251,7 +266,8 @@ public class SecondFactorChallengeProcessorTests
             .Setup(x => x.SendChallengeAsync(It.IsAny<SendChallengeRequest>()))
             .ReturnsAsync(new MultifactorResponse(status));
         var mfService = mfServiceMock.Object;
-        var processor = new SecondFactorChallengeProcessor(mfService, NullLogger<SecondFactorChallengeProcessor>.Instance);
+        var groupsServiceMock = new Mock<ILdapGroupService>();
+        var processor = new SecondFactorChallengeProcessor(mfService, groupsServiceMock.Object, NullLogger<SecondFactorChallengeProcessor>.Instance);
         var contextMock = new Mock<IRadiusPipelineExecutionContext>();
         var endpoint = IPEndPoint.Parse("127.0.0.1:8080");
         contextMock.Setup(x => x.RequestPacket.UserName).Returns("userName");
@@ -265,9 +281,11 @@ public class SecondFactorChallengeProcessorTests
         contextMock.SetupProperty(x => x.AuthenticationState.SecondFactorStatus);
         contextMock.SetupProperty(x => x.ResponseInformation.State);
         contextMock.Setup(x => x.ApiCredential).Returns(new ApiCredential("1", "2"));
-        contextMock.Setup(x => x.LdapServerConfiguration).Returns(new Mock<ILdapServerConfiguration>().Object);
+        var ldapConfigMock = new Mock<ILdapServerConfiguration>();
+        ldapConfigMock.Setup(x => x.AuthenticationCacheGroups).Returns([]);
+        contextMock.Setup(x => x.LdapServerConfiguration).Returns(ldapConfigMock.Object);
         contextMock.Setup(x => x.UserLdapProfile).Returns(new Mock<ILdapProfile>().Object);
-        contextMock.Setup(x => x.AuthenticationCacheLifetime).Returns(AuthenticatedClientCacheConfig.Create("08:08:08", false));
+        contextMock.Setup(x => x.AuthenticationCacheLifetime).Returns(AuthenticatedClientCacheConfig.Create("08:08:08"));
         var context = contextMock.Object;
         
         context.ResponseInformation.State = "2";

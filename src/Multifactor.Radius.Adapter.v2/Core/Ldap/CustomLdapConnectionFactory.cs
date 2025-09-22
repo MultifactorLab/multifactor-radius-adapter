@@ -20,6 +20,6 @@ public class CustomLdapConnectionFactory : ILdapConnectionFactory
 
     public ILdapConnection CreateConnection(LdapConnectionOptions ldapConnectionOptions)
     {
-        return _factory.CreateConnection(ldapConnectionOptions);
+        return new LdapConnection(_factory.CreateConnection(ldapConnectionOptions));
     }
 }

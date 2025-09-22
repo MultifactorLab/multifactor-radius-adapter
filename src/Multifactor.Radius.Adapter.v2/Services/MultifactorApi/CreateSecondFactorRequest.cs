@@ -28,8 +28,9 @@ public class CreateSecondFactorRequest
     public bool BypassSecondFactorWhenApiUnreachable { get; }
     public IReadOnlyList<string> PhoneAttributesNames { get; }
     public IReadOnlyList<string> ApiUrls { get; }
+    public bool ApiResponseCacheEnabled { get; }
 
-    public CreateSecondFactorRequest(IRadiusPipelineExecutionContext context)
+    public CreateSecondFactorRequest(IRadiusPipelineExecutionContext context, bool cacheEnabled = true)
     {
         ArgumentNullException.ThrowIfNull(context);
         ArgumentNullException.ThrowIfNull(context.RequestPacket);
@@ -41,7 +42,7 @@ public class CreateSecondFactorRequest
         ArgumentNullException.ThrowIfNull(context.PreAuthnMode);
         ArgumentNullException.ThrowIfNull(context.UserNameTransformRules);
         ArgumentNullException.ThrowIfNull(context.ApiCredential);
-        
+
         UserProfile = context.UserLdapProfile;
         RequestPacket = context.RequestPacket;
         RemoteEndpoint = context.RemoteEndpoint;
@@ -57,6 +58,7 @@ public class CreateSecondFactorRequest
         IdentityAttribute = context.LdapServerConfiguration?.IdentityAttribute;
         BypassSecondFactorWhenApiUnreachable = context.BypassSecondFactorWhenApiUnreachable;
         PhoneAttributesNames = context.LdapServerConfiguration?.PhoneAttributes ?? new List<string>();
+        ApiResponseCacheEnabled = cacheEnabled;
         ApiUrls = context.ApiUrls;
     }
 }

@@ -27,7 +27,8 @@ public class LdapSchemaLoadingStep: IRadiusPipelineStep
     {
         _logger.LogDebug("'{name}' started", nameof(LdapSchemaLoadingStep));
         ArgumentNullException.ThrowIfNull(context, nameof(context));
-
+        ArgumentNullException.ThrowIfNull(context.LdapServerConfiguration, nameof(context));
+        
         var schema = TryGetLdapSchema(context);
 
         if (schema is null)
@@ -42,7 +43,7 @@ public class LdapSchemaLoadingStep: IRadiusPipelineStep
 
     private ILdapSchema? TryGetLdapSchema(IRadiusPipelineExecutionContext context)
     {
-        var cacheKey = context.LdapServerConfiguration.ConnectionString;
+        var cacheKey = context.LdapServerConfiguration!.ConnectionString;
         if (_cache.TryGetValue(cacheKey, out ILdapSchema? schema))
         {
             _logger.LogDebug("Loaded LDAP schema for '{domain}' from cache.", cacheKey);

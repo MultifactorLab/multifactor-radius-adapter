@@ -13,6 +13,7 @@ using Multifactor.Radius.Adapter.v2.Core.Pipeline.Settings;
 using Multifactor.Radius.Adapter.v2.Core.Radius;
 using Multifactor.Radius.Adapter.v2.Core.Radius.Packet;
 using Multifactor.Radius.Adapter.v2.Core.RandomWaiterFeature;
+using NetTools;
 
 namespace Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Context;
 
@@ -26,8 +27,8 @@ public class RadiusPipelineExecutionContext : IRadiusPipelineExecutionContext
     public IAuthenticationState AuthenticationState { get; set; } = new AuthenticationState();
     public IResponseInformation ResponseInformation { get; set; } = new ResponseInformation();
     public string MustChangePasswordDomain { get; set; }
-    public IPEndPoint RemoteEndpoint { get; set; }
-    public IPEndPoint? ProxyEndpoint { get; set; }
+    public IPEndPoint RemoteEndpoint => RequestPacket.RemoteEndpoint;
+    public IPEndPoint? ProxyEndpoint => RequestPacket.ProxyEndpoint;
     public ILdapSchema? LdapSchema { get; set; }
     public UserPassphrase Passphrase { get; set; }
     public HashSet<string> UserGroups { get; set; } = new();
@@ -47,7 +48,9 @@ public class RadiusPipelineExecutionContext : IRadiusPipelineExecutionContext
     public PreAuthModeDescriptor PreAuthnMode => _settings.PreAuthnMode;
     public string ClientConfigurationName => _settings.ClientConfigurationName;
     public SharedSecret RadiusSharedSecret => _settings.RadiusSharedSecret;
+    public IReadOnlyCollection<IPAddressRange> IpWhiteList => _settings.LdapServerConfiguration?.IpWhiteList.Count > 0 ? _settings.LdapServerConfiguration.IpWhiteList : _settings.IpWhiteList; 
     public IReadOnlyList<string> ApiUrls => _settings.ApiUrls;
+    public bool IsDomainAccount => RequestPacket.AccountType == AccountType.Domain;
 
     public RadiusPipelineExecutionContext(IPipelineExecutionSettings settings, IRadiusPacket requestPacket)
     {
