@@ -3,23 +3,18 @@
     public enum PreAuthMode
     {
         /// <summary>
-        /// No mode specified
+        /// No second factor
         /// </summary>
         None = 0,
+        
+        /// <summary>
+        /// Any second factor
+        /// </summary>
+        Any = 1,
 
         /// <summary>
         /// One-time password
         /// </summary>
-        Otp = 1,
-
-        /// <summary>
-        /// Mobile app push.
-        /// </summary>
-        Push = 2,
-
-        /// <summary>
-        /// Telegram bot.
-        /// </summary>
-        Telegram = 4
+        Otp = 2
     }
 }

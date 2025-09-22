@@ -83,8 +83,7 @@ public class PipelineConfigurationFactoryTests
     
     [Theory]
     [InlineData(PreAuthMode.Otp)]
-    [InlineData(PreAuthMode.Push)]
-    [InlineData(PreAuthMode.Telegram)]
+    [InlineData(PreAuthMode.Any)]
     public void BuildPipelineConfiguration_ShouldReturnPreAuthConfiguration(PreAuthMode mode)
     {
         var config = new PipelineStepsConfiguration("name", mode, hasLdapServers: true);
@@ -163,8 +162,7 @@ public class PipelineConfigurationFactoryTests
     
     [Theory]
     [InlineData(PreAuthMode.Otp)]
-    [InlineData(PreAuthMode.Push)]
-    [InlineData(PreAuthMode.Telegram)]
+    [InlineData(PreAuthMode.Any)]
     public void BuildPipelineConfiguration_NoLdapServersWithPreAuth_ShouldReturnConfig(PreAuthMode mode)
     {
         var config = new PipelineStepsConfiguration("name", mode, hasLdapServers: false);
