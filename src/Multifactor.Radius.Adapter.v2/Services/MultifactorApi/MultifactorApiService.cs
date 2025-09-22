@@ -78,16 +78,18 @@ public class MultifactorApiService : IMultifactorApiService
                         phone);
                 }
                 
+                var mfResponse = new MultifactorResponse(responseCode, state: response?.Id, replyMessage: response?.ReplyMessage);
+                
                 if (!ShouldCacheResponse(request.ApiResponseCacheEnabled, responseCode, response))
                 {
                     _logger.LogDebug("Skip 2FA response caching for user '{user}'.", request.RequestPacket.UserName);
-                    return new MultifactorResponse(responseCode, response?.Id, response?.ReplyMessage);
+                    return mfResponse;
                 }
                 
                 LogGrantedInfo(personalData.Identity, response, request.RequestPacket.CallingStationIdAttribute);
                 _authenticatedClientCache.SetCache(personalData.CallingStationId, personalData.Identity, request.ConfigName, request.AuthenticationCacheLifetime);
 
-                return new MultifactorResponse(responseCode, response?.Id, response?.ReplyMessage);
+                return mfResponse;
             }
             catch (MultifactorApiUnreachableException apiEx)
             {
@@ -136,16 +138,18 @@ public class MultifactorApiService : IMultifactorApiService
                 var response = await _api.SendChallengeAsync(apiUrl, payload, request.ApiCredential);
                 var responseCode = ConvertToAuthCode(response);
                 
+                var mfResponse = new MultifactorResponse(responseCode, state: response?.Id, replyMessage: response?.ReplyMessage);
+                
                 if (!ShouldCacheResponse(request.ApiResponseCacheEnabled, responseCode, response))
                 {
                     _logger.LogDebug("Skip challenge response caching for user '{user}'.", request.RequestPacket.UserName);
-                    return new MultifactorResponse(responseCode, response?.ReplyMessage);
+                    return mfResponse;
                 }
                 
                 LogGrantedInfo(identity, response, callingStationId);
                 _authenticatedClientCache.SetCache(callingStationId, identity, request.ConfigName, request.AuthenticationCacheLifetime);
 
-                return new MultifactorResponse(responseCode, response?.ReplyMessage);
+                return mfResponse;
             }
             catch (MultifactorApiUnreachableException apiEx)
             {
