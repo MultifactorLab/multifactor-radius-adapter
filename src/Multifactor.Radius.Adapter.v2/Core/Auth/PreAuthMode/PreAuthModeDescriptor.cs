@@ -32,7 +32,6 @@ public class PreAuthModeDescriptor
     private static PreAuthMode GetMode(string value)
     {
         var parse = Enum.Parse<PreAuthMode>(value, true);
-        
         return parse;
     }
 

@@ -103,6 +103,7 @@ public class RadiusFirstFactorProcessor : IFirstFactorProcessor
         }
 
         authPacket.RemoveAttribute("Proxy-State");
+        // authPacket.RemoveAttribute("State"); MF NPS does not send a response with State, but it should be
         authPacket.ReplaceAttribute("User-Name", userName);
 
         if (!string.IsNullOrWhiteSpace(passphrase.Password))
