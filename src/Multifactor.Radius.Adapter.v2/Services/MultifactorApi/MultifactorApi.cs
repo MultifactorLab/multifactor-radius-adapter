@@ -58,10 +58,10 @@ public class MultifactorApi : IMultifactorApi
         {
             return ProcessHttpRequestException(ex, url);
         }
-        catch (TaskCanceledException tce)
+        catch (TaskCanceledException)
         {
-            throw new MultifactorApiUnreachableException(
-                $"Multifactor API host unreachable: {url}. Reason: Http request timeout", tce);
+            _logger.LogWarning("Multifactor API timeout expired.");
+            return new AccessRequestResponse() { Status = RequestStatus.Denied };
         }
         catch (Exception ex)
         {
