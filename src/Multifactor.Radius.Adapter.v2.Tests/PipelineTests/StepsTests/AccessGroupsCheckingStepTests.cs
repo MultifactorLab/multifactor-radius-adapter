@@ -65,7 +65,7 @@ public class AccessGroupsCheckingStepTests
         var step = new AccessGroupsCheckingStep(groupService.Object, NullLogger<AccessGroupsCheckingStep>.Instance);
         var contextMock = new Mock<IRadiusPipelineExecutionContext>();
         var serverConfigMock = new Mock<ILdapServerConfiguration>();
-        serverConfigMock.Setup(x => x.AccessGroups).Returns(["group"]);
+        serverConfigMock.Setup(x => x.AccessGroups).Returns([new DistinguishedName("dc=group")]);
         contextMock.Setup(x => x.LdapServerConfiguration).Returns(serverConfigMock.Object);
         contextMock.Setup(x => x.UserLdapProfile).Returns(() => null);
         contextMock.Setup(x => x.LdapSchema).Returns(() => new Mock<ILdapSchema>().Object);
@@ -99,7 +99,7 @@ public class AccessGroupsCheckingStepTests
         var contextMock = new Mock<IRadiusPipelineExecutionContext>();
         var serverConfigMock = new Mock<ILdapServerConfiguration>();
         var execState = new ExecutionState();
-        serverConfigMock.Setup(x => x.AccessGroups).Returns(["dc=group,dc=admin,dc=user]"]);
+        serverConfigMock.Setup(x => x.AccessGroups).Returns([new DistinguishedName("dc=group,dc=admin,dc=user")]);
         serverConfigMock.Setup(x => x.NestedGroupsBaseDns).Returns([]);
         serverConfigMock.Setup(x => x.ConnectionString).Returns("string");
         serverConfigMock.Setup(x => x.UserName).Returns("string");
@@ -134,7 +134,7 @@ public class AccessGroupsCheckingStepTests
         var contextMock = new Mock<IRadiusPipelineExecutionContext>();
         var serverConfigMock = new Mock<ILdapServerConfiguration>();
 
-        serverConfigMock.Setup(x => x.AccessGroups).Returns(["dc=group,dc=admin,dc=user]"]);
+        serverConfigMock.Setup(x => x.AccessGroups).Returns([new DistinguishedName("dc=group,dc=admin,dc=user")]);
         serverConfigMock.Setup(x => x.NestedGroupsBaseDns).Returns([]);
         serverConfigMock.Setup(x => x.ConnectionString).Returns("string");
         serverConfigMock.Setup(x => x.UserName).Returns("string");
@@ -168,7 +168,7 @@ public class AccessGroupsCheckingStepTests
         var contextMock = new Mock<IRadiusPipelineExecutionContext>();
         var serverConfigMock = new Mock<ILdapServerConfiguration>();
         var execState = new ExecutionState();
-        serverConfigMock.Setup(x => x.AccessGroups).Returns(["group"]);
+        serverConfigMock.Setup(x => x.AccessGroups).Returns([new DistinguishedName("dc=group")]);
         contextMock.Setup(x => x.LdapServerConfiguration).Returns(serverConfigMock.Object);
         contextMock.Setup(x => x.UserLdapProfile).Returns(() => new Mock<ILdapProfile>().Object);
         contextMock.Setup(x => x.LdapSchema).Returns(() => new Mock<ILdapSchema>().Object);

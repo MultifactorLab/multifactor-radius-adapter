@@ -316,7 +316,7 @@ public class LdapForestServiceTests
         var domainsLoaderProviderMock = new Mock<ILdapForestLoaderProvider>();
         var cacheMock = new Mock<ICacheService>();
         var key = "forest_url";
-        var forest = new List<LdapForestEntry> { new LdapForestEntry(LdapSchemaBuilder.Default) };
+        IReadOnlyCollection<LdapForestEntry> forest = new List<LdapForestEntry> { new LdapForestEntry(LdapSchemaBuilder.Default) };
         cacheMock.Setup(x => x.TryGetValue(key, out forest)).Returns(true);
         var forestService = new LdapForestService(
             ldapSchemaLoaderMock.Object,

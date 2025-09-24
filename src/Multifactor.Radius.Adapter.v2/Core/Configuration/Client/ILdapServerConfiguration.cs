@@ -1,3 +1,4 @@
+using Multifactor.Core.Ldap.Name;
 using NetTools;
 
 namespace Multifactor.Radius.Adapter.v2.Core.Configuration.Client;
@@ -10,13 +11,13 @@ public interface ILdapServerConfiguration
     int BindTimeoutInSeconds { get; }
     bool LoadNestedGroups { get; }
     string? IdentityAttribute { get; }
-    IReadOnlyList<string> AccessGroups { get; }
-    IReadOnlyList<string> SecondFaGroups { get; }
-    IReadOnlyList<string> SecondFaBypassGroups { get; }
-    IReadOnlyList<string> NestedGroupsBaseDns { get; }
+    IReadOnlyList<DistinguishedName> AccessGroups { get; }
+    IReadOnlyList<DistinguishedName> SecondFaGroups { get; }
+    IReadOnlyList<DistinguishedName> SecondFaBypassGroups { get; }
+    IReadOnlyList<DistinguishedName> NestedGroupsBaseDns { get; }
     IReadOnlyList<string> PhoneAttributes { get; }
     IReadOnlyList<IPAddressRange> IpWhiteList { get; }
-    IReadOnlyList<string> AuthenticationCacheGroups { get; }
+    IReadOnlyList<DistinguishedName> AuthenticationCacheGroups { get; }
     int LdapSchemaCacheLifeTimeInHours { get; }
     int UserProfileCacheLifeTimeInHours { get; }
     IPermissionRules DomainPermissions { get; }

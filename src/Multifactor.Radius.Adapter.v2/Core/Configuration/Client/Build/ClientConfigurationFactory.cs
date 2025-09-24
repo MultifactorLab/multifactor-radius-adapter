@@ -1,6 +1,7 @@
 ﻿using System.Globalization;
 using System.Net;
 using System.Text.RegularExpressions;
+using Multifactor.Core.Ldap.Name;
 using Multifactor.Radius.Adapter.v2.Core.Auth;
 using Multifactor.Radius.Adapter.v2.Core.Auth.PreAuthMode;
 using Multifactor.Radius.Adapter.v2.Core.Configuration.Service;
@@ -440,6 +441,12 @@ public class ClientConfigurationFactory : IClientConfigurationFactory
 
             if (!string.IsNullOrWhiteSpace(server.IncludedSuffixes) && !string.IsNullOrWhiteSpace(server.ExcludedSuffixes))
                 throw new InvalidConfigurationException($"Config name: '{configName}', LDAP server: '{serverName}'. Simultaneous use of 'included-suffixes' and 'excluded-suffixes' is not allowed.");
+            
+            ValidateDnFormat(configName, serverName, Utils.SplitString(server.AccessGroups));
+            ValidateDnFormat(configName, serverName, Utils.SplitString(server.AuthenticationCacheGroups));
+            ValidateDnFormat(configName, serverName, Utils.SplitString(server.SecondFaGroups));
+            ValidateDnFormat(configName, serverName, Utils.SplitString(server.SecondFaBypassGroups));
+            ValidateDnFormat(configName, serverName, Utils.SplitString(server.NestedGroupsBaseDn));
         }
     }
 
@@ -458,5 +465,20 @@ public class ClientConfigurationFactory : IClientConfigurationFactory
         var ldapFirstFactor = builder.FirstFactorAuthenticationSource == AuthenticationSource.Ldap;
         var hasReplyAttributesFromLdap = builder.RadiusReplyAttributes.Values.SelectMany(x => x).Any(x => x.FromLdap || x.IsMemberOf || x.UserGroupCondition.Count > 0);
         return ldapFirstFactor || hasReplyAttributesFromLdap;
+    }
+
+    private static void ValidateDnFormat(string configName, string serverName, IEnumerable<string> groups)
+    {
+        foreach (var group in groups)
+        {
+            try
+            {
+                new DistinguishedName(group);
+            }
+            catch (ArgumentException)
+            {
+                throw new InvalidConfigurationException($"Config name: '{configName}', LDAP server: '{serverName}'. Invalid format: {group}. Distinguished name is required.");
+            }
+        }
     }
 }

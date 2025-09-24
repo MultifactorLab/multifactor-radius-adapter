@@ -1,13 +1,15 @@
+using Multifactor.Core.Ldap.Name;
+
 namespace Multifactor.Radius.Adapter.v2.Core.Configuration.Client;
 
 public class LdapServerInitializeRequest
 {
     public IEnumerable<string> PhoneAttributes { get; set; } = Array.Empty<string>();
-    public IEnumerable<string> AccessGroups { get; set; } = Array.Empty<string>();
-    public IEnumerable<string> SecondFaGroups { get; set; } = Array.Empty<string>();
-    public IEnumerable<string> SecondFaBypassGroups { get; set; } = Array.Empty<string>();
-    public IEnumerable<string> NestedGroupsBaseDns { get; set; } = Array.Empty<string>();
-    public IEnumerable<string> AuthenticationCacheGroups { get; set; } = Array.Empty<string>();
+    public IEnumerable<DistinguishedName> AccessGroups { get; set; } = Array.Empty<DistinguishedName>();
+    public IEnumerable<DistinguishedName> SecondFaGroups { get; set; } = Array.Empty<DistinguishedName>();
+    public IEnumerable<DistinguishedName> SecondFaBypassGroups { get; set; } = Array.Empty<DistinguishedName>();
+    public IEnumerable<DistinguishedName> NestedGroupsBaseDns { get; set; } = Array.Empty<DistinguishedName>();
+    public IEnumerable<DistinguishedName> AuthenticationCacheGroups { get; set; } = Array.Empty<DistinguishedName>();
     public string? IdentityAttribute { get; set; } = string.Empty;
     public bool LoadNestedGroups { get; set; } = true;
     public int BindTimeoutInSeconds { get; set; } = 30;
@@ -42,11 +44,11 @@ public class LdapServerInitializeRequest
     public LdapServerInitializeRequest(Multifactor.Radius.Adapter.v2.Infrastructure.Configuration.RadiusAdapter.Sections.LdapServer.LdapServerConfiguration config)
     {
         PhoneAttributes = Split(config.PhoneAttributes);
-        AccessGroups = Split(config.AccessGroups);
-        SecondFaGroups = Split(config.SecondFaGroups);
-        SecondFaBypassGroups = Split(config.SecondFaBypassGroups);
-        NestedGroupsBaseDns = Split(config.NestedGroupsBaseDn);
-        AuthenticationCacheGroups = Split(config.AuthenticationCacheGroups);
+        AccessGroups = Split(config.AccessGroups).Select(x => new DistinguishedName(x));
+        SecondFaGroups = Split(config.SecondFaGroups).Select(x => new DistinguishedName(x));
+        SecondFaBypassGroups = Split(config.SecondFaBypassGroups).Select(x => new DistinguishedName(x));
+        NestedGroupsBaseDns = Split(config.NestedGroupsBaseDn).Select(x => new DistinguishedName(x));
+        AuthenticationCacheGroups = Split(config.AuthenticationCacheGroups).Select(x => new DistinguishedName(x));
         IdentityAttribute = config.IdentityAttribute;
         LoadNestedGroups = config.LoadNestedGroups;
         BindTimeoutInSeconds = config.BindTimeoutInSeconds;

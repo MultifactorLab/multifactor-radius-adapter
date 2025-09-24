@@ -213,7 +213,7 @@ public class SecondFactorChallengeProcessor : IChallengeProcessor
             return true;
         
         var cacheGroups = context.LdapServerConfiguration.AuthenticationCacheGroups;
-        var isMember = _ldapGroupService.IsMemberOf(GetMembershipRequest(context, cacheGroups));
+        var isMember = _ldapGroupService.IsMemberOf(new MembershipRequest(context, cacheGroups));
         var groupsStr = string.Join(',', cacheGroups);
         var username = context.RequestPacket.UserName;
         if (!isMember)
@@ -222,12 +222,5 @@ public class SecondFactorChallengeProcessor : IChallengeProcessor
             _logger.LogDebug("User '{userName}' is a member of authentication cache groups: ({groups})", username, groupsStr);
 
         return isMember;
-    }
-    
-    private MembershipRequest GetMembershipRequest(IRadiusPipelineExecutionContext context, IEnumerable<string> targetGroupsNames)
-    {
-        var groupDns = targetGroupsNames.Select(x => new DistinguishedName(x)).ToArray();
-        
-        return new MembershipRequest(context, groupDns);
     }
 }

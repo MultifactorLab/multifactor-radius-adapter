@@ -1,3 +1,4 @@
+using Multifactor.Core.Ldap.Name;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configuration.Exceptions;
 using NetTools;
 
@@ -11,15 +12,15 @@ public class LdapServerConfiguration : ILdapServerConfiguration
     private bool _trustedDomainsEnabled;
     private bool _alternativeSuffixesEnabled;
     private bool _requiresUpn;
-    private readonly List<string> _accessGroups = new List<string>();
-    private readonly List<string> _2FaGroups = new List<string>();
-    private readonly List<string> _2FaBypassGroups = new List<string>();
-    private readonly List<string> _baseDns = new List<string>();
-    private readonly List<string> _phones = new List<string>();
+    private readonly List<DistinguishedName> _accessGroups = new();
+    private readonly List<DistinguishedName> _2FaGroups = new();
+    private readonly List<DistinguishedName> _2FaBypassGroups = new();
+    private readonly List<DistinguishedName> _baseDns = new();
+    private readonly List<string> _phones = new();
     private IPermissionRules _domainPermissionRules = new PermissionRules();
     private IPermissionRules _suffixesPermissionRules = new PermissionRules();
     private readonly List<IPAddressRange> _ipWhiteList = new();
-    private readonly List<string> _authenticationCacheGroups = new();
+    private readonly List<DistinguishedName> _authenticationCacheGroups = new();
     
     public string ConnectionString { get; }
     public string UserName { get; }
@@ -27,10 +28,10 @@ public class LdapServerConfiguration : ILdapServerConfiguration
     public int BindTimeoutInSeconds => _timeout;
     public bool LoadNestedGroups => _loadNestedGroups;
     public string? IdentityAttribute => _identity;
-    public IReadOnlyList<string> AccessGroups => _accessGroups;
-    public IReadOnlyList<string> SecondFaGroups => _2FaGroups;
-    public IReadOnlyList<string> SecondFaBypassGroups => _2FaBypassGroups;
-    public IReadOnlyList<string> NestedGroupsBaseDns => _baseDns;
+    public IReadOnlyList<DistinguishedName> AccessGroups => _accessGroups;
+    public IReadOnlyList<DistinguishedName> SecondFaGroups => _2FaGroups;
+    public IReadOnlyList<DistinguishedName> SecondFaBypassGroups => _2FaBypassGroups;
+    public IReadOnlyList<DistinguishedName> NestedGroupsBaseDns => _baseDns;
     public IReadOnlyList<string> PhoneAttributes => _phones;
     public IPermissionRules DomainPermissions => _domainPermissionRules;
     public IPermissionRules SuffixesPermissions => _suffixesPermissionRules;
@@ -40,7 +41,7 @@ public class LdapServerConfiguration : ILdapServerConfiguration
     public bool AlternativeSuffixesEnabled => _alternativeSuffixesEnabled;
     public bool UpnRequired => _requiresUpn;
     public IReadOnlyList<IPAddressRange> IpWhiteList => _ipWhiteList;
-    public IReadOnlyList<string> AuthenticationCacheGroups => _authenticationCacheGroups;
+    public IReadOnlyList<DistinguishedName> AuthenticationCacheGroups => _authenticationCacheGroups;
 
     public LdapServerConfiguration(string connectionString, string userName, string password)
     {
@@ -56,10 +57,10 @@ public class LdapServerConfiguration : ILdapServerConfiguration
     public void Initialize(LdapServerInitializeRequest settings)
     {
         AddPhoneAttributes(settings.PhoneAttributes)
-            .AddAccessGroups(settings.AccessGroups)
-            .AddSecondFaGroups(settings.SecondFaGroups)
-            .AddSecondFaBypassGroups(settings.SecondFaBypassGroups)
-            .AddNestedGroupBaseDns(settings.NestedGroupsBaseDns)
+            .AddAccessGroups(settings.AccessGroups.Select(x=> x.StringRepresentation))
+            .AddSecondFaGroups(settings.SecondFaGroups.Select(x=> x.StringRepresentation))
+            .AddSecondFaBypassGroups(settings.SecondFaBypassGroups.Select(x=> x.StringRepresentation))
+            .AddNestedGroupBaseDns(settings.NestedGroupsBaseDns.Select(x=> x.StringRepresentation))
             .SetIdentityAttribute(settings.IdentityAttribute)
             .SetLoadNestedGroups(settings.LoadNestedGroups)
             .SetBindTimeoutInSeconds(settings.BindTimeoutInSeconds)
@@ -68,7 +69,7 @@ public class LdapServerConfiguration : ILdapServerConfiguration
             .EnableAlternativeSuffixes(settings.EnableAlternativeSuffixes)
             .SetDomainRules(settings.DomainPermissions)
             .SetAlternativeSuffixesRules(settings.SuffixesPermissions)
-            .AddAuthenticationCacheGroups(settings.AuthenticationCacheGroups);
+            .AddAuthenticationCacheGroups(settings.AuthenticationCacheGroups.Select(x=> x.StringRepresentation));
     }
 
     public LdapServerConfiguration EnableTrustedDomains(bool enable = true)
@@ -89,7 +90,6 @@ public class LdapServerConfiguration : ILdapServerConfiguration
         return this;
     }
 
-    // TODO add to ldap server config this settings
     public LdapServerConfiguration SetDomainRules(IPermissionRules rules)
     {
         _domainPermissionRules = rules;
@@ -128,7 +128,7 @@ public class LdapServerConfiguration : ILdapServerConfiguration
         if (groups is null)
             return this;
         
-        AddToList(_accessGroups, groups);
+        AddToList(_accessGroups, groups.Select(x => new DistinguishedName(x)));
         return this;
     }
     
@@ -137,7 +137,7 @@ public class LdapServerConfiguration : ILdapServerConfiguration
         if (groups is null)
             return this;
         
-        AddToList(_2FaGroups, groups);
+        AddToList(_2FaGroups, groups.Select(x => new DistinguishedName(x)));
         return this;
     }
     
@@ -146,7 +146,7 @@ public class LdapServerConfiguration : ILdapServerConfiguration
         if (groups is null)
             return this;
         
-        AddToList(_2FaBypassGroups, groups);
+        AddToList(_2FaBypassGroups, groups.Select(x => new DistinguishedName(x)));
         return this;
     }
     
@@ -155,7 +155,7 @@ public class LdapServerConfiguration : ILdapServerConfiguration
         if (items is null)
             return this;
         
-        AddToList(_baseDns, items);
+        AddToList(_baseDns, items.Select(x => new DistinguishedName(x)));
         return this;
     }
     
@@ -187,8 +187,8 @@ public class LdapServerConfiguration : ILdapServerConfiguration
     
     public LdapServerConfiguration AddAuthenticationCacheGroups(IEnumerable<string> groups)
     {
-        if (groups?.Count() > 0)
-            return AddToList(_authenticationCacheGroups, groups);
+        if (groups != null)
+            return AddToList(_authenticationCacheGroups, groups.Select(x => new DistinguishedName(x)));
         return this;
     }
     

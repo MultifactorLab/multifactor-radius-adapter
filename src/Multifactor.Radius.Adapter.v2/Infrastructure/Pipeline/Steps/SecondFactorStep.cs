@@ -80,7 +80,7 @@ public class SecondFactorStep : IRadiusPipelineStep
 
         if (serverConfig.SecondFaBypassGroups.Any())
         {
-            var request = GetMembershipRequest(context, serverConfig.SecondFaBypassGroups);
+            var request = new MembershipRequest(context, serverConfig.SecondFaBypassGroups);
             bypassMember = _ldapGroupService.IsMemberOf(request);
         }
 
@@ -93,7 +93,7 @@ public class SecondFactorStep : IRadiusPipelineStep
         bool? secondFactorMember = null;
         if (serverConfig.SecondFaGroups.Any())
         {
-           var request = GetMembershipRequest(context, serverConfig.SecondFaGroups);
+           var request = new MembershipRequest(context, serverConfig.SecondFaGroups);
            secondFactorMember = _ldapGroupService.IsMemberOf(request);
            if (secondFactorMember is false)
                _logger.LogInformation("User '{user:l}' is not a member of the 2FA group at '{domain:l}'", context.RequestPacket.UserName, serverConfig.ConnectionString);
@@ -110,7 +110,6 @@ public class SecondFactorStep : IRadiusPipelineStep
         if (context.LdapServerConfiguration is null || context.LdapServerConfiguration.AuthenticationCacheGroups.Count == 0)
             return true;
         
-        //TODO add tests
         if (!context.IsDomainAccount)
         {
             _logger.LogInformation(
@@ -121,7 +120,7 @@ public class SecondFactorStep : IRadiusPipelineStep
         }
 
         var cacheGroups = context.LdapServerConfiguration.AuthenticationCacheGroups;
-        var isMember = _ldapGroupService.IsMemberOf(GetMembershipRequest(context, cacheGroups));
+        var isMember = _ldapGroupService.IsMemberOf(new MembershipRequest(context, cacheGroups));
         var groupsStr = string.Join(',', cacheGroups);
         var username = context.RequestPacket.UserName;
         if (!isMember)
@@ -137,23 +136,16 @@ public class SecondFactorStep : IRadiusPipelineStep
         context.AuthenticationState.SecondFactorStatus = apiResponse.Code;
         context.ResponseInformation.State = apiResponse.State;
         context.ResponseInformation.ReplyMessage = apiResponse.ReplyMessage;
-        
-        if (apiResponse.Code != AuthenticationStatus.Awaiting) 
+
+        if (apiResponse.Code != AuthenticationStatus.Awaiting)
             return;
-        
+
         var challengeProcessor = _challengeProcessorProvider.GetChallengeProcessorByType(ChallengeType.SecondFactor);
         if (challengeProcessor is null)
             throw new InvalidOperationException("Challenge processor could not be found");
         challengeProcessor.AddChallengeContext(context);
     }
 
-    private MembershipRequest GetMembershipRequest(IRadiusPipelineExecutionContext context, IEnumerable<string> targetGroupsNames)
-    {
-        var groupDns = targetGroupsNames.Select(x => new DistinguishedName(x)).ToArray();
-        
-        return new MembershipRequest(context, groupDns);
-    }
-    
     private bool UnsupportedAccountType(IRadiusPipelineExecutionContext context)
     {
         if (context.IsDomainAccount)

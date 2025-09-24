@@ -33,7 +33,7 @@ public class AccessGroupsCheckingStep : IRadiusPipelineStep
         
         ArgumentNullException.ThrowIfNull(context.UserLdapProfile, nameof(context.UserLdapProfile));
         
-        var accessGroupsDns = serverConfig.AccessGroups.Select(x => new DistinguishedName(x)).ToArray();
+        var accessGroupsDns = serverConfig.AccessGroups.ToArray();
         var request = GetMembershipRequest(context, accessGroupsDns);
         var isMember = _ldapGroupService.IsMemberOf(request);
 

@@ -216,7 +216,7 @@ public class UserGroupLoadingStepTests
         contextMock.Setup(x => x.RadiusReplyAttributes).Returns(attributes);
         contextMock.Setup(x => x.UserLdapProfile.MemberOf).Returns([]);
         contextMock.SetupProperty(x => x.UserGroups);
-        contextMock.Setup(x => x.LdapServerConfiguration.NestedGroupsBaseDns).Returns(["dc=nested,dc=group"]);
+        contextMock.Setup(x => x.LdapServerConfiguration.NestedGroupsBaseDns).Returns([new DistinguishedName("dc=nested,dc=group")]);
         contextMock.Setup(x => x.LdapServerConfiguration.LoadNestedGroups).Returns(true);
         contextMock.Setup(x => x.LdapServerConfiguration.UserName).Returns("user");
         contextMock.Setup(x => x.LdapServerConfiguration.Password).Returns("password");

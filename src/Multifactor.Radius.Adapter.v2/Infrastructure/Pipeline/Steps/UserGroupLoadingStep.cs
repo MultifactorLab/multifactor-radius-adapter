@@ -72,7 +72,7 @@ public class UserGroupLoadingStep : IRadiusPipelineStep
                 context.LdapSchema!,
                 connection,
                 context.UserLdapProfile!.Dn,
-                new DistinguishedName(dn));
+                dn);
             
             var groups = _ldapGroupService.LoadUserGroups(request);
             var groupLog = string.Join("\n", groups);

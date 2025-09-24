@@ -1,3 +1,4 @@
+using Multifactor.Core.Ldap.Name;
 using Multifactor.Radius.Adapter.v2.Core;
 using Multifactor.Radius.Adapter.v2.Core.Configuration.Client;
 
@@ -70,11 +71,11 @@ public class LdapServerConfigurationTests
     }
 
     [Theory]
-    [InlineData("group")]
-    [InlineData("group1;group2")]
-    [InlineData("group1;group2;group3")]
-    [InlineData("group1;group2;group3;group4")]
-    [InlineData("group1;group2;group3;group4;")]
+    [InlineData("dc=group")]
+    [InlineData("dc=group1;dc=group2")]
+    [InlineData("dc=group1;dc=group2;dc=group3")]
+    [InlineData("dc=group1;dc=group2;dc=group3;dc=group4")]
+    [InlineData("dc=group1;dc=group2;dc=group3;dc=group4;")]
     public void AddAccessGroups_ShouldAdd(string? groups)
     {
         var config = GetDefaultConfiguration();
@@ -83,30 +84,30 @@ public class LdapServerConfigurationTests
         config.AddAccessGroups(expectedGroups);
 
         Assert.NotNull(config.AccessGroups);
-        Assert.True(expectedGroups.SequenceEqual(config.AccessGroups));
+        Assert.True(expectedGroups.Select(x => new DistinguishedName(x)).SequenceEqual(config.AccessGroups));
     }
 
     [Theory]
-    [InlineData("group")]
-    [InlineData("group1;group2")]
-    [InlineData("group1;group2;group3")]
-    [InlineData("group1;group2;group3;group4")]
-    [InlineData("group1;group2;group3;group4;")]
+    [InlineData("dc=group")]
+    [InlineData("dc=group1;dc=group2")]
+    [InlineData("dc=group1;dc=group2;dc=group3")]
+    [InlineData("dc=group1;dc=group2;dc=group3;dc=group4")]
+    [InlineData("dc=group1;dc=group2;dc=group3;dc=group4;")]
     public void Add2FaGroups_ShouldAdd(string? groups)
     {
         var config = GetDefaultConfiguration();
         var expectedGroups = Utils.SplitString(groups);
         config.AddSecondFaGroups(expectedGroups);
         Assert.NotNull(config.SecondFaGroups);
-        Assert.True(expectedGroups.SequenceEqual(config.SecondFaGroups));
+        Assert.True(expectedGroups.Select(x => new DistinguishedName(x)).SequenceEqual(config.SecondFaGroups));
     }
 
     [Theory]
-    [InlineData("group")]
-    [InlineData("group1;group2")]
-    [InlineData("group1;group2;group3")]
-    [InlineData("group1;group2;group3;group4")]
-    [InlineData("group1;group2;group3;group4;")]
+    [InlineData("dc=group")]
+    [InlineData("dc=group1;dc=group2")]
+    [InlineData("dc=group1;dc=group2;dc=group3")]
+    [InlineData("dc=group1;dc=group2;dc=group3;dc=group4")]
+    [InlineData("dc=group1;dc=group2;dc=group3;dc=group4;")]
     public void Add2FaBypassGroups_ShouldAdd(string? groups)
     {
         var config = GetDefaultConfiguration();
@@ -115,7 +116,7 @@ public class LdapServerConfigurationTests
         config.AddSecondFaBypassGroups(expectedGroups);
 
         Assert.NotNull(config.SecondFaBypassGroups);
-        Assert.True(expectedGroups.SequenceEqual(config.SecondFaBypassGroups));
+        Assert.True(expectedGroups.Select(x => new DistinguishedName(x)).SequenceEqual(config.SecondFaBypassGroups));
     }
 
     [Theory]
@@ -136,11 +137,11 @@ public class LdapServerConfigurationTests
     }
 
     [Theory]
-    [InlineData("group")]
-    [InlineData("group1;group2")]
-    [InlineData("group1;group2;group3")]
-    [InlineData("group1;group2;group3;group4")]
-    [InlineData("group1;group2;group3;group4;")]
+    [InlineData("dc=group")]
+    [InlineData("dc=group1;dc=group2")]
+    [InlineData("dc=group1;dc=group2;dc=group3")]
+    [InlineData("dc=group1;dc=group2;dc=group3;dc=group4")]
+    [InlineData("dc=group1;dc=group2;dc=group3;dc=group4;")]
     public void AddNestedGroupBaseDns_ShouldAdd(string? groups)
     {
         var config = GetDefaultConfiguration();
@@ -149,7 +150,7 @@ public class LdapServerConfigurationTests
         config.AddNestedGroupBaseDns(expectedGroups);
 
         Assert.NotNull(config.NestedGroupsBaseDns);
-        Assert.True(expectedGroups.SequenceEqual(config.NestedGroupsBaseDns));
+        Assert.True(expectedGroups.Select(x => new DistinguishedName(x)).SequenceEqual(config.NestedGroupsBaseDns));
     }
 
     [Theory]
@@ -218,10 +219,10 @@ public class LdapServerConfigurationTests
         var request = new LdapServerInitializeRequest()
         {
             PhoneAttributes = ["phone"],
-            AccessGroups = ["access"],
-            SecondFaGroups = ["2fa"],
-            SecondFaBypassGroups = ["2fabypass"],
-            NestedGroupsBaseDns = ["nested"],
+            AccessGroups = [new DistinguishedName("dc=access")],
+            SecondFaGroups = [new DistinguishedName("dc=2fa")],
+            SecondFaBypassGroups = [new DistinguishedName("dc=2fabypass")],
+            NestedGroupsBaseDns = [new DistinguishedName("dc=nested")],
             IdentityAttribute = "identity",
             LoadNestedGroups = true,
             BindTimeoutInSeconds = 10,
@@ -230,7 +231,7 @@ public class LdapServerConfigurationTests
             EnableAlternativeSuffixes = true,
             DomainPermissions = rules,
             SuffixesPermissions = rules,
-            AuthenticationCacheGroups = ["authentication"]
+            AuthenticationCacheGroups = [new DistinguishedName("dc=authentication")]
         };
         
         config.Initialize(request);

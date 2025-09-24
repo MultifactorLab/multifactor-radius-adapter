@@ -5,6 +5,7 @@ using Multifactor.Core.Ldap.LangFeatures;
 using Multifactor.Radius.Adapter.v2.Core.Configuration.Client;
 using Multifactor.Radius.Adapter.v2.Core.Configuration.Service;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Builder;
+using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Configuration;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Steps;
 
 namespace Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline;

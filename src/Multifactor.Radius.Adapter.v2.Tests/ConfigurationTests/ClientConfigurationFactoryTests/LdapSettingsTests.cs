@@ -1,4 +1,5 @@
 using Moq;
+using Multifactor.Core.Ldap.Name;
 using Multifactor.Radius.Adapter.v2.Core.Configuration.Client.Build;
 using Multifactor.Radius.Adapter.v2.Core.Configuration.Service;
 using Multifactor.Radius.Adapter.v2.Core.Radius.Attributes;
@@ -99,11 +100,11 @@ public class LdapSettingsTests
                         ConnectionString = "connectionString",
                         UserName = "username",
                         Password = "password",
-                        AccessGroups = "groups",
-                        SecondFaGroups = "second fa groups",
-                        SecondFaBypassGroups = "second fa bypass groups",
+                        AccessGroups = "dc=groups",
+                        SecondFaGroups = "dc=second fa groups",
+                        SecondFaBypassGroups = "dc=second fa bypass groups",
                         LoadNestedGroups = true,
-                        NestedGroupsBaseDn = "nested groups",
+                        NestedGroupsBaseDn = "dc=nested groups",
                         PhoneAttributes = "phone attributes",
                         IdentityAttribute = "Id"
                     }
@@ -125,10 +126,10 @@ public class LdapSettingsTests
         Assert.Equal("connectionString", serverConfig.ConnectionString);
         Assert.Equal("username", serverConfig.UserName);
         Assert.Equal("password", serverConfig.Password);
-        Assert.Collection(serverConfig.AccessGroups, e => Assert.Equal("groups", e));
-        Assert.Collection(serverConfig.SecondFaGroups, e => Assert.Equal("second fa groups", e));
-        Assert.Collection(serverConfig.SecondFaBypassGroups, e => Assert.Equal("second fa bypass groups", e));
-        Assert.Collection(serverConfig.NestedGroupsBaseDns, e => Assert.Equal("nested groups", e));
+        Assert.Collection(serverConfig.AccessGroups, e => Assert.Equal(new DistinguishedName("dc=groups"), e));
+        Assert.Collection(serverConfig.SecondFaGroups, e => Assert.Equal(new DistinguishedName("dc=second fa groups"), e));
+        Assert.Collection(serverConfig.SecondFaBypassGroups, e => Assert.Equal(new DistinguishedName("dc=second fa bypass groups"), e));
+        Assert.Collection(serverConfig.NestedGroupsBaseDns, e => Assert.Equal(new DistinguishedName("dc=nested groups"), e));
         Assert.Collection(serverConfig.PhoneAttributes, e => Assert.Equal("phone attributes", e));
         Assert.True(serverConfig.LoadNestedGroups);
         Assert.Equal("Id", serverConfig.IdentityAttribute);
@@ -142,11 +143,11 @@ public class LdapSettingsTests
             ConnectionString = "connectionString",
             UserName = "username",
             Password = "password",
-            AccessGroups = "groups",
-            SecondFaGroups = "second fa groups",
-            SecondFaBypassGroups = "second fa bypass groups",
+            AccessGroups = "dc=groups",
+            SecondFaGroups = "dc=second fa groups",
+            SecondFaBypassGroups = "dc=second fa bypass groups",
             LoadNestedGroups = true,
-            NestedGroupsBaseDn = "nested groups",
+            NestedGroupsBaseDn = "dc=nested groups",
             PhoneAttributes = "phone attributes",
             IdentityAttribute = "Id"
         };
@@ -190,10 +191,10 @@ public class LdapSettingsTests
             Assert.Equal("connectionString", serverConfig.ConnectionString);
             Assert.Equal("username", serverConfig.UserName);
             Assert.Equal("password", serverConfig.Password);
-            Assert.Collection(serverConfig.AccessGroups, e => Assert.Equal("groups", e));
-            Assert.Collection(serverConfig.SecondFaGroups, e => Assert.Equal("second fa groups", e));
-            Assert.Collection(serverConfig.SecondFaBypassGroups, e => Assert.Equal("second fa bypass groups", e));
-            Assert.Collection(serverConfig.NestedGroupsBaseDns, e => Assert.Equal("nested groups", e));
+            Assert.Collection(serverConfig.AccessGroups, e => Assert.Equal(new DistinguishedName("dc=groups"), e));
+            Assert.Collection(serverConfig.SecondFaGroups, e => Assert.Equal(new DistinguishedName("dc=second fa groups"), e));
+            Assert.Collection(serverConfig.SecondFaBypassGroups, e => Assert.Equal(new DistinguishedName("dc=second fa bypass groups"), e));
+            Assert.Collection(serverConfig.NestedGroupsBaseDns, e => Assert.Equal(new DistinguishedName("dc=nested groups"), e));
             Assert.Collection(serverConfig.PhoneAttributes, e => Assert.Equal("phone attributes", e));
             Assert.True(serverConfig.LoadNestedGroups);
             Assert.Equal("Id", serverConfig.IdentityAttribute);
@@ -528,7 +529,7 @@ public class LdapSettingsTests
                         ConnectionString = "connectionString",
                         UserName = "username",
                         Password = "password",
-                        AuthenticationCacheGroups = "group1;group2 ;group3; ; ;"
+                        AuthenticationCacheGroups = "dc=group1;dc=group2 ;dc=group3; ; ;"
                     }
                 }
             }
@@ -545,7 +546,7 @@ public class LdapSettingsTests
 
         var serverConfig = clientConfig.LdapServers.First();
         
-        Assert.True(serverConfig.AuthenticationCacheGroups.SequenceEqual(["group1", "group2", "group3"]));
+        Assert.True(serverConfig.AuthenticationCacheGroups.SequenceEqual([new DistinguishedName("dc=group1"), new DistinguishedName("dc=group2"), new DistinguishedName("dc=group3")]));
     }
     
     [Fact]

@@ -213,7 +213,7 @@ public class LdapGroupServiceTests
         contextMock.Setup(x => x.UserLdapProfile.Dn).Returns(new DistinguishedName("cn=user,dc=example,dc=com"));
         contextMock.Setup(x => x.UserLdapProfile.MemberOf).Returns([new DistinguishedName("cn=group1,dc=example,dc=com")]);
         contextMock.Setup(x => x.LdapServerConfiguration.LoadNestedGroups).Returns(true);
-        contextMock.Setup(x => x.LdapServerConfiguration.NestedGroupsBaseDns).Returns(["dc=example1,dc=com"]);
+        contextMock.Setup(x => x.LdapServerConfiguration.NestedGroupsBaseDns).Returns([new DistinguishedName("dc=example1,dc=com")]);
         contextMock.Setup(x => x.LdapServerConfiguration.ConnectionString).Returns("connectionString");
         contextMock.Setup(x => x.LdapServerConfiguration.UserName).Returns("user");
         contextMock.Setup(x => x.LdapServerConfiguration.Password).Returns("password");
@@ -280,7 +280,7 @@ public class LdapGroupServiceTests
         contextMock.Setup(x => x.UserLdapProfile.Dn).Returns(new DistinguishedName("cn=user,dc=example,dc=com"));
         contextMock.Setup(x => x.UserLdapProfile.MemberOf).Returns([new DistinguishedName("cn=group1,dc=example,dc=com")]);
         contextMock.Setup(x => x.LdapServerConfiguration.LoadNestedGroups).Returns(true);
-        contextMock.Setup(x => x.LdapServerConfiguration.NestedGroupsBaseDns).Returns(["dc=example1,dc=com"]);
+        contextMock.Setup(x => x.LdapServerConfiguration.NestedGroupsBaseDns).Returns([new DistinguishedName("dc=example1,dc=com")]);
         contextMock.Setup(x => x.LdapServerConfiguration.ConnectionString).Returns("connectionString");
         contextMock.Setup(x => x.LdapServerConfiguration.UserName).Returns("user");
         contextMock.Setup(x => x.LdapServerConfiguration.Password).Returns("password");
