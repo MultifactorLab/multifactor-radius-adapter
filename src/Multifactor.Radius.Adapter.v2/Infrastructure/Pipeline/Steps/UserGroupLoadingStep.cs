@@ -2,7 +2,7 @@ using System.DirectoryServices.Protocols;
 using Microsoft.Extensions.Logging;
 using Multifactor.Core.Ldap;
 using Multifactor.Core.Ldap.Connection;
-using Multifactor.Core.Ldap.Name;
+using Multifactor.Radius.Adapter.v2.Core.Auth;
 using Multifactor.Radius.Adapter.v2.Core.Configuration.Client;
 using Multifactor.Radius.Adapter.v2.Core.Ldap;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Context;
@@ -11,7 +11,6 @@ using ILdapConnection = Multifactor.Radius.Adapter.v2.Core.Ldap.ILdapConnection;
 
 namespace Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Steps;
 
-//TODO load groups only when request is accepted or use cache
 public class UserGroupLoadingStep : IRadiusPipelineStep
 {
     private readonly ILdapGroupService _ldapGroupService;
@@ -111,7 +110,7 @@ public class UserGroupLoadingStep : IRadiusPipelineStep
 
     private bool ShouldSkipGroupLoading(IRadiusPipelineExecutionContext context)
     {
-        return GroupsNotRequired(context) || UnsupportedAccountType(context);
+        return !AcceptedRequest(context) || GroupsNotRequired(context) || UnsupportedAccountType(context);
     }
 
     private bool GroupsNotRequired(IRadiusPipelineExecutionContext context)
@@ -140,5 +139,13 @@ public class UserGroupLoadingStep : IRadiusPipelineStep
             context.RequestPacket.AccountType);
         
         return true;
+    }
+    
+    private bool AcceptedRequest(IRadiusPipelineExecutionContext context)
+    {
+        return context.AuthenticationState.FirstFactorStatus is
+                   AuthenticationStatus.Accept or AuthenticationStatus.Bypass
+               && context.AuthenticationState.SecondFactorStatus is 
+                   AuthenticationStatus.Accept or AuthenticationStatus.Bypass;
     }
 }

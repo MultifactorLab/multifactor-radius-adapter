@@ -4,6 +4,7 @@ using Moq;
 using Multifactor.Core.Ldap.Connection;
 using Multifactor.Core.Ldap.Name;
 using Multifactor.Core.Ldap.Schema;
+using Multifactor.Radius.Adapter.v2.Core.Auth;
 using Multifactor.Radius.Adapter.v2.Core.Configuration.Client;
 using Multifactor.Radius.Adapter.v2.Core.Ldap;
 using Multifactor.Radius.Adapter.v2.Core.Radius.Packet;
@@ -25,6 +26,8 @@ public class UserGroupLoadingStepTests
         var step = new UserGroupLoadingStep(groupService.Object, connectionFactory.Object, NullLogger<UserGroupLoadingStep>.Instance);
         var contextMock = new Mock<IRadiusPipelineExecutionContext>();
         contextMock.Setup(x => x.RadiusReplyAttributes).Returns(new Dictionary<string, RadiusReplyAttributeValue[]>());
+        contextMock.Setup(x => x.AuthenticationState).Returns(new AuthenticationState()
+            { FirstFactorStatus = AuthenticationStatus.Accept, SecondFactorStatus = AuthenticationStatus.Accept });
         
         contextMock.SetupProperty(x => x.UserGroups);
         var context = contextMock.Object;
@@ -46,6 +49,8 @@ public class UserGroupLoadingStepTests
         var attributes = new Dictionary<string, RadiusReplyAttributeValue[]>();
         attributes.Add("key", [new RadiusReplyAttributeValue("name", string.Empty)]);
         contextMock.Setup(x => x.RadiusReplyAttributes).Returns(attributes);
+        contextMock.Setup(x => x.AuthenticationState).Returns(new AuthenticationState()
+            { FirstFactorStatus = AuthenticationStatus.Accept, SecondFactorStatus = AuthenticationStatus.Accept });
         
         contextMock.SetupProperty(x => x.UserGroups);
         var context = contextMock.Object;
@@ -55,6 +60,34 @@ public class UserGroupLoadingStepTests
         
         Assert.Empty(context.UserGroups);
         groupService.Verify(x=> x.LoadUserGroups(It.IsAny<LoadUserGroupsRequest>()), Times.Never);
+    }
+    
+    [Theory]
+    [InlineData(AuthenticationStatus.Awaiting, AuthenticationStatus.Awaiting)]
+    [InlineData(AuthenticationStatus.Reject, AuthenticationStatus.Reject)]
+    [InlineData(AuthenticationStatus.Awaiting, AuthenticationStatus.Reject)]
+    [InlineData(AuthenticationStatus.Reject, AuthenticationStatus.Awaiting)]
+    public async Task LoadGroups_NotAcceptedRequest_ShouldSkipGroupLoading(AuthenticationStatus ff, AuthenticationStatus sf)
+    {
+        var groupService = new Mock<ILdapGroupService>();
+        var connectionFactory = new Mock<ILdapConnectionFactory>();
+
+        var step = new UserGroupLoadingStep(groupService.Object, connectionFactory.Object, NullLogger<UserGroupLoadingStep>.Instance);
+        var contextMock = new Mock<IRadiusPipelineExecutionContext>();
+        var replyAttributes = new Dictionary<string, RadiusReplyAttributeValue[]>();
+        replyAttributes.Add("key", [new RadiusReplyAttributeValue("name")]);
+        
+        contextMock.Setup(x => x.RadiusReplyAttributes).Returns(replyAttributes);
+        contextMock.Setup(x => x.AuthenticationState).Returns(new AuthenticationState()
+            { FirstFactorStatus = ff, SecondFactorStatus = sf });
+        
+        contextMock.SetupProperty(x => x.UserGroups);
+        var context = contextMock.Object;
+        context.UserGroups = new();
+        
+        await step.ExecuteAsync(context);
+        
+        Assert.Empty(context.UserGroups);
     }
     
     [Fact]
@@ -71,8 +104,10 @@ public class UserGroupLoadingStepTests
         contextMock.Setup(x => x.IsDomainAccount).Returns(false);
         contextMock.Setup(x=> x.RequestPacket.UserName).Returns("user");
         contextMock.Setup(x=> x.RequestPacket.AccountType).Returns(AccountType.Local);
-        
+        contextMock.Setup(x => x.AuthenticationState).Returns(new AuthenticationState()
+            { FirstFactorStatus = AuthenticationStatus.Accept, SecondFactorStatus = AuthenticationStatus.Accept });
         contextMock.SetupProperty(x => x.UserGroups);
+        
         var context = contextMock.Object;
         context.UserGroups = new();
         
@@ -102,6 +137,8 @@ public class UserGroupLoadingStepTests
         contextMock.SetupProperty(x => x.UserGroups);
         contextMock.Setup(x => x.LdapServerConfiguration.LoadNestedGroups).Returns(false);
         contextMock.Setup(x => x.IsDomainAccount).Returns(true);
+        contextMock.Setup(x => x.AuthenticationState).Returns(new AuthenticationState()
+            { FirstFactorStatus = AuthenticationStatus.Accept, SecondFactorStatus = AuthenticationStatus.Accept });
         
         var context = contextMock.Object;
         context.UserGroups = new();
@@ -144,6 +181,8 @@ public class UserGroupLoadingStepTests
         contextMock.Setup(x => x.LdapServerConfiguration.ConnectionString).Returns("Server=localhost;Port=5432");
         contextMock.Setup(x => x.RequestPacket.UserName).Returns("userName");
         contextMock.Setup(x => x.IsDomainAccount).Returns(true);
+        contextMock.Setup(x => x.AuthenticationState).Returns(new AuthenticationState()
+            { FirstFactorStatus = AuthenticationStatus.Accept, SecondFactorStatus = AuthenticationStatus.Accept });
         
         var context = contextMock.Object;
         context.UserGroups = new();
@@ -185,6 +224,8 @@ public class UserGroupLoadingStepTests
         contextMock.Setup(x => x.LdapServerConfiguration.ConnectionString).Returns("Server=localhost;Port=5432");
         contextMock.Setup(x => x.RequestPacket.UserName).Returns("userName");
         contextMock.Setup(x => x.IsDomainAccount).Returns(true);
+        contextMock.Setup(x => x.AuthenticationState).Returns(new AuthenticationState()
+            { FirstFactorStatus = AuthenticationStatus.Accept, SecondFactorStatus = AuthenticationStatus.Accept });
         
         var context = contextMock.Object;
         context.UserGroups = new();
@@ -226,6 +267,8 @@ public class UserGroupLoadingStepTests
         contextMock.Setup(x => x.LdapServerConfiguration.ConnectionString).Returns("Server=localhost;Port=5432");
         contextMock.Setup(x => x.RequestPacket.UserName).Returns("userName");
         contextMock.Setup(x => x.IsDomainAccount).Returns(true);
+        contextMock.Setup(x => x.AuthenticationState).Returns(new AuthenticationState()
+            { FirstFactorStatus = AuthenticationStatus.Accept, SecondFactorStatus = AuthenticationStatus.Accept });
         
         var context = contextMock.Object;
         context.UserGroups = new();
