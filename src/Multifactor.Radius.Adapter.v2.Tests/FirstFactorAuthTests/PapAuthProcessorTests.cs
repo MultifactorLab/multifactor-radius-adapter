@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
+using Multifactor.Core.Ldap.Schema;
 using Multifactor.Radius.Adapter.v2.Core;
 using Multifactor.Radius.Adapter.v2.Core.Auth;
 using Multifactor.Radius.Adapter.v2.Core.Auth.PreAuthMode;
@@ -32,6 +33,7 @@ public class PapAuthProcessorTests
         serverSettings.Setup(x => x.ConnectionString).Returns(sensitiveData["ConnectionString"]);
         serverSettings.Setup(x => x.BindTimeoutInSeconds).Returns(30);
         contextMock.Setup(x => x.LdapServerConfiguration).Returns(serverSettings.Object);
+        contextMock.Setup(x => x.LdapSchema).Returns(new Mock<ILdapSchema>().Object);
         
         var authState = new AuthenticationState();
         contextMock.Setup(x => x.AuthenticationState).Returns(authState);
@@ -64,6 +66,7 @@ public class PapAuthProcessorTests
         contextMock.Setup(x => x.UserNameTransformRules).Returns(transformRules);
         contextMock.Setup(x => x.PreAuthnMode).Returns(PreAuthModeDescriptor.Default);
         contextMock.Setup(x => x.Passphrase).Returns(UserPassphrase.Parse("123456", PreAuthModeDescriptor.Default));
+        contextMock.Setup(x => x.LdapSchema).Returns(new Mock<ILdapSchema>().Object);
         
         var result = await processor.Auth(contextMock.Object);
         Assert.False(result.IsSuccess);
@@ -89,6 +92,7 @@ public class PapAuthProcessorTests
         contextMock.Setup(x => x.UserNameTransformRules).Returns(transformRules);
         contextMock.Setup(x => x.PreAuthnMode).Returns(PreAuthModeDescriptor.Default);
         contextMock.Setup(x => x.Passphrase).Returns(UserPassphrase.Parse("123456", PreAuthModeDescriptor.Default));
+        contextMock.Setup(x => x.LdapSchema).Returns(new Mock<ILdapSchema>().Object);
         
         var result = await processor.Auth(contextMock.Object);
         Assert.False(result.IsSuccess);
