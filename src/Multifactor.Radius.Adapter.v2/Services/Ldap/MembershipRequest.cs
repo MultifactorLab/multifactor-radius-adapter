@@ -28,7 +28,7 @@ public class MembershipRequest
         UserDn = context.UserLdapProfile.Dn;
         ProfileGroups = context.UserLdapProfile.MemberOf;
         LoadNestedGroups = context.LdapServerConfiguration.LoadNestedGroups;
-        NestedGroupsBaseDns = context.LdapServerConfiguration.NestedGroupsBaseDns.Select(x => new DistinguishedName(x)).ToList();
+        NestedGroupsBaseDns = context.LdapServerConfiguration.NestedGroupsBaseDns;
         UserName = context.LdapServerConfiguration.UserName;
         Password = context.LdapServerConfiguration.Password;
         Timeout = TimeSpan.FromSeconds(context.LdapServerConfiguration.BindTimeoutInSeconds);

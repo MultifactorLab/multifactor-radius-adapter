@@ -4,6 +4,7 @@ using Multifactor.Core.Ldap.LdapGroup.Load;
 using Multifactor.Core.Ldap.LdapGroup.Membership;
 using Multifactor.Core.Ldap.Name;
 using Multifactor.Radius.Adapter.v2.Core.Ldap;
+using ILdapConnection = Multifactor.Radius.Adapter.v2.Core.Ldap.ILdapConnection;
 
 namespace Multifactor.Radius.Adapter.v2.Services.Ldap;
 

@@ -36,6 +36,9 @@ public class AppSettingsSection
 
     [Description("nps-server-endpoint")]
     public string NpsServerEndpoint { get; init; } = string.Empty;
+    
+    [Description("nps-server-timeout")]
+    public string NpsServerTimeout { get; init; } = "00:00:05";
 
     [Description("radius-client-ip")]
     public string RadiusClientIp { get; init; } = string.Empty;
@@ -55,9 +58,6 @@ public class AppSettingsSection
     [Description("authentication-cache-lifetime")]
     public string AuthenticationCacheLifetime { get; init; } = string.Empty;
 
-    [Description("authentication-cache-minimal-matching")]
-    public bool AuthenticationCacheMinimalMatching { get; init; } = false;
-
     [Description("invalid-credential-delay")]
     public string InvalidCredentialDelay { get; init; } = string.Empty;
 
@@ -75,4 +75,7 @@ public class AppSettingsSection
 
     [Description("file-log-output-template")]
     public string FileLogOutputTemplate { get; init; } = string.Empty;
+    
+    [Description("ip-white-list")]
+    public string IpWhiteList { get; init; } = string.Empty;
 }

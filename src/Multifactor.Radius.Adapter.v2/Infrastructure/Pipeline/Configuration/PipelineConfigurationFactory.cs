@@ -1,16 +1,16 @@
 using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Steps;
-using Microsoft.Extensions.Caching.Memory;
 using Multifactor.Radius.Adapter.v2.Core.Auth.PreAuthMode;
+using Multifactor.Radius.Adapter.v2.Services.Cache;
 
 namespace Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline;
 
 public class PipelineConfigurationFactory : IPipelineConfigurationFactory
 {
-    private readonly IMemoryCache _memoryCache;
+    private readonly ICacheService _cache;
 
-    public PipelineConfigurationFactory(IMemoryCache memoryCache)
+    public PipelineConfigurationFactory(ICacheService cache)
     {
-        _memoryCache = memoryCache;
+        _cache = cache;
     }
 
     public PipelineConfiguration CreatePipelineConfiguration(IPipelineStepsConfiguration pipelineStepsConfiguration)
@@ -22,13 +22,13 @@ public class PipelineConfigurationFactory : IPipelineConfigurationFactory
         }
 
         PipelineConfiguration newPipeline = BuildNewPipeline(pipelineStepsConfiguration);
-        _memoryCache.Set(pipelineStepsConfiguration.ConfigurationName, newPipeline);
+        _cache.Set(pipelineStepsConfiguration.ConfigurationName, newPipeline);
         return newPipeline;
     }
 
     private PipelineConfiguration? GetExistedPipeline(string pipelineName)
     {
-        if (!_memoryCache.TryGetValue(pipelineName, out PipelineConfiguration? pipeline))
+        if (!_cache.TryGetValue(pipelineName, out PipelineConfiguration? pipeline))
             return null;
 
         return pipeline;
@@ -44,6 +44,7 @@ public class PipelineConfigurationFactory : IPipelineConfigurationFactory
         var pipeline = new List<Type>();
 
         pipeline.Add(typeof(StatusServerFilteringStep));
+        pipeline.Add(typeof(IpWhiteListStep));
         pipeline.Add(typeof(AccessRequestFilteringStep));
         pipeline.Add(typeof(AccessChallengeStep));
         
@@ -68,15 +69,12 @@ public class PipelineConfigurationFactory : IPipelineConfigurationFactory
         var pipeline = new List<Type>();
 
         pipeline.Add(typeof(StatusServerFilteringStep));
-
+        pipeline.Add(typeof(IpWhiteListStep));
         pipeline.Add(typeof(AccessRequestFilteringStep));
-        
+        pipeline.Add(typeof(UserNameValidationStep));
         pipeline.Add(typeof(LdapSchemaLoadingStep));
-
         pipeline.Add(typeof(ProfileLoadingStep));
-
         pipeline.Add(typeof(AccessGroupsCheckingStep));
-
         pipeline.Add(typeof(AccessChallengeStep));
 
         if (pipelineStepsConfiguration.PreAuthMode != PreAuthMode.None)

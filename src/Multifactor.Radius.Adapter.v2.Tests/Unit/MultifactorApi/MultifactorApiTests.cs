@@ -14,7 +14,7 @@ public class MultifactorApiTests
     {
         var clientMock = new Mock<IHttpClient>();
         var api = new Services.MultifactorApi.MultifactorApi(clientMock.Object, NullLogger<Services.MultifactorApi.MultifactorApi>.Instance);
-        await Assert.ThrowsAsync<ArgumentNullException>(() => api.CreateAccessRequest(null, new ApiCredential("key", "secret")));
+        await Assert.ThrowsAsync<ArgumentNullException>(() => api.CreateAccessRequest("url", null, new ApiCredential("key", "secret")));
     }
     
     [Fact]
@@ -22,7 +22,7 @@ public class MultifactorApiTests
     {
         var clientMock = new Mock<IHttpClient>();
         var api = new Services.MultifactorApi.MultifactorApi(clientMock.Object, NullLogger<Services.MultifactorApi.MultifactorApi>.Instance);
-        await Assert.ThrowsAsync<ArgumentNullException>(() => api.CreateAccessRequest(new AccessRequest(), null));
+        await Assert.ThrowsAsync<ArgumentNullException>(() => api.CreateAccessRequest("url", new AccessRequest(), null));
     }
     
     [Fact]
@@ -35,7 +35,7 @@ public class MultifactorApiTests
             .ReturnsAsync(() => null);
         
         var api = new Services.MultifactorApi.MultifactorApi(clientMock.Object, NullLogger<Services.MultifactorApi.MultifactorApi>.Instance);
-        var response = await api.CreateAccessRequest(new AccessRequest(), new ApiCredential("key", "secret"));
+        var response = await api.CreateAccessRequest("url", new AccessRequest(), new ApiCredential("key", "secret"));
         Assert.NotNull(response);
         Assert.Equal(RequestStatus.Denied, response.Status);
     }
@@ -52,7 +52,7 @@ public class MultifactorApiTests
             .ReturnsAsync(() => new MultiFactorApiResponse<AccessRequestResponse>() { Success = success, Model = new AccessRequestResponse() {Status = RequestStatus.Granted} } );
         
         var api = new Services.MultifactorApi.MultifactorApi(clientMock.Object, NullLogger<Services.MultifactorApi.MultifactorApi>.Instance);
-        var response = await api.CreateAccessRequest(new AccessRequest(), new ApiCredential("key", "secret"));
+        var response = await api.CreateAccessRequest("url", new AccessRequest(), new ApiCredential("key", "secret"));
         Assert.NotNull(response);
         Assert.Equal(RequestStatus.Granted, response.Status);
     }
@@ -68,7 +68,7 @@ public class MultifactorApiTests
             .Throws(new HttpRequestException());
         
         var api = new Services.MultifactorApi.MultifactorApi(clientMock.Object, NullLogger<Services.MultifactorApi.MultifactorApi>.Instance);
-        await Assert.ThrowsAsync<MultifactorApiUnreachableException>(() => api.CreateAccessRequest(new AccessRequest(), new ApiCredential("key", "secret")));
+        await Assert.ThrowsAsync<MultifactorApiUnreachableException>(() => api.CreateAccessRequest("url", new AccessRequest(), new ApiCredential("key", "secret")));
     }
     
     [Fact]
@@ -81,13 +81,13 @@ public class MultifactorApiTests
             .Throws(new HttpRequestException(string.Empty, null, HttpStatusCode.TooManyRequests));
         
         var api = new Services.MultifactorApi.MultifactorApi(clientMock.Object, NullLogger<Services.MultifactorApi.MultifactorApi>.Instance);
-        var response = await api.CreateAccessRequest(new AccessRequest(), new ApiCredential("key", "secret"));
+        var response = await api.CreateAccessRequest("url", new AccessRequest(), new ApiCredential("key", "secret"));
         Assert.NotNull(response);
         Assert.Equal(RequestStatus.Denied, response.Status);
     }
     
     [Fact]
-    public async Task SendRequest_TaskCanceledException_ShouldMultifactorApiUnreachableException()
+    public async Task SendRequest_TaskCanceledException_ShouldReturnDenied()
     {
         var clientMock = new Mock<IHttpClient>();
         
@@ -96,7 +96,24 @@ public class MultifactorApiTests
             .Throws(new TaskCanceledException());
         
         var api = new Services.MultifactorApi.MultifactorApi(clientMock.Object, NullLogger<Services.MultifactorApi.MultifactorApi>.Instance);
-        await Assert.ThrowsAsync<MultifactorApiUnreachableException>(() => api.CreateAccessRequest(new AccessRequest(), new ApiCredential("key", "secret")));
+        var response = await api.CreateAccessRequest("url", new AccessRequest(), new ApiCredential("key", "secret"));
+        Assert.NotNull(response);
+        Assert.Equal(RequestStatus.Denied, response.Status);
+    }
+    
+    [Fact]
+    public async Task SendChallenge_TaskCanceledException_ShouldReturnDenied()
+    {
+        var clientMock = new Mock<IHttpClient>();
+        
+        clientMock
+            .Setup(x => x.PostAsync<MultiFactorApiResponse<AccessRequestResponse>>(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<IReadOnlyDictionary<string, string>>()))
+            .Throws(new TaskCanceledException());
+        
+        var api = new Services.MultifactorApi.MultifactorApi(clientMock.Object, NullLogger<Services.MultifactorApi.MultifactorApi>.Instance);
+        var response = await api.SendChallengeAsync("url", new ChallengeRequest(), new ApiCredential("key", "secret"));
+        Assert.NotNull(response);
+        Assert.Equal(RequestStatus.Denied, response.Status);
     }
     
     [Fact]
@@ -109,6 +126,6 @@ public class MultifactorApiTests
             .Throws(new Exception());
         
         var api = new Services.MultifactorApi.MultifactorApi(clientMock.Object, NullLogger<Services.MultifactorApi.MultifactorApi>.Instance);
-        await Assert.ThrowsAsync<MultifactorApiUnreachableException>(() => api.CreateAccessRequest(new AccessRequest(), new ApiCredential("key", "secret")));
+        await Assert.ThrowsAsync<MultifactorApiUnreachableException>(() => api.CreateAccessRequest("url", new AccessRequest(), new ApiCredential("key", "secret")));
     }
 }

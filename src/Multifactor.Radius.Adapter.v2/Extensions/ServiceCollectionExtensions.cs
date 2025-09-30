@@ -2,6 +2,7 @@ using System.Runtime.InteropServices;
 using System.Security.Authentication;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Http.Resilience;
 using Multifactor.Core.Ldap.Connection.LdapConnectionFactory;
 using Multifactor.Core.Ldap.LdapGroup.Load;
 using Multifactor.Core.Ldap.LdapGroup.Membership;
@@ -11,8 +12,7 @@ using Multifactor.Radius.Adapter.v2.Core.Configuration.Client.Build;
 using Multifactor.Radius.Adapter.v2.Core.Configuration.Service;
 using Multifactor.Radius.Adapter.v2.Core.Configuration.Service.Build;
 using Multifactor.Radius.Adapter.v2.Core.FirstFactor;
-using Multifactor.Radius.Adapter.v2.Core.FirstFactor.LdapAuth;
-using Multifactor.Radius.Adapter.v2.Core.FirstFactor.LdapAuth.MsChapV2;
+using Multifactor.Radius.Adapter.v2.Core.FirstFactor.BindNameFormat;
 using Multifactor.Radius.Adapter.v2.Core.Ldap;
 using Multifactor.Radius.Adapter.v2.Core.Radius.Attributes;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configuration.RadiusAdapter.Build;
@@ -23,12 +23,13 @@ using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Builder;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Steps;
 using Multifactor.Radius.Adapter.v2.Server.Udp;
 using Multifactor.Radius.Adapter.v2.Services.AuthenticatedClientCache;
+using Multifactor.Radius.Adapter.v2.Services.Cache;
 using Multifactor.Radius.Adapter.v2.Services.DataProtection;
 using Multifactor.Radius.Adapter.v2.Services.Ldap;
-using Multifactor.Radius.Adapter.v2.Services.LdapForest;
+using Multifactor.Radius.Adapter.v2.Services.Ldap.Forest;
 using Multifactor.Radius.Adapter.v2.Services.MultifactorApi;
-using Multifactor.Radius.Adapter.v2.Services.NetBios;
 using Multifactor.Radius.Adapter.v2.Services.Radius;
+using Polly;
 using Serilog;
 using ILdapConnectionFactory = Multifactor.Radius.Adapter.v2.Core.Ldap.ILdapConnectionFactory;
 
@@ -110,29 +111,38 @@ public static class ServiceCollectionExtensions
     {
         services.AddSingleton<IHttpClient, MultifactorHttpClient>();
         services.AddHttpClient(nameof(MultifactorHttpClient), (prov, client) =>
-        {
-            var config = prov.GetRequiredService<IServiceConfiguration>();
-            client.BaseAddress = new Uri(config.ApiUrl);
-            client.Timeout = config.ApiTimeout;
-        }).ConfigurePrimaryHttpMessageHandler(prov =>
-        {
-            var config = prov.GetRequiredService<IServiceConfiguration>();
-            var handler = new HttpClientHandler
             {
-                MaxConnectionsPerServer = 100,
-                SslProtocols = SslProtocols.Tls13 | SslProtocols.Tls12
-            };
-            
-            if (string.IsNullOrWhiteSpace(config.ApiProxy))
+                var config = prov.GetRequiredService<IServiceConfiguration>();
+                client.Timeout = config.ApiTimeout;
+            }).ConfigurePrimaryHttpMessageHandler(prov =>
+            {
+                var config = prov.GetRequiredService<IServiceConfiguration>();
+                var handler = new HttpClientHandler
+                {
+                    MaxConnectionsPerServer = 100,
+                    SslProtocols = SslProtocols.Tls13 | SslProtocols.Tls12
+                };
+
+                if (string.IsNullOrWhiteSpace(config.ApiProxy))
+                    return handler;
+
+                if (!WebProxyFactory.TryCreateWebProxy(config.ApiProxy, out var webProxy))
+                    throw new Exception(
+                        "Unable to initialize WebProxy. Please, check whether multifactor-api-proxy URI is valid.");
+
+                handler.Proxy = webProxy;
+
                 return handler;
-            
-            if (!WebProxyFactory.TryCreateWebProxy(config.ApiProxy, out var webProxy))
-                throw new Exception("Unable to initialize WebProxy. Please, check whether multifactor-api-proxy URI is valid.");
-
-            handler.Proxy = webProxy;
-
-            return handler;
-        });
+            })
+            .AddResilienceHandler("mf-api-pipeline", x =>
+            {
+                x.AddRetry(new HttpRetryStrategyOptions
+                {
+                    MaxRetryAttempts = 2,
+                    Delay = TimeSpan.FromSeconds(1),
+                    BackoffType = DelayBackoffType.Exponential
+                });
+            });
     }
 
     public static void AddRadiusDictionary(this IServiceCollection services)
@@ -170,11 +180,14 @@ public static class ServiceCollectionExtensions
         services.AddTransient<PreAuthCheckStep>();
         services.AddTransient<PreAuthPostCheck>();
         services.AddTransient<UserGroupLoadingStep>();
+        services.AddTransient<UserNameValidationStep>();
+        services.AddTransient<IpWhiteListStep>();
     }
 
     public static void AddLdapSchemaLoader(this IServiceCollection services)
     {
         services.AddSingleton<LdapSchemaLoader>();
+        services.AddTransient<ILdapSchemeLoaderWrapper, LdapSchemaLoaderWrapper>();
         services.AddSingleton<ILdapSchemaLoader, CustomLdapSchemaLoader>();
     }
 
@@ -196,26 +209,29 @@ public static class ServiceCollectionExtensions
     public static void AddServices(this IServiceCollection services)
     {
         services.AddTransient<IRadiusPacketService, RadiusPacketService>();
-        
+        services.AddSingleton<IRadiusClientFactory, RadiusClientFactory>();
+
         services.AddSingleton<IAuthenticatedClientCache, AuthenticatedClientCache>();
-        
+
         services.AddSingleton(LdapConnectionFactory.Create());
         services.AddSingleton<ILdapConnectionFactory, CustomLdapConnectionFactory>((prov) => new CustomLdapConnectionFactory());
-        
+
         services.AddSingleton<ILdapGroupLoaderFactory, LdapGroupLoaderFactory>();
         services.AddSingleton<IMembershipCheckerFactory, MembershipCheckerFactory>();
         services.AddTransient<ILdapGroupService, LdapGroupService>();
         
-        services.AddSingleton<IForestMetadataCache, ForestMetadataCache>();
         services.AddTransient<ILdapProfileService, LdapProfileService>();
 
         services.AddTransient<IMultifactorApi, MultifactorApi>();
         services.AddSingleton<IAuthenticatedClientCache, AuthenticatedClientCache>();
         services.AddTransient<IMultifactorApiService, MultifactorApiService>();
-        services.AddTransient<INetBiosService, NetBiosService>();
 
         services.AddTransient<IRadiusReplyAttributeService, RadiusReplyAttributeService>();
         services.AddTransient<IRadiusAttributeTypeConverter, RadiusAttributeTypeConverter>();
+        services.AddTransient<IRadiusPacketProcessor, RadiusPacketProcessor>();
+        AddTrustedDomains(services);
+        services.AddSingleton<ICacheService, CacheService>();
+        AddLdapBindNameFormation(services);
     }
 
     public static void AddAdapterLogging(this IServiceCollection services)
@@ -225,5 +241,23 @@ public static class ServiceCollectionExtensions
         Log.Logger = logger;
 
         services.AddSerilog();
+    }
+
+    private static void AddLdapBindNameFormation(IServiceCollection services)
+    {
+        services.AddSingleton<ILdapBindNameFormatterProvider, LdapBindNameFormatterProvider>();
+        services.AddTransient<ILdapBindNameFormatter, ActiveDirectoryFormatter>();
+        services.AddTransient<ILdapBindNameFormatter, FreeIpaFormatter>();
+        services.AddTransient<ILdapBindNameFormatter, MultiDirectoryFormatter>();
+        services.AddTransient<ILdapBindNameFormatter, OpenLdapFormatter>();
+        services.AddTransient<ILdapBindNameFormatter, SambaFormatter>();
+    }
+
+    private static void AddTrustedDomains(this IServiceCollection services)
+    {
+        services.AddTransient<ILdapServerConfigurationService, LdapServerConfigurationService>();
+        services.AddTransient<ILdapForestService, LdapForestService>();
+        services.AddSingleton<ILdapForestLoaderProvider, LdapForestLoaderProvider>();
+        services.AddTransient<ILdapForestLoader, ActiveDirectoryLdapForestLoader>();
     }
 }

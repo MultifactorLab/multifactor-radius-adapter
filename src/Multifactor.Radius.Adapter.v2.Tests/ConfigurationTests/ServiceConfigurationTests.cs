@@ -29,9 +29,10 @@ public class ServiceConfigurationTests
     public void SetApiUrl_ShouldSet()
     {
         var configuration = new ServiceConfiguration();
-        configuration.SetApiUrl("url");
-
-        Assert.Equal("url", configuration.ApiUrl);
+        configuration.AddApiUrl("url");
+        Assert.Single(configuration.ApiUrls);
+        var apiUrl = configuration.ApiUrls[0];
+        Assert.Equal("url", apiUrl);
     }
 
     [Fact]

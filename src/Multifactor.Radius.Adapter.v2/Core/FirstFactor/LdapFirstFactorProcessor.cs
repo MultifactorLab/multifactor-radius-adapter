@@ -2,7 +2,6 @@ using Microsoft.Extensions.Logging;
 using Multifactor.Core.Ldap.LangFeatures;
 using Multifactor.Radius.Adapter.v2.Core.Auth;
 using Multifactor.Radius.Adapter.v2.Core.FirstFactor.LdapAuth;
-using Multifactor.Radius.Adapter.v2.Core.Radius.Packet;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Context;
 
 
@@ -10,8 +9,9 @@ namespace Multifactor.Radius.Adapter.v2.Core.FirstFactor;
 
 public class LdapFirstFactorProcessor : IFirstFactorProcessor
 {
-    private readonly ILogger<LdapFirstFactorProcessor> _logger;
     private readonly ILdapAuthProvider _authProvider;
+    private readonly ILogger<LdapFirstFactorProcessor> _logger;
+
     public AuthenticationSource AuthenticationSource => AuthenticationSource.Ldap;
 
     public LdapFirstFactorProcessor(ILdapAuthProvider authProvider, ILogger<LdapFirstFactorProcessor> logger)

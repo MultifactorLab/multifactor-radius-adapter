@@ -87,7 +87,7 @@ public class BypassWhenApiUnreachableTests(RadiusFixtures radiusFixtures) : E2ET
         var secondFactorMock = new Mock<IMultifactorApi>();
 
         secondFactorMock
-            .Setup(x => x.CreateAccessRequest(It.IsAny<AccessRequest>(), It.IsAny<ApiCredential>()))
+            .Setup(x => x.CreateAccessRequest(It.IsAny<string>(), It.IsAny<AccessRequest>(), It.IsAny<ApiCredential>()))
             .ThrowsAsync(new MultifactorApiUnreachableException());
 
         var hostConfiguration = (HostApplicationBuilder builder) =>
@@ -120,7 +120,7 @@ public class BypassWhenApiUnreachableTests(RadiusFixtures radiusFixtures) : E2ET
         var secondFactorMock = new Mock<IMultifactorApi>();
 
         secondFactorMock
-            .Setup(x => x.CreateAccessRequest(It.IsAny<AccessRequest>(), It.IsAny<ApiCredential>()))
+            .Setup(x => x.CreateAccessRequest(It.IsAny<string>(), It.IsAny<AccessRequest>(), It.IsAny<ApiCredential>()))
             .ThrowsAsync(new MultifactorApiUnreachableException());
 
         var hostConfiguration = (HostApplicationBuilder builder) =>
@@ -153,7 +153,7 @@ public class BypassWhenApiUnreachableTests(RadiusFixtures radiusFixtures) : E2ET
         var secondFactorMock = new Mock<IMultifactorApi>();
 
         secondFactorMock
-            .Setup(x => x.CreateAccessRequest(It.IsAny<AccessRequest>(), It.IsAny<ApiCredential>()))
+            .Setup(x => x.CreateAccessRequest(It.IsAny<string>(), It.IsAny<AccessRequest>(), It.IsAny<ApiCredential>()))
             .ThrowsAsync(new MultifactorApiUnreachableException());
 
         var hostConfiguration = (HostApplicationBuilder builder) =>

@@ -4,6 +4,7 @@ using Multifactor.Radius.Adapter.v2.Core.Auth.PreAuthMode;
 using Multifactor.Radius.Adapter.v2.Core.MultifactorApi;
 using Multifactor.Radius.Adapter.v2.Core.MultifactorApi.PrivacyMode;
 using Multifactor.Radius.Adapter.v2.Core.RandomWaiterFeature;
+using NetTools;
 
 namespace Multifactor.Radius.Adapter.v2.Core.Configuration.Client;
 
@@ -16,7 +17,8 @@ public interface IClientConfiguration
     AuthenticationSource FirstFactorAuthenticationSource { get; }
     ApiCredential ApiCredential { get; }
     string Name { get; }
-    IPEndPoint NpsServerEndpoint { get; }
+    IReadOnlySet<IPEndPoint> NpsServerEndpoints { get; }
+    TimeSpan NpsServerTimeout { get; }
     PrivacyModeDescriptor PrivacyMode { get; }
     IReadOnlyDictionary<string, RadiusReplyAttributeValue[]> RadiusReplyAttributes { get; }
     string RadiusSharedSecret { get; }
@@ -25,4 +27,6 @@ public interface IClientConfiguration
     UserNameTransformRules UserNameTransformRules { get; }
     RandomWaiterConfig InvalidCredentialDelay { get; }
     PreAuthModeDescriptor PreAuthnMode { get; }
+    IReadOnlyList<IPAddressRange> IpWhiteList { get; }
+    IReadOnlyList<string> ApiUrls { get; }
 }

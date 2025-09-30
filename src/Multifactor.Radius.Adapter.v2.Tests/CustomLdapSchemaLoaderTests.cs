@@ -9,7 +9,7 @@ using Multifactor.Radius.Adapter.v2.Tests.Fixture;
 
 namespace Multifactor.Radius.Adapter.v2.Tests;
 
-[Collection("ActiveDirectory")]
+[Collection("LDAP")]
 public class CustomLdapSchemaLoaderTests
 {
     [Fact]
@@ -17,7 +17,8 @@ public class CustomLdapSchemaLoaderTests
     {
         var config = GetConfig();
         var loader = new LdapSchemaLoader(LdapConnectionFactory.Create());
-        var customLdapSchemaLoader = new CustomLdapSchemaLoader(loader, NullLogger<ILdapSchemaLoader>.Instance);
+        var wrapper = new LdapSchemaLoaderWrapper(loader);
+        var customLdapSchemaLoader = new CustomLdapSchemaLoader(wrapper, NullLogger<ILdapSchemaLoader>.Instance);
         var connectionOptions = new LdapConnectionOptions(
             new LdapConnectionString(config["ConnectionString"]),
             AuthType.Basic,

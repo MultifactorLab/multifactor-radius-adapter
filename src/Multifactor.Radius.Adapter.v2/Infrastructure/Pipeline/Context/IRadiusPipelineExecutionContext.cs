@@ -11,6 +11,7 @@ using Multifactor.Radius.Adapter.v2.Core.Pipeline;
 using Multifactor.Radius.Adapter.v2.Core.Radius;
 using Multifactor.Radius.Adapter.v2.Core.Radius.Packet;
 using Multifactor.Radius.Adapter.v2.Core.RandomWaiterFeature;
+using NetTools;
 
 namespace Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Context;
 
@@ -23,8 +24,8 @@ public interface IRadiusPipelineExecutionContext
     IResponseInformation ResponseInformation { get; set; }
     IExecutionState ExecutionState { get; }
     string? MustChangePasswordDomain { get; set; }
-    IPEndPoint RemoteEndpoint { get; set; }
-    IPEndPoint? ProxyEndpoint { get; set; }
+    IPEndPoint RemoteEndpoint { get; }
+    IPEndPoint? ProxyEndpoint { get; }
     ILdapSchema? LdapSchema { get; set; }
     UserPassphrase Passphrase { get; set; }
     HashSet<string> UserGroups { get; set; }
@@ -33,7 +34,8 @@ public interface IRadiusPipelineExecutionContext
     bool BypassSecondFactorWhenApiUnreachable { get; }
     AuthenticationSource FirstFactorAuthenticationSource { get; }
     ApiCredential ApiCredential { get; }
-    IPEndPoint NpsServerEndpoint { get; }
+    IReadOnlySet<IPEndPoint> NpsServerEndpoints { get; }
+    TimeSpan NpsServerTimeout { get; }
     PrivacyModeDescriptor PrivacyMode { get; }
     IReadOnlyDictionary<string, RadiusReplyAttributeValue[]> RadiusReplyAttributes { get; }
     IPEndPoint ServiceClientEndpoint { get; }
@@ -43,4 +45,7 @@ public interface IRadiusPipelineExecutionContext
     PreAuthModeDescriptor PreAuthnMode { get; }
     string ClientConfigurationName { get; }
     SharedSecret RadiusSharedSecret { get; }
+    IReadOnlyCollection<IPAddressRange> IpWhiteList { get; }
+    IReadOnlyList<string> ApiUrls { get; }
+    bool IsDomainAccount { get; }
 }

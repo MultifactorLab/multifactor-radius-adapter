@@ -1,5 +1,7 @@
-﻿using System.Net;
+﻿using System.Globalization;
+using System.Net;
 using System.Text.RegularExpressions;
+using Multifactor.Core.Ldap.Name;
 using Multifactor.Radius.Adapter.v2.Core.Auth;
 using Multifactor.Radius.Adapter.v2.Core.Auth.PreAuthMode;
 using Multifactor.Radius.Adapter.v2.Core.Configuration.Service;
@@ -9,10 +11,11 @@ using Multifactor.Radius.Adapter.v2.Core.RandomWaiterFeature;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configuration;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configuration.Exceptions;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configuration.RadiusAdapter;
-using Multifactor.Radius.Adapter.v2.Infrastructure.Configuration.RadiusAdapter.Sections;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configuration.RadiusAdapter.Sections.LdapServer;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configuration.RadiusAdapter.Sections.RadiusReply;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configuration.RadiusAdapter.Sections.UserNameTransform;
+using NetTools;
+using AppSettingsSection = Multifactor.Radius.Adapter.v2.Infrastructure.Configuration.RadiusAdapter.Sections.AppSettingsSection;
 
 namespace Multifactor.Radius.Adapter.v2.Core.Configuration.Client.Build;
 
@@ -44,13 +47,16 @@ public class ClientConfigurationFactory : IClientConfigurationFactory
         var firstFactorAuthenticationSource = Enum.Parse<AuthenticationSource>(
             appSettings.FirstFactorAuthenticationSource,
             true);
-
+        
+        var appSettingsUrls = Utils.SplitString(appSettings.MultifactorApiUrl);
+        var mfUrls = serviceConfig.ApiUrls.Count > 0 ? serviceConfig.ApiUrls : appSettingsUrls;
         var builder = new ClientConfiguration(
             name,
             appSettings.RadiusSharedSecret,
             firstFactorAuthenticationSource,
             appSettings.MultifactorNasIdentifier,
-            appSettings.MultifactorSharedSecret);
+            appSettings.MultifactorSharedSecret,
+            mfUrls);
 
         builder.SetBypassSecondFactorWhenApiUnreachable(appSettings.BypassSecondFactorWhenApiUnreachable);
 
@@ -63,7 +69,8 @@ public class ClientConfigurationFactory : IClientConfigurationFactory
         
         ReadLdapServersSettings(builder, configuration.LdapServers);
         ReadRadiusReplyAttributes(builder, _dictionary, configuration.RadiusReply);
-
+        ReadIpWhiteListSetting(builder, configuration.AppSettings.IpWhiteList);    
+        
         LoadUserNameTransformRulesSection(configuration, builder);
 
         ReadSignUpGroupsSettings(builder, appSettings);
@@ -92,16 +99,8 @@ public class ClientConfigurationFactory : IClientConfigurationFactory
                 ldapSettings.ConnectionString,
                 ldapSettings.UserName,
                 ldapSettings.Password);
-
-            ldapConfig
-                .AddPhoneAttributes(Utils.SplitString(ldapSettings.PhoneAttributes.ToLower()))
-                .AddAccessGroups(Utils.SplitString(ldapSettings.AccessGroups.ToLower()))
-                .AddSecondFaGroups(Utils.SplitString(ldapSettings.SecondFaGroups.ToLower()))
-                .AddSecondFaBypassGroups(Utils.SplitString(ldapSettings.SecondFaBypassGroups.ToLower()))
-                .AddNestedGroupBaseDns(Utils.SplitString(ldapSettings.NestedGroupsBaseDn.ToLower()))
-                .SetIdentityAttribute(ldapSettings.IdentityAttribute)
-                .SetLoadNestedGroups(ldapSettings.LoadNestedGroups)
-                .SetBindTimeoutInSeconds(ldapSettings.BindTimeoutInSeconds);
+            var settings = new LdapServerInitializeRequest(ldapSettings);
+            ldapConfig.Initialize(settings);
 
             builder.AddLdapServers(ldapConfig);
         }
@@ -219,16 +218,29 @@ public class ClientConfigurationFactory : IClientConfigurationFactory
                 builder.Name);
         }
 
-        if (!IPEndPointFactory.TryParse(appSettings.NpsServerEndpoint, out var npsEndpoint))
+        var npsServers = Utils.SplitString(appSettings.NpsServerEndpoint);
+        foreach (var server in npsServers)
         {
-            throw InvalidConfigurationException.For(
-                x => x.AppSettings.NpsServerEndpoint,
-                "Can't parse '{prop}' value. Config name: '{0}'",
-                builder.Name);
+            if (!IPEndPointFactory.TryParse(server, out var npsEndpoint))
+                throw new InvalidConfigurationException($"Config name: '{builder.Name}'. Invalid NPS server endpoint: '{server}'"); 
+            
+            builder.AddNpsServerEndpoint(npsEndpoint);
         }
-
+        
+        var timeoutStr = appSettings.NpsServerTimeout;
+        if (!string.IsNullOrWhiteSpace(timeoutStr))
+        {
+            if (TimeSpan.TryParseExact(timeoutStr, @"hh\:mm\:ss", null, TimeSpanStyles.None, out var npsServerTimeout))
+            {
+                builder.SetNpsServerTimeout(npsServerTimeout);
+            }
+            else
+            {
+                throw new InvalidConfigurationException($"Config name: '{builder.Name}'. Invalid NPS server timeout: '{timeoutStr}'"); 
+            }
+        }
+        
         builder.SetServiceClientEndpoint(serviceClientEndpoint);
-        builder.SetNpsServerEndpoint(npsEndpoint);
     }
 
     private static void ReadSignUpGroupsSettings(ClientConfiguration builder, AppSettingsSection appSettings)
@@ -257,9 +269,7 @@ public class ClientConfigurationFactory : IClientConfigurationFactory
     {
         try
         {
-            var ltConf = AuthenticatedClientCacheConfig.Create(
-                appSettings.AuthenticationCacheLifetime,
-                appSettings.AuthenticationCacheMinimalMatching);
+            var ltConf = AuthenticatedClientCacheConfig.Create(appSettings.AuthenticationCacheLifetime);
             builder.SetAuthenticationCacheLifetime(ltConf);
         }
         catch
@@ -331,6 +341,18 @@ public class ClientConfigurationFactory : IClientConfigurationFactory
             DictionaryAttribute.TypeOctet => Utils.StringToByteArray(value),
             _ => throw new Exception($"Unknown type {attribute.Type}")
         };
+    }
+
+    private static void ReadIpWhiteListSetting(ClientConfiguration builder, string ipWhiteList)
+    {
+        var splittedRanges = Utils.SplitString(ipWhiteList);
+        
+        foreach (var range in splittedRanges)
+        {
+            if (!IPAddressRange.TryParse(range, out var ipAddressRange))
+                throw new InvalidConfigurationException($"Invalid IP address range: '{range}' in '{builder.Name}' config");
+            builder.AddWhiteIpRange(ipAddressRange);
+        }
     }
 
     private void ValidateAppSettings(AppSettingsSection appSettings, string configName)
@@ -409,6 +431,22 @@ public class ClientConfigurationFactory : IClientConfigurationFactory
                     "Can't parse '{prop}' value. Config name: '{0}'",
                     configName);
             }
+            
+            var serverName = server.ConnectionString;
+            if (server is { EnableTrustedDomains: true, RequiresUpn: false })
+                throw new InvalidConfigurationException($"Config name: '{configName}', LDAP server: '{serverName}'. To use trusted domains also set 'requires-upn' to 'true'."); 
+
+            if (!string.IsNullOrWhiteSpace(server.IncludedDomains) && !string.IsNullOrWhiteSpace(server.ExcludedDomains))
+                throw new InvalidConfigurationException($"Config name: '{configName}', LDAP server: '{serverName}'. Simultaneous use of 'included-domains' and 'excluded-domains' is not allowed."); 
+
+            if (!string.IsNullOrWhiteSpace(server.IncludedSuffixes) && !string.IsNullOrWhiteSpace(server.ExcludedSuffixes))
+                throw new InvalidConfigurationException($"Config name: '{configName}', LDAP server: '{serverName}'. Simultaneous use of 'included-suffixes' and 'excluded-suffixes' is not allowed.");
+            
+            ValidateDnFormat(configName, serverName, Utils.SplitString(server.AccessGroups));
+            ValidateDnFormat(configName, serverName, Utils.SplitString(server.AuthenticationCacheGroups));
+            ValidateDnFormat(configName, serverName, Utils.SplitString(server.SecondFaGroups));
+            ValidateDnFormat(configName, serverName, Utils.SplitString(server.SecondFaBypassGroups));
+            ValidateDnFormat(configName, serverName, Utils.SplitString(server.NestedGroupsBaseDn));
         }
     }
 
@@ -427,5 +465,20 @@ public class ClientConfigurationFactory : IClientConfigurationFactory
         var ldapFirstFactor = builder.FirstFactorAuthenticationSource == AuthenticationSource.Ldap;
         var hasReplyAttributesFromLdap = builder.RadiusReplyAttributes.Values.SelectMany(x => x).Any(x => x.FromLdap || x.IsMemberOf || x.UserGroupCondition.Count > 0);
         return ldapFirstFactor || hasReplyAttributesFromLdap;
+    }
+
+    private static void ValidateDnFormat(string configName, string serverName, IEnumerable<string> groups)
+    {
+        foreach (var group in groups)
+        {
+            try
+            {
+                new DistinguishedName(group);
+            }
+            catch (ArgumentException)
+            {
+                throw new InvalidConfigurationException($"Config name: '{configName}', LDAP server: '{serverName}'. Invalid format: {group}. Distinguished name is required.");
+            }
+        }
     }
 }

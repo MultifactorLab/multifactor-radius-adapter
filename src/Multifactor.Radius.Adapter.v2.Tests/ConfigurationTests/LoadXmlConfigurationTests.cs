@@ -81,7 +81,6 @@ public class LoadXmlConfigurationTests
         Assert.Equal("privacy-mode", config.AppSettings.PrivacyMode);
         Assert.Equal("pre-authentication-method", config.AppSettings.PreAuthenticationMethod);
         Assert.Equal("authentication-cache-lifetime", config.AppSettings.AuthenticationCacheLifetime);
-        Assert.True(config.AppSettings.AuthenticationCacheMinimalMatching);
         Assert.Equal("invalid-credential-delay", config.AppSettings.InvalidCredentialDelay);
         Assert.Equal("calling-station-id-attribute", config.AppSettings.CallingStationIdAttribute);
         Assert.Equal("multifactor-api-url", config.AppSettings.MultifactorApiUrl);

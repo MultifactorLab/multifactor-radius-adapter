@@ -2,7 +2,6 @@ using System.DirectoryServices.Protocols;
 using Moq;
 using Multifactor.Core.Ldap;
 using Multifactor.Core.Ldap.Connection;
-using Multifactor.Core.Ldap.Connection.LdapConnectionFactory;
 using Multifactor.Core.Ldap.Name;
 using Multifactor.Core.Ldap.Schema;
 using Multifactor.Radius.Adapter.v2.Core.Ldap;
@@ -11,13 +10,13 @@ using Multifactor.Radius.Adapter.v2.Tests.Fixture;
 
 namespace Multifactor.Radius.Adapter.v2.Tests;
 
-[Collection("ActiveDirectory")]
+[Collection("LDAP")]
 public class LdapPasswordChangerTests
 {
     [Fact]
     public async Task ChangePassword_ShouldChange()
     {
-        var factory = LdapConnectionFactory.Create();
+        var factory = new CustomLdapConnectionFactory();
 
         var sensitiveData = GetConfig();
 
@@ -62,7 +61,7 @@ public class LdapPasswordChangerTests
     [Fact]
     public async Task ChangePassword_UnsuccessfulResponseCode_ShouldFailed()
     {
-        var factory = LdapConnectionFactory.Create();
+        var factory = new CustomLdapConnectionFactory();
 
         var sensitiveData = GetConfig();
 

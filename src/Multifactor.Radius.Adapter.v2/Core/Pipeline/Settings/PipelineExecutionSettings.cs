@@ -7,6 +7,7 @@ using Multifactor.Radius.Adapter.v2.Core.MultifactorApi;
 using Multifactor.Radius.Adapter.v2.Core.MultifactorApi.PrivacyMode;
 using Multifactor.Radius.Adapter.v2.Core.Radius;
 using Multifactor.Radius.Adapter.v2.Core.RandomWaiterFeature;
+using NetTools;
 
 namespace Multifactor.Radius.Adapter.v2.Core.Pipeline.Settings;
 
@@ -19,7 +20,8 @@ public class PipelineExecutionSettings : IPipelineExecutionSettings
     public bool BypassSecondFactorWhenApiUnreachable => _configuration.BypassSecondFactorWhenApiUnreachable;
     public AuthenticationSource FirstFactorAuthenticationSource => _configuration.FirstFactorAuthenticationSource;
     public ApiCredential ApiCredential => _configuration.ApiCredential;
-    public IPEndPoint NpsServerEndpoint => _configuration.NpsServerEndpoint;
+    public IReadOnlySet<IPEndPoint> NpsServerEndpoints => _configuration.NpsServerEndpoints;
+    public TimeSpan NpsServerTimeout => _configuration.NpsServerTimeout;
     public PrivacyModeDescriptor PrivacyMode => _configuration.PrivacyMode;
     public IReadOnlyDictionary<string, RadiusReplyAttributeValue[]> RadiusReplyAttributes => _configuration.RadiusReplyAttributes;
     public IPEndPoint ServiceClientEndpoint => _configuration.ServiceClientEndpoint;
@@ -28,6 +30,8 @@ public class PipelineExecutionSettings : IPipelineExecutionSettings
     public RandomWaiterConfig InvalidCredentialDelay => _configuration.InvalidCredentialDelay;
     public PreAuthModeDescriptor PreAuthnMode => _configuration.PreAuthnMode;
     public SharedSecret RadiusSharedSecret => _sharedSecret;
+    public IReadOnlyList<string> ApiUrls => _configuration.ApiUrls;
+    public IReadOnlyList<IPAddressRange> IpWhiteList => _configuration.IpWhiteList;
     public string ClientConfigurationName => _configuration.Name;
     
     public PipelineExecutionSettings(IClientConfiguration clientConfiguration, ILdapServerConfiguration? ldapServerConfiguration = null)

@@ -6,6 +6,7 @@ using Multifactor.Radius.Adapter.v2.Core.MultifactorApi;
 using Multifactor.Radius.Adapter.v2.Core.MultifactorApi.PrivacyMode;
 using Multifactor.Radius.Adapter.v2.Core.Radius;
 using Multifactor.Radius.Adapter.v2.Core.RandomWaiterFeature;
+using NetTools;
 
 namespace Multifactor.Radius.Adapter.v2.Core.Pipeline.Settings;
 
@@ -16,7 +17,8 @@ public interface IPipelineExecutionSettings
     bool BypassSecondFactorWhenApiUnreachable { get; }
     AuthenticationSource FirstFactorAuthenticationSource { get; }
     ApiCredential ApiCredential { get; }
-    IPEndPoint NpsServerEndpoint { get; }
+    IReadOnlySet<IPEndPoint> NpsServerEndpoints { get; }
+    TimeSpan NpsServerTimeout { get; }
     PrivacyModeDescriptor PrivacyMode { get; }
     IReadOnlyDictionary<string, RadiusReplyAttributeValue[]> RadiusReplyAttributes { get; }
     IPEndPoint ServiceClientEndpoint { get; }
@@ -26,4 +28,6 @@ public interface IPipelineExecutionSettings
     PreAuthModeDescriptor PreAuthnMode { get; }
     string ClientConfigurationName { get; }
     SharedSecret RadiusSharedSecret { get; }
+    IReadOnlyList<IPAddressRange> IpWhiteList { get; }
+    IReadOnlyList<string> ApiUrls { get; }
 }

@@ -5,7 +5,7 @@ namespace Multifactor.Radius.Adapter.v2.Services.Radius;
 
 public interface IRadiusPacketService
 {
-    RadiusPacket Parse(byte[] packetBytes, SharedSecret sharedSecret, RadiusAuthenticator requestAuthenticator = null);
+    IRadiusPacket Parse(byte[] packetBytes, SharedSecret sharedSecret, RadiusAuthenticator requestAuthenticator = null);
     RadiusPacket CreateResponsePacket(IRadiusPacket radiusPacket, PacketCode responsePacketCode);
     byte[] GetBytes(IRadiusPacket packet, SharedSecret sharedSecret);
     bool TryGetNasIdentifier(byte[] packetBytes, out string nasIdentifier);

@@ -8,11 +8,10 @@ namespace Multifactor.Radius.Adapter.v2.Services.AuthenticatedClientCache;
     {
         // TODO ConcurrentDictionary -> MemoryCache
         private readonly ConcurrentDictionary<string, AuthenticatedClient> _authenticatedClients = new();
-        private readonly ILogger _logger;
+        private readonly ILogger<AuthenticatedClientCache> _logger;
 
         public AuthenticatedClientCache(ILogger<AuthenticatedClientCache> logger)
         {
-            ArgumentNullException.ThrowIfNull(logger);
             _logger = logger;
         }
 
@@ -24,9 +23,9 @@ namespace Multifactor.Radius.Adapter.v2.Services.AuthenticatedClientCache;
             if (!cacheConfig.Enabled)
                 return false;
 
-            if (!cacheConfig.MinimalMatching && string.IsNullOrWhiteSpace(callingStationId))
+            if (string.IsNullOrWhiteSpace(callingStationId))
             {
-                _logger.LogWarning("Remote host parameter miss for user {userName:l}", userName);
+                _logger.LogError("Remote host parameter miss for user {userName:l}", userName);
                 return false;
             }
 
@@ -49,11 +48,20 @@ namespace Multifactor.Radius.Adapter.v2.Services.AuthenticatedClientCache;
             ArgumentNullException.ThrowIfNull(cacheConfig);
             ArgumentException.ThrowIfNullOrWhiteSpace(clientName);
             
-            if (!cacheConfig.Enabled || !cacheConfig.MinimalMatching && string.IsNullOrWhiteSpace(callingStationId))
+            if (!cacheConfig.Enabled || string.IsNullOrWhiteSpace(callingStationId))
                 return;
 
             var client = AuthenticatedClient.Create(callingStationId, clientName, userName);
+            var added = false;
             if (!_authenticatedClients.ContainsKey(client.Id))
-                _authenticatedClients.TryAdd(client.Id, client);
+                added = _authenticatedClients.TryAdd(client.Id, client);
+
+            if (added)
+            {
+                var expirationDate = DateTimeOffset.Now.Add(cacheConfig.Lifetime);
+                _logger.LogDebug("Authentication for user '{userName}' is saved in cache till '{expiration}' with key '{key}'", userName, expirationDate.ToString(), client.Id);
+            }
+            else
+                _logger.LogWarning("Failed to save user '{userName}' with key '{key}' to cache", userName, client.Id);
         }
     }

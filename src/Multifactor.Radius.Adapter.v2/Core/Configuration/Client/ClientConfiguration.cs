@@ -4,20 +4,25 @@ using Multifactor.Radius.Adapter.v2.Core.Auth.PreAuthMode;
 using Multifactor.Radius.Adapter.v2.Core.MultifactorApi;
 using Multifactor.Radius.Adapter.v2.Core.MultifactorApi.PrivacyMode;
 using Multifactor.Radius.Adapter.v2.Core.RandomWaiterFeature;
+using NetTools;
 
 namespace Multifactor.Radius.Adapter.v2.Core.Configuration.Client;
 
 public class ClientConfiguration : IClientConfiguration
 {
     private readonly List<ILdapServerConfiguration> _ldapServers = new();
+    private readonly List<IPAddressRange> _ipWhiteList = new();
+    private readonly HashSet<IPEndPoint> _npsServers = new();
 
     public IReadOnlyList<ILdapServerConfiguration> LdapServers => _ldapServers;
+    public IReadOnlyList<string> ApiUrls { get; }
 
     public ClientConfiguration(string name,
         string rdsSharedSecret,
         AuthenticationSource firstFactorAuthSource,
         string apiKey,
-        string apiSecret)
+        string apiSecret,
+        IEnumerable<string> apiUrls)
     {
         if (string.IsNullOrWhiteSpace(name))
             throw new ArgumentException($"'{nameof(name)}' cannot be null or whitespace.", nameof(name));
@@ -31,6 +36,10 @@ public class ClientConfiguration : IClientConfiguration
 
         if (string.IsNullOrWhiteSpace(apiSecret))
             throw new ArgumentException($"'{nameof(apiSecret)}' cannot be null or whitespace.", nameof(apiSecret));
+        
+        var urls = apiUrls?.ToList();
+        if (urls is null || urls.Count == 0)
+            throw new ArgumentException($"'{nameof(apiUrls)}' cannot be null or empty.", nameof(apiUrls));
 
         BypassSecondFactorWhenApiUnreachable = true; //by default
 
@@ -38,6 +47,7 @@ public class ClientConfiguration : IClientConfiguration
         RadiusSharedSecret = rdsSharedSecret;
         FirstFactorAuthenticationSource = firstFactorAuthSource;
         ApiCredential = new ApiCredential(apiKey, apiSecret);
+        ApiUrls = urls;
     }
 
     /// <summary>
@@ -62,6 +72,8 @@ public class ClientConfiguration : IClientConfiguration
     /// </summary>
     public bool BypassSecondFactorWhenApiUnreachable { get; private set; }
 
+    public TimeSpan NpsServerTimeout { get; private set; } = TimeSpan.FromSeconds(5);
+    
     public PrivacyModeDescriptor PrivacyMode { get; private set; } = PrivacyModeDescriptor.Default;
 
     /// <summary>
@@ -72,7 +84,7 @@ public class ClientConfiguration : IClientConfiguration
     /// <summary>
     /// Network Policy Service RADIUS UDP Server endpoint
     /// </summary>
-    public IPEndPoint NpsServerEndpoint { get; private set; }
+    public IReadOnlySet<IPEndPoint> NpsServerEndpoints => _npsServers;
 
     /// <summary>
     /// Groups to assign to the registered user.Specified groups will be assigned to a new user.
@@ -108,6 +120,7 @@ public class ClientConfiguration : IClientConfiguration
 
     public RandomWaiterConfig InvalidCredentialDelay { get; private set; }
     public PreAuthModeDescriptor PreAuthnMode { get; private set; } = PreAuthModeDescriptor.Default;
+    public IReadOnlyList<IPAddressRange> IpWhiteList => _ipWhiteList;
 
     public ClientConfiguration SetBypassSecondFactorWhenApiUnreachable(bool val)
     {
@@ -127,9 +140,19 @@ public class ClientConfiguration : IClientConfiguration
         return this;
     }
 
-    public ClientConfiguration SetNpsServerEndpoint(IPEndPoint val)
+    public ClientConfiguration AddNpsServerEndpoint(IPEndPoint val)
     {
-        NpsServerEndpoint = val;
+        ArgumentNullException.ThrowIfNull(val);
+        _npsServers.Add(val);
+        return this;
+    }
+
+    public ClientConfiguration SetNpsServerTimeout(TimeSpan val)
+    {
+        if (val.TotalMilliseconds <= 0)
+            throw new ArgumentException($"Invalid NPS server timeout: {val}");
+        
+        NpsServerTimeout = val;
         return this;
     }
 
@@ -186,6 +209,13 @@ public class ClientConfiguration : IClientConfiguration
             _ldapServers.AddRange(ldapServers);
         else
             throw new ArgumentNullException(nameof(ldapServers));
+        return this;
+    }
+
+    public ClientConfiguration AddWhiteIpRange(IPAddressRange range)
+    {
+        ArgumentNullException.ThrowIfNull(range);
+        _ipWhiteList.Add(range);
         return this;
     }
 }

@@ -8,6 +8,7 @@ using Multifactor.Core.Ldap.Schema;
 using Multifactor.Radius.Adapter.v2.Core.Ldap;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Context;
 using Multifactor.Radius.Adapter.v2.Services.Ldap;
+using ILdapConnection = Multifactor.Radius.Adapter.v2.Core.Ldap.ILdapConnection;
 
 namespace Multifactor.Radius.Adapter.v2.Tests.Unit;
 
@@ -24,7 +25,7 @@ public class LdapGroupServiceTests
         var loaderMock = new Mock<ILdapGroupLoader>();
         var groupsDns = new DistinguishedName[] { new("cn=group1,dc=example,dc=com"), new("cn=group2,dc=example,dc=com"), new("cn=group3,dc=example,dc=com")};
         loaderMock.Setup(x => x.GetGroups(It.IsAny<DistinguishedName>(), It.IsAny<int>())).Returns(groupsDns);
-        groupLoaderFactoryMock.Setup(x => x.GetGroupLoader(It.IsAny<ILdapSchema>(), It.IsAny<ILdapConnection>(), It.IsAny<DistinguishedName>())).Returns(loaderMock.Object);
+        groupLoaderFactoryMock.Setup(x => x.GetGroupLoader(It.IsAny<ILdapSchema>(), It.IsAny<Multifactor.Core.Ldap.Connection.ILdapConnection>(), It.IsAny<DistinguishedName>())).Returns(loaderMock.Object);
         
         var service = new LdapGroupService(groupLoaderFactoryMock.Object, membershipCheckerFactoryMock.Object, ldapConnectionFactoryMock.Object);
         var actualGroups = service.LoadUserGroups(new LoadUserGroupsRequest(schemaMock.Object, ldapConnectionMock.Object, new DistinguishedName("cn=group1,dc=example,dc=com"), new DistinguishedName("dc=search,dc=base")));
@@ -48,7 +49,7 @@ public class LdapGroupServiceTests
         var loaderMock = new Mock<ILdapGroupLoader>();
         var groupsDns = new DistinguishedName[] { new("cn=group1,dc=example,dc=com"), new("cn=group2,dc=example,dc=com"), new("cn=group3,dc=example,dc=com")};
         loaderMock.Setup(x => x.GetGroups(It.IsAny<DistinguishedName>(), It.IsAny<int>())).Returns(groupsDns);
-        groupLoaderFactoryMock.Setup(x => x.GetGroupLoader(It.IsAny<ILdapSchema>(), It.IsAny<ILdapConnection>(), It.IsAny<DistinguishedName>())).Returns(loaderMock.Object);
+        groupLoaderFactoryMock.Setup(x => x.GetGroupLoader(It.IsAny<ILdapSchema>(), It.IsAny<Multifactor.Core.Ldap.Connection.ILdapConnection>(), It.IsAny<DistinguishedName>())).Returns(loaderMock.Object);
         
         var service = new LdapGroupService(groupLoaderFactoryMock.Object, membershipCheckerFactoryMock.Object, ldapConnectionFactoryMock.Object);
         var actualGroups = service.LoadUserGroups(new LoadUserGroupsRequest(schemaMock.Object, ldapConnectionMock.Object, new DistinguishedName("cn=group1,dc=example,dc=com"), new DistinguishedName("dc=search,dc=base"), limit));
@@ -71,7 +72,7 @@ public class LdapGroupServiceTests
         var loaderMock = new Mock<ILdapGroupLoader>();
         var groupsDns = new DistinguishedName[] { new("cn=group1,dc=example,dc=com"), new("cn=group2,dc=example,dc=com"), new("cn=group3,dc=example,dc=com")};
         loaderMock.Setup(x => x.GetGroups(It.IsAny<DistinguishedName>(), It.IsAny<int>())).Returns(groupsDns);
-        groupLoaderFactory.Setup(x => x.GetGroupLoader(It.IsAny<ILdapSchema>(), It.IsAny<ILdapConnection>(), It.IsAny<DistinguishedName>())).Returns(loaderMock.Object);
+        groupLoaderFactory.Setup(x => x.GetGroupLoader(It.IsAny<ILdapSchema>(), It.IsAny<Multifactor.Core.Ldap.Connection.ILdapConnection>(), It.IsAny<DistinguishedName>())).Returns(loaderMock.Object);
         
         var service = new LdapGroupService(groupLoaderFactory.Object, membershipCheckerFactoryMock.Object, ldapConnectionFactoryMock.Object);
        Assert.Throws<ArgumentOutOfRangeException>(() => service.LoadUserGroups(new LoadUserGroupsRequest(schemaMock.Object, ldapConnectionMock.Object, new DistinguishedName("cn=group1,dc=example,dc=com"), new DistinguishedName("dc=search,dc=base") ,limit)));
@@ -168,7 +169,7 @@ public class LdapGroupServiceTests
         var namingContext = new DistinguishedName("dc=example,dc=com");
         checkerMock.Setup(x=> x.IsMemberOf(It.IsAny<DistinguishedName>(), It.IsAny<DistinguishedName>())).Returns(true);
         memberShipCheckerFactoryMock
-            .Setup(x => x.GetMembershipChecker(It.IsAny<ILdapSchema>(), It.IsAny<ILdapConnection>(), namingContext))
+            .Setup(x => x.GetMembershipChecker(It.IsAny<ILdapSchema>(), It.IsAny<Multifactor.Core.Ldap.Connection.ILdapConnection>(), namingContext))
             .Returns(checkerMock.Object);
         
         var service = new LdapGroupService(groupLoaderFactoryMock.Object, memberShipCheckerFactoryMock.Object, connectionFactory.Object);
@@ -204,7 +205,7 @@ public class LdapGroupServiceTests
         var namingContext = new DistinguishedName("dc=example1,dc=com");
         checkerMock.Setup(x=> x.IsMemberOf(It.IsAny<DistinguishedName>(), It.IsAny<DistinguishedName>())).Returns(true);
         memberShipCheckerFactoryMock
-            .Setup(x => x.GetMembershipChecker(It.IsAny<ILdapSchema>(), It.IsAny<ILdapConnection>(), namingContext))
+            .Setup(x => x.GetMembershipChecker(It.IsAny<ILdapSchema>(), It.IsAny<Multifactor.Core.Ldap.Connection.ILdapConnection>(), namingContext))
             .Returns(checkerMock.Object);
         
         var service = new LdapGroupService(groupLoaderFactoryMock.Object, memberShipCheckerFactoryMock.Object, connectionFactory.Object);
@@ -212,7 +213,7 @@ public class LdapGroupServiceTests
         contextMock.Setup(x => x.UserLdapProfile.Dn).Returns(new DistinguishedName("cn=user,dc=example,dc=com"));
         contextMock.Setup(x => x.UserLdapProfile.MemberOf).Returns([new DistinguishedName("cn=group1,dc=example,dc=com")]);
         contextMock.Setup(x => x.LdapServerConfiguration.LoadNestedGroups).Returns(true);
-        contextMock.Setup(x => x.LdapServerConfiguration.NestedGroupsBaseDns).Returns(["dc=example1,dc=com"]);
+        contextMock.Setup(x => x.LdapServerConfiguration.NestedGroupsBaseDns).Returns([new DistinguishedName("dc=example1,dc=com")]);
         contextMock.Setup(x => x.LdapServerConfiguration.ConnectionString).Returns("connectionString");
         contextMock.Setup(x => x.LdapServerConfiguration.UserName).Returns("user");
         contextMock.Setup(x => x.LdapServerConfiguration.Password).Returns("password");
@@ -237,7 +238,7 @@ public class LdapGroupServiceTests
         var namingContext = new DistinguishedName("dc=example,dc=com");
         checkerMock.Setup(x=> x.IsMemberOf(It.IsAny<DistinguishedName>(), It.IsAny<DistinguishedName>())).Returns(false);
         memberShipCheckerFactoryMock
-            .Setup(x => x.GetMembershipChecker(It.IsAny<ILdapSchema>(), It.IsAny<ILdapConnection>(), namingContext))
+            .Setup(x => x.GetMembershipChecker(It.IsAny<ILdapSchema>(), It.IsAny<Multifactor.Core.Ldap.Connection.ILdapConnection>(), namingContext))
             .Returns(checkerMock.Object);
         
         var service = new LdapGroupService(groupLoaderFactoryMock.Object, memberShipCheckerFactoryMock.Object, connectionFactory.Object);
@@ -271,7 +272,7 @@ public class LdapGroupServiceTests
         var namingContext = new DistinguishedName("dc=example1,dc=com");
         checkerMock.Setup(x=> x.IsMemberOf(It.IsAny<DistinguishedName>(), It.IsAny<DistinguishedName>())).Returns(false);
         memberShipCheckerFactoryMock
-            .Setup(x => x.GetMembershipChecker(It.IsAny<ILdapSchema>(), It.IsAny<ILdapConnection>(), namingContext))
+            .Setup(x => x.GetMembershipChecker(It.IsAny<ILdapSchema>(), It.IsAny<Multifactor.Core.Ldap.Connection.ILdapConnection>(), namingContext))
             .Returns(checkerMock.Object);
         
         var service = new LdapGroupService(groupLoaderFactoryMock.Object, memberShipCheckerFactoryMock.Object, connectionFactory.Object);
@@ -279,7 +280,7 @@ public class LdapGroupServiceTests
         contextMock.Setup(x => x.UserLdapProfile.Dn).Returns(new DistinguishedName("cn=user,dc=example,dc=com"));
         contextMock.Setup(x => x.UserLdapProfile.MemberOf).Returns([new DistinguishedName("cn=group1,dc=example,dc=com")]);
         contextMock.Setup(x => x.LdapServerConfiguration.LoadNestedGroups).Returns(true);
-        contextMock.Setup(x => x.LdapServerConfiguration.NestedGroupsBaseDns).Returns(["dc=example1,dc=com"]);
+        contextMock.Setup(x => x.LdapServerConfiguration.NestedGroupsBaseDns).Returns([new DistinguishedName("dc=example1,dc=com")]);
         contextMock.Setup(x => x.LdapServerConfiguration.ConnectionString).Returns("connectionString");
         contextMock.Setup(x => x.LdapServerConfiguration.UserName).Returns("user");
         contextMock.Setup(x => x.LdapServerConfiguration.Password).Returns("password");
