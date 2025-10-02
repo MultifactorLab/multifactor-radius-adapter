@@ -235,12 +235,6 @@ public class MultifactorApiService : IMultifactorApiService
         {
             case PreAuthMode.Otp:
                 return passphrase.Otp;
-
-            case PreAuthMode.Push:
-                return "m";
-
-            case PreAuthMode.Telegram:
-                return "t";
         }
 
         if (passphrase.IsEmpty)

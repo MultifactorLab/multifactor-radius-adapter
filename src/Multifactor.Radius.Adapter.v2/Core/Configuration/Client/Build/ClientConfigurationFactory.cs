@@ -136,8 +136,7 @@ public class ClientConfigurationFactory : IClientConfigurationFactory
     {
         try
         {
-            builder.SetPreAuthMode(PreAuthModeDescriptor.Create(appSettings.PreAuthenticationMethod,
-                PreAuthModeSettings.Default));
+            builder.SetPreAuthMode(PreAuthModeDescriptor.Create(appSettings.PreAuthenticationMethod, PreAuthModeSettings.Default));
         }
         catch
         {

@@ -450,12 +450,14 @@ public class PreSecondFactorTests(RadiusFixtures radiusFixtures) : E2ETestBase(r
                 MultifactorNasIdentifier = "nas-identifier",
                 MultifactorSharedSecret = "shared-secret",
 
-                PreAuthenticationMethod = "push",
+                PreAuthenticationMethod = "any",
                 InvalidCredentialDelay = "3",
 
                 NpsServerEndpoint = sensitiveData.GetConfigValue(
                     configName,
                     nameof(AppSettingsSection.NpsServerEndpoint))!,
+                
+                NpsServerTimeout = "00:00:10",
 
                 AdapterClientEndpoint = sensitiveData.GetConfigValue(
                     configName,

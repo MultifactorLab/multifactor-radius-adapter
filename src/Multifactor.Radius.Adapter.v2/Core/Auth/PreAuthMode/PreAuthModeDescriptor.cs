@@ -31,8 +31,8 @@ public class PreAuthModeDescriptor
 
     private static PreAuthMode GetMode(string value)
     {
-        Enum.TryParse<PreAuthMode>(value, true, out var parsed);
-        return parsed;
+        var parse = Enum.Parse<PreAuthMode>(value, true);
+        return parse;
     }
 
     public override string ToString() => Mode.ToString();

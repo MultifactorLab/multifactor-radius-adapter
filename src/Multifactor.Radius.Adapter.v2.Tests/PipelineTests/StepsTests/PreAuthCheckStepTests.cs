@@ -36,9 +36,8 @@ public class PreAuthCheckStepTests
     
     [Theory]
     [InlineData("None")]
-    [InlineData("Telegram")]
     [InlineData("Otp")]
-    [InlineData("Push")]
+    [InlineData("Any")]
     public async Task CorrectPreAuthState_ShouldBypass(string mode)
     {
         var contextMock = new Mock<IRadiusPipelineExecutionContext>();

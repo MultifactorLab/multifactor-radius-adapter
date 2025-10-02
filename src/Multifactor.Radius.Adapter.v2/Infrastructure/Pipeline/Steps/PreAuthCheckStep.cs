@@ -30,8 +30,7 @@ public class PreAuthCheckStep : IRadiusPipelineStep
             
             case PreAuthMode.None:
             case PreAuthMode.Otp:
-            case PreAuthMode.Push:
-            case PreAuthMode.Telegram:
+            case PreAuthMode.Any:
                 _logger.LogDebug("Pre-auth check for '{user}' is completed.", context.RequestPacket.UserName);
                 return Task.CompletedTask;
             
