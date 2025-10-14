@@ -1,3 +1,4 @@
+using Multifactor.Core.Ldap;
 using Multifactor.Core.Ldap.Name;
 using Multifactor.Radius.Adapter.v2.Core.Configuration.Client;
 using Multifactor.Radius.Adapter.v2.Core.Ldap;
@@ -13,7 +14,10 @@ public class LdapServerConfigurationService : ILdapServerConfigurationService
     
     private ILdapServerConfiguration CreateConfigurationWithDn(DistinguishedName trustedDomain, ILdapServerConfiguration initialConfiguration)
     {
-        var config = new LdapServerConfiguration(LdapNamesUtils.DnToFqdn(trustedDomain), initialConfiguration.UserName, initialConfiguration.Password);
+        var connectionString = new LdapConnectionString(initialConfiguration.ConnectionString);
+        var trustedLdapDomain = LdapNamesUtils.DnToFqdn(trustedDomain);
+        var trustedConnectionString = connectionString.CopySchemaAndPort(trustedLdapDomain);
+        var config = new LdapServerConfiguration(trustedConnectionString.WellFormedLdapUrl, initialConfiguration.UserName, initialConfiguration.Password);
         var settings = new LdapServerInitializeRequest(initialConfiguration);
         config.Initialize(settings);
         return config;

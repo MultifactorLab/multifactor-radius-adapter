@@ -68,7 +68,7 @@ public class LdapForestService : ILdapForestService
             return new List<LdapForestEntry>() { new(mainSchema, [LdapNamesUtils.DnToFqdn(mainSchema.NamingContext)])};
         }
         
-        _logger.LogDebug("Loading forest schema from '{domain}'",  domain);
+        _logger.LogDebug("Loading forest schema from '{domain}'", domain);
         using var connection = _connectionFactory.CreateConnection(connectionOptions);
        
         var schemas = new List<ILdapSchema> { mainSchema };
@@ -104,13 +104,13 @@ public class LdapForestService : ILdapForestService
     private IEnumerable<ILdapSchema> LoadTrustedSchemas(ILdapConnection connection, ILdapForestLoader loader, LdapConnectionOptions connectionOptions, ILdapSchema mainSchema)
     {
         var trustedDomains = loader.LoadTrustedDomains(connection, mainSchema);
-
         foreach (var trusted in trustedDomains)
         {
             var trustedFqdn = LdapNamesUtils.DnToFqdn(trusted);
             _logger.LogDebug("Found trusted domain: '{trustedDomain}'", trustedFqdn);
+            var connectionString = connectionOptions.ConnectionString.CopySchemaAndPort(trustedFqdn);
             var options = new LdapConnectionOptions(
-                new LdapConnectionString(trustedFqdn),
+                connectionString,
                 connectionOptions.AuthType,
                 connectionOptions.Username,
                 connectionOptions.Password,

@@ -36,7 +36,7 @@ public class LdapServerConfiguration : ILdapServerConfiguration
     public IPermissionRules DomainPermissions => _domainPermissionRules;
     public IPermissionRules SuffixesPermissions => _suffixesPermissionRules;
     public int LdapSchemaCacheLifeTimeInHours { get; } = 1;
-    public int UserProfileCacheLifeTimeInHours { get; } = 1;
+    public int UserProfileCacheLifeTimeInHours { get; } = 0;
     public bool TrustedDomainsEnabled => _trustedDomainsEnabled;
     public bool AlternativeSuffixesEnabled => _alternativeSuffixesEnabled;
     public bool UpnRequired => _requiresUpn;
