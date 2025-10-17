@@ -14,6 +14,7 @@ IHost? host = null;
 try
 {
     var builder = Host.CreateApplicationBuilder(args);
+    builder.Services.AddWindowsService(options => options.ServiceName = "Multifactor RADIUS");
     builder.Services.AddMemoryCache();
     builder.Services.AddAdapterLogging();
     var appVars = new ApplicationVariables
