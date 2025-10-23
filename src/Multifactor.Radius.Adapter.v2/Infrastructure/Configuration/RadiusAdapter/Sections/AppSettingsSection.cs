@@ -78,4 +78,21 @@ public class AppSettingsSection
     
     [Description("ip-white-list")]
     public string IpWhiteList { get; init; } = string.Empty;
+    
+    [Description("syslog-server")]
+    public string SyslogServer { get; init; } = string.Empty;
+    [Description("syslog-format")]
+    public string SyslogFormat { get; init; } = string.Empty;
+    [Description("syslog-facility")]
+    public string SyslogFacility { get; init; } = string.Empty;
+    [Description("syslog-app-name")]
+    public string SyslogAppName { get; init; } = "multifactor-radius";
+    [Description("log-file-max-size-bytes")]
+    public int LogFileMaxSizeBytes { get; init; } = 1073741824;
+    [Description("syslog-use-tls")]
+    public bool SyslogUseTls { get; init; } = false;
+    [Description("syslog-framer")]
+    public string SyslogFramer { get; init; } = string.Empty;
+    [Description("syslog-output-template")]
+    public string SyslogOutputTemplate { get; init; } = string.Empty;
 }
