@@ -13,6 +13,8 @@ using Multifactor.Radius.Adapter.v2.Core.Configuration.Service;
 using Multifactor.Radius.Adapter.v2.Core.Configuration.Service.Build;
 using Multifactor.Radius.Adapter.v2.Core.FirstFactor;
 using Multifactor.Radius.Adapter.v2.Core.FirstFactor.BindNameFormat;
+using Multifactor.Radius.Adapter.v2.Core.FirstFactor.LdapAuth;
+using Multifactor.Radius.Adapter.v2.Core.FirstFactor.LdapAuth.MsChapV2;
 using Multifactor.Radius.Adapter.v2.Core.Ldap;
 using Multifactor.Radius.Adapter.v2.Core.Radius.Attributes;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configuration.RadiusAdapter.Build;
@@ -163,6 +165,9 @@ public static class ServiceCollectionExtensions
         services.AddTransient<IFirstFactorProcessor, LdapFirstFactorProcessor>();
         services.AddTransient<IFirstFactorProcessor, RadiusFirstFactorProcessor>();
         services.AddTransient<IFirstFactorProcessor, NoneFirstFactorProcessor>();
+        services.AddSingleton<ILdapAuthProvider, LdapAuthProvider>();
+        services.AddTransient<ILdapAuthProcessor, PapAuthProcessor>();
+        services.AddTransient<ILdapAuthProcessor, MsChapV2AuthProcessor>();
     }
 
     private static void AddPipelineSteps(this IServiceCollection services)
