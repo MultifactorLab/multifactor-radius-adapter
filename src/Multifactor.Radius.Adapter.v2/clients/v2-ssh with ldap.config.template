@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<configuration>
+
+    <appSettings>
+	    <add key="radius-client-nas-identifier" value="linux"/>
+	    <!-- shared secret between this service and radius client -->
+	    <add key="radius-shared-secret" value="0000000000"/>
+	
+    	<!--First factor (login/pwd) authentication source -->
+	    <!--One of: ldap, radius, none-->
+	    <add key="first-factor-authentication-source" value="ldap"/>
+	
+	    <!-- get it from multifactor management panel -->
+        <add key="multifactor-nas-identifier" value="1"/>
+        <!-- get it from multifactor management panel -->
+        <add key="multifactor-shared-secret" value="2"/>
+    </appSettings>
+
+    <ldapServers>
+        <ldapServer
+            connection-string="domain.local"
+            username="CN=admin,CN=Users,DC=domain,DC=your"
+            password="password"
+        />
+    </ldapServers>
+
+</configuration>
