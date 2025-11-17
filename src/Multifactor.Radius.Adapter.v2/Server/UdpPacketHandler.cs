@@ -103,8 +103,7 @@ public class UdpPacketHandler : IUdpPacketHandler
         IClientConfiguration? clientConfiguration = null;
         if (_radiusPacketService.TryGetNasIdentifier(udpPacket.Buffer, out var nasIdentifier))
             clientConfiguration = _serviceConfiguration.GetClient(nasIdentifier);
-        else
-            clientConfiguration ??= _serviceConfiguration.GetClient(udpPacket.RemoteEndPoint.Address);
+        clientConfiguration ??= _serviceConfiguration.GetClient(udpPacket.RemoteEndPoint.Address);
 
         return clientConfiguration;
     }
