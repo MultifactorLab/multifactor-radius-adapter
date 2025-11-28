@@ -54,7 +54,7 @@ public class LdapForestService : ILdapForestService
 
     private IReadOnlyCollection<LdapForestEntry> LoadForest(LdapConnectionOptions connectionOptions, bool loadTrustedDomains, bool loadSuffixes)
     {
-        var domain  = connectionOptions.ConnectionString.Host;
+        var originalHost = connectionOptions.ConnectionString.Host;
         var mainSchema = LoadSchema(connectionOptions);
 
         if (mainSchema is null)
@@ -64,38 +64,30 @@ public class LdapForestService : ILdapForestService
         
         if (loader is null)
         {
-            _logger.LogDebug("Adapter does not support trusted domains feature for '{catalogType}' catalog '{domain}'. Loading is skipped", mainSchema.LdapServerImplementation, domain);
-            return new List<LdapForestEntry>() { new(mainSchema, [LdapNamesUtils.DnToFqdn(mainSchema.NamingContext)])};
+            _logger.LogDebug("Adapter does not support trusted domains feature for '{catalogType}' catalog '{domain}'. Loading is skipped", mainSchema.LdapServerImplementation, originalHost);
+            return new List<LdapForestEntry>() { new(mainSchema, [originalHost])}; 
         }
         
-        _logger.LogDebug("Loading forest schema from '{domain}'", domain);
+        _logger.LogDebug("Loading forest schema from '{originalHost}'", originalHost);
         using var connection = _connectionFactory.CreateConnection(connectionOptions);
        
         var schemas = new List<ILdapSchema> { mainSchema };
         if (loadTrustedDomains)
             schemas.AddRange(LoadTrustedSchemas(connection, loader, connectionOptions, mainSchema));
         else
-            _logger.LogDebug("Trusted domains are not required for '{domain}'", domain);
-
+            _logger.LogDebug("Trusted domains are not required for '{originalHost}'", originalHost);
         var forest = new List<LdapForestEntry>();
         
         foreach (var schema in schemas)
         {
-            var fqdn = LdapNamesUtils.DnToFqdn(schema.NamingContext);
-            var forestEntry = new LdapForestEntry(schema, [fqdn]);
+            var forestEntry = new LdapForestEntry(schema, [originalHost]);
             forest.Add(forestEntry);
-            if (!loadSuffixes)
-                continue;
-
-            var suffixes = loader.LoadDomainSuffixes(connection, schema).ToList();
-
-            if (suffixes.Any())
+            
+            if (loadSuffixes)
             {
-                var str = string.Join(", ", suffixes);
-                _logger.LogDebug("Loaded suffixes ({suffixes}) from '{domain}'", str, fqdn);
+                var suffixes = loader.LoadDomainSuffixes(connection, schema).ToList();
+                forestEntry.AddSuffix(suffixes);
             }
-
-            forestEntry.AddSuffix(suffixes);
         }
         
         return forest;
@@ -103,12 +95,12 @@ public class LdapForestService : ILdapForestService
 
     private IEnumerable<ILdapSchema> LoadTrustedSchemas(ILdapConnection connection, ILdapForestLoader loader, LdapConnectionOptions connectionOptions, ILdapSchema mainSchema)
     {
+        var originalHost = connectionOptions.ConnectionString.Host;
+        
         var trustedDomains = loader.LoadTrustedDomains(connection, mainSchema);
         foreach (var trusted in trustedDomains)
         {
-            var trustedFqdn = LdapNamesUtils.DnToFqdn(trusted);
-            _logger.LogDebug("Found trusted domain: '{trustedDomain}'", trustedFqdn);
-            var connectionString = connectionOptions.ConnectionString.CopySchemaAndPort(trustedFqdn);
+            var connectionString = connectionOptions.ConnectionString.CopySchemaAndPort(originalHost);
             var options = new LdapConnectionOptions(
                 connectionString,
                 connectionOptions.AuthType,
@@ -121,7 +113,6 @@ public class LdapForestService : ILdapForestService
                 yield return trustedSchema;
         }
     }
-
     private ILdapForestLoader? GetForestLoader(LdapImplementation ldapImplementation)
     {
         var loader = _ldapForestLoaderProvider.GetTrustedDomainsLoader(ldapImplementation);

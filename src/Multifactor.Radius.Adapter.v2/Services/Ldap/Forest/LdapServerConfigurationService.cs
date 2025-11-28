@@ -17,7 +17,7 @@ public class LdapServerConfigurationService : ILdapServerConfigurationService
         var connectionString = new LdapConnectionString(initialConfiguration.ConnectionString);
         var trustedLdapDomain = LdapNamesUtils.DnToFqdn(trustedDomain);
         var trustedConnectionString = connectionString.CopySchemaAndPort(trustedLdapDomain);
-        var config = new LdapServerConfiguration(trustedConnectionString.WellFormedLdapUrl, initialConfiguration.UserName, initialConfiguration.Password);
+        var config = new LdapServerConfiguration(initialConfiguration.ConnectionString, initialConfiguration.UserName, initialConfiguration.Password);
         var settings = new LdapServerInitializeRequest(initialConfiguration);
         config.Initialize(settings);
         return config;
