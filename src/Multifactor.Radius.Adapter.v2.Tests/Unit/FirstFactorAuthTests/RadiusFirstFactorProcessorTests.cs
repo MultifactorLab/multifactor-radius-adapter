@@ -1,14 +1,12 @@
 using System.Net;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
-using Multifactor.Radius.Adapter.v2.Core;
-using Multifactor.Radius.Adapter.v2.Core.Auth;
-using Multifactor.Radius.Adapter.v2.Core.Auth.PreAuthMode;
-using Multifactor.Radius.Adapter.v2.Core.FirstFactor;
-using Multifactor.Radius.Adapter.v2.Core.Radius;
-using Multifactor.Radius.Adapter.v2.Core.Radius.Packet;
-using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Context;
-using Multifactor.Radius.Adapter.v2.Services.Radius;
+using Multifactor.Radius.Adapter.v2.Application.FirstFactor;
+using Multifactor.Radius.Adapter.v2.Domain;
+using Multifactor.Radius.Adapter.v2.Domain.Auth;
+using Multifactor.Radius.Adapter.v2.Domain.Radius;
+using Multifactor.Radius.Adapter.v2.Domain.Radius.Packet;
+using Multifactor.Radius.Adapter.v2.Infrastructure.Radius.Interfaces;
 
 namespace Multifactor.Radius.Adapter.v2.Tests.Unit.FirstFactorAuthTests;
 
@@ -21,7 +19,7 @@ public class RadiusFirstFactorProcessorTests
         var clientFactoryMock = new Mock<IRadiusClientFactory>();
         var clientMock = new Mock<IRadiusClient>();
         clientMock.Setup(x => x.SendPacketAsync(It.IsAny<byte>(), It.IsAny<byte[]>(), It.IsAny<IPEndPoint>(), It.IsAny<TimeSpan>())).ReturnsAsync([]);
-        clientFactoryMock.Setup(x => x.CreateRadiusClient(It.IsAny<IPEndPoint>())).Returns(clientMock.Object);
+        clientFactoryMock.Setup(x => x.Create(It.IsAny<IPEndPoint>())).Returns(clientMock.Object);
         
         var packetService = new Mock<IRadiusPacketService>();
         packetService.Setup(x => x.GetBytes(It.IsAny<IRadiusPacket>(),It.IsAny<SharedSecret>())).Returns([]);

@@ -2,17 +2,16 @@ using System.Net;
 using System.Net.Sockets;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
-using Multifactor.Radius.Adapter.v2.Core.Configuration.Client;
-using Multifactor.Radius.Adapter.v2.Core.Configuration.Service;
-using Multifactor.Radius.Adapter.v2.Core.Pipeline;
-using Multifactor.Radius.Adapter.v2.Core.Radius;
-using Multifactor.Radius.Adapter.v2.Core.Radius.Packet;
+using Multifactor.Radius.Adapter.v2.Application.Pipeline.Provider;
+using Multifactor.Radius.Adapter.v2.Domain.Radius;
+using Multifactor.Radius.Adapter.v2.Domain.Radius.Packet;
+using Multifactor.Radius.Adapter.v2.Infrastructure.Cache;
+using Multifactor.Radius.Adapter.v2.Infrastructure.Configuration.Client;
+using Multifactor.Radius.Adapter.v2.Infrastructure.Configuration.Service;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline;
-using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Context;
-using Multifactor.Radius.Adapter.v2.Server;
-using Multifactor.Radius.Adapter.v2.Server.Udp;
-using Multifactor.Radius.Adapter.v2.Services.Cache;
-using Multifactor.Radius.Adapter.v2.Services.Radius;
+using Multifactor.Radius.Adapter.v2.Infrastructure.Radius.Interfaces;
+using Multifactor.Radius.Adapter.v2.Infrastructure.Server;
+using Multifactor.Radius.Adapter.v2.Infrastructure.Server.Interfaces;
 using Multifactor.Radius.Adapter.v2.Tests.PipelineTests;
 
 namespace Multifactor.Radius.Adapter.v2.Tests.Server;
@@ -52,7 +51,7 @@ public class UdpPacketHandlerTests
 
         for(int i = 0; i < connectionsCount; i++)
         {
-            var task = Task.Factory.StartNew(() => handler.HandleUdpPacket(new UdpReceiveResult(new byte[0], IPEndPoint.Parse("127.0.0.1:1812"))), TaskCreationOptions.LongRunning);
+            var task = Task.Factory.StartNew(() => handler.HandleAsync(new UdpReceiveResult(new byte[0], IPEndPoint.Parse("127.0.0.1:1812"))), TaskCreationOptions.LongRunning);
             tasks.Add(task);
         }
         
@@ -65,8 +64,8 @@ public class UdpPacketHandlerTests
 
     private class PipelineMock : IRadiusPipeline
     {
-        private Random _random = new();
-        public async Task ExecuteAsync(IRadiusPipelineExecutionContext context)
+        private readonly Random _random = new();
+        public async Task ExecuteAsync(RadiusPipelineExecutionContext context)
         {
             var delay = _random.Next(1, 15) * 1000;
             await Task.Delay(delay);

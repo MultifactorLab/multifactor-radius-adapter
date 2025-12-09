@@ -1,6 +1,6 @@
 using Moq;
 using Multifactor.Core.Ldap.Schema;
-using Multifactor.Radius.Adapter.v2.Core.FirstFactor.BindNameFormat;
+using Multifactor.Radius.Adapter.v2.Application.FirstFactor.BindNameFormat;
 
 namespace Multifactor.Radius.Adapter.v2.Tests.Unit.LdapBindNameFormatterTests;
 

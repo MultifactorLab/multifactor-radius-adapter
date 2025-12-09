@@ -1,16 +1,17 @@
 using Microsoft.Extensions.Hosting;
 using Moq;
-using Multifactor.Radius.Adapter.v2.Core.Auth;
-using Multifactor.Radius.Adapter.v2.Core.MultifactorApi;
-using Multifactor.Radius.Adapter.v2.Core.Radius.Packet;
+using Multifactor.Radius.Adapter.v2.Domain.Auth;
+using Multifactor.Radius.Adapter.v2.Domain.MultifactorApi;
+using Multifactor.Radius.Adapter.v2.Domain.MultifactorApi.Interfaces;
+using Multifactor.Radius.Adapter.v2.Domain.Radius.Packet;
+using Multifactor.Radius.Adapter.v2.Domain.RadiusAdapter;
+using Multifactor.Radius.Adapter.v2.Domain.RadiusAdapter.Sections;
+using Multifactor.Radius.Adapter.v2.Domain.RadiusAdapter.Sections.LdapServer;
+using Multifactor.Radius.Adapter.v2.Domain.RadiusAdapter.Sections.RadiusReply;
 using Multifactor.Radius.Adapter.v2.EndToEndTests.Constants;
 using Multifactor.Radius.Adapter.v2.EndToEndTests.Fixtures;
 using Multifactor.Radius.Adapter.v2.EndToEndTests.Fixtures.Models;
-using Multifactor.Radius.Adapter.v2.Infrastructure.Configuration.RadiusAdapter;
-using Multifactor.Radius.Adapter.v2.Infrastructure.Configuration.RadiusAdapter.Sections;
-using Multifactor.Radius.Adapter.v2.Infrastructure.Configuration.RadiusAdapter.Sections.LdapServer;
-using Multifactor.Radius.Adapter.v2.Infrastructure.Configuration.RadiusAdapter.Sections.RadiusReply;
-using Multifactor.Radius.Adapter.v2.Services.MultifactorApi;
+using Multifactor.Radius.Adapter.v2.Infrastructure.MultifactorApi.Dto;
 
 namespace Multifactor.Radius.Adapter.v2.EndToEndTests.Tests;
 

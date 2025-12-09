@@ -1,17 +1,18 @@
 using System.Net;
 using Moq;
-using Multifactor.Radius.Adapter.v2.Core;
-using Multifactor.Radius.Adapter.v2.Core.Auth;
-using Multifactor.Radius.Adapter.v2.Core.Configuration.Client.Build;
-using Multifactor.Radius.Adapter.v2.Core.Configuration.Service;
-using Multifactor.Radius.Adapter.v2.Core.Radius.Attributes;
-using Multifactor.Radius.Adapter.v2.Infrastructure.Configuration.Exceptions;
-using Multifactor.Radius.Adapter.v2.Infrastructure.Configuration.RadiusAdapter;
-using Multifactor.Radius.Adapter.v2.Infrastructure.Configuration.RadiusAdapter.Sections;
-using Multifactor.Radius.Adapter.v2.Infrastructure.Configuration.RadiusAdapter.Sections.LdapServer;
-using Multifactor.Radius.Adapter.v2.Infrastructure.Configuration.RadiusAdapter.Sections.RadiusReply;
+using Multifactor.Radius.Adapter.v2.Domain;
+using Multifactor.Radius.Adapter.v2.Domain.Auth;
+using Multifactor.Radius.Adapter.v2.Domain.Radius.Attributes;
+using Multifactor.Radius.Adapter.v2.Domain.RadiusAdapter;
+using Multifactor.Radius.Adapter.v2.Domain.RadiusAdapter.Sections;
+using Multifactor.Radius.Adapter.v2.Domain.RadiusAdapter.Sections.LdapServer;
+using Multifactor.Radius.Adapter.v2.Domain.RadiusAdapter.Sections.RadiusReply;
+using Multifactor.Radius.Adapter.v2.Infrastructure.Configuration.Client;
+using Multifactor.Radius.Adapter.v2.Infrastructure.Configuration.Service;
+using Multifactor.Radius.Adapter.v2.Infrastructure.Exceptions;
 using Multifactor.Radius.Adapter.v2.Tests.Fixture;
 using NetTools;
+using LdapServerConfiguration = Multifactor.Radius.Adapter.v2.Domain.RadiusAdapter.Sections.LdapServer.LdapServerConfiguration;
 
 namespace Multifactor.Radius.Adapter.v2.Tests.ConfigurationTests.ClientConfigurationFactoryTests;
 

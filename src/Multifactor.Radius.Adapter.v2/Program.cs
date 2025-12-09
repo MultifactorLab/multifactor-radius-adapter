@@ -1,14 +1,15 @@
 ﻿using System.Reflection;
 using System.Text;
-using Multifactor.Radius.Adapter.v2.Core;
-using Multifactor.Radius.Adapter.v2.Extensions;
-using Multifactor.Radius.Adapter.v2.Server;
-using Multifactor.Radius.Adapter.v2.Server.Udp;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Multifactor.Radius.Adapter.v2.Core.Pipeline;
+using Multifactor.Radius.Adapter.v2.Application.Extensions;
+using Multifactor.Radius.Adapter.v2.Domain;
+using Multifactor.Radius.Adapter.v2.Domain.Pipeline;
+using Multifactor.Radius.Adapter.v2.Infrastructure.Extensions;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Logging;
-using Multifactor.Radius.Adapter.v2.Services.AdapterResponseSender;
+using Multifactor.Radius.Adapter.v2.Infrastructure.Radius;
+using Multifactor.Radius.Adapter.v2.Infrastructure.Server;
+using Multifactor.Radius.Adapter.v2.Infrastructure.Server.Interfaces;
 
 IHost? host = null;
 try
@@ -29,7 +30,6 @@ try
     builder.Services.AddConfiguration();
     
     builder.Services.AddLdapSchemaLoader();
-    builder.Services.AddDataProtectionService();
     
     builder.Services.AddFirstFactor();
     builder.Services.AddPipelines();
@@ -77,6 +77,5 @@ static string FlattenException(Exception? exception)
         stringBuilder.AppendLine(exception.Message);
         exception = exception.InnerException;
     }
-
     return stringBuilder.ToString();
 }

@@ -1,8 +1,7 @@
 ﻿using System.Reflection;
-using Multifactor.Radius.Adapter.v2.Infrastructure.Configuration.RadiusAdapter;
-using Multifactor.Radius.Adapter.v2.Infrastructure.Configuration.RadiusAdapter.Build;
+using Multifactor.Radius.Adapter.v2.Domain.RadiusAdapter;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configuration.XmlAppConfiguration;
-using Multifactor.Radius.Adapter.v2.Server;
+using Multifactor.Radius.Adapter.v2.Infrastructure.Server;
 
 namespace Multifactor.Radius.Adapter.v2.EndToEndTests.Fixtures.ConfigLoading;
 

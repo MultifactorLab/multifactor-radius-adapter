@@ -1,5 +1,5 @@
-using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Context;
-using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Steps;
+using Multifactor.Radius.Adapter.v2.Application.Pipeline.Steps;
+using Multifactor.Radius.Adapter.v2.Application.Pipeline.Steps.Interfaces;
 
 namespace Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline;
 
@@ -14,7 +14,7 @@ public class RadiusPipeline : IRadiusPipeline
         _nextStep = nextStep;
     }
 
-    public async Task ExecuteAsync(IRadiusPipelineExecutionContext context)
+    public async Task ExecuteAsync(RadiusPipelineExecutionContext context)
     {
         if (_currentStep is not null)
             await _currentStep.ExecuteAsync(context);

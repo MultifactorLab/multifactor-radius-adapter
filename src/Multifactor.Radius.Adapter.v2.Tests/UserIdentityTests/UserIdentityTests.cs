@@ -1,4 +1,4 @@
-using Multifactor.Radius.Adapter.v2.Core.Ldap.Identity;
+using Multifactor.Radius.Adapter.v2.Domain.Ldap.Identity;
 using Multifactor.Radius.Adapter.v2.Tests.Fixture;
 
 namespace Multifactor.Radius.Adapter.v2.Tests.UserIdentityTests;

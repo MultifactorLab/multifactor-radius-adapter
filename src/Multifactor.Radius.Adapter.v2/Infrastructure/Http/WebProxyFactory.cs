@@ -4,47 +4,64 @@ namespace Multifactor.Radius.Adapter.v2.Infrastructure.Http;
 
 public static class WebProxyFactory
 {
-    public static bool TryCreateWebProxy(string proxyAddress, out WebProxy? proxy)
+    public static bool TryCreateProxy(string address, out IWebProxy? proxy)
     {
-        if (string.IsNullOrWhiteSpace(proxyAddress))
-        {
-            proxy = null;
-            return false;
-        }
+        proxy = null;
 
-        if (!TryParseUri(proxyAddress, out var proxyUri))
-        {
-            proxy = null;
+        if (string.IsNullOrWhiteSpace(address))
             return false;
-        }
 
-        proxy = new WebProxy(proxyUri);
-        SetProxyCredentials(proxy, proxyUri!);
+        if (!TryParseUri(address, out var uri))
+            return false;
+
+        proxy = CreateProxy(uri);
         return true;
     }
 
-    private static bool TryParseUri(string apiUri, out Uri uri)
+    private static IWebProxy CreateProxy(Uri uri)
     {
-        if (Uri.TryCreate(apiUri, UriKind.Absolute, out uri!))
+        var proxy = new WebProxy(uri);
+
+        if (!string.IsNullOrEmpty(uri.UserInfo))
+        {
+            var credentials = ParseCredentials(uri.UserInfo);
+            proxy.Credentials = credentials;
+        }
+
+        return proxy;
+    }
+
+    private static bool TryParseUri(string address, out Uri uri)
+    {
+        if (Uri.TryCreate(address, UriKind.Absolute, out uri))
             return true;
-        var uriSeparatorIdx = apiUri.LastIndexOf('@');
-        if (uriSeparatorIdx == -1)
-            return false;
-        
 
-        var leftPart = apiUri[..uriSeparatorIdx].Replace("@", "%40");
-        var rightPart = apiUri[(uriSeparatorIdx + 1)..];
-        var escapedUri = $"{leftPart}@{rightPart}";
-        uri = new Uri(escapedUri);
-        return true;
+        return TryParseUriWithCredentials(address, out uri);
     }
 
-    private static void SetProxyCredentials(WebProxy proxy, Uri proxyUri)
+    private static bool TryParseUriWithCredentials(string address, out Uri uri)
     {
-        if (string.IsNullOrWhiteSpace(proxyUri.UserInfo))
-            return;
+        uri = null;
 
-        var credentials = proxyUri.UserInfo.Split(new[] { ':' }, 2);
-        proxy.Credentials = new NetworkCredential(credentials[0], credentials[1]);
+        var atIndex = address.LastIndexOf('@');
+        if (atIndex == -1)
+            return false;
+
+        var beforeAt = address[..atIndex];
+        var afterAt = address[(atIndex + 1)..];
+
+        var escapedBeforeAt = beforeAt.Replace("@", "%40");
+        var escapedUri = $"{escapedBeforeAt}@{afterAt}";
+
+        return Uri.TryCreate(escapedUri, UriKind.Absolute, out uri);
+    }
+
+    private static NetworkCredential ParseCredentials(string userInfo)
+    {
+        var parts = userInfo.Split(':', 2);
+        var username = parts[0];
+        var password = parts.Length > 1 ? parts[1] : string.Empty;
+
+        return new NetworkCredential(username, password);
     }
 }

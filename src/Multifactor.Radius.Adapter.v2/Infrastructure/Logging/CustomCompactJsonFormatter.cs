@@ -1,5 +1,4 @@
 using System.Globalization;
-using Multifactor.Core.Ldap.LangFeatures;
 using Serilog.Events;
 using Serilog.Formatting;
 using Serilog.Formatting.Compact;
@@ -10,80 +9,84 @@ namespace Multifactor.Radius.Adapter.v2.Infrastructure.Logging;
 public class CustomCompactJsonFormatter : ITextFormatter
 {
     private readonly JsonValueFormatter _valueFormatter;
-    private static string _timestampTemplate;
+    private readonly string _timestampFormat;
 
-    public CustomCompactJsonFormatter(string timestampTemplate, JsonValueFormatter? valueFormatter = null)
+    public CustomCompactJsonFormatter(string timestampFormat, JsonValueFormatter? valueFormatter = null)
     {
-        Throw.IfNullOrWhiteSpace(timestampTemplate, nameof(timestampTemplate));
+        ArgumentException.ThrowIfNullOrWhiteSpace(timestampFormat);
         
-        _valueFormatter = valueFormatter ?? new JsonValueFormatter(typeTagName: "$type");
-        _timestampTemplate = timestampTemplate;
+        _timestampFormat = timestampFormat;
+        _valueFormatter = valueFormatter ?? new JsonValueFormatter("$type");
     }
 
     public void Format(LogEvent logEvent, TextWriter output)
     {
-        FormatEvent(logEvent, output, _valueFormatter);
+        ArgumentNullException.ThrowIfNull(logEvent);
+        ArgumentNullException.ThrowIfNull(output);
+
+        FormatEvent(logEvent, output);
         output.WriteLine();
     }
 
-    private static void FormatEvent(LogEvent logEvent, TextWriter output, JsonValueFormatter valueFormatter)
+    private void FormatEvent(LogEvent logEvent, TextWriter output)
     {
-        if (logEvent == null) throw new ArgumentNullException(nameof(logEvent));
-        if (output == null) throw new ArgumentNullException(nameof(output));
-        if (valueFormatter == null) throw new ArgumentNullException(nameof(valueFormatter));
-
         output.Write("{\"@t\":\"");
-        output.Write(logEvent.Timestamp.ToString(_timestampTemplate));
+        output.Write(logEvent.Timestamp.ToString(_timestampFormat));
         output.Write("\",\"@m\":");
-        var message = logEvent.MessageTemplate.Render(logEvent.Properties, CultureInfo.InvariantCulture);
-        JsonValueFormatter.WriteQuotedJsonString(message, output);
+        WriteJsonString(logEvent.MessageTemplate.Render(logEvent.Properties, CultureInfo.InvariantCulture), output);
         output.Write(",\"@i\":\"");
-        var id = EventIdHash.Compute(logEvent.MessageTemplate.Text);
-        output.Write(id.ToString("x8", CultureInfo.InvariantCulture));
+        output.Write(EventIdHash.Compute(logEvent.MessageTemplate.Text).ToString("x8", CultureInfo.InvariantCulture));
         output.Write('"');
 
-        if (logEvent.Level != LogEventLevel.Information)
-        {
-            output.Write(",\"@l\":\"");
-            output.Write(logEvent.Level);
-            output.Write('\"');
-        }
-
-        if (logEvent.Exception != null)
-        {
-            output.Write(",\"@x\":");
-            JsonValueFormatter.WriteQuotedJsonString(logEvent.Exception.ToString(), output);
-        }
-
-        if (logEvent.TraceId != null)
-        {
-            output.Write(",\"@tr\":\"");
-            output.Write(logEvent.TraceId.Value.ToHexString());
-            output.Write('\"');
-        }
-
-        if (logEvent.SpanId != null)
-        {
-            output.Write(",\"@sp\":\"");
-            output.Write(logEvent.SpanId.Value.ToHexString());
-            output.Write('\"');
-        }
-
-        foreach (var property in logEvent.Properties)
-        {
-            var name = property.Key;
-            if (name.Length > 0 && name[0] == '@')
-            {
-                // Escape first '@' by doubling
-                name = '@' + name;
-            }
-
-            output.Write(',');
-            JsonValueFormatter.WriteQuotedJsonString(name, output);
-            output.Write(':');
-            valueFormatter.Format(property.Value, output);
-        }
+        WriteLevel(logEvent.Level, output);
+        WriteException(logEvent.Exception, output);
+        WriteProperties(logEvent.Properties, output);
 
         output.Write('}');
+    }
+
+    private static void WriteJsonString(string value, TextWriter output)
+    {
+        JsonValueFormatter.WriteQuotedJsonString(value, output);
+    }
+
+    private static void WriteLevel(LogEventLevel level, TextWriter output)
+    {
+        if (level != LogEventLevel.Information)
+        {
+            output.Write(",\"@l\":\"");
+            output.Write(level);
+            output.Write('\"');
+        }
+    }
+
+    private static void WriteException(Exception? exception, TextWriter output)
+    {
+        if (exception != null)
+        {
+            output.Write(",\"@x\":");
+            WriteJsonString(exception.ToString(), output);
+        }
+    }
+
+    private void WriteProperties(IReadOnlyDictionary<string, LogEventPropertyValue> properties, TextWriter output)
+    {
+        foreach (var property in properties)
+        {
+            var name = EscapePropertyName(property.Key);
+            
+            output.Write(',');
+            WriteJsonString(name, output);
+            output.Write(':');
+            _valueFormatter.Format(property.Value, output);
+        }
+    }
+
+    private static string EscapePropertyName(string name)
+    {
+        if (name.Length > 0 && name[0] == '@')
+            return "@" + name;
+            
+        return name;
     }
 }

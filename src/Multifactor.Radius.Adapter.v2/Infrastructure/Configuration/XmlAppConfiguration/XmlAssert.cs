@@ -18,15 +18,9 @@ internal static class XmlAssert
     /// <exception cref="Exception"></exception>
     public static void HasUniqueElements<TKey>(IEnumerable<XElement> elements, Func<XElement, TKey> keySelector)
     {
-        if (elements is null)
-        {
-            throw new ArgumentNullException(nameof(elements));
-        }
+        ArgumentNullException.ThrowIfNull(elements);
 
-        if (keySelector is null)
-        {
-            throw new ArgumentNullException(nameof(keySelector));
-        }
+        ArgumentNullException.ThrowIfNull(keySelector);
 
         var duplicates = elements
             .GroupBy(keySelector)
@@ -52,10 +46,7 @@ internal static class XmlAssert
     /// <exception cref="Exception"></exception>
     public static string HasAttribute(XElement element, string attribute)
     {
-        if (element is null)
-        {
-            throw new ArgumentNullException(nameof(element));
-        }
+        ArgumentNullException.ThrowIfNull(element);
 
         if (string.IsNullOrWhiteSpace(attribute))
         {

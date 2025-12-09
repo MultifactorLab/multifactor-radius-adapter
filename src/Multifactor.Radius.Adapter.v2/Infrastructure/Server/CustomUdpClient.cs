@@ -1,0 +1,27 @@
+using System.Net;
+using System.Net.Sockets;
+using Multifactor.Core.Ldap.LangFeatures;
+using Multifactor.Radius.Adapter.v2.Infrastructure.Server.Interfaces;
+
+namespace Multifactor.Radius.Adapter.v2.Infrastructure.Server;
+
+public sealed class CustomUdpClient : IUdpClient
+{
+    private readonly UdpClient _udpClient;
+    
+    public CustomUdpClient(IPEndPoint endPoint)
+    {
+        Throw.IfNull(endPoint, nameof(endPoint));
+        _udpClient = new UdpClient(endPoint);
+    }
+    
+    public Task<UdpReceiveResult> ReceiveAsync() => _udpClient.ReceiveAsync();
+    
+    public Task<int> SendAsync(byte[] datagram, int bytesCount, IPEndPoint endPoint) => _udpClient.SendAsync(datagram, bytesCount, endPoint);
+    
+    public void Dispose()
+    {
+        _udpClient?.Close();
+        _udpClient?.Dispose();
+    }
+}

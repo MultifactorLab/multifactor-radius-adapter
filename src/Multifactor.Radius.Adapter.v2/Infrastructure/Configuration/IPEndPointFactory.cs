@@ -4,31 +4,30 @@
 
 using System.Net;
 
-namespace Multifactor.Radius.Adapter.v2.Infrastructure.Configuration
+namespace Multifactor.Radius.Adapter.v2.Infrastructure.Configuration;
+
+public static class IPEndPointFactory
 {
-    public static class IPEndPointFactory
+    public static bool TryParse(string text, out IPEndPoint ipEndPoint)
     {
-        public static bool TryParse(string text, out IPEndPoint ipEndPoint)
+        ipEndPoint = null;
+
+        if (Uri.TryCreate(string.Concat("tcp://", text), UriKind.Absolute, out Uri uri))
         {
-            ipEndPoint = null;
+            if (!IPAddress.TryParse(uri.Host, out var parsed)) return false;
 
-            if (Uri.TryCreate(string.Concat("tcp://", text), UriKind.Absolute, out Uri uri))
-            {
-                if (!IPAddress.TryParse(uri.Host, out var parsed)) return false;
-
-                ipEndPoint = new IPEndPoint(parsed, uri.Port < 0 ? 0 : uri.Port);
-                return true;
-            }
-
-            if (Uri.TryCreate(string.Concat("tcp://", string.Concat("[", text, "]")), UriKind.Absolute, out uri))
-            {
-                if (!IPAddress.TryParse(uri.Host, out var parsed)) return false;
-
-                ipEndPoint = new IPEndPoint(parsed, uri.Port < 0 ? 0 : uri.Port);
-                return true;
-            }
-
-            return false;
+            ipEndPoint = new IPEndPoint(parsed, uri.Port < 0 ? 0 : uri.Port);
+            return true;
         }
+
+        if (Uri.TryCreate(string.Concat("tcp://", string.Concat("[", text, "]")), UriKind.Absolute, out uri))
+        {
+            if (!IPAddress.TryParse(uri.Host, out var parsed)) return false;
+
+            ipEndPoint = new IPEndPoint(parsed, uri.Port < 0 ? 0 : uri.Port);
+            return true;
+        }
+
+        return false;
     }
 }

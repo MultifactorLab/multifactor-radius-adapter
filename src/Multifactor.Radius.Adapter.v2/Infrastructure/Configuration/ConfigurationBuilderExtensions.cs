@@ -11,24 +11,25 @@ internal static class ConfigurationBuilderExtensions
 {
     public const string BasePrefix = "RAD_";
 
-    public static IConfigurationBuilder AddRadiusConfigurationFile(this IConfigurationBuilder configurationBuilder, RadiusConfigurationFile file)
+    public static IConfigurationBuilder AddRadiusConfigurationFile(
+        this IConfigurationBuilder builder, 
+        RadiusConfigurationFile file)
     {
-        if (file is null)
-        {
-            throw new ArgumentNullException(nameof(file));
-        }
-
-        configurationBuilder.Add(new XmlAppConfigurationSource(file));
-        return configurationBuilder; 
+        ArgumentNullException.ThrowIfNull(file);
+        builder.Add(new XmlAppConfigurationSource(file));
+        return builder;
     }
 
-    public static IConfigurationBuilder AddRadiusEnvironmentVariables(this IConfigurationBuilder configurationBuilder, string configName = null)
+    public static IConfigurationBuilder AddRadiusEnvironmentVariables(
+        this IConfigurationBuilder builder, 
+        string? configName = null)
     {
-        var preparedConfigName = RadiusConfigurationSource.TransformName(configName);
-        var prefix = preparedConfigName == string.Empty
-            ? BasePrefix
-            : $"{BasePrefix}{preparedConfigName}_";
-        configurationBuilder.AddEnvironmentVariables(prefix);
-        return configurationBuilder;
+        var preparedName = RadiusConfigurationSource.TransformName(configName);
+        var prefix = string.IsNullOrEmpty(preparedName) 
+            ? BasePrefix 
+            : $"{BasePrefix}{preparedName}_";
+
+        builder.AddEnvironmentVariables(prefix);
+        return builder;
     }
 }

@@ -2,10 +2,11 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Multifactor.Core.Ldap.Name;
 using Multifactor.Core.Ldap.Schema;
-using Multifactor.Radius.Adapter.v2.Core.Configuration.Client;
-using Multifactor.Radius.Adapter.v2.Core.Ldap;
-using Multifactor.Radius.Adapter.v2.Core.Ldap.Identity;
-using Multifactor.Radius.Adapter.v2.Services.Ldap;
+using Multifactor.Radius.Adapter.v2.Domain.Ldap;
+using Multifactor.Radius.Adapter.v2.Domain.Ldap.Identity;
+using Multifactor.Radius.Adapter.v2.Infrastructure.Configuration.Client;
+using Multifactor.Radius.Adapter.v2.Infrastructure.Ldap;
+using Multifactor.Radius.Adapter.v2.Infrastructure.Ldap.Dto;
 using Multifactor.Radius.Adapter.v2.Tests.Fixture;
 
 namespace Multifactor.Radius.Adapter.v2.Tests.LdapProfile;

@@ -1,13 +1,12 @@
 using System.Net;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
+using Multifactor.Radius.Adapter.v2.Application.FirstFactor;
 using Multifactor.Radius.Adapter.v2.Core;
-using Multifactor.Radius.Adapter.v2.Core.Auth;
-using Multifactor.Radius.Adapter.v2.Core.Auth.PreAuthMode;
-using Multifactor.Radius.Adapter.v2.Core.FirstFactor;
-using Multifactor.Radius.Adapter.v2.Core.Radius;
-using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Context;
-using Multifactor.Radius.Adapter.v2.Services.Radius;
+using Multifactor.Radius.Adapter.v2.Domain;
+using Multifactor.Radius.Adapter.v2.Domain.Auth;
+using Multifactor.Radius.Adapter.v2.Domain.Radius;
+using Multifactor.Radius.Adapter.v2.Infrastructure.Radius;
 using Multifactor.Radius.Adapter.v2.Tests.Fixture;
 
 namespace Multifactor.Radius.Adapter.v2.Tests.FirstFactorAuthTests;

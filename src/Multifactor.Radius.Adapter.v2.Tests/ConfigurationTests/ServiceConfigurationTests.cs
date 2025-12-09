@@ -1,9 +1,10 @@
 using System.Net;
 using Moq;
-using Multifactor.Radius.Adapter.v2.Core.Configuration.Client;
-using Multifactor.Radius.Adapter.v2.Core.Configuration.Service;
-using Multifactor.Radius.Adapter.v2.Core.RandomWaiterFeature;
+using Multifactor.Radius.Adapter.v2.Domain;
+using Multifactor.Radius.Adapter.v2.Infrastructure;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configuration;
+using Multifactor.Radius.Adapter.v2.Infrastructure.Configuration.Client;
+using Multifactor.Radius.Adapter.v2.Infrastructure.Configuration.Service;
 
 namespace Multifactor.Radius.Adapter.v2.Tests.ConfigurationTests;
 

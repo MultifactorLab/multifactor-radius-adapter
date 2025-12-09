@@ -1,6 +1,8 @@
 using System.Reflection;
 using Multifactor.Radius.Adapter.v2.Core;
-using Multifactor.Radius.Adapter.v2.Core.Radius.Attributes;
+using Multifactor.Radius.Adapter.v2.Domain;
+using Multifactor.Radius.Adapter.v2.Domain.Radius.Attributes;
+using Multifactor.Radius.Adapter.v2.Infrastructure;
 
 namespace Multifactor.Radius.Adapter.v2.Tests.Fixture;
 

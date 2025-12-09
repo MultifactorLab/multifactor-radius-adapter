@@ -1,0 +1,98 @@
+﻿using System.ComponentModel;
+
+namespace Multifactor.Radius.Adapter.v2.Domain.RadiusAdapter.Sections;
+
+public class AppSettingsSection
+{
+    [Description("multifactor-api-url")]
+    public string MultifactorApiUrl { get; init; } = string.Empty;
+
+    [Description("multifactor-api-proxy")]
+    public string MultifactorApiProxy { get; init; } = string.Empty;
+
+    [Description("multifactor-api-timeout")]
+    public string MultifactorApiTimeout { get; init; } = string.Empty;
+
+    [Description("multifactor-nas-identifier")]
+    public string MultifactorNasIdentifier { get; init; } = string.Empty;
+
+    [Description("multifactor-shared-secret")]
+    public string MultifactorSharedSecret { get; init; } = string.Empty;
+
+    [Description("sign-up-groups")] 
+    public string SignUpGroups { get; init; } = string.Empty;
+
+    [Description("bypass-second-factor-when-api-unreachable")]
+    public bool BypassSecondFactorWhenApiUnreachable { get; init; } = true;
+
+    [Description("first-factor-authentication-source")]
+    public string FirstFactorAuthenticationSource { get; init; } = string.Empty;
+
+    [Description("adapter-client-endpoint")]
+    public string AdapterClientEndpoint { get; init; } = string.Empty;
+
+    [Description("adapter-server-endpoint")]
+    public string AdapterServerEndpoint { get; init; } = string.Empty;
+
+    [Description("nps-server-endpoint")]
+    public string NpsServerEndpoint { get; init; } = string.Empty;
+    
+    [Description("nps-server-timeout")]
+    public string NpsServerTimeout { get; init; } = "00:00:05";
+
+    [Description("radius-client-ip")]
+    public string RadiusClientIp { get; init; } = string.Empty;
+
+    [Description("radius-client-nas-identifier")]
+    public string RadiusClientNasIdentifier { get; init; } = string.Empty;
+
+    [Description("radius-shared-secret")]
+    public string RadiusSharedSecret { get; init; } = string.Empty;
+
+    [Description("privacy-mode")]
+    public string PrivacyMode { get; init; } = string.Empty;
+
+    [Description("pre-authentication-method")]
+    public string PreAuthenticationMethod { get; init; } = string.Empty;
+
+    [Description("authentication-cache-lifetime")]
+    public string AuthenticationCacheLifetime { get; init; } = string.Empty;
+
+    [Description("invalid-credential-delay")]
+    public string InvalidCredentialDelay { get; init; } = string.Empty;
+
+    [Description("logging-format")]
+    public string LoggingFormat { get; init; } = string.Empty;
+
+    [Description("logging-level")]
+    public string LoggingLevel { get; init; } = string.Empty;
+
+    [Description("calling-station-id-attribute")]
+    public string CallingStationIdAttribute { get; init; } = string.Empty;
+
+    [Description("console-log-output-template")]
+    public string ConsoleLogOutputTemplate { get; init; } = string.Empty;
+
+    [Description("file-log-output-template")]
+    public string FileLogOutputTemplate { get; init; } = string.Empty;
+    
+    [Description("ip-white-list")]
+    public string IpWhiteList { get; init; } = string.Empty;
+    
+    [Description("syslog-server")]
+    public string SyslogServer { get; init; } = string.Empty;
+    [Description("syslog-format")]
+    public string SyslogFormat { get; init; } = string.Empty;
+    [Description("syslog-facility")]
+    public string SyslogFacility { get; init; } = string.Empty;
+    [Description("syslog-app-name")]
+    public string SyslogAppName { get; init; } = "multifactor-radius";
+    [Description("log-file-max-size-bytes")]
+    public int LogFileMaxSizeBytes { get; init; } = 1073741824;
+    [Description("syslog-use-tls")]
+    public bool SyslogUseTls { get; init; } = false;
+    [Description("syslog-framer")]
+    public string SyslogFramer { get; init; } = string.Empty;
+    [Description("syslog-output-template")]
+    public string SyslogOutputTemplate { get; init; } = string.Empty;
+}

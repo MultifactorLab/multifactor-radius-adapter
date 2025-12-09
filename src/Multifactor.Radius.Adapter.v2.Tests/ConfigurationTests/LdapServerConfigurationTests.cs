@@ -1,6 +1,8 @@
 using Multifactor.Core.Ldap.Name;
 using Multifactor.Radius.Adapter.v2.Core;
-using Multifactor.Radius.Adapter.v2.Core.Configuration.Client;
+using Multifactor.Radius.Adapter.v2.Domain;
+using Multifactor.Radius.Adapter.v2.Infrastructure;
+using Multifactor.Radius.Adapter.v2.Infrastructure.Configuration.Client;
 
 namespace Multifactor.Radius.Adapter.v2.Tests.ConfigurationTests;
 

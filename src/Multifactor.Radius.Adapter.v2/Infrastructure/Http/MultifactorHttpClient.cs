@@ -7,80 +7,79 @@ namespace Multifactor.Radius.Adapter.v2.Infrastructure.Http;
 
 public interface IHttpClient
 {
-    Task<T?> PostAsync<T>(string endpoint, object body, IReadOnlyDictionary<string, string>? headers = null);
+    Task<T?> PostAsync<T>(string endpoint, object? body, IReadOnlyDictionary<string, string>? headers = null);
 }
 
 public class MultifactorHttpClient : IHttpClient
 {
-    private readonly IHttpClientFactory _factory;
+    private readonly System.Net.Http.HttpClient _client;
     private readonly ILogger<MultifactorHttpClient> _logger;
-    
+    private readonly JsonSerializerOptions _jsonOptions;
+
     public MultifactorHttpClient(IHttpClientFactory factory, ILogger<MultifactorHttpClient> logger)
     {
-        _factory = factory;
+        _client = factory.CreateClient(nameof(MultifactorHttpClient));
         _logger = logger;
+        _jsonOptions = CreateJsonOptions();
     }
-    
+
     public async Task<T?> PostAsync<T>(string endpoint, object? body, IReadOnlyDictionary<string, string>? headers = null)
     {
-        ArgumentNullException.ThrowIfNull(endpoint);
+        ArgumentException.ThrowIfNullOrWhiteSpace(endpoint);
 
-        var request = new HttpRequestMessage(HttpMethod.Post, endpoint)
-        {
-            Content = body == null ? null : CreateJsonStringContent(body)
-        };
-
-        AddHeaders(request, headers);
-
-        var cli = _factory.CreateClient(nameof(MultifactorHttpClient));
-        _logger.LogDebug("Sending request to API: {@payload}", body);
-
-        using var response = await cli.SendAsync(request);
-
+        using var request = CreateRequest(endpoint, body, headers);
+        
+        _logger.LogDebug("Sending request to {Endpoint}: {@Body}", endpoint, body);
+        
+        using var response = await _client.SendAsync(request);
         response.EnsureSuccessStatusCode();
 
-        var parsed = await DeserializeAsync<T>(response.Content);
-        _logger.LogDebug("Received response from API: {@response}", parsed);
-
-        return parsed;
+        var result = await ParseResponse<T>(response);
+        
+        _logger.LogDebug("Received response from {Endpoint}: {@Response}", endpoint, result);
+        
+        return result;
     }
-    
-    private static void AddHeaders(HttpRequestMessage message, IReadOnlyDictionary<string, string>? headers)
+
+    private HttpRequestMessage CreateRequest(string endpoint, object? body, IReadOnlyDictionary<string, string>? headers)
     {
-        if (headers == null)
-        {
+        var request = new HttpRequestMessage(HttpMethod.Post, endpoint);
+        
+        if (body != null)
+            request.Content = CreateJsonContent(body);
+
+        AddHeaders(request, headers);
+        return request;
+    }
+
+    private static void AddHeaders(HttpRequestMessage request, IReadOnlyDictionary<string, string>? headers)
+    {
+        if (headers == null) 
             return;
-        }
 
-        foreach (var h in headers)
-        {
-            message.Headers.Add(h.Key, h.Value);
-        }
+        foreach (var header in headers)
+            request.Headers.Add(header.Key, header.Value);
     }
 
-    private static StringContent CreateJsonStringContent(object data)
+    private HttpContent CreateJsonContent(object body)
     {
-        var payload = JsonSerializer.Serialize(data, GetJsonSerializerOptions());
-        return new StringContent(payload, Encoding.UTF8, "application/json");
+        var json = JsonSerializer.Serialize(body, _jsonOptions);
+        return new StringContent(json, Encoding.UTF8, "application/json");
     }
 
-    private static async Task<T?> DeserializeAsync<T>(HttpContent content)
+    private async Task<T?> ParseResponse<T>(HttpResponseMessage response)
     {
-        var jsonResponse = await content.ReadAsStringAsync();
-        var parsed = JsonSerializer.Deserialize<T>(jsonResponse, GetJsonSerializerOptions());
-        return parsed;
+        var json = await response.Content.ReadAsStringAsync();
+        return JsonSerializer.Deserialize<T>(json, _jsonOptions);
     }
 
-    private static JsonSerializerOptions GetJsonSerializerOptions()
+    private static JsonSerializerOptions CreateJsonOptions()
     {
-        var options = new JsonSerializerOptions
+        return new JsonSerializerOptions
         {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
             AllowTrailingCommas = true,
-            DefaultIgnoreCondition = JsonIgnoreCondition.Never
+            Converters = { new JsonStringEnumConverter() }
         };
-        options.Converters.Add(new JsonStringEnumConverter());
-
-        return options;
     }
 }

@@ -4,14 +4,14 @@ using Moq;
 using Multifactor.Core.Ldap.Connection;
 using Multifactor.Core.Ldap.Name;
 using Multifactor.Core.Ldap.Schema;
-using Multifactor.Radius.Adapter.v2.Core.Auth;
-using Multifactor.Radius.Adapter.v2.Core.Configuration.Client;
-using Multifactor.Radius.Adapter.v2.Core.Ldap;
-using Multifactor.Radius.Adapter.v2.Core.Radius.Packet;
-using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Context;
-using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Steps;
-using Multifactor.Radius.Adapter.v2.Services.Ldap;
-using ILdapConnection = Multifactor.Radius.Adapter.v2.Core.Ldap.ILdapConnection;
+using Multifactor.Radius.Adapter.v2.Application.Pipeline.Steps;
+using Multifactor.Radius.Adapter.v2.Domain.Auth;
+using Multifactor.Radius.Adapter.v2.Domain.Ldap.Interfaces;
+using Multifactor.Radius.Adapter.v2.Domain.Radius.Packet;
+using Multifactor.Radius.Adapter.v2.Infrastructure.Configuration.Client;
+using Multifactor.Radius.Adapter.v2.Infrastructure.Ldap.Dto;
+using Multifactor.Radius.Adapter.v2.Infrastructure.Ldap.Interface;
+using ILdapConnection = Multifactor.Radius.Adapter.v2.Domain.Ldap.Interfaces.ILdapConnection;
 
 namespace Multifactor.Radius.Adapter.v2.Tests.PipelineTests.StepsTests;
 

@@ -6,24 +6,24 @@ using Microsoft.Extensions.Hosting;
 using Multifactor.Core.Ldap;
 using Multifactor.Core.Ldap.Connection;
 using Multifactor.Core.Ldap.Name;
-using Multifactor.Radius.Adapter.v2.Core;
-using Multifactor.Radius.Adapter.v2.Core.Configuration.Client;
-using Multifactor.Radius.Adapter.v2.Core.Configuration.Client.Build;
-using Multifactor.Radius.Adapter.v2.Core.Configuration.Service;
-using Multifactor.Radius.Adapter.v2.Core.Configuration.Service.Build;
-using Multifactor.Radius.Adapter.v2.Core.Pipeline;
-using Multifactor.Radius.Adapter.v2.Core.Radius;
-using Multifactor.Radius.Adapter.v2.Core.Radius.Packet;
+using Multifactor.Radius.Adapter.v2.Application.Extensions;
+using Multifactor.Radius.Adapter.v2.Domain;
+using Multifactor.Radius.Adapter.v2.Domain.Pipeline;
+using Multifactor.Radius.Adapter.v2.Domain.Radius;
+using Multifactor.Radius.Adapter.v2.Domain.Radius.Packet;
+using Multifactor.Radius.Adapter.v2.Domain.RadiusAdapter;
 using Multifactor.Radius.Adapter.v2.EndToEndTests.Fixtures;
 using Multifactor.Radius.Adapter.v2.EndToEndTests.Udp;
-using Multifactor.Radius.Adapter.v2.Extensions;
-using Multifactor.Radius.Adapter.v2.Infrastructure.Configuration.RadiusAdapter;
-using Multifactor.Radius.Adapter.v2.Server;
-using Multifactor.Radius.Adapter.v2.Server.Udp;
-using Multifactor.Radius.Adapter.v2.Services.AdapterResponseSender;
-using Multifactor.Radius.Adapter.v2.Services.Ldap;
-using Multifactor.Radius.Adapter.v2.Services.Radius;
-using ILdapConnectionFactory = Multifactor.Radius.Adapter.v2.Core.Ldap.ILdapConnectionFactory;
+using Multifactor.Radius.Adapter.v2.Infrastructure.Configuration.Client;
+using Multifactor.Radius.Adapter.v2.Infrastructure.Configuration.Client.Build;
+using Multifactor.Radius.Adapter.v2.Infrastructure.Configuration.Service;
+using Multifactor.Radius.Adapter.v2.Infrastructure.Configuration.Service.Build;
+using Multifactor.Radius.Adapter.v2.Infrastructure.Extensions;
+using Multifactor.Radius.Adapter.v2.Infrastructure.Radius;
+using Multifactor.Radius.Adapter.v2.Infrastructure.Radius.Interfaces;
+using Multifactor.Radius.Adapter.v2.Infrastructure.Server;
+using Multifactor.Radius.Adapter.v2.Infrastructure.Server.Interfaces;
+using ILdapConnectionFactory = Multifactor.Radius.Adapter.v2.Domain.Ldap.Interfaces.ILdapConnectionFactory;
 
 namespace Multifactor.Radius.Adapter.v2.EndToEndTests;
 
@@ -67,7 +67,6 @@ public abstract class E2ETestBase(RadiusFixtures radiusFixtures) : IDisposable
         var clientConfigsProvider = new E2EClientConfigurationsProvider(clientConfigs);
         builder.Services.ReplaceService<IClientConfigurationsProvider>(clientConfigsProvider);
         builder.Services.AddLdapSchemaLoader();
-        builder.Services.AddDataProtectionService();
     
         builder.Services.AddFirstFactor();
         builder.Services.AddPipelines();

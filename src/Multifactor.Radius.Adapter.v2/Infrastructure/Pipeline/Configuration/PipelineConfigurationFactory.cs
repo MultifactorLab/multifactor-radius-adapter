@@ -1,8 +1,8 @@
-using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Steps;
-using Multifactor.Radius.Adapter.v2.Core.Auth.PreAuthMode;
-using Multifactor.Radius.Adapter.v2.Services.Cache;
+using Multifactor.Radius.Adapter.v2.Application.Pipeline.Steps;
+using Multifactor.Radius.Adapter.v2.Domain.Auth;
+using Multifactor.Radius.Adapter.v2.Infrastructure.Cache;
 
-namespace Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline;
+namespace Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Configuration;
 
 public class PipelineConfigurationFactory : IPipelineConfigurationFactory
 {

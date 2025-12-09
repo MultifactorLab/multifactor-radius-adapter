@@ -5,10 +5,10 @@ using Multifactor.Core.Ldap.LdapGroup.Load;
 using Multifactor.Core.Ldap.LdapGroup.Membership;
 using Multifactor.Core.Ldap.Name;
 using Multifactor.Core.Ldap.Schema;
-using Multifactor.Radius.Adapter.v2.Core.Ldap;
-using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Context;
-using Multifactor.Radius.Adapter.v2.Services.Ldap;
-using ILdapConnection = Multifactor.Radius.Adapter.v2.Core.Ldap.ILdapConnection;
+using Multifactor.Radius.Adapter.v2.Domain.Ldap.Interfaces;
+using Multifactor.Radius.Adapter.v2.Infrastructure.Ldap;
+using Multifactor.Radius.Adapter.v2.Infrastructure.Ldap.Dto;
+using ILdapConnection = Multifactor.Radius.Adapter.v2.Domain.Ldap.Interfaces.ILdapConnection;
 
 namespace Multifactor.Radius.Adapter.v2.Tests.Unit;
 

@@ -1,11 +1,12 @@
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
+using Multifactor.Radius.Adapter.v2.Application.Pipeline.Steps;
 using Multifactor.Radius.Adapter.v2.Core;
-using Multifactor.Radius.Adapter.v2.Core.Auth;
-using Multifactor.Radius.Adapter.v2.Core.Pipeline;
-using Multifactor.Radius.Adapter.v2.Core.Radius.Packet;
-using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Context;
-using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Steps;
+using Multifactor.Radius.Adapter.v2.Domain;
+using Multifactor.Radius.Adapter.v2.Domain.Auth;
+using Multifactor.Radius.Adapter.v2.Domain.Pipeline;
+using Multifactor.Radius.Adapter.v2.Domain.Radius.Packet;
+using Multifactor.Radius.Adapter.v2.Infrastructure;
 
 namespace Multifactor.Radius.Adapter.v2.Tests.PipelineTests.StepsTests;
 

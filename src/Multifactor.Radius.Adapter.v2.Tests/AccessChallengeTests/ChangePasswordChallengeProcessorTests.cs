@@ -1,19 +1,17 @@
-using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Multifactor.Core.Ldap.Schema;
-using Multifactor.Radius.Adapter.v2.Core;
-using Multifactor.Radius.Adapter.v2.Core.AccessChallenge;
-using Multifactor.Radius.Adapter.v2.Core.Auth;
-using Multifactor.Radius.Adapter.v2.Core.Auth.PreAuthMode;
-using Multifactor.Radius.Adapter.v2.Core.Configuration.Client;
-using Multifactor.Radius.Adapter.v2.Core.Ldap;
-using Multifactor.Radius.Adapter.v2.Core.MultifactorApi;
-using Multifactor.Radius.Adapter.v2.Core.Pipeline;
-using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Context;
-using Multifactor.Radius.Adapter.v2.Services.Cache;
-using Multifactor.Radius.Adapter.v2.Services.DataProtection;
-using Multifactor.Radius.Adapter.v2.Services.Ldap;
+using Multifactor.Radius.Adapter.v2.Application.Challenge;
+using Multifactor.Radius.Adapter.v2.Domain;
+using Multifactor.Radius.Adapter.v2.Domain.Auth;
+using Multifactor.Radius.Adapter.v2.Domain.Challenge;
+using Multifactor.Radius.Adapter.v2.Domain.Ldap.Interfaces;
+using Multifactor.Radius.Adapter.v2.Domain.MultifactorApi;
+using Multifactor.Radius.Adapter.v2.Domain.Pipeline;
+using Multifactor.Radius.Adapter.v2.Infrastructure.Cache;
+using Multifactor.Radius.Adapter.v2.Infrastructure.Configuration.Client;
+using Multifactor.Radius.Adapter.v2.Infrastructure.Ldap.Dto;
+using Multifactor.Radius.Adapter.v2.Infrastructure.Ldap.Interface;
 using Multifactor.Radius.Adapter.v2.Tests.Fixture;
 
 namespace Multifactor.Radius.Adapter.v2.Tests.AccessChallengeTests;
@@ -26,10 +24,9 @@ public class ChangePasswordChallengeProcessorTests
         //Arrange
         var memCacheMock = new Mock<ICacheService>();
         var service = new Mock<ILdapProfileService>();
-        var dataProtectionService = new Mock<IDataProtectionService>();
         
         //Act
-        var processor = new ChangePasswordChallengeProcessor(memCacheMock.Object, service.Object, dataProtectionService.Object, NullLogger<ChangePasswordChallengeProcessor>.Instance);
+        var processor = new ChangePasswordChallengeProcessor(memCacheMock.Object, service.Object, NullLogger<ChangePasswordChallengeProcessor>.Instance);
         
         //Assert
         Assert.Equal(ChallengeType.PasswordChange, processor.ChallengeType);

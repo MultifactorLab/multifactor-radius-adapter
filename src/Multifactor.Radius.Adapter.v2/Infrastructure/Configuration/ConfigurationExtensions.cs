@@ -3,7 +3,7 @@
 //https://github.com/MultifactorLab/multifactor-radius-adapter/blob/main/LICENSE.md
 
 using Microsoft.Extensions.Configuration;
-using Multifactor.Radius.Adapter.v2.Infrastructure.Configuration.RadiusAdapter;
+using Multifactor.Radius.Adapter.v2.Domain.RadiusAdapter;
 
 namespace Multifactor.Radius.Adapter.v2.Infrastructure.Configuration;
 

@@ -1,11 +1,11 @@
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Primitives;
 using Moq;
-using Multifactor.Radius.Adapter.v2.Core.Auth.PreAuthMode;
+using Multifactor.Radius.Adapter.v2.Application.Pipeline.Steps;
+using Multifactor.Radius.Adapter.v2.Domain.Auth;
+using Multifactor.Radius.Adapter.v2.Infrastructure.Cache;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Configuration;
-using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Steps;
-using Multifactor.Radius.Adapter.v2.Services.Cache;
 
 namespace Multifactor.Radius.Adapter.v2.Tests.PipelineTests;
 

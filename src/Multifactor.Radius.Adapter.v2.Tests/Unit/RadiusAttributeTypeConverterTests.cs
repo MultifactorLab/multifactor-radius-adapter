@@ -1,8 +1,8 @@
 using System.Globalization;
 using System.Net;
 using Moq;
-using Multifactor.Radius.Adapter.v2.Core.Radius.Attributes;
-using Multifactor.Radius.Adapter.v2.Services.Radius;
+using Multifactor.Radius.Adapter.v2.Domain.Radius.Attributes;
+using Multifactor.Radius.Adapter.v2.Infrastructure.Radius;
 
 namespace Multifactor.Radius.Adapter.v2.Tests.Unit;
 

@@ -1,4 +1,4 @@
-using Multifactor.Radius.Adapter.v2.Core.Auth.PreAuthMode;
+using Multifactor.Radius.Adapter.v2.Domain.Auth;
 
 namespace Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Configuration;
 

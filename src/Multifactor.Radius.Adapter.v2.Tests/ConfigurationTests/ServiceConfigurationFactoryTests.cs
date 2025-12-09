@@ -1,17 +1,19 @@
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Multifactor.Radius.Adapter.v2.Core;
-using Multifactor.Radius.Adapter.v2.Core.Configuration.Client;
-using Multifactor.Radius.Adapter.v2.Core.Configuration.Client.Build;
-using Multifactor.Radius.Adapter.v2.Core.Configuration.Service;
-using Multifactor.Radius.Adapter.v2.Core.Configuration.Service.Build;
-using Multifactor.Radius.Adapter.v2.Core.Radius.Attributes;
-using Multifactor.Radius.Adapter.v2.Infrastructure.Configuration.RadiusAdapter;
-using Multifactor.Radius.Adapter.v2.Infrastructure.Configuration.RadiusAdapter.Sections;
-using Multifactor.Radius.Adapter.v2.Infrastructure.Configuration.RadiusAdapter.Sections.LdapServer;
+using Multifactor.Radius.Adapter.v2.Domain;
+using Multifactor.Radius.Adapter.v2.Domain.Radius.Attributes;
+using Multifactor.Radius.Adapter.v2.Domain.RadiusAdapter;
+using Multifactor.Radius.Adapter.v2.Domain.RadiusAdapter.Sections;
+using Multifactor.Radius.Adapter.v2.Domain.RadiusAdapter.Sections.LdapServer;
+using Multifactor.Radius.Adapter.v2.Infrastructure;
+using Multifactor.Radius.Adapter.v2.Infrastructure.Configuration.Client;
+using Multifactor.Radius.Adapter.v2.Infrastructure.Configuration.Client.Build;
+using Multifactor.Radius.Adapter.v2.Infrastructure.Configuration.Service;
+using Multifactor.Radius.Adapter.v2.Infrastructure.Configuration.Service.Build;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configuration.XmlAppConfiguration;
 using LdapServerConfiguration =
-    Multifactor.Radius.Adapter.v2.Infrastructure.Configuration.RadiusAdapter.Sections.LdapServer.LdapServerConfiguration;
+    Multifactor.Radius.Adapter.v2.Domain.RadiusAdapter.Sections.LdapServer.LdapServerConfiguration;
 
 namespace Multifactor.Radius.Adapter.v2.Tests.ConfigurationTests;
 

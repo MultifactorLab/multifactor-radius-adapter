@@ -46,10 +46,6 @@
     </ItemGroup>
 
     <ItemGroup>
-        <Folder Include="Core\Configuration\" />
-    </ItemGroup>
-
-    <ItemGroup>
         <Content Include="content\radius.dictionary">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
             <ExcludeFromSingleFile>true</ExcludeFromSingleFile>

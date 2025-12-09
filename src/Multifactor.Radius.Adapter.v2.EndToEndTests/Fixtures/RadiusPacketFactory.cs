@@ -1,4 +1,4 @@
-﻿using Multifactor.Radius.Adapter.v2.Core.Radius.Packet;
+﻿using Multifactor.Radius.Adapter.v2.Domain.Radius.Packet;
 
 namespace Multifactor.Radius.Adapter.v2.EndToEndTests.Fixtures;
 

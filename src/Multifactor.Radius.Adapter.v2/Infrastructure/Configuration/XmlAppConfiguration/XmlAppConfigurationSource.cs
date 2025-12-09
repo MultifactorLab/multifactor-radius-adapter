@@ -4,7 +4,7 @@
 
 using System.Xml.Linq;
 using Microsoft.Extensions.Configuration;
-using Multifactor.Radius.Adapter.v2.Extensions;
+using Multifactor.Radius.Adapter.v2.Infrastructure.Extensions;
 
 namespace Multifactor.Radius.Adapter.v2.Infrastructure.Configuration.XmlAppConfiguration;
 
@@ -65,10 +65,10 @@ public class XmlAppConfigurationSource : ConfigurationProvider, IConfigurationSo
 
     private void FillAppSettingsSection(XElement[] appSettingsElements)
     {
-        for (var i = 0; i < appSettingsElements.Length; i++)
+        foreach (var element in appSettingsElements)
         {
-            var key = XmlAssert.HasAttribute(appSettingsElements[i], "key");
-            var value = XmlAssert.HasAttribute(appSettingsElements[i], "value");
+            var key = XmlAssert.HasAttribute(element, "key");
+            var value = XmlAssert.HasAttribute(element, "value");
 
             var newKey = $"{_appSettingsElement}:{key.ToPascalCase()}";
             Data.Add(newKey, value);

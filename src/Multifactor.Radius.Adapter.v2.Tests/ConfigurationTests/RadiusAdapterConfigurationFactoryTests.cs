@@ -1,4 +1,4 @@
-using Multifactor.Radius.Adapter.v2.Infrastructure.Configuration.RadiusAdapter.Build;
+using Multifactor.Radius.Adapter.v2.Domain.RadiusAdapter;
 
 namespace Multifactor.Radius.Adapter.v2.Tests.ConfigurationTests;
 
