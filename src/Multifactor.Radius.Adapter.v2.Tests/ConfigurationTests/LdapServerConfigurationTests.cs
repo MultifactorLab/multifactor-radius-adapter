@@ -1,5 +1,4 @@
 using Multifactor.Core.Ldap.Name;
-using Multifactor.Radius.Adapter.v2.Core;
 using Multifactor.Radius.Adapter.v2.Core.Configuration.Client;
 
 namespace Multifactor.Radius.Adapter.v2.Tests.ConfigurationTests;

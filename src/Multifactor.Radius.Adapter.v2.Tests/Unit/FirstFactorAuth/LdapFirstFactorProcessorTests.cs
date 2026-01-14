@@ -5,15 +5,11 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Multifactor.Core.Ldap.Connection;
 using Multifactor.Core.Ldap.Schema;
-using Multifactor.Radius.Adapter.v2.Core;
-using Multifactor.Radius.Adapter.v2.Core.Auth;
+using Multifactor.Radius.Adapter.v2.Application.Features.FirstFactor;
+using Multifactor.Radius.Adapter.v2.Application.Features.FirstFactor.BindNameFormat;
+using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline;
 using Multifactor.Radius.Adapter.v2.Core.Auth.PreAuthMode;
 using Multifactor.Radius.Adapter.v2.Core.Configuration.Client;
-using Multifactor.Radius.Adapter.v2.Core.FirstFactor;
-using Multifactor.Radius.Adapter.v2.Core.FirstFactor.BindNameFormat;
-using Multifactor.Radius.Adapter.v2.Core.Ldap;
-using Multifactor.Radius.Adapter.v2.Core.Radius.Packet;
-using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Context;
 using Multifactor.Radius.Adapter.v2.Tests.Fixture;
 using ILdapConnectionFactory = Multifactor.Core.Ldap.Connection.LdapConnectionFactory.ILdapConnectionFactory;
 

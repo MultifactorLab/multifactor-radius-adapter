@@ -1,7 +1,6 @@
-using Multifactor.Radius.Adapter.v2.Core.Radius;
+using Multifactor.Radius.Adapter.v2.Application.Features.Radius;
 using Multifactor.Radius.Adapter.v2.EndToEndTests.Constants;
 using Multifactor.Radius.Adapter.v2.EndToEndTests.Udp;
-using Multifactor.Radius.Adapter.v2.Services.Radius;
 
 namespace Multifactor.Radius.Adapter.v2.EndToEndTests;
 

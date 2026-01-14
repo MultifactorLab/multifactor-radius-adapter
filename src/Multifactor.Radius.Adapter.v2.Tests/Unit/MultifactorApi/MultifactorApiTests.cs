@@ -1,7 +1,6 @@
 using System.Net;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
-using Multifactor.Radius.Adapter.v2.Core.MultifactorApi;
 using Multifactor.Radius.Adapter.v2.Exceptions;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Http;
 

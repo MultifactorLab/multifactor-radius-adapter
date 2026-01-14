@@ -1,10 +1,11 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Multifactor.Radius.Adapter.v2.Core;
+using Multifactor.Radius.Adapter.v2.Application.Configuration.Models;
+using Multifactor.Radius.Adapter.v2.Application.Models;
+using Multifactor.Radius.Adapter.v2.Application.Pipeline.Steps;
 using Multifactor.Radius.Adapter.v2.Extensions;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configuration.XmlAppConfiguration;
-using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline;
-using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Steps;
+using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Configuration;
 
 namespace Multifactor.Radius.Adapter.v2.Tests.ServiceCollectionExtensionsTests;
 

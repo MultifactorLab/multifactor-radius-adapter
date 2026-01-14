@@ -1,10 +1,8 @@
 using System.Net;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
-using Multifactor.Radius.Adapter.v2.Core.Auth;
-using Multifactor.Radius.Adapter.v2.Core.Pipeline;
-using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Context;
-using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Steps;
+using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline;
+using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Steps;
 using NetTools;
 
 namespace Multifactor.Radius.Adapter.v2.Tests.Unit.PipelineSteps;

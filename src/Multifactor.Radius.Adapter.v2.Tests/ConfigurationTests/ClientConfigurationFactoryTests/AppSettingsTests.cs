@@ -1,7 +1,5 @@
 using System.Net;
 using Moq;
-using Multifactor.Radius.Adapter.v2.Core;
-using Multifactor.Radius.Adapter.v2.Core.Auth;
 using Multifactor.Radius.Adapter.v2.Core.Configuration.Client.Build;
 using Multifactor.Radius.Adapter.v2.Core.Configuration.Service;
 using Multifactor.Radius.Adapter.v2.Core.Radius.Attributes;

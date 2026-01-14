@@ -1,6 +1,6 @@
 using Moq;
-using Multifactor.Radius.Adapter.v2.Core.FirstFactor.BindNameFormat;
-using Multifactor.Radius.Adapter.v2.Core.Ldap;
+using Multifactor.Radius.Adapter.v2.Application.Features.FirstFactor.BindNameFormat;
+using Multifactor.Radius.Adapter.v2.Application.Ports.Ldap;
 
 namespace Multifactor.Radius.Adapter.v2.Tests.Unit.LdapBindNameFormatterTests;
 

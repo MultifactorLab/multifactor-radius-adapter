@@ -1,8 +1,6 @@
 using Moq;
-using Multifactor.Radius.Adapter.v2.Core.Pipeline;
+using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Builder;
-using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Context;
-using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Steps;
 
 namespace Multifactor.Radius.Adapter.v2.Tests.PipelineTests;
 

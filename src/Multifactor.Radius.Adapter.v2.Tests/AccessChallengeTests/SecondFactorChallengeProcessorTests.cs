@@ -1,17 +1,14 @@
 using System.Net;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
-using Multifactor.Radius.Adapter.v2.Core;
-using Multifactor.Radius.Adapter.v2.Core.AccessChallenge;
-using Multifactor.Radius.Adapter.v2.Core.Auth;
+using Multifactor.Radius.Adapter.v2.Application.Features.AccessChallenge;
+using Multifactor.Radius.Adapter.v2.Application.Features.AccessChallenge.Models;
+using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline;
+using Multifactor.Radius.Adapter.v2.Application.Features.Radius.Models.Enums;
+using Multifactor.Radius.Adapter.v2.Application.MultifactorApi;
+using Multifactor.Radius.Adapter.v2.Application.Ports.Ldap;
 using Multifactor.Radius.Adapter.v2.Core.Auth.PreAuthMode;
 using Multifactor.Radius.Adapter.v2.Core.Configuration.Client;
-using Multifactor.Radius.Adapter.v2.Core.Ldap;
-using Multifactor.Radius.Adapter.v2.Core.MultifactorApi;
-using Multifactor.Radius.Adapter.v2.Core.Radius;
-using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Context;
-using Multifactor.Radius.Adapter.v2.Services.Ldap;
-using Multifactor.Radius.Adapter.v2.Services.MultifactorApi;
 using Multifactor.Radius.Adapter.v2.Tests.Fixture;
 
 namespace Multifactor.Radius.Adapter.v2.Tests.AccessChallengeTests;

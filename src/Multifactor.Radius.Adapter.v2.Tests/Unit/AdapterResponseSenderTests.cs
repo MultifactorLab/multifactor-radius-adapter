@@ -2,16 +2,13 @@
 using System.Net;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
-using Multifactor.Radius.Adapter.v2.Core.Auth;
+using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline;
+using Multifactor.Radius.Adapter.v2.Application.Features.Radius;
+using Multifactor.Radius.Adapter.v2.Application.Features.Radius.Models;
+using Multifactor.Radius.Adapter.v2.Application.Ports;
 using Multifactor.Radius.Adapter.v2.Core.Configuration.Client;
-using Multifactor.Radius.Adapter.v2.Core.Pipeline;
-using Multifactor.Radius.Adapter.v2.Core.Radius;
-using Multifactor.Radius.Adapter.v2.Core.Radius.Packet;
 using Multifactor.Radius.Adapter.v2.Core.RandomWaiterFeature;
-using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Context;
-using Multifactor.Radius.Adapter.v2.Server.Udp;
-using Multifactor.Radius.Adapter.v2.Services.AdapterResponseSender;
-using Multifactor.Radius.Adapter.v2.Services.Radius;
+using Multifactor.Radius.Adapter.v2.Infrastructure.Radius.Sender;
 
 namespace Multifactor.Radius.Adapter.v2.Tests.Unit;
 

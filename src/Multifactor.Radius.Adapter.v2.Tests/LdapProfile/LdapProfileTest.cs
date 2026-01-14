@@ -10,7 +10,7 @@ public class LdapProfileTest
     [Fact]
     public void CreateLdapProfile_EntryIsNull_ThrowsArgumentNullException()
     {
-        Assert.Throws<ArgumentNullException>(() => new Core.Ldap.LdapProfile(null));
+        Assert.Throws<ArgumentNullException>(() => new Application.Features.Ldap.Models.LdapProfile(null));
     }
 
     [Fact]
@@ -23,7 +23,7 @@ public class LdapProfileTest
         var ldapAttrCollection = new LdapAttributeCollection(attributes);
         var entry = new LdapEntry(dn, ldapAttrCollection);
 
-        var profile = new Core.Ldap.LdapProfile(entry);
+        var profile = new Application.Features.Ldap.Models.LdapProfile(entry);
         Assert.NotNull(profile);
         Assert.Equal(dn, profile.Dn);
     }
@@ -41,7 +41,7 @@ public class LdapProfileTest
         var ldapAttrCollection = new LdapAttributeCollection(attributes);
         var entry = new LdapEntry(dn, ldapAttrCollection);
 
-        var profile = new Core.Ldap.LdapProfile(entry);
+        var profile = new Application.Features.Ldap.Models.LdapProfile(entry);
         
         var memberOf = profile.MemberOf.OrderBy(x =>x.StringRepresentation);
         Assert.NotNull(memberOf);
@@ -62,7 +62,7 @@ public class LdapProfileTest
         var ldapAttrCollection = new LdapAttributeCollection(attributes);
         var entry = new LdapEntry(dn, ldapAttrCollection);
 
-        var profile = new Core.Ldap.LdapProfile(entry);
+        var profile = new Application.Features.Ldap.Models.LdapProfile(entry);
 
         var upnFromProfile = profile.Upn;
         Assert.Equal(upn, upnFromProfile);
@@ -81,7 +81,7 @@ public class LdapProfileTest
         var ldapAttrCollection = new LdapAttributeCollection(attributes);
         var entry = new LdapEntry(dn, ldapAttrCollection);
 
-        var profile = new Core.Ldap.LdapProfile(entry);
+        var profile = new Application.Features.Ldap.Models.LdapProfile(entry);
 
         var phoneFromProfile = profile.Phone;
         Assert.Equal(phone, phoneFromProfile);
@@ -100,7 +100,7 @@ public class LdapProfileTest
         var ldapAttrCollection = new LdapAttributeCollection(attributes);
         var entry = new LdapEntry(dn, ldapAttrCollection);
 
-        var profile = new Core.Ldap.LdapProfile(entry);
+        var profile = new Application.Features.Ldap.Models.LdapProfile(entry);
 
         var emailFromProfile = profile.Email;
         Assert.NotNull(emailFromProfile);
@@ -120,7 +120,7 @@ public class LdapProfileTest
         var ldapAttrCollection = new LdapAttributeCollection(attributes);
         var entry = new LdapEntry(dn, ldapAttrCollection);
 
-        var profile = new Core.Ldap.LdapProfile(entry);
+        var profile = new Application.Features.Ldap.Models.LdapProfile(entry);
 
         var emailFromProfile = profile.Email;
         Assert.NotNull(emailFromProfile);
@@ -143,7 +143,7 @@ public class LdapProfileTest
         var ldapAttrCollection = new LdapAttributeCollection(attributes);
         var entry = new LdapEntry(dn, ldapAttrCollection);
 
-        var profile = new Core.Ldap.LdapProfile(entry);
+        var profile = new Application.Features.Ldap.Models.LdapProfile(entry);
 
         var attributesFromProfile = profile.Attributes;
         Assert.Equal(2, attributesFromProfile.Count);

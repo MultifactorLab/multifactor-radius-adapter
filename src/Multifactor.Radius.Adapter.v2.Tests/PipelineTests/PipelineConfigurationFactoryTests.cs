@@ -1,11 +1,14 @@
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Primitives;
 using Moq;
+using Multifactor.Radius.Adapter.v2.Application.Pipeline.Steps;
+using Multifactor.Radius.Adapter.v2.Application.Pipeline.Steps.Challenge;
 using Multifactor.Radius.Adapter.v2.Core.Auth.PreAuthMode;
-using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Configuration;
-using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline.Steps;
 using Multifactor.Radius.Adapter.v2.Services.Cache;
+using AccessChallengeStep = Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Steps.AccessChallengeStep;
+using IpWhiteListStep = Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Steps.IpWhiteListStep;
+using SecondFactorStep = Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Steps.SecondFactorStep;
 
 namespace Multifactor.Radius.Adapter.v2.Tests.PipelineTests;
 

@@ -1,14 +1,12 @@
-﻿using System.Reflection;
-using System.Text;
-using Multifactor.Radius.Adapter.v2.Core;
-using Multifactor.Radius.Adapter.v2.Extensions;
-using Multifactor.Radius.Adapter.v2.Server;
-using Multifactor.Radius.Adapter.v2.Server.Udp;
+﻿using System.Text;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Multifactor.Radius.Adapter.v2.Core.Pipeline;
+using Multifactor.Radius.Adapter.v2.Application.Features.Radius.Ports;
+using Multifactor.Radius.Adapter.v2.Infrastructure.Extensions;
+using Multifactor.Radius.Adapter.v2.Application.Extensions;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Logging;
-using Multifactor.Radius.Adapter.v2.Services.AdapterResponseSender;
+using Multifactor.Radius.Adapter.v2.Infrastructure.Radius.Sender;
+using Multifactor.Radius.Adapter.v2.Server;
 
 IHost? host = null;
 try
@@ -17,31 +15,25 @@ try
     builder.Services.AddWindowsService(options => options.ServiceName = "Multifactor RADIUS");
     builder.Services.AddMemoryCache();
     builder.Services.AddAdapterLogging();
-    var appVars = new ApplicationVariables
-    {
-        AppPath = Path.GetDirectoryName(AppDomain.CurrentDomain.BaseDirectory),
-        AppVersion = Assembly.GetExecutingAssembly().GetName().Version?.ToString(),
-        StartedAt = DateTime.Now
-    };
+    builder.Services.AddApplicationVariables();
     
-    builder.Services.AddSingleton(appVars);
-    builder.Services.AddRadiusDictionary();
     builder.Services.AddConfiguration();
     
-    builder.Services.AddLdapSchemaLoader();
-    builder.Services.AddDataProtectionService();
+    builder.Services.AddLdap();
     
     builder.Services.AddFirstFactor();
+    builder.Services.AddChallenge();
+    builder.Services.AddPipelineSteps();
     builder.Services.AddPipelines();
    
-    builder.Services.AddSingleton<IUdpPacketHandler, UdpPacketHandler>();
     builder.Services.AddTransient<IResponseSender, AdapterResponseSender>();
     
-    builder.Services.AddServices();
+    builder.Services.AddInfraServices();
+    builder.Services.AddAppServices();
     builder.Services.AddChallenge();
     
-    builder.Services.AddUdpClient();
-    builder.Services.AddMultifactorHttpClient();
+    builder.Services.AddRadiusUdpClient();
+    builder.Services.AddMultifactorApi();
     
     builder.Services.AddSingleton<AdapterServer>();
     builder.Services.AddHostedService<ServerHost>();

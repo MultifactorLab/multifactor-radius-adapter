@@ -21,6 +21,12 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Multifactor.Radius.Adapter.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Multifactor.Radius.Adapter.v2.EndToEndTests", "Multifactor.Radius.Adapter.v2.EndToEndTests\Multifactor.Radius.Adapter.v2.EndToEndTests.csproj", "{3882D448-6BDC-449C-AC9E-687EE82F407B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Multifactor.Radius.Adapter.v2.Infrastructure", "Multifactor.Radius.Adapter.v2.Infrastructure\Multifactor.Radius.Adapter.v2.Infrastructure.csproj", "{1C003665-1D1D-428F-ACB5-F4489BC21C04}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Multifactor.Radius.Adapter.v2.Application", "Multifactor.Radius.Adapter.v2.Application\Multifactor.Radius.Adapter.v2.Application.csproj", "{3B698212-A44A-49BF-BA2C-B2FF1FC9780F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Multifactor.Radius.Adapter.v2.Shared", "Multifactor.Radius.Adapter.v2.Shared\Multifactor.Radius.Adapter.v2.Shared.csproj", "{7B428E7E-778B-4F37-8911-EB0B893B1AFE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -47,6 +53,18 @@ Global
 		{3882D448-6BDC-449C-AC9E-687EE82F407B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3882D448-6BDC-449C-AC9E-687EE82F407B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3882D448-6BDC-449C-AC9E-687EE82F407B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1C003665-1D1D-428F-ACB5-F4489BC21C04}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1C003665-1D1D-428F-ACB5-F4489BC21C04}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1C003665-1D1D-428F-ACB5-F4489BC21C04}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1C003665-1D1D-428F-ACB5-F4489BC21C04}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3B698212-A44A-49BF-BA2C-B2FF1FC9780F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3B698212-A44A-49BF-BA2C-B2FF1FC9780F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3B698212-A44A-49BF-BA2C-B2FF1FC9780F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3B698212-A44A-49BF-BA2C-B2FF1FC9780F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7B428E7E-778B-4F37-8911-EB0B893B1AFE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7B428E7E-778B-4F37-8911-EB0B893B1AFE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7B428E7E-778B-4F37-8911-EB0B893B1AFE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7B428E7E-778B-4F37-8911-EB0B893B1AFE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

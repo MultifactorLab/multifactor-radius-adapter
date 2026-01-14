@@ -1,4 +1,6 @@
-using Multifactor.Radius.Adapter.v2.Core.Ldap.Identity;
+using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Models;
+using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Models.Enum;
+using Multifactor.Radius.Adapter.v2.Infrastructure.Adapters.Ldap.Models;
 using Multifactor.Radius.Adapter.v2.Tests.Fixture;
 
 namespace Multifactor.Radius.Adapter.v2.Tests.UserIdentityTests;

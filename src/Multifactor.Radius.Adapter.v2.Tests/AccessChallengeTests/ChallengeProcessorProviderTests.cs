@@ -1,5 +1,6 @@
 using Moq;
-using Multifactor.Radius.Adapter.v2.Core.AccessChallenge;
+using Multifactor.Radius.Adapter.v2.Application.Features.AccessChallenge;
+using Multifactor.Radius.Adapter.v2.Application.Features.AccessChallenge.Models;
 
 namespace Multifactor.Radius.Adapter.v2.Tests.AccessChallengeTests;
 

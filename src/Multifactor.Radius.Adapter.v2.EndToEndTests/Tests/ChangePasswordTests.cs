@@ -2,15 +2,13 @@ using System.Text;
 using Microsoft.Extensions.Hosting;
 using Moq;
 using Multifactor.Core.Ldap.Name;
-using Multifactor.Radius.Adapter.v2.Core.MultifactorApi;
-using Multifactor.Radius.Adapter.v2.Core.Radius.Packet;
+using Multifactor.Radius.Adapter.v2.Application.MultifactorApi;
 using Multifactor.Radius.Adapter.v2.EndToEndTests.Constants;
 using Multifactor.Radius.Adapter.v2.EndToEndTests.Fixtures;
 using Multifactor.Radius.Adapter.v2.EndToEndTests.Fixtures.Models;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configuration.RadiusAdapter;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configuration.RadiusAdapter.Sections;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configuration.RadiusAdapter.Sections.LdapServer;
-using Multifactor.Radius.Adapter.v2.Services.MultifactorApi;
 
 namespace Multifactor.Radius.Adapter.v2.EndToEndTests.Tests;
 
