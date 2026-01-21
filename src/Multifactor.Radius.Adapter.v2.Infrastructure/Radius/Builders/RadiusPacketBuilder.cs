@@ -1,7 +1,6 @@
 using Microsoft.Extensions.Logging;
 using Multifactor.Radius.Adapter.v2.Application.Features.Radius.Models;
 using Multifactor.Radius.Adapter.v2.Application.Features.Radius.Models.Enums;
-using Multifactor.Radius.Adapter.v2.Application.Features.Radius.Ports;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Dictionary;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Radius.Crypto;
 
@@ -132,7 +131,6 @@ public class RadiusPacketBuilder : IRadiusPacketBuilder
                 break;
         }
 
-        // Copy authenticator to packet
         Buffer.BlockCopy(authenticator, 0, packetBytesArray, 4, 16);
         
         return packetBytesArray;

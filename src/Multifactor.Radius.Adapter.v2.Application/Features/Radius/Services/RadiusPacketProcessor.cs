@@ -66,7 +66,6 @@ public class RadiusPacketProcessor : IRadiusPacketProcessor
                 _logger.LogWarning(ex, 
                     "Failed to process with LDAP server {ConnectionString} for client {ClientName}", 
                     serverConfig.ConnectionString, clientConfiguration.Name);
-                // Продолжаем пробовать следующий сервер
             }
         }
         
@@ -74,7 +73,7 @@ public class RadiusPacketProcessor : IRadiusPacketProcessor
         {
             _logger.LogError(lastException, 
                 "All LDAP servers failed for client {ClientName}", clientConfiguration.Name);
-            throw new RadiusProcessingException(
+            throw new Exception(
                 $"All LDAP servers failed for client '{clientConfiguration.Name}'", 
                 lastException);
         }
@@ -85,7 +84,6 @@ public class RadiusPacketProcessor : IRadiusPacketProcessor
         RadiusPacket requestPacket, 
         LdapServerConfiguration? ldapServerConfiguration = null)
     {
-        // Логирование
         if (ldapServerConfiguration != null)
         {
             _logger.LogDebug(
@@ -100,13 +98,12 @@ public class RadiusPacketProcessor : IRadiusPacketProcessor
         }
         
         var context = CreatePipelineContext(clientConfiguration, requestPacket, ldapServerConfiguration);
-        var pipeline = GetPipeline(clientConfiguration.Name);
+        var pipeline = GetPipeline(clientConfiguration);
         
         try
         {
             await pipeline.ExecuteAsync(context);
             
-            // Отправка ответа
             var responseRequest = SendAdapterResponseRequest.FromContext(context);
             await _responseSender.SendResponse(responseRequest);
             
@@ -120,18 +117,15 @@ public class RadiusPacketProcessor : IRadiusPacketProcessor
         }
         catch (Exception ex)
         {
-            // Логируем как Warning, т.к. это временная ошибка выполнения
             _logger.LogWarning(ex, 
                 "Pipeline execution failed for client {ClientName}{ServerInfo}", 
                 clientConfiguration.Name,
                 ldapServerConfiguration != null ? $" with LDAP server {ldapServerConfiguration.ConnectionString}" : "");
-            
-            // Пробрасываем дальше для TryProcessWithLdapServers
             throw;
         }
     }
 
-    private RadiusPipelineContext CreatePipelineContext(
+    private static RadiusPipelineContext CreatePipelineContext(
         ClientConfiguration clientConfiguration, 
         RadiusPacket requestPacket, 
         LdapServerConfiguration? ldapServerConfiguration = null)
@@ -148,31 +142,26 @@ public class RadiusPacketProcessor : IRadiusPacketProcessor
         return context;
     }
 
-    private IRadiusPipeline GetPipeline(string clientConfigurationName)
+    private IRadiusPipeline GetPipeline(ClientConfiguration clientConfiguration)
     {
-        var pipeline = _pipelineProvider.GetPipeline(clientConfigurationName);
+        var pipeline = _pipelineProvider.GetPipeline(clientConfiguration);
         if (pipeline is null)
         {
             throw new PipelineNotFoundException(
-                $"No pipeline found for client '{clientConfigurationName}'. " +
+                $"No pipeline found for client '{clientConfiguration.Name}'. " +
                 "Check adapter configuration and restart the adapter.",
-                clientConfigurationName);
+                clientConfiguration.Name);
         }
         return pipeline;
     }
     
-    private bool ShouldProcessWithoutLdap(RadiusPacket requestPacket, ClientConfiguration clientConfiguration)
+    private static bool ShouldProcessWithoutLdap(RadiusPacket requestPacket, ClientConfiguration clientConfiguration)
     {
-        // Если нет LDAP серверов
         if (clientConfiguration.LdapServers.Count <= 0)
             return true;
         
-        // Если пакет не является AccessRequest
         if (requestPacket.Code != PacketCode.AccessRequest)
             return true;
-        
-        // Дополнительные условия можно добавить здесь
-        // Например, если есть определенные атрибуты или флаги
         
         return false;
     }

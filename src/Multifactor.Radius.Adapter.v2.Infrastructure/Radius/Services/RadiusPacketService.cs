@@ -115,8 +115,3 @@ public class RadiusPacketService : IRadiusPacketService
         return _nasIdentifierExtractor.TryExtract(packetBytes, out nasIdentifier);
     }
 }
-
-public interface INasIdentifierExtractor
-{
-    bool TryExtract(byte[] packetBytes, out string nasIdentifier);
-}

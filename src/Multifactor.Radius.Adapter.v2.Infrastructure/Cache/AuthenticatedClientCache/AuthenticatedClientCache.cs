@@ -1,66 +1,73 @@
-using System.Collections.Concurrent;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Multifactor.Radius.Adapter.v2.Application.Cache;
-using Multifactor.Radius.Adapter.v2.Application.Features.Radius.Models;
 
 namespace Multifactor.Radius.Adapter.v2.Infrastructure.Cache.AuthenticatedClientCache;
 
-    public class AuthenticatedClientCache : IAuthenticatedClientCache
+public class AuthenticatedClientCache : IAuthenticatedClientCache
+{
+    private readonly IMemoryCache _memoryCache;
+    private readonly ILogger<AuthenticatedClientCache> _logger;
+
+    public AuthenticatedClientCache(IMemoryCache memoryCache, ILogger<AuthenticatedClientCache> logger)
     {
-        // TODO ConcurrentDictionary -> MemoryCache
-        private readonly ConcurrentDictionary<string, AuthenticatedClient> _authenticatedClients = new();
-        private readonly ILogger<AuthenticatedClientCache> _logger;
+        _memoryCache = memoryCache ?? throw new ArgumentNullException(nameof(memoryCache));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    }
 
-        public AuthenticatedClientCache(ILogger<AuthenticatedClientCache> logger)
+    public bool TryHitCache(string? callingStationId, string userName, string clientName, TimeSpan lifetime)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(clientName);
+        
+        if (lifetime == TimeSpan.Zero)
+            return false;
+
+        if (string.IsNullOrWhiteSpace(callingStationId))
         {
-            _logger = logger;
-        }
-
-        public bool TryHitCache(string? callingStationId, string userName, string clientName, TimeSpan lifetime)
-        {
-            ArgumentException.ThrowIfNullOrWhiteSpace(clientName);
-            
-            if (lifetime == TimeSpan.Zero)
-                return false;
-
-            if (string.IsNullOrWhiteSpace(callingStationId))
-            {
-                _logger.LogError("Remote host parameter miss for user {userName:l}", userName);
-                return false;
-            }
-
-            var id = AuthenticatedClient.ParseId(callingStationId, clientName, userName);
-            if (!_authenticatedClients.TryGetValue(id, out var authenticatedClient))
-                return false;
-
-            _logger.LogDebug($"User {userName} with calling-station-id {callingStationId} authenticated {authenticatedClient.Elapsed:hh\\:mm\\:ss} ago. Authentication session period: {lifetime}");
-
-            if (authenticatedClient.Elapsed <= lifetime)
-                return true;
-
-            _authenticatedClients.TryRemove(id, out _);
-
+            _logger.LogError("Remote host parameter miss for user {userName:l}", userName);
             return false;
         }
 
-        public void SetCache(string? callingStationId, string? userName, string clientName, TimeSpan lifetime)
+        var id = AuthenticatedClient.ParseId(callingStationId, clientName, userName);
+        
+        if (!_memoryCache.TryGetValue(id, out var cachedValue))
+            return false;
+
+        if (cachedValue is AuthenticatedClient authenticatedClient)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(clientName);
-            
-            if (lifetime == TimeSpan.Zero || string.IsNullOrWhiteSpace(callingStationId))
-                return;
+            _logger.LogDebug($"User {userName} with calling-station-id {callingStationId} authenticated {authenticatedClient.Elapsed:hh\\:mm\\:ss} ago. Authentication session period: {lifetime}");
+            return true;
+        }
 
-            var client = AuthenticatedClient.Create(callingStationId, clientName, userName);
-            var added = false;
-            if (!_authenticatedClients.ContainsKey(client.Id))
-                added = _authenticatedClients.TryAdd(client.Id, client);
+        return false;
+    }
 
-            if (added)
+    public void SetCache(string? callingStationId, string? userName, string clientName, TimeSpan lifetime)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(clientName);
+        
+        if (lifetime == TimeSpan.Zero || string.IsNullOrWhiteSpace(callingStationId))
+            return;
+
+        var id = AuthenticatedClient.ParseId(callingStationId, clientName, userName);
+        
+        if (!_memoryCache.TryGetValue(id, out _))
+        {
+            var client = new AuthenticatedClient([callingStationId, clientName, userName]);
+            var cacheOptions = new MemoryCacheEntryOptions
             {
-                var expirationDate = DateTimeOffset.Now.Add(lifetime);
-                _logger.LogDebug("Authentication for user '{userName}' is saved in cache till '{expiration}' with key '{key}'", userName, expirationDate.ToString(), client.Id);
-            }
-            else
-                _logger.LogWarning("Failed to save user '{userName}' with key '{key}' to cache", userName, client.Id);
+                AbsoluteExpirationRelativeToNow = lifetime
+            };
+
+            _memoryCache.Set(id, client, cacheOptions);
+            
+            var expirationDate = DateTimeOffset.Now.Add(lifetime);
+            _logger.LogDebug("Authentication for user '{userName}' is saved in cache till '{expiration}' with key '{key}'", 
+                userName, expirationDate.ToString("O"), id);
+        }
+        else
+        {
+            _logger.LogDebug("Cache entry for user '{userName}' with key '{key}' already exists", userName, id);
         }
     }
+}

@@ -1,5 +1,4 @@
 using System.Security.Authentication;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -12,25 +11,29 @@ using Multifactor.Radius.Adapter.v2.Application.Configuration.Models;
 using Multifactor.Radius.Adapter.v2.Application.Features.Ldap;
 using Multifactor.Radius.Adapter.v2.Application.Features.Multifactor.Ports;
 using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline;
-using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Models;
+using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.AccessChallenge;
 using Multifactor.Radius.Adapter.v2.Application.Features.Radius.Ports;
 using Multifactor.Radius.Adapter.v2.Application.Features.Radius.Services;
-using Multifactor.Radius.Adapter.v2.Application.Ports;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Adapters.Ldap;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Adapters.Multifactor;
+using Multifactor.Radius.Adapter.v2.Infrastructure.Adapters.Multifactor.Http;
+using Multifactor.Radius.Adapter.v2.Infrastructure.Adapters.PacketHandler;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Adapters.Udp;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Cache;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Cache.AuthenticatedClientCache;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Dictionary;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Loader;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Parser;
-using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Parser.ValueParser;
-using Multifactor.Radius.Adapter.v2.Infrastructure.Http;
+using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Reader;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Logging;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline;
+using Multifactor.Radius.Adapter.v2.Infrastructure.Radius.Builders;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Radius.Client;
+using Multifactor.Radius.Adapter.v2.Infrastructure.Radius.Crypto;
+using Multifactor.Radius.Adapter.v2.Infrastructure.Radius.Parsers;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Radius.Services;
-using Multifactor.Radius.Adapter.v2.Shared;
+using Multifactor.Radius.Adapter.v2.Infrastructure.Radius.Validators;
+using Multifactor.Radius.Adapter.v2.Shared.Extensions;
 using Polly;
 using Serilog;
 using ILogger = Microsoft.Extensions.Logging.ILogger;
@@ -48,19 +51,17 @@ public static class InfrastructureExtensions
             dict.Read();
             return dict;
         });
-        
-        services.AddSingleton<IValueParser, ValueParser>();
         services.AddSingleton<IConfigurationParser, XmlConfigurationParser>();
         services.AddSingleton<IConfigurationLoader, ConfigurationLoader>();
 
         services.AddSingleton<ServiceConfiguration>(provider =>
         {
             var manager = provider.GetRequiredService<IConfigurationLoader>();
-            return manager.LoadAsync(CancellationToken.None).GetAwaiter().GetResult();
+            return manager.Load();
         });
     }
     
-    public static IServiceCollection AddRadiusUdpClient(this IServiceCollection services)
+    public static void AddRadiusUdpClient(this IServiceCollection services)
     {
         services.AddSingleton<IUdpClient>(serviceProvider =>
         {
@@ -72,29 +73,45 @@ public static class InfrastructureExtensions
             return new CustomUdpClient(endpoint, logger, options);
         });
     
-        return services;
+        services.AddSingleton<IRadiusAttributeParser, RadiusAttributeParser>();
+        services.AddSingleton<IRadiusPacketParser, RadiusPacketParser>();
+        services.AddSingleton<IRadiusCryptoProvider, RadiusCryptoProvider>();
+        
+        services.AddSingleton<IRadiusUdpAdapter, RadiusUdpAdapter>();
     }
     
 
     public static void AddMultifactorApi(this IServiceCollection services)
     {
+        services.AddTransient<MfTraceIdHeaderSetter>();
         services.AddSingleton<IEndpointSelector, RoundRobinEndpointSelector>();
         services.AddHttpClient("multifactor-api")
-        .AddPolicyHandler((serviceProvider, request) =>
+            .ConfigureHttpClient((serviceProvider, client) =>
+            {
+                var config = serviceProvider.GetRequiredService<ServiceConfiguration>();
+                if (config.RootConfiguration.MultifactorApiUrls?.Any() == true)
+                {
+                    var primaryUrl = config.RootConfiguration.MultifactorApiUrls[0];
+                    client.BaseAddress = primaryUrl;
+                }
+            })
+            .AddPolicyHandler((serviceProvider, request) =>
             Policy<HttpResponseMessage>
                 .Handle<HttpRequestException>()
-                .OrResult(response => !response.IsSuccessStatusCode)
+                .OrResult(response => !response.IsSuccessStatusCode && (int)response.StatusCode >= 500)
                 .FallbackAsync(
                     fallbackAction: async (outcome, context, cancellationToken) =>
                     {
+                        StartupLogger.Error("start");
                         var urlSelector = serviceProvider.GetRequiredService<IEndpointSelector>();
                         var fallbackUrl = await urlSelector.GetNextEndpointAsync();
                     
                         var fallbackRequest = request.CloneHttpRequestMessage();
-                        fallbackRequest.RequestUri = new Uri(new Uri(fallbackUrl), request.RequestUri!.PathAndQuery);
+                        fallbackRequest.RequestUri = new Uri(fallbackUrl, request.RequestUri!.PathAndQuery);
+                        StartupLogger.Error(fallbackRequest.RequestUri.ToString());
                     
                         var httpClientFactory = serviceProvider.GetRequiredService<IHttpClientFactory>();
-                        var httpClient = httpClientFactory.CreateClient("FallbackClient");
+                        var httpClient = httpClientFactory.CreateClient("multifactor-api");
                     
                         return await httpClient.SendAsync(fallbackRequest, cancellationToken);
                     },
@@ -144,7 +161,8 @@ public static class InfrastructureExtensions
 
     public static void AddLdap(this IServiceCollection services)
     {
-        services.AddSingleton<ILdapConnectionFactory, CustomLdapConnectionFactory>();
+        services.AddSingleton(LdapConnectionFactory.Create());
+        services.AddSingleton<ILdapConnectionFactory, CustomLdapConnectionFactory>((prov) => new CustomLdapConnectionFactory());
         services.AddSingleton<ILdapGroupLoaderFactory, LdapGroupLoaderFactory>();
         services.AddSingleton<IMembershipCheckerFactory, MembershipCheckerFactory>();
         services.AddSingleton<LdapSchemaLoader>();
@@ -155,6 +173,8 @@ public static class InfrastructureExtensions
     {
         services.AddSingleton<ICacheService, CacheService>();
         services.AddSingleton<IAuthenticatedClientCache, AuthenticatedClientCache>();
+        services.AddSingleton<IRadiusAttributeSerializer, RadiusAttributeSerializer>();
+        services.AddSingleton<IRadiusPacketBuilder, RadiusPacketBuilder>();
         services.AddTransient<IRadiusPacketService, RadiusPacketService>();
         services.AddSingleton<IRadiusClientFactory, RadiusClientFactory>();
         services.AddTransient<IRadiusReplyAttributeService, RadiusReplyAttributeService>();
@@ -163,7 +183,10 @@ public static class InfrastructureExtensions
     
     public static void AddPipelines(this IServiceCollection services)
     {
+        
+        services.AddSingleton<INasIdentifierExtractor, RadiusNasIdentifierExtractor>();
+        services.AddSingleton<IRadiusPacketValidator, RadiusPacketValidator>();
         services.AddSingleton<IPipelineProvider, RadiusPipelineProvider>();
         services.AddSingleton<IRadiusPipelineFactory, RadiusPipelineFactory>();
-    }
+    }    
 }

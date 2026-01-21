@@ -1,5 +1,3 @@
-using Multifactor.Radius.Adapter.v2.Application.Features.Radius.Models;
-
 namespace Multifactor.Radius.Adapter.v2.Application.Cache;
 
 public interface IAuthenticatedClientCache

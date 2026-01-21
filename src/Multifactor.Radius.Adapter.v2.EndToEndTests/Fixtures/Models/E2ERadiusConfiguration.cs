@@ -1,5 +1,3 @@
-using Multifactor.Radius.Adapter.v2.Infrastructure.Configuration.RadiusAdapter;
-
 namespace Multifactor.Radius.Adapter.v2.EndToEndTests.Fixtures.Models;
 
 public class E2ERadiusConfiguration(

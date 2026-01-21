@@ -18,20 +18,20 @@ public static class StartupLogger
     {
         SelfLog.Enable(Console.WriteLine);
 
-        var baseDir = Path.GetDirectoryName(AppDomain.CurrentDomain.BaseDirectory);
-        var dir = Path.Combine(baseDir!, LogDirectory);
-        if (!Directory.Exists(dir))
-        {
-            Directory.CreateDirectory(dir);
-        }
+        // var baseDir = Path.GetDirectoryName(AppDomain.CurrentDomain.BaseDirectory);
+        // var dir = Path.Combine(baseDir!, LogDirectory);
+        // if (!Directory.Exists(dir))
+        // {
+        //     Directory.CreateDirectory(dir);
+        // }
 
-        var path = Path.Combine(dir, StartupLogFile);
+        // var path = Path.Combine(dir, StartupLogFile);
         var loggerConfig = new LoggerConfiguration()
-            .WriteTo.File(path: path,
-                LogEventLevel.Verbose,
-                FileLogTemplate,
-                fileSizeLimitBytes: FileSizeLimitBytes,
-                rollOnFileSizeLimit: true)
+            // .WriteTo.File(path: path,
+            //     LogEventLevel.Verbose,
+            //     FileLogTemplate,
+            //     fileSizeLimitBytes: FileSizeLimitBytes,
+            //     rollOnFileSizeLimit: true)
             .WriteTo.Console(LogEventLevel.Verbose, ConsoleLogTemplate)
             .Enrich.FromLogContext();
 
@@ -46,6 +46,7 @@ public static class StartupLogger
 
     /// <inheritdoc cref="Microsoft.VisualBasic.Information"/>
     public static void Information(string message, params object?[] values) => _logger.Value.Information(message, values);
+    public static void Warning(string message, params object?[] values) => _logger.Value.Warning(message, values);
 
     /// <inheritdoc cref="JSType.Error"/>
     public static void Error(string message, params object?[] values) => _logger.Value.Error(message, values);

@@ -1,12 +1,8 @@
 using Microsoft.Extensions.Hosting;
 using Moq;
-using Multifactor.Radius.Adapter.v2.Application.MultifactorApi;
 using Multifactor.Radius.Adapter.v2.EndToEndTests.Constants;
 using Multifactor.Radius.Adapter.v2.EndToEndTests.Fixtures;
 using Multifactor.Radius.Adapter.v2.EndToEndTests.Fixtures.Models;
-using Multifactor.Radius.Adapter.v2.Infrastructure.Configuration.RadiusAdapter;
-using Multifactor.Radius.Adapter.v2.Infrastructure.Configuration.RadiusAdapter.Sections;
-using Multifactor.Radius.Adapter.v2.Infrastructure.Configuration.RadiusAdapter.Sections.LdapServer;
 
 namespace Multifactor.Radius.Adapter.v2.EndToEndTests.Tests;
 

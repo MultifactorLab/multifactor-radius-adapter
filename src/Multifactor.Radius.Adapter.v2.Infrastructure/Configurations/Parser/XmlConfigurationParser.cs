@@ -1,46 +1,39 @@
 using System.Net;
 using System.Xml.Linq;
 using Multifactor.Radius.Adapter.v2.Application.Configuration.Models;
-using Multifactor.Radius.Adapter.v2.Application.Models.Enum;
+using Multifactor.Radius.Adapter.v2.Application.Configuration.Models.Enum;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Dictionary;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Dictionary.Attributes;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Exceptions;
-using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Parser.ValueParser;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Reader;
-using Multifactor.Radius.Adapter.v2.Shared;
+using Multifactor.Radius.Adapter.v2.Shared.Extensions;
 
 namespace Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Parser;
 
 public class XmlConfigurationParser : IConfigurationParser
 {
-    private readonly IXmlReader _xmlReader;
-    private readonly IValueParser _valueParser;
     private readonly IRadiusDictionary _dictionary;
     
     public XmlConfigurationParser(
-        IXmlReader xmlReader,
-        IValueParser valueParser,
         IRadiusDictionary dictionary)
     {
-        _xmlReader = xmlReader;
-        _valueParser = valueParser;
         _dictionary = dictionary;
     }
     
     public async Task<RootConfiguration> ParseRootConfigAsync(string filePath, CancellationToken ct)
     {
-        var xml = await _xmlReader.ReadAsync(filePath, ct);
-        var settings = _xmlReader.ExtractAppSettings(xml);
+        var xml = await XmlReader.ReadAsync(filePath, ct);
+        var settings = XmlReader.ExtractAppSettings(xml);
         
-        return new RootConfiguration()
+        return new RootConfiguration
         {
-            AdapterServerEndpoint = _valueParser.ParseEndpoint(settings.GetValueOrDefault("adapter-server-endpoint"), required: true),
-            MultifactorApiUrls = _valueParser.ParseUrls(settings.GetValueOrDefault("multifactor-api-url"), required: true),
-            MultifactorApiTimeout = _valueParser.ParseTimeout(settings.GetValueOrDefault("multifactor-api-timeout"), 
-                TimeSpan.FromSeconds(65)),
+            MultifactorApiUrls = ValueParser.ParseUrls(settings.GetValueOrDefault("multifactor-api-url"), required: true),
             MultifactorApiProxy = settings.GetValueOrDefault("multifactor-api-proxy"),
+            MultifactorApiTimeout = ValueParser.ParseTimeout(settings.GetValueOrDefault("multifactor-api-timeout"), 
+                TimeSpan.FromSeconds(65)),
+            AdapterServerEndpoint = ValueParser.ParseEndpoint(settings.GetValueOrDefault("adapter-server-endpoint"), required: true),
             LoggingFormat = settings.GetValueOrDefault("logging-format") ?? string.Empty,
-            SyslogUseTls = _valueParser.ParseBool("syslog-use-tls", false),
+            SyslogUseTls = ValueParser.ParseBool("syslog-use-tls", false),
             SyslogServer = settings.GetValueOrDefault("syslog-server") ?? string.Empty,
             SyslogFormat = settings.GetValueOrDefault("syslog-format") ?? string.Empty,
             SyslogFacility = settings.GetValueOrDefault("syslog-facility") ?? string.Empty,
@@ -49,14 +42,15 @@ public class XmlConfigurationParser : IConfigurationParser
             SyslogOutputTemplate = settings.GetValueOrDefault("syslog-output-template") ?? string.Empty,
             ConsoleLogOutputTemplate = settings.GetValueOrDefault("console-log-output-template") ?? string.Empty,
             FileLogOutputTemplate = settings.GetValueOrDefault("file-log-output-template") ?? string.Empty,
-            LogFileMaxSizeBytes = _valueParser.ParseInt("log-file-max-size-bytes", 1073741824),
+            LogFileMaxSizeBytes = ValueParser.ParseInt("log-file-max-size-bytes", 1073741824),
+            LoggingLevel = settings.GetValueOrDefault("logging-level"),
         };
     }
     
     public async Task<ClientConfiguration> ParseClientConfigAsync(string filePath, CancellationToken ct)
     {
-        var xml = await _xmlReader.ReadAsync(filePath, ct);
-        var settings = _xmlReader.ExtractAppSettings(xml);
+        var xml = await XmlReader.ReadAsync(filePath, ct);
+        var settings = XmlReader.ExtractAppSettings(xml);
         
         var dto = new ClientConfiguration
         {
@@ -65,33 +59,28 @@ public class XmlConfigurationParser : IConfigurationParser
                                        ?? throw new InvalidConfigurationException("multifactor-nas-identifier is required"),
             MultifactorSharedSecret = settings.GetValueOrDefault("multifactor-shared-secret")
                                       ?? throw new InvalidConfigurationException("multifactor-shared-secret is required"),
-            SignUpGroups = _valueParser.ParseStringList(settings.GetValueOrDefault("sign-up-group")),
-            BypassSecondFactorWhenApiUnreachable = _valueParser.ParseBool("bypass-second-factor-when-api-unreachable", true),
-            FirstFactorAuthenticationSource = _valueParser.ParseEnum<AuthenticationSource>("first-factor-authentication-source", required: true),
-            AdapterClientEndpoint = _valueParser.ParseEndpoint(settings.GetValueOrDefault("adapter-client-endpoint"), required: true),
-            RadiusClientIp = _valueParser.ParseIpAddress(settings.GetValueOrDefault("radius-client-ip")),
+            SignUpGroups = ValueParser.ParseStringList(settings.GetValueOrDefault("sign-up-group")),
+            BypassSecondFactorWhenApiUnreachable = ValueParser.ParseBool(settings.GetValueOrDefault("bypass-second-factor-when-api-unreachable"), true),
+            FirstFactorAuthenticationSource = ValueParser.ParseEnum<AuthenticationSource>(settings.GetValueOrDefault("first-factor-authentication-source"), required: true),
+            AdapterClientEndpoint = ValueParser.ParseEndpoint(settings.GetValueOrDefault("adapter-client-endpoint"), required: true),
+            RadiusClientIp = ValueParser.ParseIpAddress(settings.GetValueOrDefault("radius-client-ip")),
             RadiusClientNasIdentifier = settings.GetValueOrDefault("radius-client-nas-identifier") ?? string.Empty,
             RadiusSharedSecret = settings.GetValueOrDefault("radius-shared-secret")
                 ?? throw new InvalidConfigurationException("radius-shared-secret is required"),
-            NpsServerEndpoints = _valueParser.ParseEndpoints(settings.GetValueOrDefault("nps-server-endpoint"), required: true),
-            NpsServerTimeout = _valueParser.ParseTimeout("nps-server-timeout", TimeSpan.Parse("00:00:05")),
-            PreAuthenticationMethod = _valueParser.ParseEnum<PreAuthMode>("pre-authentication-method", PreAuthMode.None),
-            AuthenticationCacheLifetime = _valueParser.ParseTimeSpan(
+            NpsServerEndpoints = ValueParser.ParseEndpoints(settings.GetValueOrDefault("nps-server-endpoint"), required: true),
+            NpsServerTimeout = ValueParser.ParseTimeout(settings.GetValueOrDefault("nps-server-timeout"), TimeSpan.Parse("00:00:05")),
+            Privacy = ValueParser.ParsePrivacyModeWithFields(settings.GetValueOrDefault("privacy-mode")),
+            PreAuthenticationMethod = ValueParser.ParseEnum<PreAuthMode>(settings.GetValueOrDefault("pre-authentication-method"), PreAuthMode.None),
+            AuthenticationCacheLifetime = ValueParser.ParseTimeSpan(
                 settings.GetValueOrDefault("authentication-cache-lifetime")),
             CallingStationIdAttribute = settings.GetValueOrDefault("calling-station-id-attribute"),
-            IpWhiteList = _valueParser.ParseIpRanges(
+            IpWhiteList = ValueParser.ParseIpRanges(
                 settings.GetValueOrDefault("ip-white-list")),
-            LoggingLevel = settings.GetValueOrDefault("logging-level"),
-            InvalidCredentialDelay = _valueParser.ParseDelaySettings(settings.GetValueOrDefault("invalid-credential-delay")),
+            InvalidCredentialDelay = ValueParser.ParseDelaySettings(settings.GetValueOrDefault("invalid-credential-delay")),
+            ReplyAttributes = ParseReplyAttributes(xml)
         };
-
-        var (mode, fields) = _valueParser.ParsePrivacyModeWithFields(settings.GetValueOrDefault("privacy-mode"));
-        dto.PrivacyMode = mode;
-        dto.PrivacyFields = fields;
         
         dto.LdapServers = ParseLdapServers(xml, dto.Name);
-        
-        dto.ReplyAttributes = ParseReplyAttributes(xml);
         
         return dto;
     }
@@ -99,7 +88,7 @@ public class XmlConfigurationParser : IConfigurationParser
     private List<LdapServerConfiguration> ParseLdapServers(XDocument xml, string configName)
     {
         var servers = new List<LdapServerConfiguration>();
-        var ldapElements = xml.Root?.Element("ldapServers")?.Elements("ldapServer");
+        var ldapElements = XmlReader.GetLdapServerElements(xml);
         
         if (ldapElements == null)
             return servers;
@@ -109,22 +98,22 @@ public class XmlConfigurationParser : IConfigurationParser
             ConnectionString = element.Attribute("connection-string")?.Value ?? throw new InvalidConfigurationException("LDAP username is required"),
             Username = element.Attribute("username")?.Value ?? throw new InvalidConfigurationException("LDAP username is required"),
             Password = element.Attribute("password")?.Value ?? throw new InvalidConfigurationException("LDAP password is required"),
-            BindTimeoutSeconds = _valueParser.ParseInt(element.Attribute("bind-timeout-in-seconds")?.Value, 30),
-            AccessGroups = _valueParser.ParseDistinguishedNames(element.Attribute("access-groups")?.Value),
-            SecondFaGroups = _valueParser.ParseDistinguishedNames(element.Attribute("second-fa-groups")?.Value),
-            SecondFaBypassGroups = _valueParser.ParseDistinguishedNames(element.Attribute("second-fa-bypass-groups")?.Value),
-            LoadNestedGroups = _valueParser.ParseBool(element.Attribute("load-nested-groups")?.Value, true),
-            NestedGroupsBaseDns = _valueParser.ParseDistinguishedNames(element.Attribute("nested-groups-base-dn")?.Value),
-            AuthenticationCacheGroups = _valueParser.ParseDistinguishedNames(element.Attribute("authentication-cache-groups")?.Value),
-            PhoneAttributes = _valueParser.ParseStringList(element.Attribute("phone-attributes")?.Value),
+            BindTimeoutSeconds = ValueParser.ParseInt(element.Attribute("bind-timeout-in-seconds")?.Value, 30),
+            AccessGroups = ValueParser.ParseDistinguishedNames(element.Attribute("access-groups")?.Value),
+            SecondFaGroups = ValueParser.ParseDistinguishedNames(element.Attribute("second-fa-groups")?.Value),
+            SecondFaBypassGroups = ValueParser.ParseDistinguishedNames(element.Attribute("second-fa-bypass-groups")?.Value),
+            LoadNestedGroups = ValueParser.ParseBool(element.Attribute("load-nested-groups")?.Value, true),
+            NestedGroupsBaseDns = ValueParser.ParseDistinguishedNames(element.Attribute("nested-groups-base-dn")?.Value),
+            AuthenticationCacheGroups = ValueParser.ParseDistinguishedNames(element.Attribute("authentication-cache-groups")?.Value),
+            PhoneAttributes = ValueParser.ParseStringList(element.Attribute("phone-attributes")?.Value),
             IdentityAttribute = element.Attribute("identity-attribute")?.Value ?? "sAMAccountName",
-            RequiresUpn = _valueParser.ParseBool(element.Attribute("requires-upn")?.Value, false),
-            TrustedDomainsEnabled = _valueParser.ParseBool(element.Attribute("enable-trusted-domains")?.Value, false), 
-            AlternativeSuffixesEnabled = _valueParser.ParseBool(element.Attribute("enable-alternative-suffixes")?.Value, false), 
-            IncludedDomains = _valueParser.ParseStringList(element.Attribute("included-domains")?.Value), 
-            ExcludedDomains = _valueParser.ParseStringList(element.Attribute("excluded-domains")?.Value), 
-            IncludedSuffixes = _valueParser.ParseStringList(element.Attribute("included-suffixes")?.Value), 
-            ExcludedSuffixes = _valueParser.ParseStringList(element.Attribute("excluded-suffixes")?.Value)
+            RequiresUpn = ValueParser.ParseBool(element.Attribute("requires-upn")?.Value, false),
+            TrustedDomainsEnabled = ValueParser.ParseBool(element.Attribute("enable-trusted-domains")?.Value, false), 
+            AlternativeSuffixesEnabled = ValueParser.ParseBool(element.Attribute("enable-alternative-suffixes")?.Value, false), 
+            IncludedDomains = ValueParser.ParseStringList(element.Attribute("included-domains")?.Value), 
+            ExcludedDomains = ValueParser.ParseStringList(element.Attribute("excluded-domains")?.Value), 
+            IncludedSuffixes = ValueParser.ParseStringList(element.Attribute("included-suffixes")?.Value), 
+            ExcludedSuffixes = ValueParser.ParseStringList(element.Attribute("excluded-suffixes")?.Value)
         }));
 
         return servers;
@@ -133,7 +122,7 @@ public class XmlConfigurationParser : IConfigurationParser
     private IReadOnlyDictionary<string, RadiusReplyAttribute[]> ParseReplyAttributes(
         XDocument xml)
     {
-        var elements = _xmlReader.GetRadiusReplyElements(xml);
+        var elements = XmlReader.GetRadiusReplyElements(xml);
         if (!elements.Any())
             return new Dictionary<string, RadiusReplyAttribute[]>();
         

@@ -8,6 +8,5 @@ public interface IRadiusCryptoProvider
     byte[] CalculateResponseAuthenticator(SharedSecret secret, byte[] requestAuth, byte[] responsePacket);
     byte[] CalculateMessageAuthenticator(SharedSecret secret, byte[] packet, RadiusAuthenticator? requestAuth = null);
     bool ValidateMessageAuthenticator(byte[] packet, byte[] messageAuth, int position, SharedSecret secret, RadiusAuthenticator? requestAuth = null);
-    byte[] EncryptPassword(SharedSecret secret, RadiusAuthenticator authenticator, byte[] password);
     byte[] DecryptPassword(SharedSecret secret, RadiusAuthenticator authenticator, byte[] encryptedPassword);
 }

@@ -1,7 +1,6 @@
 using Microsoft.Extensions.Logging;
 using Multifactor.Radius.Adapter.v2.Application.Features.Radius.Models;
 using Multifactor.Radius.Adapter.v2.Application.Features.Radius.Models.Enums;
-using Multifactor.Radius.Adapter.v2.Application.Features.Radius.Ports;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Radius.Crypto;
 
 namespace Multifactor.Radius.Adapter.v2.Infrastructure.Radius.Parsers;
@@ -54,7 +53,7 @@ public class RadiusPacketParser : IRadiusPacketParser
         return packet;
     }
 
-    private void ValidatePacketLength(byte[] packetBytes)
+    private static void ValidatePacketLength(byte[] packetBytes)
     {
         if (packetBytes.Length < 20)
         {
@@ -62,9 +61,9 @@ public class RadiusPacketParser : IRadiusPacketParser
         }
     }
 
-    private void ValidatePacketLengthField(byte[] packetBytes)
+    private static void ValidatePacketLengthField(byte[] packetBytes)
     {
-        var declaredLength = BitConverter.ToUInt16(new[] { packetBytes[3], packetBytes[2] }, 0);
+        var declaredLength = BitConverter.ToUInt16([packetBytes[3], packetBytes[2]], 0);
         
         if (declaredLength != packetBytes.Length)
         {

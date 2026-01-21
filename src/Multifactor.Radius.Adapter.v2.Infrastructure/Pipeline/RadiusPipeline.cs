@@ -8,7 +8,7 @@ namespace Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline;
 public class RadiusPipeline : IRadiusPipeline
 {
     private readonly List<IRadiusPipelineStep> _steps;
-    private readonly ILogger<RadiusPipeline> _logger;
+    // private readonly ILogger<RadiusPipeline> _logger;
     
     public RadiusPipeline(List<IRadiusPipelineStep> steps)
     {
@@ -18,7 +18,7 @@ public class RadiusPipeline : IRadiusPipeline
     
     public async Task ExecuteAsync(RadiusPipelineContext context)
     {
-        _logger.LogDebug("Starting pipeline execution with {StepCount} steps", _steps.Count);
+        // _logger.LogDebug("Starting pipeline execution with {StepCount} steps", _steps.Count);
 
         foreach (var step in _steps)
         {
@@ -26,8 +26,8 @@ public class RadiusPipeline : IRadiusPipeline
             
             if (context.IsTerminated)
             {
-                _logger.LogDebug("Pipeline terminated early at step {StepName}", 
-                    step.GetType().Name);
+                // _logger.LogDebug("Pipeline terminated early at step {StepName}", 
+                //     step.GetType().Name);
                 break;
             }
         }

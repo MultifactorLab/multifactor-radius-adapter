@@ -1,4 +1,3 @@
-using Multifactor.Radius.Adapter.v2.Application.Features.Radius;
 using Multifactor.Radius.Adapter.v2.EndToEndTests.Constants;
 using Multifactor.Radius.Adapter.v2.EndToEndTests.Udp;
 

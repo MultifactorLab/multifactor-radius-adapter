@@ -12,7 +12,7 @@ public class LdapProfile : ILdapProfile
 
     public LdapProfile(LdapEntry ldapEntry, ILdapSchema? schema = null)
     {
-        Throw.IfNull(ldapEntry, nameof(ldapEntry));
+        ArgumentNullException.ThrowIfNull(ldapEntry, nameof(ldapEntry));
         _ldapEntry = ldapEntry;
 
         MemberOf = _ldapEntry.Attributes["memberOf"]?.GetNotEmptyValues().Select(n => new DistinguishedName(n, schema)).ToList() ?? [];

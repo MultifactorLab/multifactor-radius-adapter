@@ -9,19 +9,20 @@ namespace Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Loader;
 public class ConfigurationLoader : IConfigurationLoader
 {
     private readonly IConfigurationParser _parser;
-    private readonly ILogger<ConfigurationLoader> _logger;
     
     public ConfigurationLoader(
-        IConfigurationParser parser,
-        ILogger<ConfigurationLoader> logger)
+        IConfigurationParser parser)
     {
         _parser = parser;
-        _logger = logger;
+    }
+    
+    public ServiceConfiguration Load()
+    {
+        return LoadAsync(CancellationToken.None).GetAwaiter().GetResult();
     }
     
     public async Task<ServiceConfiguration> LoadAsync(CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Loading configuration...");
         
         var rootConfig = await LoadRootConfigurationAsync(cancellationToken);
         
@@ -32,8 +33,6 @@ public class ConfigurationLoader : IConfigurationLoader
             RootConfiguration = rootConfig,
             ClientsConfigurations = clients
         };
-        
-        _logger.LogInformation("Configuration loaded: {ClientCount} clients", clients.Count);
         
         return serviceConfig;
     }
@@ -57,26 +56,24 @@ public class ConfigurationLoader : IConfigurationLoader
         
         if (!Directory.Exists(clientsPath))
         {
-            _logger.LogDebug("No clients directory found at {Path}", clientsPath);
             return clients;
         }
         
         var configFiles = Directory.GetFiles(clientsPath, "*.config");
+        if (configFiles.Length == 0)
+        {
+            var assemblyLocation = Assembly.GetEntryAssembly()?.Location;
+            var configPath = $"{assemblyLocation}.config";
         
+            if (!File.Exists(configPath))
+                throw new InvalidConfigurationException($"Root configuration not found: {configPath}");
+            
+            return [await _parser.ParseClientConfigAsync(configPath, ct)];
+        }
         foreach (var file in configFiles)
         {
-            try
-            {
-                var clientDto = await _parser.ParseClientConfigAsync(file, ct);
-                clients.Add(clientDto);
-                
-                _logger.LogDebug("Loaded client: {Name} from {File}", clientDto.Name, Path.GetFileName(file));
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Failed to load client configuration from {File}", file);
-                throw;
-            }
+            var clientDto = await _parser.ParseClientConfigAsync(file, ct);
+            clients.Add(clientDto);
         }
         
         return clients;

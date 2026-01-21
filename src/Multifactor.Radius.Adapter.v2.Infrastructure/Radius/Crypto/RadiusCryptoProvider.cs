@@ -1,7 +1,6 @@
 using System.Security.Cryptography;
 using Microsoft.Extensions.Logging;
 using Multifactor.Radius.Adapter.v2.Application.Features.Radius.Models;
-using Multifactor.Radius.Adapter.v2.Application.Features.Radius.Ports;
 
 namespace Multifactor.Radius.Adapter.v2.Infrastructure.Radius.Crypto;
 
@@ -26,18 +25,13 @@ public class RadiusCryptoProvider : IRadiusCryptoProvider
 
     public byte[] CalculateMessageAuthenticator(SharedSecret secret, byte[] packet, RadiusAuthenticator? requestAuth = null)
     {
-        using var hmac = new HMACMD5(secret.Bytes.ToArray());
-        
-        if (requestAuth != null)
-        {
-            // For response packets, use request authenticator
-            var tempPacket = new byte[packet.Length];
-            packet.CopyTo(tempPacket, 0);
-            requestAuth.Value.CopyTo(tempPacket, 4);
-            return hmac.ComputeHash(tempPacket);
-        }
-        
-        return hmac.ComputeHash(packet);
+        var temp = new byte[packet.Length];
+        packet.CopyTo(temp, 0);
+
+        requestAuth?.Value.CopyTo(temp, 4);
+
+        using var md5 = new HMACMD5(secret.Bytes);
+        return md5.ComputeHash(temp);
     }
 
     public bool ValidateMessageAuthenticator(
@@ -55,13 +49,8 @@ public class RadiusCryptoProvider : IRadiusCryptoProvider
             tempPacket[position + 2 + i] = 0;
         }
         var calculated = CalculateMessageAuthenticator(secret, tempPacket, requestAuth);
-        
-        return CryptographicOperations.FixedTimeEquals(calculated, messageAuth);
-    }
-
-    public byte[] EncryptPassword(SharedSecret secret, RadiusAuthenticator authenticator, byte[] password)
-    {
-        return RadiusPasswordProtector.Encrypt(secret, authenticator, password);
+        return calculated.SequenceEqual(messageAuth);
+        // return CryptographicOperations.FixedTimeEquals(calculated, messageAuth);
     }
 
     public byte[] DecryptPassword(SharedSecret secret, RadiusAuthenticator authenticator, byte[] encryptedPassword)
@@ -69,7 +58,7 @@ public class RadiusCryptoProvider : IRadiusCryptoProvider
         return RadiusPasswordProtector.Decrypt(secret, authenticator, encryptedPassword);
     }
 
-    private byte[] CalculateAuthenticator(SharedSecret secret, byte[] packet, byte[] requestAuth)
+    private static byte[] CalculateAuthenticator(SharedSecret secret, byte[] packet, byte[] requestAuth)
     {
         var buffer = new byte[packet.Length + secret.Bytes.Length];
         packet.CopyTo(buffer, 0);

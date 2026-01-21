@@ -2,16 +2,12 @@ using System.Net;
 using System.Text;
 using Microsoft.Extensions.Logging;
 using Multifactor.Radius.Adapter.v2.Application.Features.Radius.Models;
-using Multifactor.Radius.Adapter.v2.Application.Security;
+using Multifactor.Radius.Adapter.v2.Application.Features.Security;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Dictionary;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Dictionary.Attributes;
 
 namespace Multifactor.Radius.Adapter.v2.Infrastructure.Radius.Builders;
 
-public interface IRadiusAttributeSerializer
-{
-    byte[]? Serialize(string attributeName, object value, RadiusAuthenticator authenticator, SharedSecret sharedSecret, RadiusAuthenticator? requestAuthenticator = null);
-}
 
 public class RadiusAttributeSerializer : IRadiusAttributeSerializer
 {
@@ -110,7 +106,7 @@ public class RadiusAttributeSerializer : IRadiusAttributeSerializer
         }
     }
 
-    private byte[] ConvertIntegerToBytes(object value)
+    private static byte[] ConvertIntegerToBytes(object value)
     {
         int intValue;
         
@@ -143,7 +139,7 @@ public class RadiusAttributeSerializer : IRadiusAttributeSerializer
         return bytes;
     }
 
-    private byte[] ConvertDateToBytes(object value)
+    private static byte[] ConvertDateToBytes(object value)
     {
         DateTime date;
         
@@ -166,7 +162,7 @@ public class RadiusAttributeSerializer : IRadiusAttributeSerializer
         return bytes;
     }
 
-    private byte[] CreateStandardHeader(byte typeCode, int contentLength)
+    private static byte[] CreateStandardHeader(byte typeCode, int contentLength)
     {
         var header = new byte[2];
         header[0] = typeCode;
@@ -174,7 +170,7 @@ public class RadiusAttributeSerializer : IRadiusAttributeSerializer
         return header;
     }
 
-    private byte[] CreateVendorSpecificHeader(DictionaryVendorAttribute vendorAttribute, int contentLength)
+    private static byte[] CreateVendorSpecificHeader(DictionaryVendorAttribute vendorAttribute, int contentLength)
     {
         // VSA format: Type(1)=26, Length(1), Vendor-Id(4), Vendor-Type(1), Vendor-Length(1), Content
         var header = new byte[8];

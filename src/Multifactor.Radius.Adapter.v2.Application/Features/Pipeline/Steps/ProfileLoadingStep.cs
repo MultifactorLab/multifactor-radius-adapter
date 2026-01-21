@@ -5,8 +5,6 @@ using Multifactor.Radius.Adapter.v2.Application.Cache;
 using Multifactor.Radius.Adapter.v2.Application.Features.Ldap;
 using Multifactor.Radius.Adapter.v2.Application.Features.Ldap.Models;
 using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Models;
-using Multifactor.Radius.Adapter.v2.Application.Models;
-using Multifactor.Radius.Adapter.v2.Application.Ports;
 
 namespace Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Steps;
 
@@ -97,7 +95,7 @@ public class ProfileLoadingStep : IRadiusPipelineStep
         return profile;
     }
     
-    private IEnumerable<LdapAttributeName> GetAttributes(RadiusPipelineContext context)
+    private static IEnumerable<LdapAttributeName> GetAttributes(RadiusPipelineContext context)
     {
         var attributes = new List<LdapAttributeName>() { new("memberOf"), new("userPrincipalName"), new("phone"), new("mail"), new("displayName"), new("email") };
         if (!string.IsNullOrWhiteSpace(context.LdapConfiguration!.IdentityAttribute))

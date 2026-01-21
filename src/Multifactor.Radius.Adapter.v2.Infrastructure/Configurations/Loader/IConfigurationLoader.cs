@@ -4,5 +4,6 @@ namespace Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Loader;
 
 public interface IConfigurationLoader
 {
+    ServiceConfiguration Load();
     Task<ServiceConfiguration> LoadAsync(CancellationToken cancellationToken);
 }

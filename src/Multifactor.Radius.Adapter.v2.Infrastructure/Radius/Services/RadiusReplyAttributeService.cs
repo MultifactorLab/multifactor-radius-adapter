@@ -2,12 +2,10 @@
 
 using System.Net;
 using Microsoft.Extensions.Logging;
-using Microsoft.VisualBasic.CompilerServices;
-using Multifactor.Radius.Adapter.v2.Application.Configuration;
 using Multifactor.Radius.Adapter.v2.Application.Configuration.Models;
 using Multifactor.Radius.Adapter.v2.Application.Features.Radius.Models;
 using Multifactor.Radius.Adapter.v2.Application.Features.Radius.Services;
-using Multifactor.Radius.Adapter.v2.Shared;
+using Multifactor.Radius.Adapter.v2.Shared.Extensions;
 
 namespace Multifactor.Radius.Adapter.v2.Infrastructure.Radius.Services;
 
@@ -76,7 +74,7 @@ public class RadiusReplyAttributeService : IRadiusReplyAttributeService
                 
                 _logger.LogDebug(
                     "Added attribute '{Attribute}': {Value}",
-                    attributeName, 
+                    attributeName,
                     GetLoggableValue(convertedValue));
             }
             
@@ -115,7 +113,7 @@ public class RadiusReplyAttributeService : IRadiusReplyAttributeService
         return true;
     }
     
-    private bool MatchesUserNameCondition(IReadOnlyList<string> conditions, string? userName)
+    private static bool MatchesUserNameCondition(IReadOnlyList<string> conditions, string? userName)
     {
         if (string.IsNullOrWhiteSpace(userName))
             return false;
@@ -135,7 +133,7 @@ public class RadiusReplyAttributeService : IRadiusReplyAttributeService
         return false;
     }
     
-    private bool MatchesUserGroupCondition(IReadOnlyList<string> conditions, HashSet<string> userGroups)
+    private static bool MatchesUserGroupCondition(IReadOnlyList<string> conditions, HashSet<string> userGroups)
     {
         if (userGroups == null || userGroups.Count == 0)
             return false;
@@ -145,7 +143,7 @@ public class RadiusReplyAttributeService : IRadiusReplyAttributeService
                 .Any(group => string.Equals(group, condition, StringComparison.OrdinalIgnoreCase)));
     }
     
-    private List<object?> GetAttributeValues(RadiusReplyAttribute attributeValue, GetReplyAttributesRequest request)
+    private static List<object?> GetAttributeValues(RadiusReplyAttribute attributeValue, GetReplyAttributesRequest request)
     {
         if (attributeValue.IsMemberOf)
         {
@@ -181,7 +179,7 @@ public class RadiusReplyAttributeService : IRadiusReplyAttributeService
             result.Count);
     }
     
-    private string GetLoggableValue(object value)
+    private static string GetLoggableValue(object value)
     {
         if (value is IPAddress ip)
             return ip.ToString();

@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Logging;
-using Multifactor.Radius.Adapter.v2.Application.Features.AccessChallenge;
-using Multifactor.Radius.Adapter.v2.Application.Features.AccessChallenge.Models;
+using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.AccessChallenge;
+using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.AccessChallenge.Models;
 using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Models;
 
 namespace Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Steps;

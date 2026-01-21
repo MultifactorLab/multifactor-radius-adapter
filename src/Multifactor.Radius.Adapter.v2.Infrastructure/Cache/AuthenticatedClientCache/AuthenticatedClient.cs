@@ -15,12 +15,12 @@ public class AuthenticatedClient
         _authenticatedAt = authenticatedAt;
     }
 
-    public static AuthenticatedClient Create(params string?[] components)
+    public AuthenticatedClient(params string?[] components)
     {
         ArgumentNullException.ThrowIfNull(components);
         if (components.Length == 0) throw new ArgumentException(nameof(components));
-
-        return new AuthenticatedClient(ParseId(components), DateTime.Now);
+        Id = ParseId(components);
+        _authenticatedAt = DateTime.Now;
     }
 
     public static string ParseId(params string?[] components) => string.Join('-', components.Where(x => !string.IsNullOrWhiteSpace(x)));      

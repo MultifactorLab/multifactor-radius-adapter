@@ -1,13 +1,9 @@
 using System.Net;
 using Microsoft.Extensions.Logging.Abstractions;
 using Multifactor.Radius.Adapter.v2.Application.Configuration.Models;
-using Multifactor.Radius.Adapter.v2.Application.Features.Radius;
-using Multifactor.Radius.Adapter.v2.Application.Models;
-using Multifactor.Radius.Adapter.v2.Core.Radius.Attributes;
 using Multifactor.Radius.Adapter.v2.EndToEndTests.Fixtures;
 using Multifactor.Radius.Adapter.v2.EndToEndTests.Fixtures.Models;
 using Multifactor.Radius.Adapter.v2.EndToEndTests.Udp;
-using Multifactor.Radius.Adapter.v2.Infrastructure.Radius;
 
 namespace Multifactor.Radius.Adapter.v2.EndToEndTests;
 

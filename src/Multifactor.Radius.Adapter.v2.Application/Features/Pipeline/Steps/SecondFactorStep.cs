@@ -1,13 +1,13 @@
 using Microsoft.Extensions.Logging;
-using Multifactor.Radius.Adapter.v2.Application.Features.AccessChallenge;
-using Multifactor.Radius.Adapter.v2.Application.Features.AccessChallenge.Models;
+using Multifactor.Radius.Adapter.v2.Application.Configuration.Models.Enum;
 using Multifactor.Radius.Adapter.v2.Application.Features.Ldap;
 using Multifactor.Radius.Adapter.v2.Application.Features.Ldap.Models;
 using Multifactor.Radius.Adapter.v2.Application.Features.Multifactor;
 using Multifactor.Radius.Adapter.v2.Application.Features.Multifactor.Models;
+using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.AccessChallenge;
+using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.AccessChallenge.Models;
 using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Models;
-using Multifactor.Radius.Adapter.v2.Application.Models.Enum;
-using Multifactor.Radius.Adapter.v2.Application.Ports;
+using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Models.Enum;
 
 namespace Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Steps;
 
@@ -66,7 +66,7 @@ public class SecondFactorStep : IRadiusPipelineStep
         return false;
     }
 
-    private bool ShouldBypassByRequest(RadiusPipelineContext context)
+    private static bool ShouldBypassByRequest(RadiusPipelineContext context)
     {
         return context.RequestPacket.IsVendorAclRequest && context.ClientConfiguration.FirstFactorAuthenticationSource == AuthenticationSource.Radius;
     }
@@ -83,7 +83,7 @@ public class SecondFactorStep : IRadiusPipelineStep
         if (serverConfig.SecondFaBypassGroups.Any())
         {
             var request = MembershipRequest.FromContext(context, serverConfig.SecondFaBypassGroups);
-            bypassMember = _ldapAdapter.IsMemberOf(request);
+            bypassMember = context.LdapProfile.MemberOf.Intersect(serverConfig.SecondFaBypassGroups).Any() || _ldapAdapter.IsMemberOf(request);
         }
 
         if (bypassMember is true)
@@ -96,7 +96,7 @@ public class SecondFactorStep : IRadiusPipelineStep
         if (serverConfig.SecondFaGroups.Any())
         {
             var request = MembershipRequest.FromContext(context, serverConfig.SecondFaGroups);
-            secondFactorMember = _ldapAdapter.IsMemberOf(request);
+            secondFactorMember = context.LdapProfile.MemberOf.Intersect(serverConfig.SecondFaGroups).Any() || _ldapAdapter.IsMemberOf(request);
             if (secondFactorMember is false)
                 _logger.LogInformation("User '{user:l}' is not a member of the 2FA group at '{domain:l}'", context.RequestPacket.UserName, serverConfig.ConnectionString);
         }
@@ -122,7 +122,7 @@ public class SecondFactorStep : IRadiusPipelineStep
         }
         
         var request = MembershipRequest.FromContext(context, context.LdapConfiguration.AuthenticationCacheGroups);
-        var isMember = _ldapAdapter.IsMemberOf(request);
+        var isMember = context.LdapProfile.MemberOf.Intersect(context.LdapConfiguration.AuthenticationCacheGroups).Any() || _ldapAdapter.IsMemberOf(request);
         var groupsStr = string.Join(',', context.LdapConfiguration.AuthenticationCacheGroups);
         var username = context.RequestPacket.UserName;
         if (!isMember)

@@ -6,6 +6,6 @@ public class ServiceConfiguration
 {
     public required RootConfiguration RootConfiguration { get; set; }
     public required IReadOnlyList<ClientConfiguration> ClientsConfigurations  { get; set; }
-    public ClientConfiguration GetClientConfiguration(string nasIdentifier) => ClientsConfigurations.First(config => config.MultifactorNasIdentifier == nasIdentifier);
-    public ClientConfiguration GetClientConfiguration(IPAddress ip) => ClientsConfigurations.First(config => config.RadiusClientIp != null && config.RadiusClientIp.Equals(ip));
+    public ClientConfiguration GetClientConfiguration(string nasIdentifier) => ClientsConfigurations.FirstOrDefault(config => config.RadiusClientNasIdentifier == nasIdentifier);
+    public ClientConfiguration GetClientConfiguration(IPAddress ip) => ClientsConfigurations.FirstOrDefault(config => config.RadiusClientIp != null && config.RadiusClientIp.Equals(ip));
 }

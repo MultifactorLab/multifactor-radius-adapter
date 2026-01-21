@@ -1,10 +1,10 @@
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using Multifactor.Radius.Adapter.v2.Application.Features.Multifactor.Models;
 using Multifactor.Radius.Adapter.v2.Application.Features.Multifactor.Ports;
-using Multifactor.Radius.Adapter.v2.Application.Models;
-using Multifactor.Radius.Adapter.v2.Application.Ports;
+using Multifactor.Radius.Adapter.v2.Infrastructure.Adapters.Multifactor.Http;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Adapters.Multifactor.Models;
 
 namespace Multifactor.Radius.Adapter.v2.Infrastructure.Adapters.Multifactor;
@@ -22,13 +22,16 @@ public class MultifactorApi : IMultifactorApi
         _logger = logger;
     }
 
-    public async Task<AccessRequestResponse> CreateAccessRequest(AccessRequestQuery query, CancellationToken cancellationToken)
+    public async Task<AccessRequestResponse> CreateAccessRequest(AccessRequestQuery query, MultifactorAuthData authData, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(query, nameof(query));
         
         var dto = AccessRequestDto.FromQuery(query);
         var client = _clientFactory.CreateClient(_clientName);
+        var headerValue = new BasicAuthHeaderValue(authData.ApiKey, authData.ApiSecret);
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", headerValue.GetBase64());
         var response = await client.PostAsJsonAsync("access/requests/ra", dto, cancellationToken: cancellationToken);
+
         if (!response.IsSuccessStatusCode)
         {
             var errContent = await response.Content.ReadAsStringAsync(cancellationToken);
@@ -36,17 +39,20 @@ public class MultifactorApi : IMultifactorApi
             throw new Exception("Error while requesting access/requests/ra");
         }
         response.EnsureSuccessStatusCode();
-        var content = await response.Content.ReadAsStringAsync(cancellationToken);
+        var content = await response.Content.ReadAsStringAsync(cancellationToken); //TODO add error cathcher
+        Console.WriteLine(content);
         var accessResponse = JsonSerializer.Deserialize<MultiFactorApiResponse<AccessRequestResponse>>(content, _options);
         return accessResponse.Model;
     }
     
-    public async Task<AccessRequestResponse> SendChallengeAsync(ChallengeRequestQuery query, CancellationToken cancellationToken)
+    public async Task<AccessRequestResponse> SendChallengeAsync(ChallengeRequestQuery query, MultifactorAuthData authData, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(query, nameof(query));
         
         var dto = ChallengeRequestDto.FromQuery(query);
         var client = _clientFactory.CreateClient(_clientName);
+        var headerValue = new BasicAuthHeaderValue(authData.ApiKey, authData.ApiSecret);
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", headerValue.GetBase64());
         var response = await client.PostAsJsonAsync("access/requests/ra/challenge", dto, cancellationToken: cancellationToken);
         if (!response.IsSuccessStatusCode)
         {

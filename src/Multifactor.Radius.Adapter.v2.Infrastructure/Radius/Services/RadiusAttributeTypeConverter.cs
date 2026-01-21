@@ -16,15 +16,12 @@ public class RadiusAttributeTypeConverter : IRadiusAttributeTypeConverter
     
     public object ConvertType(string attributeName, object value)
     {
-        // Если значение не строка - возвращаем как есть
         if (value is not string stringValue)
             return value;
             
-        // Получаем информацию об атрибуте из словаря
         var attributeInfo = _radiusDictionary.GetAttribute(attributeName);
         if (attributeInfo == null)
         {
-            // Неизвестный атрибут - возвращаем как есть
             return value;
         }
         
@@ -40,25 +37,22 @@ public class RadiusAttributeTypeConverter : IRadiusAttributeTypeConverter
             "integer" => ConvertToInteger(stringValue),
             "string" or "tagged-string" => stringValue,
             "octets" => ConvertToOctets(stringValue),
-            _ => stringValue // Неподдерживаемый тип - возвращаем как строку
+            _ => stringValue
         };
     }
     
     private object ConvertToIpAddress(string stringValue)
     {
-        // Пробуем парсить как обычный IP-адрес
         if (IPAddress.TryParse(stringValue, out var ipAddress))
             return ipAddress;
             
-        // Пробуем парсить как Microsoft RADIUS Framed IP Address (целое число)
         if (int.TryParse(stringValue, out var intValue))
             return ConvertMsRadiusFramedIpAddress(intValue);
             
-        // Не удалось конвертировать - возвращаем исходную строку
         return stringValue;
     }
     
-    private IPAddress ConvertMsRadiusFramedIpAddress(int intValue)
+    private static IPAddress ConvertMsRadiusFramedIpAddress(int intValue)
     {
         // Microsoft RADIUS специфика:
         // Числа выше 2147483647 представляются как отрицательные
@@ -86,9 +80,8 @@ public class RadiusAttributeTypeConverter : IRadiusAttributeTypeConverter
         return new IPAddress(ipBytes);
     }
     
-    private object ConvertToDateTime(string stringValue)
+    private static object ConvertToDateTime(string stringValue)
     {
-        // Пробуем парсить как DateTime
         if (DateTime.TryParse(stringValue, CultureInfo.InvariantCulture, 
             DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal, 
             out var dateTime))
@@ -96,7 +89,6 @@ public class RadiusAttributeTypeConverter : IRadiusAttributeTypeConverter
             return dateTime;
         }
         
-        // Пробуем парсить как Unix timestamp
         if (long.TryParse(stringValue, out var unixTimestamp))
         {
             return DateTimeOffset.FromUnixTimeSeconds(unixTimestamp).UtcDateTime;
@@ -105,7 +97,7 @@ public class RadiusAttributeTypeConverter : IRadiusAttributeTypeConverter
         return stringValue;
     }
     
-    private object ConvertToInteger(string stringValue)
+    private static object ConvertToInteger(string stringValue)
     {
         if (int.TryParse(stringValue, out var intValue))
             return intValue;
@@ -113,7 +105,7 @@ public class RadiusAttributeTypeConverter : IRadiusAttributeTypeConverter
         return stringValue;
     }
     
-    private object ConvertToOctets(string stringValue)
+    private static object ConvertToOctets(string stringValue)
     {
         // Для octets можно конвертировать из hex или base64
         try

@@ -1,5 +1,4 @@
 using System.Security.Cryptography;
-using System.Text;
 using Multifactor.Radius.Adapter.v2.Application.Features.Radius.Models;
 
 namespace Multifactor.Radius.Adapter.v2.Infrastructure.Radius.Crypto;
@@ -40,19 +39,5 @@ public static class RadiusPasswordProtector
     public static byte[] Decrypt(SharedSecret secret, RadiusAuthenticator authenticator, byte[] encryptedPassword)
     {
         return Encrypt(secret, authenticator, encryptedPassword); // XOR is symmetric
-    }
-
-    public static string EncryptPasswordString(SharedSecret secret, RadiusAuthenticator authenticator, string password)
-    {
-        var passwordBytes = Encoding.UTF8.GetBytes(password);
-        var encryptedBytes = Encrypt(secret, authenticator, passwordBytes);
-        return Convert.ToBase64String(encryptedBytes);
-    }
-
-    public static string DecryptPasswordString(SharedSecret secret, RadiusAuthenticator authenticator, string encryptedPassword)
-    {
-        var encryptedBytes = Convert.FromBase64String(encryptedPassword);
-        var decryptedBytes = Decrypt(secret, authenticator, encryptedBytes);
-        return Encoding.UTF8.GetString(decryptedBytes).TrimEnd('\0');
     }
 }

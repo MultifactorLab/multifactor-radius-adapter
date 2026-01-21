@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using Multifactor.Radius.Adapter.v2.Application.Configuration.Models;
 using DictionaryAttribute = Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Dictionary.Attributes.DictionaryAttribute;
 using DictionaryVendorAttribute = Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Dictionary.Attributes.DictionaryVendorAttribute;
 
@@ -9,21 +10,23 @@ namespace Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Dictionary
         private readonly Dictionary<byte, DictionaryAttribute> _attributes = new();
         private readonly Dictionary<(uint VendorId, byte VendorCode), DictionaryVendorAttribute> _vendorAttributes = new();
         private readonly Dictionary<string, DictionaryAttribute> _attributeNames = new();
+        private readonly ApplicationVariables _variables;
         private readonly string _filePath;
 
-        public RadiusDictionary(string? filePath = null, string? appPath = null)
+        public RadiusDictionary(ApplicationVariables variables, string? filePath = null)
         {
-            _filePath = ResolveFilePath(filePath, appPath);
+            _variables = variables;
+            _filePath = ResolveFilePath(filePath);
         }
 
-        private string ResolveFilePath(string? filePath, string? appPath)
+        private string ResolveFilePath(string? filePath)
         {
             if (!string.IsNullOrEmpty(filePath) && Path.IsPathRooted(filePath))
                 return filePath;
 
-            var basePath = string.IsNullOrEmpty(appPath) 
+            var basePath = string.IsNullOrEmpty(_variables.AppPath) 
                 ? AppDomain.CurrentDomain.BaseDirectory 
-                : appPath;
+                : _variables.AppPath;
 
             var relativePath = string.IsNullOrEmpty(filePath)
                 ? Path.Combine("content", "radius.dictionary")
@@ -68,7 +71,7 @@ namespace Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Dictionary
             }
         }
 
-        private string[] SplitLine(string line)
+        private static string[] SplitLine(string line)
         {
             return line.Split(['\t', ' ', '\''], StringSplitOptions.RemoveEmptyEntries);
         }

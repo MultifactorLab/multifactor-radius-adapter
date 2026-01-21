@@ -1,5 +1,3 @@
-using Multifactor.Radius.Adapter.v2.Infrastructure.Configuration.XmlAppConfiguration;
-
 namespace Multifactor.Radius.Adapter.v2.EndToEndTests.Fixtures.Models;
 
 public class RadiusConfigurationModel : RadiusConfigurationSource

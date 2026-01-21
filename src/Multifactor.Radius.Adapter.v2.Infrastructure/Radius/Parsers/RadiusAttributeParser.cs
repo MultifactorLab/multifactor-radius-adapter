@@ -2,7 +2,6 @@ using System.Net;
 using System.Text;
 using Microsoft.Extensions.Logging;
 using Multifactor.Radius.Adapter.v2.Application.Features.Radius.Models;
-using Multifactor.Radius.Adapter.v2.Application.Features.Radius.Ports;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Dictionary;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Radius.Crypto;
 
@@ -129,7 +128,7 @@ public class RadiusAttributeParser : IRadiusAttributeParser
         return new ParsedAttribute(attributeDefinition.Name, content, isMessageAuthenticator);
     }
 
-    private object? ParseContentBytes(
+    private object ParseContentBytes(
         byte[] contentBytes,
         string type,
         uint code,
@@ -160,7 +159,7 @@ public class RadiusAttributeParser : IRadiusAttributeParser
                 return ParseDate(contentBytes);
                 
             case "ifid":
-                return ParseInterfaceId(contentBytes);
+                return contentBytes;
                 
             default:
                 _logger.LogWarning("Unknown attribute type: {Type}", type);
@@ -168,7 +167,7 @@ public class RadiusAttributeParser : IRadiusAttributeParser
         }
     }
 
-    private string ParseString(byte[] bytes)
+    private static string ParseString(byte[] bytes)
     {
         // Try to decode as UTF-8, fall back to ASCII if invalid
         try
@@ -181,40 +180,32 @@ public class RadiusAttributeParser : IRadiusAttributeParser
         }
     }
 
-    private int ParseInteger(byte[] bytes)
+    private static int ParseInteger(byte[] bytes)
     {
-        if (bytes.Length == 4)
+        switch (bytes.Length)
         {
-            Array.Reverse(bytes);
-            return BitConverter.ToInt32(bytes, 0);
+            case 4:
+                Array.Reverse(bytes);
+                return BitConverter.ToInt32(bytes, 0);
+            case 2:
+                Array.Reverse(bytes);
+                return BitConverter.ToInt16(bytes, 0);
+            case 1:
+                return bytes[0];
+            default:
+                throw new InvalidOperationException($"Invalid integer length: {bytes.Length}");
         }
-        else if (bytes.Length == 2)
-        {
-            Array.Reverse(bytes);
-            return BitConverter.ToInt16(bytes, 0);
-        }
-        else if (bytes.Length == 1)
-        {
-            return bytes[0];
-        }
-        
-        throw new InvalidOperationException($"Invalid integer length: {bytes.Length}");
     }
 
-    private IPAddress ParseIpAddress(byte[] bytes)
+    private static IPAddress ParseIpAddress(byte[] bytes)
     {
         return new IPAddress(bytes);
     }
 
-    private DateTime ParseDate(byte[] bytes)
+    private static DateTime ParseDate(byte[] bytes)
     {
         Array.Reverse(bytes);
         uint seconds = BitConverter.ToUInt32(bytes, 0);
         return new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddSeconds(seconds);
-    }
-
-    private byte[] ParseInterfaceId(byte[] bytes)
-    {
-        return bytes; // Return as-is for Interface-Id
     }
 }

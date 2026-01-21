@@ -7,7 +7,7 @@ using Multifactor.Radius.Adapter.v2.Application.Configuration.Models;
 using Multifactor.Radius.Adapter.v2.Application.Features.Radius.Models;
 using Multifactor.Radius.Adapter.v2.Application.Features.Radius.Ports;
 using Multifactor.Radius.Adapter.v2.Application.Features.Radius.Services;
-using Multifactor.Radius.Adapter.v2.Shared;
+using Multifactor.Radius.Adapter.v2.Shared.Extensions;
 
 namespace Multifactor.Radius.Adapter.v2.Infrastructure.Adapters.PacketHandler;
 
@@ -66,7 +66,7 @@ public class RadiusUdpAdapter : IRadiusUdpAdapter
         await _radiusPacketProcessor.ProcessPacketAsync(requestPacket, clientConfiguration);
     }
 
-    private bool IsProxyProtocol(byte[] payload, out IPEndPoint sourceEndpoint, out byte[] requestWithoutProxyHeader)
+    private static bool IsProxyProtocol(byte[] payload, out IPEndPoint sourceEndpoint, out byte[] requestWithoutProxyHeader)
     {
         //https://www.haproxy.org/download/1.8/doc/proxy-protocol.txt
 
@@ -117,7 +117,7 @@ public class RadiusUdpAdapter : IRadiusUdpAdapter
         return false;
     }
 
-    private string CreateUniquePacketKey(RadiusPacket requestPacket)
+    private static string CreateUniquePacketKey(RadiusPacket requestPacket)
     {
         var base64Authenticator = requestPacket.Authenticator.Value.ToBase64();
         return $"{requestPacket.Code:d}:{requestPacket.Identifier}:{requestPacket.RemoteEndpoint}:{requestPacket.UserName}:{base64Authenticator}";

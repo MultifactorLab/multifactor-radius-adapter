@@ -1,10 +1,13 @@
+using Elastic.CommonSchema.Serilog;
 using Multifactor.Radius.Adapter.v2.Application.Configuration.Models;
+using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Exceptions;
 using Serilog;
 using Serilog.Core;
 using Serilog.Events;
 using Serilog.Formatting;
 using Serilog.Formatting.Compact;
 using Serilog.Sinks.Syslog;
+using Serilog.Sinks.SystemConsole.Themes;
 
 namespace Multifactor.Radius.Adapter.v2.Infrastructure.Logging;
 
@@ -35,16 +38,15 @@ public static class SerilogLoggerFactory
             rootConfiguration.SyslogAppName,
             rootConfiguration.SyslogUseTls
             );
-        //TODO rework loglevel
-        // var level = rootConfiguration.LoggingLevel;
-        // if (string.IsNullOrWhiteSpace(level))
-        // {
-        //     throw InvalidConfigurationException.For(x => x.LoggingLevel,
-        //         "'{prop}' element not found. Config name: '{0}'",
-        //         rootConfiguration.ConfigurationName);
-        // }
+        var level = rootConfiguration.LoggingLevel;
+        if (string.IsNullOrWhiteSpace(level))
+        {
+         // throw new InvalidConfigurationException(
+         //     "'{prop}' element not found. Config name: '{0}'",
+         //     rootConfiguration.ConfigurationName);
+        }
 
-        // SetLogLevel(levelSwitch, level);
+        SetLogLevel(levelSwitch, level);
         var logger = loggerConfiguration.CreateLogger();
 
         return logger;
@@ -82,8 +84,12 @@ public static class SerilogLoggerFactory
         if (!string.IsNullOrWhiteSpace(consoleTemplate))
             loggerConfiguration.WriteTo.Console(outputTemplate: consoleTemplate);
         else
-            loggerConfiguration.WriteTo.Console();
-
+            // loggerConfiguration.WriteTo.Console();TODO remove
+            loggerConfiguration.WriteTo.Console(
+                outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}",
+                theme: AnsiConsoleTheme.Code,
+                restrictedToMinimumLevel: LogEventLevel.Information);
+        
         if (!string.IsNullOrWhiteSpace(fileTemplate))
         {
             loggerConfiguration.WriteTo.File(
@@ -202,7 +208,7 @@ public static class SerilogLoggerFactory
         {
             SerilogJsonFormatterTypes.Json or SerilogJsonFormatterTypes.JsonUtc => new RenderedCompactJsonFormatter(),
             SerilogJsonFormatterTypes.JsonTz => new CustomCompactJsonFormatter("yyyy-MM-dd HH:mm:ss.fff zzz"),
-            // SerilogJsonFormatterTypes.ElasticCommonSchema => new EcsTextFormatter(),
+            SerilogJsonFormatterTypes.ElasticCommonSchema => new EcsTextFormatter(),
             _ => null,
         };
     }

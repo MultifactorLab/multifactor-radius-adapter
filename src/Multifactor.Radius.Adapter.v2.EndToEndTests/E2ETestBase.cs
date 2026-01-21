@@ -7,18 +7,10 @@ using Multifactor.Core.Ldap;
 using Multifactor.Core.Ldap.Connection;
 using Multifactor.Core.Ldap.Name;
 using Multifactor.Radius.Adapter.v2.Application.Configuration.Models;
-using Multifactor.Radius.Adapter.v2.Application.Features.Radius;
 using Multifactor.Radius.Adapter.v2.Application.Features.Radius.Models;
 using Multifactor.Radius.Adapter.v2.Application.Features.Radius.Ports;
-using Multifactor.Radius.Adapter.v2.Application.Models;
-using Multifactor.Radius.Adapter.v2.Core.Configuration.Client;
-using Multifactor.Radius.Adapter.v2.Core.Configuration.Client.Build;
-using Multifactor.Radius.Adapter.v2.Core.Configuration.Service;
-using Multifactor.Radius.Adapter.v2.Core.Configuration.Service.Build;
 using Multifactor.Radius.Adapter.v2.EndToEndTests.Fixtures;
 using Multifactor.Radius.Adapter.v2.EndToEndTests.Udp;
-using Multifactor.Radius.Adapter.v2.Extensions;
-using Multifactor.Radius.Adapter.v2.Infrastructure.Configuration.RadiusAdapter;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Radius.Sender;
 using Multifactor.Radius.Adapter.v2.Server;
 using ILdapConnectionFactory = Multifactor.Radius.Adapter.v2.Core.Ldap.ILdapConnectionFactory;
@@ -102,7 +94,7 @@ public abstract class E2ETestBase(RadiusFixtures radiusFixtures) : IDisposable
         return parsed;
     }
     
-    protected RadiusPacket CreateRadiusPacket(PacketCode packetCode, byte identifier = 0)
+    protected static RadiusPacket CreateRadiusPacket(PacketCode packetCode, byte identifier = 0)
     {
         RadiusPacket packet;
         switch (packetCode)
@@ -161,7 +153,7 @@ public abstract class E2ETestBase(RadiusFixtures radiusFixtures) : IDisposable
         return _clientConfigurationFactory.CreateConfig("e2e", configuration, serviceConfig!);
     }
     
-    private ModifyRequest BuildModifyRequest(
+    private static ModifyRequest BuildModifyRequest(
         DistinguishedName dn,
         string attributeName,
         object attributeValue)

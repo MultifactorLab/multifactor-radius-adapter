@@ -20,7 +20,7 @@ namespace Multifactor.Radius.Adapter.v2.Application.Features.Radius.Models
         
         public RadiusPacketHeader(PacketCode code, byte identifier, byte[] authenticator)
         {
-            Throw.IfNull(authenticator, nameof(authenticator));
+            ArgumentNullException.ThrowIfNull(authenticator, nameof(authenticator));
             
             Code = code;
             Identifier = identifier;

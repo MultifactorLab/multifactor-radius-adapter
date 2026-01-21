@@ -10,12 +10,27 @@ namespace Multifactor.Radius.Adapter.v2.Infrastructure.Radius.Client;
 public sealed class RadiusClient : IRadiusClient
 {
     private readonly UdpClient _udpClient; 
-    
-    // TODO ConcurrentDictionary -> MemoryCache
-    private readonly ConcurrentDictionary<Tuple<byte, IPEndPoint>, TaskCompletionSource<UdpReceiveResult>> _pendingRequests = new();
-
+    private readonly ConcurrentDictionary<string, PendingRequest> _pendingRequests = new();
     private readonly CancellationTokenSource _cancellationTokenSource;
     private readonly ILogger<RadiusClient> _logger;
+    private readonly Timer _cleanupTimer;
+    private readonly TimeSpan _cleanupInterval = TimeSpan.FromMinutes(1);
+    
+    private class PendingRequest
+    {
+        public TaskCompletionSource<byte[]?> TaskCompletionSource { get; }
+        public DateTime CreatedAt { get; }
+        public byte Identifier { get; }
+        public IPEndPoint RemoteEndpoint { get; }
+        
+        public PendingRequest(byte identifier, IPEndPoint remoteEndpoint)
+        {
+            TaskCompletionSource = new TaskCompletionSource<byte[]?>();
+            CreatedAt = DateTime.UtcNow;
+            Identifier = identifier;
+            RemoteEndpoint = remoteEndpoint;
+        }
+    }
 
     /// <summary>
     /// Create a radius client which sends and receives responses on localEndpoint
@@ -24,37 +39,66 @@ public sealed class RadiusClient : IRadiusClient
     {
         Throw.IfNull(localEndpoint);
         Throw.IfNull(logger);
+        
         _logger = logger;
         _udpClient = new UdpClient(localEndpoint);
-
         _cancellationTokenSource = new CancellationTokenSource();
 
-        var receiveTask = StartReceiveLoopAsync(_cancellationTokenSource.Token);
-    }
+        // Запускаем периодическую очистку старых запросов
+        _cleanupTimer = new Timer(CleanupOldRequests, null, _cleanupInterval, _cleanupInterval);
 
+        // Запускаем цикл приема пакетов
+        _ = StartReceiveLoopAsync(_cancellationTokenSource.Token);
+    }
 
     /// <summary>
     /// Send a packet with specified timeout
     /// </summary>
     public async Task<byte[]?> SendPacketAsync(byte identifier, byte[] requestPacket, IPEndPoint remoteEndpoint, TimeSpan timeout)
     {
-        var responseTaskCs = new TaskCompletionSource<UdpReceiveResult>();
-
-        if (_pendingRequests.TryAdd(new Tuple<byte, IPEndPoint>(identifier, remoteEndpoint), responseTaskCs))
+        var key = CreateRequestKey(identifier, remoteEndpoint);
+        var pendingRequest = new PendingRequest(identifier, remoteEndpoint);
+        
+        var timeoutCancellation = new CancellationTokenSource(timeout);
+        timeoutCancellation.Token.Register(() =>
         {
-            await _udpClient.SendAsync(requestPacket, requestPacket.Length, remoteEndpoint);
-            var completedTask = await Task.WhenAny(responseTaskCs.Task, Task.Delay(timeout));
-            if (completedTask == responseTaskCs.Task)
+            if (_pendingRequests.TryRemove(key, out var request))
             {
-                return responseTaskCs.Task.Result.Buffer;
+                request.TaskCompletionSource.TrySetCanceled();
+                _logger.LogDebug("Request timeout for identifier {identifier} to {remoteEndpoint}", 
+                    identifier, remoteEndpoint);
             }
-            
-            _logger.LogDebug("Server {remoteEndpoint:l} did not respond within {timeout:l}", remoteEndpoint, timeout.ToString());
+        }, useSynchronizationContext: false);
+
+        try
+        {
+            if (_pendingRequests.TryAdd(key, pendingRequest))
+            {
+                await _udpClient.SendAsync(requestPacket, remoteEndpoint);
+                
+                // Ожидаем завершения задачи (ответ или таймаут)
+                return await pendingRequest.TaskCompletionSource.Task;
+            }
+            else
+            {
+                _logger.LogWarning("Duplicate request detected for identifier {identifier} to {remoteEndpoint}", 
+                    identifier, remoteEndpoint);
+                return null;
+            }
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _logger.LogError(ex, "Error sending packet to {remoteEndpoint}", remoteEndpoint);
+            _pendingRequests.TryRemove(key, out _);
+            pendingRequest.TaskCompletionSource.TrySetException(ex);
             return null;
         }
-
-        _logger.LogWarning("Network error");
-        return null;
+        finally
+        {
+            timeoutCancellation.Dispose();
+            
+            _pendingRequests.TryRemove(key, out _);
+        }
     }
 
     /// <summary>
@@ -62,31 +106,141 @@ public sealed class RadiusClient : IRadiusClient
     /// </summary>
     private async Task StartReceiveLoopAsync(CancellationToken cancellationToken)
     {
+        _logger.LogDebug("Starting receive loop");
+        
         while (!cancellationToken.IsCancellationRequested)
         {
             try
             {
                 var response = await _udpClient.ReceiveAsync(cancellationToken);
-
-                if (_pendingRequests.TryRemove(new Tuple<byte, IPEndPoint>(response.Buffer[1], response.RemoteEndPoint), out var taskCs))
-                    taskCs.SetResult(response);
+                ProcessReceivedPacket(response);
             }
             catch (ObjectDisposedException)
             {
                 // This is thrown when udpclient is disposed, can be safely ignored
+                break;
             }
-            catch (TaskCanceledException)
+            catch (OperationCanceledException)
             {
-                
+                // Cancellation requested
+                break;
+            }
+            catch (SocketException ex)
+            {
+                _logger.LogError(ex, "Socket error in receive loop");
+                await Task.Delay(TimeSpan.FromMilliseconds(100), cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error in receive loop");
+                await Task.Delay(TimeSpan.FromMilliseconds(100), cancellationToken);
+            }
+        }
+        
+        _logger.LogDebug("Receive loop stopped");
+    }
+
+    /// <summary>
+    /// Process received UDP packet
+    /// </summary>
+    private void ProcessReceivedPacket(UdpReceiveResult result)
+    {
+        try
+        {
+            if (result.Buffer.Length < 2)
+            {
+                _logger.LogDebug("Received packet too small: {length} bytes", result.Buffer.Length);
+                return;
             }
 
-            await Task.Delay(TimeSpan.FromMilliseconds(5), cancellationToken);
+            var identifier = result.Buffer[1];
+            var key = CreateRequestKey(identifier, result.RemoteEndPoint);
+
+            if (_pendingRequests.TryRemove(key, out var pendingRequest))
+            {
+                pendingRequest.TaskCompletionSource.TrySetResult(result.Buffer);
+                _logger.LogDebug("Received response for identifier {identifier} from {remoteEndpoint}", 
+                    identifier, result.RemoteEndPoint);
+            }
+            else
+            {
+                _logger.LogDebug("Received unexpected response for identifier {identifier} from {remoteEndpoint}", 
+                    identifier, result.RemoteEndPoint);
+            }
         }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error processing received packet from {remoteEndpoint}", 
+                result.RemoteEndPoint);
+        }
+    }
+
+    /// <summary>
+    /// Cleanup old pending requests that haven't received responses
+    /// </summary>
+    private void CleanupOldRequests(object? state)
+    {
+        try
+        {
+            var cutoffTime = DateTime.UtcNow - TimeSpan.FromMinutes(5);
+            var removedCount = 0;
+            
+            foreach (var kvp in _pendingRequests)
+            {
+                if (kvp.Value.CreatedAt < cutoffTime)
+                {
+                    if (_pendingRequests.TryRemove(kvp.Key, out var request))
+                    {
+                        request.TaskCompletionSource.TrySetCanceled();
+                        removedCount++;
+                    }
+                }
+            }
+            
+            if (removedCount > 0)
+            {
+                _logger.LogDebug("Cleaned up {count} old pending requests", removedCount);
+            }
+            
+            _logger.LogTrace("Pending requests count: {count}", _pendingRequests.Count);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error during cleanup of pending requests");
+        }
+    }
+
+    /// <summary>
+    /// Create a unique key for a request
+    /// </summary>
+    private static string CreateRequestKey(byte identifier, IPEndPoint remoteEndpoint)
+    {
+        return $"{identifier}_{remoteEndpoint.Address}:{remoteEndpoint.Port}";
     }
 
     public void Dispose()
     {
-        _cancellationTokenSource.Cancel();
-        _udpClient?.Close();
+        try
+        {
+            _cancellationTokenSource.Cancel();
+            _cancellationTokenSource?.Dispose();
+            
+            _cleanupTimer.Change(Timeout.Infinite, Timeout.Infinite);
+            _cleanupTimer.Dispose();
+            
+            foreach (var kvp in _pendingRequests)
+            {
+                kvp.Value.TaskCompletionSource.TrySetCanceled();
+            }
+            _pendingRequests.Clear();
+            
+            _udpClient.Dispose();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error during disposal");
+        }
+        
+        _logger.LogDebug("RadiusClient disposed");
     }
 }

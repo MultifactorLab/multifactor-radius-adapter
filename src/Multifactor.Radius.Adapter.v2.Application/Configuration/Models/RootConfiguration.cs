@@ -1,24 +1,42 @@
 using System.Net;
+using Multifactor.Radius.Adapter.v2.Shared.Attributes;
 
 namespace Multifactor.Radius.Adapter.v2.Application.Configuration.Models;
 
 public class RootConfiguration
-{
-    public required IReadOnlyList<Uri> MultifactorApiUrls { get; set; }
+{    
+    [ConfigParameter("multifactor-api-url")]
+    public IReadOnlyList<Uri> MultifactorApiUrls { get; set; }
+    [ConfigParameter("multifactor-api-proxy")]
     public string? MultifactorApiProxy { get; set; }
+    [ConfigParameter("multifactor-api-timeout")]
     public TimeSpan MultifactorApiTimeout { get; set; }
-    public required IPEndPoint? AdapterServerEndpoint { get; set; }
+    [ConfigParameter("adapter-server-endpoint")]
+    public IPEndPoint? AdapterServerEndpoint { get; set; }
+    [ConfigParameter("logging-level")]
+    public string LoggingLevel { get; set; }
     
-    public string LoggingFormat { get; set; } = string.Empty;
-    public bool SyslogUseTls { get; set; } = false;
-    public string SyslogServer { get; set; } = string.Empty;
-    public string SyslogFormat { get; set; } = string.Empty;
-    public string SyslogFacility { get; set; } = string.Empty;
-    public string SyslogAppName { get; set; } = "multifactor-radius";
-    public string SyslogFramer { get; set; } = string.Empty;
-    public string SyslogOutputTemplate { get; set; } = string.Empty;
+    [ConfigParameter("logging-format")]
+    public string LoggingFormat { get; set; }
+    [ConfigParameter("syslog-use-tls")]
+    public bool SyslogUseTls { get; set; }
+    [ConfigParameter("syslog-server")]
+    public string SyslogServer { get; set; }
+    [ConfigParameter("syslog-format")]
+    public string SyslogFormat { get; set; }
+    [ConfigParameter("syslog-facility")]
+    public string SyslogFacility { get; set; }
+    [ConfigParameter("syslog-app-name", "multifactor-radius")]
+    public string SyslogAppName { get; set; }
+    [ConfigParameter("syslog-framer")]
+    public string SyslogFramer { get; set; }
+    [ConfigParameter("syslog-output-template")]
+    public string SyslogOutputTemplate { get; set; }
     
-    public string ConsoleLogOutputTemplate { get; set; } = string.Empty;
-    public string FileLogOutputTemplate { get; set; } = string.Empty;
-    public int LogFileMaxSizeBytes { get; set; } = 1073741824;
+    [ConfigParameter("console-log-output-template")]
+    public string ConsoleLogOutputTemplate { get; set; }
+    [ConfigParameter("file-log-output-template")]
+    public string FileLogOutputTemplate { get; set; }
+    [ConfigParameter("log-file-max-size-bytes", 1073741824)]
+    public int LogFileMaxSizeBytes { get; set; }
 }

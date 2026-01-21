@@ -5,16 +5,12 @@ using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Exceptions;
 
 namespace Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Reader;
 
-public class XmlReader : IXmlReader
+public static class XmlReader
 {
-    private readonly ILogger<XmlReader> _logger;
-    public XmlReader(ILogger<XmlReader> logger) => _logger = logger;
-    
-    public async Task<XDocument> ReadAsync(string filePath, CancellationToken cancellationToken)
+    public static async Task<XDocument> ReadAsync(string filePath, CancellationToken cancellationToken)
     {
         try
         {
-            _logger.LogDebug("Reading XML configuration from {FilePath}", filePath);
 
             await using var stream = File.OpenRead(filePath);
             var settings = new XmlReaderSettings
@@ -31,12 +27,11 @@ public class XmlReader : IXmlReader
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Failed to read XML file {FilePath}", filePath);
             throw new InvalidConfigurationException($"Failed to read configuration file: {filePath}", ex);
         }
     }
     
-    public IReadOnlyDictionary<string, string> ExtractAppSettings(XDocument xml)
+    public static IReadOnlyDictionary<string, string> ExtractAppSettings(XDocument xml)
     {
         var appSettings = xml.Root?.Element("appSettings");
         if (appSettings == null)
@@ -50,13 +45,13 @@ public class XmlReader : IXmlReader
                 StringComparer.OrdinalIgnoreCase);
     }
     
-    public IReadOnlyList<XElement> GetLdapServerElements(XDocument xml)
+    public static IReadOnlyList<XElement> GetLdapServerElements(XDocument xml)
     {
         return xml.Root?.Element("ldapServers")?.Elements("ldapServer").ToList() 
             ?? [];
     }
     
-    public IReadOnlyList<XElement> GetRadiusReplyElements(XDocument xml)
+    public static IReadOnlyList<XElement> GetRadiusReplyElements(XDocument xml)
     {
         var attributes = xml.Root?.Element("RadiusReply")?.Element("Attributes");
         return attributes?.Elements("add").ToList() ?? [];

@@ -1,11 +1,10 @@
 using System.Text;
 using Microsoft.Extensions.Logging;
+using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Models.Enum;
 using Multifactor.Radius.Adapter.v2.Application.Features.Radius.Models;
 using Multifactor.Radius.Adapter.v2.Application.Features.Radius.Models.Enums;
 using Multifactor.Radius.Adapter.v2.Application.Features.Radius.Ports;
 using Multifactor.Radius.Adapter.v2.Application.Features.Radius.Services;
-using Multifactor.Radius.Adapter.v2.Application.Models.Enum;
-using Multifactor.Radius.Adapter.v2.Application.Ports;
 
 namespace Multifactor.Radius.Adapter.v2.Infrastructure.Radius.Sender;
 
@@ -16,7 +15,6 @@ public class AdapterResponseSender : IResponseSender
     private readonly IUdpClient _udpClient;
     private readonly ILogger<AdapterResponseSender> _logger;
     
-    // Константы
     private const string MessageAuthenticatorAttribute = "Message-Authenticator";
     private const string ProxyStateAttribute = "Proxy-State";
     private const string StateAttribute = "State";
@@ -45,21 +43,19 @@ public class AdapterResponseSender : IResponseSender
             return;
         }
         
-        // Проверка специальных случаев
         if (ShouldProxyResponse(request))
         {
             await ProxyResponseAsync(request);
             return;
         }
         
-        // Построение и отправка обычного ответа
         var responsePacket = BuildResponsePacket(request);
         await SendResponsePacketAsync(responsePacket, request);
         
         LogResponseSent(responsePacket, request);
     }
     
-    private bool ShouldProxyResponse(SendAdapterResponseRequest request)
+    private static bool ShouldProxyResponse(SendAdapterResponseRequest request)
     {
         // EAP challenge
         if (request.ResponsePacket?.IsEapMessageChallenge == true)
@@ -126,28 +122,24 @@ public class AdapterResponseSender : IResponseSender
     
     private void ProcessAccessAcceptResponse(RadiusPacket responsePacket, SendAdapterResponseRequest request)
     {
-        // Копируем атрибуты из исходного ответа (если есть)
         if (request.ResponsePacket != null)
         {
             CopyAttributes(request.ResponsePacket, responsePacket);
         }
         
-        // Добавляем reply-атрибуты
         AddReplyAttributes(responsePacket, request);
     }
     
     private void ProcessAccessRejectResponse(RadiusPacket responsePacket, SendAdapterResponseRequest request)
     {
-        // Для Reject копируем атрибуты только если это тоже Reject
         if (request.ResponsePacket?.Code == PacketCode.AccessReject)
         {
             CopyAttributes(request.ResponsePacket, responsePacket);
         }
     }
     
-    private void ProcessAccessChallengeResponse(RadiusPacket responsePacket, SendAdapterResponseRequest request)
+    private static void ProcessAccessChallengeResponse(RadiusPacket responsePacket, SendAdapterResponseRequest request)
     {
-        // Добавляем State атрибут если есть
         if (!string.IsNullOrWhiteSpace(request.ResponseInformation.State))
         {
             responsePacket.ReplaceAttribute(StateAttribute, request.ResponseInformation.State);
@@ -161,25 +153,23 @@ public class AdapterResponseSender : IResponseSender
         {
             responsePacket.ReplaceAttribute(ReplyMessageAttribute, request.ResponseInformation.ReplyMessage);
         }
-        
+
         // Proxy-State
         AddProxyStateAttribute(request.RequestPacket, responsePacket);
-        
+
         // Message-Authenticator (placeholder если нет)
         AddMessageAuthenticatorIfMissing(responsePacket);
     }
     
-    private void CopyAttributes(RadiusPacket source, RadiusPacket target)
+    private static void CopyAttributes(RadiusPacket source, RadiusPacket target)
     {
         if (source == null || target == null)
             return;
             
         foreach (var attribute in source.Attributes.Values)
         {
-            // Удаляем старый атрибут если есть
             target.RemoveAttribute(attribute.Name);
             
-            // Добавляем все значения
             foreach (var value in attribute.Values)
             {
                 target.AddAttributeValue(attribute.Name, value);
@@ -187,11 +177,10 @@ public class AdapterResponseSender : IResponseSender
         }
     }
     
-    private void AddProxyStateAttribute(RadiusPacket source, RadiusPacket target)
+    private static void AddProxyStateAttribute(RadiusPacket source, RadiusPacket target)
     {
         if (source.Attributes.TryGetValue(ProxyStateAttribute, out var proxyStateAttribute))
         {
-            // Добавляем только если еще нет
             if (!target.Attributes.ContainsKey(ProxyStateAttribute))
             {
                 var value = proxyStateAttribute.Values.FirstOrDefault();
@@ -203,7 +192,7 @@ public class AdapterResponseSender : IResponseSender
         }
     }
     
-    private void AddMessageAuthenticatorIfMissing(RadiusPacket packet)
+    private static void AddMessageAuthenticatorIfMissing(RadiusPacket packet)
     {
         if (!packet.Attributes.ContainsKey(MessageAuthenticatorAttribute))
         {
@@ -225,10 +214,8 @@ public class AdapterResponseSender : IResponseSender
         
         foreach (var attribute in attributes)
         {
-            // Удаляем старый атрибут
             target.RemoveAttribute(attribute.Key);
             
-            // Добавляем все значения
             foreach (var attrValue in attribute.Value)
             {
                 target.AddAttributeValue(attribute.Key, attrValue);
@@ -236,7 +223,7 @@ public class AdapterResponseSender : IResponseSender
         }
     }
     
-    private PacketCode DetermineResponseCode(AuthenticationStatus firstFactorStatus, AuthenticationStatus secondFactorStatus)
+    private static PacketCode DetermineResponseCode(AuthenticationStatus firstFactorStatus, AuthenticationStatus secondFactorStatus)
     {
         var successfulFirstFactor = firstFactorStatus 
             is AuthenticationStatus.Accept 

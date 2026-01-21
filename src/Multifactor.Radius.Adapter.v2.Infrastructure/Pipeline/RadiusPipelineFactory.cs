@@ -1,11 +1,10 @@
+using System.Text;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Multifactor.Radius.Adapter.v2.Application.Configuration;
 using Multifactor.Radius.Adapter.v2.Application.Configuration.Models;
+using Multifactor.Radius.Adapter.v2.Application.Configuration.Models.Enum;
 using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline;
-using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Models;
 using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Steps;
-using Multifactor.Radius.Adapter.v2.Application.Models.Enum;
 
 namespace Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline;
 
@@ -25,17 +24,19 @@ public class RadiusPipelineFactory : IRadiusPipelineFactory
     public IRadiusPipeline CreatePipeline(ClientConfiguration clientConfig)
     {
         var steps = CreatePipelineSteps(clientConfig);
+        LogProviderCreated(clientConfig.Name, steps);
         return new RadiusPipeline(steps);
     }
     
     private List<IRadiusPipelineStep> CreatePipelineSteps(ClientConfiguration clientConfig)
     {
-        var steps = new List<IRadiusPipelineStep>();
-        
-        steps.Add(CreateStep<StatusServerFilteringStep>());
-        steps.Add(CreateStep<IpWhiteListStep>());
-        steps.Add(CreateStep<AccessRequestFilteringStep>());
-        
+        var steps = new List<IRadiusPipelineStep>
+        {
+            CreateStep<StatusServerFilteringStep>(),
+            CreateStep<IpWhiteListStep>(),
+            CreateStep<AccessRequestFilteringStep>()
+        };
+
         if (clientConfig.LdapServers?.Count > 0)
         {
             steps.Add(CreateStep<UserNameValidationStep>());
@@ -72,7 +73,20 @@ public class RadiusPipelineFactory : IRadiusPipelineFactory
         return _serviceProvider.GetRequiredService<TStep>();
     }
     
-    private bool ShouldLoadUserGroups(ClientConfiguration config) => config
+    private void LogProviderCreated(string configName, List<IRadiusPipelineStep> steps)
+    {
+        var builder = new StringBuilder();
+        builder.AppendLine($"Configuration: {configName}");
+        builder.AppendLine("Steps:");
+        for (var i = 0; i < steps.Count; i++)
+        {
+            builder.AppendLine($"{i+1}. {steps[i].GetType().Name}");
+        }
+        
+        _logger.LogDebug(builder.ToString());
+    }
+    
+    private static bool ShouldLoadUserGroups(ClientConfiguration config) => config
         .ReplyAttributes
         .Values
         .SelectMany(x => x)

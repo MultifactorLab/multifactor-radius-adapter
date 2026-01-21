@@ -1,14 +1,8 @@
-using System.DirectoryServices.Protocols;
 using Microsoft.Extensions.Logging;
-using Multifactor.Core.Ldap;
-using Multifactor.Core.Ldap.Connection;
-using Multifactor.Radius.Adapter.v2.Application.Configuration;
-using Multifactor.Radius.Adapter.v2.Application.Configuration.Models;
 using Multifactor.Radius.Adapter.v2.Application.Features.Ldap;
 using Multifactor.Radius.Adapter.v2.Application.Features.Ldap.Models;
 using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Models;
-using Multifactor.Radius.Adapter.v2.Application.Models.Enum;
-using Multifactor.Radius.Adapter.v2.Application.Ports;
+using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Models.Enum;
 
 namespace Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Steps;
 
@@ -140,7 +134,7 @@ public class UserGroupLoadingStep : IRadiusPipelineStep
         return true;
     }
     
-    private bool AcceptedRequest(RadiusPipelineContext context)
+    private static bool AcceptedRequest(RadiusPipelineContext context)
     {
         return context.FirstFactorStatus is
                    AuthenticationStatus.Accept or AuthenticationStatus.Bypass

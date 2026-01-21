@@ -5,26 +5,26 @@ namespace Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Models;
 
 public class UserIdentity
 {
-    public string Identity { get; private set; }
-    public UserIdentityFormat Format { get; private set; }
+    public string Identity { get; init; }
+    public UserIdentityFormat Format { get; init; }
 
     public UserIdentity(string identity)
     {
-        Throw.IfNullOrWhiteSpace(identity, nameof(identity));
+        ArgumentException.ThrowIfNullOrWhiteSpace(identity, nameof(identity));
         Identity = identity;
         Format = GetIdentityTypeByIdentity(identity);
     }
     
     public UserIdentity(string identity, UserIdentityFormat format)
     {
-        Throw.IfNullOrWhiteSpace(identity, nameof(identity));
+        ArgumentException.ThrowIfNullOrWhiteSpace(identity, nameof(identity));
         Identity = identity;
         Format = format;
     }
 
-    private UserIdentityFormat GetIdentityTypeByIdentity(string identity)
+    private static UserIdentityFormat GetIdentityTypeByIdentity(string identity)
     {
-        Throw.IfNullOrWhiteSpace(identity, nameof(identity));
+        ArgumentException.ThrowIfNullOrWhiteSpace(identity, nameof(identity));
         
         var id = identity.ToLower();
         

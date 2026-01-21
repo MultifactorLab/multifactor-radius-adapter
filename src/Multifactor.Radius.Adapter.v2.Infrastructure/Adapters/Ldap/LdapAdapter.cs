@@ -38,17 +38,18 @@ public sealed class LdapAdapter : ILdapAdapter
 
     public IReadOnlyList<string> LoadUserGroups(LoadUserGroupRequest request)
     {
-        var options = new LdapConnectionOptions(new LdapConnectionString(request.ConnectionString), 
+        var options = new LdapConnectionOptions(new LdapConnectionString(request.ConnectionString, true), 
             AuthType.Basic, 
             request.UserName, 
             request.Password, 
             TimeSpan.FromSeconds(request.BindTimeoutInSeconds));
-        var connection = _connectionFactory.CreateConnection(options);
+        using var connection = _connectionFactory.CreateConnection(options);
         var groupLoader = _ldapGroupLoaderFactory.GetGroupLoader(request.LdapSchema, connection, request.SearchBase ?? request.LdapSchema.NamingContext);
         var groupDns = groupLoader.GetGroups(request.UserDN, pageSize: 20);
         return groupDns.Take(request.Limit).Select(x => x.Components.Deepest.Value).ToList();
     }
 
+    #region FindUserProfile
     public ILdapProfile? FindUserProfile(FindUserRequest request)
     {
         var options = new LdapConnectionOptions(new LdapConnectionString(request.ConnectionString), 
@@ -56,8 +57,18 @@ public sealed class LdapAdapter : ILdapAdapter
             request.UserName, 
             request.Password, 
             TimeSpan.FromSeconds(request.BindTimeoutInSeconds));
-        var connection = _connectionFactory.CreateConnection(options);
-        var filter = GetFilter(request.UserIdentity, request.LdapSchema);
+        using var connection = _connectionFactory.CreateConnection(options);        
+        
+        var identityToSearch = request.UserIdentity;
+        if (request.UserIdentity.Format == UserIdentityFormat.NetBiosName)
+        {
+            var index = request.UserIdentity.Identity.IndexOf('\\');
+            if (index <= 0)
+                throw new ArgumentException($"Invalid NetBIOS identity: {request.UserIdentity.Identity}");
+            var userName = request.UserIdentity.Identity[(index + 1)..];
+            identityToSearch = new UserIdentity(userName);
+        }
+        var filter = GetFilter(identityToSearch, request.LdapSchema);
         var result = connection.Find(request.SearchBase, filter, SearchScope.Subtree, attributes: request.AttributeNames ?? []);
         var entry = result.FirstOrDefault();
         return entry is null ? null : new LdapProfile(entry, request.LdapSchema);
@@ -72,13 +83,14 @@ public sealed class LdapAdapter : ILdapAdapter
         return $"(&({objectClass}={classValue})({identityAttribute}={identity.Identity}))";
     }
     
-    private string GetIdentityAttribute(UserIdentity identity, ILdapSchema schema) => identity.Format switch
+    private static string GetIdentityAttribute(UserIdentity identity, ILdapSchema schema) => identity.Format switch
     {
         UserIdentityFormat.UserPrincipalName => "userPrincipalName",
         UserIdentityFormat.DistinguishedName => schema.Dn,
         UserIdentityFormat.SamAccountName => schema.Uid,
         _ => throw new NotSupportedException("Unsupported user identity format")
     };
+    #endregion
     
     public ILdapSchema? LoadSchema(LoadSchemaRequest request)
     {
@@ -97,13 +109,16 @@ public sealed class LdapAdapter : ILdapAdapter
             request.UserName, 
             request.Password, 
             TimeSpan.FromSeconds(request.BindTimeoutInSeconds));
-        _connectionFactory.CreateConnection(options);
-        return true;
+            using var connection = _connectionFactory.CreateConnection(options);
+            return true;
     }
 
     #region IsMemberOf
     public bool IsMemberOf(MembershipRequest request)
     {        
+        ArgumentNullException.ThrowIfNull(request);
+        if(request.TargetGroups == null || request.TargetGroups.Length == 0)
+            throw new InvalidOperationException();
         var options = new LdapConnectionOptions(new LdapConnectionString(request.ConnectionString), 
             AuthType.Basic, 
             request.UserName, 
@@ -128,24 +143,26 @@ public sealed class LdapAdapter : ILdapAdapter
     #region ChangeUserPassword
     public bool ChangeUserPassword(ChangeUserPasswordRequest request)
     {
+        ArgumentNullException.ThrowIfNull(request, nameof(request));
+        
         var options = new LdapConnectionOptions(new LdapConnectionString(request.ConnectionString), 
             AuthType.Basic, 
             request.UserName, 
             request.Password, 
             TimeSpan.FromSeconds(request.BindTimeoutInSeconds));
-        var connection = _connectionFactory.CreateConnection(options);
+        using var connection = _connectionFactory.CreateConnection(options);
         var changePasswordrequest = BuildPasswordChangeRequest(request.LdapSchema, request.DistinguishedName, request.NewPassword);
         var response = connection.SendRequest(changePasswordrequest);
         return response.ResultCode == ResultCode.Success;
     }
     
-    private ModifyRequest BuildPasswordChangeRequest(ILdapSchema ldapSchema, DistinguishedName userDn, string newPassword)
+    private static ModifyRequest BuildPasswordChangeRequest(ILdapSchema ldapSchema, DistinguishedName userDn, string newPassword)
     {
         var attributeName = ldapSchema.LdapServerImplementation == LdapImplementation.ActiveDirectory
             ? "unicodePwd"
             : "userpassword";
 
-        var newPasswordAttribute = new DirectoryAttributeModification()
+        var newPasswordAttribute = new DirectoryAttributeModification
         {
             Name = attributeName,
             Operation = DirectoryAttributeOperation.Replace

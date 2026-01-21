@@ -1,10 +1,8 @@
 using Microsoft.Extensions.Logging;
-using Multifactor.Core.Ldap.Name;
 using Multifactor.Radius.Adapter.v2.Application.Features.Ldap;
 using Multifactor.Radius.Adapter.v2.Application.Features.Ldap.Models;
 using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Models;
-using Multifactor.Radius.Adapter.v2.Application.Models.Enum;
-using Multifactor.Radius.Adapter.v2.Application.Ports;
+using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Models.Enum;
 
 namespace Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Steps;
 
@@ -32,10 +30,9 @@ public class AccessGroupsCheckingStep : IRadiusPipelineStep
             return Task.CompletedTask;
         
         ArgumentNullException.ThrowIfNull(context.LdapProfile, nameof(context.LdapProfile));
-        
-        var request = MembershipRequest.FromContext(context, context.LdapConfiguration.AccessGroups);
-        //TODO логику из стараго сервиса сюда и оставить только вызов адаптера
-        var isMember = _ldapAdapter.IsMemberOf(request);
+        var accessGroup = context.LdapConfiguration.AccessGroups;
+        var request = MembershipRequest.FromContext(context, accessGroup);
+        var isMember = context.LdapProfile.MemberOf.Intersect(accessGroup).Any() || _ldapAdapter.IsMemberOf(request);
 
         return isMember ? Task.CompletedTask : TerminatePipeline(context);
     }

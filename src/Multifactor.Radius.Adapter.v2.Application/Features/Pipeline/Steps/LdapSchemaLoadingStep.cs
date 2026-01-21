@@ -54,14 +54,9 @@ public class LdapSchemaLoadingStep: IRadiusPipelineStep
             return schema;
           
         var expirationDate = DateTimeOffset.Now.AddHours(LdapSchemaCacheLifeTimeInHours);  
-        SaveToCache(cacheKey, schema, expirationDate);
+        _cache.Set(cacheKey, schema, expirationDate);
         
         _logger.LogDebug("LDAP schema for '{domain}' is saved in cache till '{expirationDate}'.", cacheKey, expirationDate.ToString());
         return schema;
-    }
-
-    private void SaveToCache(string cacheKey, ILdapSchema schema, DateTimeOffset expirationDate)
-    {
-        _cache.Set(cacheKey, schema, expirationDate);
     }
 }

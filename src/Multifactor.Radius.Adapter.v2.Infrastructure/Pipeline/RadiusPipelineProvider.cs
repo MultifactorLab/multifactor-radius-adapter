@@ -1,9 +1,7 @@
 using System.Collections.Concurrent;
 using Microsoft.Extensions.Logging;
-using Multifactor.Radius.Adapter.v2.Application.Configuration;
 using Multifactor.Radius.Adapter.v2.Application.Configuration.Models;
 using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline;
-using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Models;
 
 namespace Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline;
 
@@ -24,29 +22,14 @@ public class RadiusPipelineProvider : IPipelineProvider
         _serviceConfiguration = serviceConfiguration;
     }
     
-    public IRadiusPipeline GetPipeline(string clientName)
+    public IRadiusPipeline GetPipeline(ClientConfiguration clientConfiguration)
     {
+        var clientName = clientConfiguration.Name;
         return _pipelineCache.GetOrAdd(clientName, name =>
         {
             _logger.LogDebug("Creating new pipeline for client '{Client}'", name);
-            return _pipelineFactory.CreatePipeline(GetClientConfiguration(name));
+            return _pipelineFactory.CreatePipeline(clientConfiguration);
         });
     }
     
-    private ClientConfiguration GetClientConfiguration(string clientName)
-    {
-        return _serviceConfiguration.GetClientConfiguration(clientName);
-    }
-    
-    public void ClearCache()
-    {
-        _pipelineCache.Clear();
-        _logger.LogInformation("Pipeline cache cleared");
-    }
-    
-    public void RemoveFromCache(string clientName)
-    {
-        _pipelineCache.TryRemove(clientName, out _);
-        _logger.LogDebug("Removed pipeline for client '{Client}' from cache", clientName);
-    }
 }
