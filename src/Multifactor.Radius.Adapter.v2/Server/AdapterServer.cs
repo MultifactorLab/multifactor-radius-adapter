@@ -1,10 +1,8 @@
 using System.Collections.Concurrent;
 using System.Net.Sockets;
 using Microsoft.Extensions.Logging;
-using Multifactor.Radius.Adapter.v2.Application.Configuration;
 using Multifactor.Radius.Adapter.v2.Application.Configuration.Models;
 using Multifactor.Radius.Adapter.v2.Application.Features.Radius.Ports;
-using Multifactor.Radius.Adapter.v2.Application.Ports;
 
 namespace Multifactor.Radius.Adapter.v2.Server;
 

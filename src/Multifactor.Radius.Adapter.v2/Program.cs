@@ -4,6 +4,7 @@ using Microsoft.Extensions.Hosting;
 using Multifactor.Radius.Adapter.v2.Application.Features.Radius.Ports;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Extensions;
 using Multifactor.Radius.Adapter.v2.Application.Extensions;
+using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Exceptions;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Logging;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Radius.Sender;
 using Multifactor.Radius.Adapter.v2.Server;
@@ -14,27 +15,26 @@ try
     var builder = Host.CreateApplicationBuilder(args);
     builder.Services.AddWindowsService(options => options.ServiceName = "Multifactor RADIUS");
     builder.Services.AddMemoryCache();
-    builder.Services.AddAdapterLogging();
     builder.Services.AddApplicationVariables();
-    
+
     builder.Services.AddConfiguration();
-    
+    builder.Services.AddAdapterLogging();
+
     builder.Services.AddLdap();
-    
-    builder.Services.AddFirstFactor();
+
     builder.Services.AddChallenge();
+    builder.Services.AddFirstFactor();
     builder.Services.AddPipelineSteps();
     builder.Services.AddPipelines();
-   
+
     builder.Services.AddTransient<IResponseSender, AdapterResponseSender>();
-    
+
     builder.Services.AddInfraServices();
     builder.Services.AddAppServices();
-    builder.Services.AddChallenge();
-    
+
     builder.Services.AddRadiusUdpClient();
     builder.Services.AddMultifactorApi();
-    
+
     builder.Services.AddSingleton<AdapterServer>();
     builder.Services.AddHostedService<ServerHost>();
     host = builder.Build();
@@ -42,8 +42,13 @@ try
 }
 catch (Exception ex)
 {
-    var errorMessage = FlattenException(ex);
-    StartupLogger.Error(ex, "Unable to start: {Message:l}", errorMessage);
+    if(ex is InvalidConfigurationException)
+        StartupLogger.Error(null, "Unable to start: {Message:l}", ex.Message);
+    else
+    {
+        var errorMessage = FlattenException(ex);
+        StartupLogger.Error(ex, "Unable to start: {Message:l}", errorMessage);
+    }
 }
 finally
 {
