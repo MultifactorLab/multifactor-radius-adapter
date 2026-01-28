@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Logging;
 using Multifactor.Radius.Adapter.v2.Application.Configuration.Models;
 using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline;
+using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Interfaces;
 using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Models;
 using Multifactor.Radius.Adapter.v2.Application.Features.Radius.Exceptions;
 using Multifactor.Radius.Adapter.v2.Application.Features.Radius.Models;
@@ -102,6 +103,8 @@ public class RadiusPacketProcessor : IRadiusPacketProcessor
         
         try
         {
+            var logMessage = $"Start executing pipeline for '{clientConfiguration.Name}'" + (ldapServerConfiguration is not null ? $" at '{ldapServerConfiguration.ConnectionString}'" : string.Empty);
+            _logger.LogDebug(logMessage);
             await pipeline.ExecuteAsync(context);
             
             var responseRequest = SendAdapterResponseRequest.FromContext(context);

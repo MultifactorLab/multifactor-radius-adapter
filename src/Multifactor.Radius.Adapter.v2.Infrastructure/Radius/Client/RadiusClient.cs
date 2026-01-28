@@ -74,9 +74,7 @@ public sealed class RadiusClient : IRadiusClient
         {
             if (_pendingRequests.TryAdd(key, pendingRequest))
             {
-                await _udpClient.SendAsync(requestPacket, remoteEndpoint);
-                
-                // Ожидаем завершения задачи (ответ или таймаут)
+                await _udpClient.SendAsync(requestPacket, remoteEndpoint, timeoutCancellation.Token);
                 return await pendingRequest.TaskCompletionSource.Task;
             }
             else

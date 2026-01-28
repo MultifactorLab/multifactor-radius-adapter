@@ -1,7 +1,6 @@
 using System.Security.Authentication;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using Multifactor.Core.Ldap.Connection.LdapConnectionFactory;
 using Multifactor.Core.Ldap.LdapGroup.Load;
 using Multifactor.Core.Ldap.LdapGroup.Membership;
@@ -9,9 +8,9 @@ using Multifactor.Core.Ldap.Schema;
 using Multifactor.Radius.Adapter.v2.Application.Cache;
 using Multifactor.Radius.Adapter.v2.Application.Configuration.Models;
 using Multifactor.Radius.Adapter.v2.Application.Features.Ldap;
+using Multifactor.Radius.Adapter.v2.Application.Features.Ldap.Ports;
 using Multifactor.Radius.Adapter.v2.Application.Features.Multifactor.Ports;
 using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline;
-using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.AccessChallenge;
 using Multifactor.Radius.Adapter.v2.Application.Features.Radius.Ports;
 using Multifactor.Radius.Adapter.v2.Application.Features.Radius.Services;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Adapters.Ldap;
@@ -24,9 +23,7 @@ using Multifactor.Radius.Adapter.v2.Infrastructure.Cache.AuthenticatedClientCach
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Dictionary;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Loader;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Parser;
-using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Reader;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Logging;
-using Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Radius.Builders;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Radius.Client;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Radius.Crypto;
@@ -68,9 +65,8 @@ public static class InfrastructureExtensions
             var config = serviceProvider.GetRequiredService<ServiceConfiguration>();
             var endpoint = config.RootConfiguration.AdapterServerEndpoint;
             var logger = serviceProvider.GetService<ILogger<CustomUdpClient>>();
-            var options = serviceProvider.GetService<IOptions<UdpClientOptions>>();
         
-            return new CustomUdpClient(endpoint, logger, options);
+            return new CustomUdpClient(endpoint, logger);
         });
     
         services.AddSingleton<IRadiusAttributeParser, RadiusAttributeParser>();
@@ -93,6 +89,7 @@ public static class InfrastructureExtensions
                 {
                     var primaryUrl = config.RootConfiguration.MultifactorApiUrls[0];
                     client.BaseAddress = primaryUrl;
+                    client.Timeout = config.RootConfiguration.MultifactorApiTimeout;
                 }
             })
             .AddPolicyHandler((serviceProvider, request) =>
@@ -179,14 +176,7 @@ public static class InfrastructureExtensions
         services.AddSingleton<IRadiusClientFactory, RadiusClientFactory>();
         services.AddTransient<IRadiusReplyAttributeService, RadiusReplyAttributeService>();
         services.AddTransient<IRadiusAttributeTypeConverter, RadiusAttributeTypeConverter>();
-    }
-    
-    public static void AddPipelines(this IServiceCollection services)
-    {
-        
         services.AddSingleton<INasIdentifierExtractor, RadiusNasIdentifierExtractor>();
         services.AddSingleton<IRadiusPacketValidator, RadiusPacketValidator>();
-        services.AddSingleton<IPipelineProvider, RadiusPipelineProvider>();
-        services.AddSingleton<IRadiusPipelineFactory, RadiusPipelineFactory>();
-    }    
+    }
 }

@@ -13,11 +13,6 @@ public class CustomLdapConnectionFactory : ILdapConnectionFactory
     {
         _factory = LdapConnectionFactory.Create();
     }
-    
-    public CustomLdapConnectionFactory(IEnumerable<ILdapConnectionFactory> ldapConnectionFactories)
-    {
-        _factory = new LdapConnectionFactory (NullLogger<LdapConnectionFactory>.Instance, ldapConnectionFactories);
-    }
 
     public ILdapConnection CreateConnection(LdapConnectionOptions ldapConnectionOptions)
     {

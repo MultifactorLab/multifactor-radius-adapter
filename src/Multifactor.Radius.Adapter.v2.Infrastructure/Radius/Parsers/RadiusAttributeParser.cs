@@ -3,6 +3,7 @@ using System.Text;
 using Microsoft.Extensions.Logging;
 using Multifactor.Radius.Adapter.v2.Application.Features.Radius.Models;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Dictionary;
+using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Dictionary.Attributes;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Radius.Crypto;
 
 namespace Multifactor.Radius.Adapter.v2.Infrastructure.Radius.Parsers;
@@ -12,6 +13,9 @@ public class RadiusAttributeParser : IRadiusAttributeParser
     private readonly IRadiusDictionary _radiusDictionary;
     private readonly IRadiusCryptoProvider _cryptoProvider;
     private readonly ILogger<RadiusAttributeParser> _logger;
+    const int VendorSpecific = 26;
+    const int MessageAuthenticator = 80;
+    const int UserPassword = 2;
 
     public RadiusAttributeParser(
         IRadiusDictionary radiusDictionary,
@@ -23,33 +27,16 @@ public class RadiusAttributeParser : IRadiusAttributeParser
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    public ParsedAttribute? Parse(byte[] attributeData, RadiusAuthenticator authenticator, SharedSecret sharedSecret)
+    public ParsedAttribute? Parse(byte[] attributeData, byte typeCode, RadiusAuthenticator authenticator, SharedSecret sharedSecret)
     {
-        if (attributeData == null || attributeData.Length < 2)
-            return null;
-
-        byte typeCode = attributeData[0];
-        byte length = attributeData[1];
-
-        if (length > attributeData.Length)
-            return null;
-
-        byte[] contentBytes = new byte[length - 2];
-        if (contentBytes.Length > 0)
-        {
-            Buffer.BlockCopy(attributeData, 2, contentBytes, 0, contentBytes.Length);
-        }
-
         try
         {
-            if (typeCode == 26) // Vendor-Specific
+            if (typeCode == VendorSpecific) // Vendor-Specific
             {
-                return ParseVendorSpecificAttribute(contentBytes, authenticator, sharedSecret);
+                return ParseVendorSpecificAttribute(attributeData, authenticator, sharedSecret);
             }
-            else
-            {
-                return ParseStandardAttribute(typeCode, contentBytes, authenticator, sharedSecret);
-            }
+            return ParseStandardAttribute(typeCode, attributeData, authenticator, sharedSecret);
+            
         }
         catch (Exception ex)
         {
@@ -123,89 +110,48 @@ public class RadiusAttributeParser : IRadiusAttributeParser
         if (content == null)
             return null;
 
-        bool isMessageAuthenticator = attributeDefinition.Code == 80; // Message-Authenticator
+        bool isMessageAuthenticator = attributeDefinition.Code == MessageAuthenticator;
         
         return new ParsedAttribute(attributeDefinition.Name, content, isMessageAuthenticator);
     }
 
-    private object ParseContentBytes(
+    private static object? ParseContentBytes(
         byte[] contentBytes,
         string type,
         uint code,
         RadiusAuthenticator authenticator,
         SharedSecret sharedSecret)
     {
-        switch (type.ToLowerInvariant())
+        switch (type)
         {
-            case "string":
-            case "tagged-string":
-                return ParseString(contentBytes);
-                
-            case "octets":
-                if (code == 2) // User-Password
+            case DictionaryAttribute.TypeTaggedString:
+            case DictionaryAttribute.TypeString:
+                //couse some NAS (like NPS) send binary within string attributes, check content before unpack to prevent data loss
+                if (contentBytes.All(b => b >= 32 && b <= 127)) //only if ascii
                 {
-                    return _cryptoProvider.DecryptPassword(sharedSecret, authenticator, contentBytes);
+                    return Encoding.UTF8.GetString(contentBytes);
                 }
+
                 return contentBytes;
-                
-            case "integer":
-            case "tagged-integer":
-                return ParseInteger(contentBytes);
-                
-            case "ipaddr":
-                return ParseIpAddress(contentBytes);
-                
-            case "date":
-                return ParseDate(contentBytes);
-                
-            case "ifid":
+
+            case DictionaryAttribute.TypeOctet:
+                // If this is a password attribute it must be decrypted
+                if (code == UserPassword)
+                {
+                    return RadiusPasswordProtector.Decrypt(sharedSecret, authenticator, contentBytes);
+                }
+
                 return contentBytes;
-                
+
+            case DictionaryAttribute.TypeInteger:
+            case DictionaryAttribute.TypeTaggedInteger:
+                return BitConverter.ToInt32(contentBytes.Reverse().ToArray(), 0);
+
+            case DictionaryAttribute.TypeIpAddr:
+                return new IPAddress(contentBytes);
+
             default:
-                _logger.LogWarning("Unknown attribute type: {Type}", type);
-                return contentBytes;
+                return null;
         }
-    }
-
-    private static string ParseString(byte[] bytes)
-    {
-        // Try to decode as UTF-8, fall back to ASCII if invalid
-        try
-        {
-            return Encoding.UTF8.GetString(bytes).TrimEnd('\0');
-        }
-        catch
-        {
-            return Encoding.ASCII.GetString(bytes).TrimEnd('\0');
-        }
-    }
-
-    private static int ParseInteger(byte[] bytes)
-    {
-        switch (bytes.Length)
-        {
-            case 4:
-                Array.Reverse(bytes);
-                return BitConverter.ToInt32(bytes, 0);
-            case 2:
-                Array.Reverse(bytes);
-                return BitConverter.ToInt16(bytes, 0);
-            case 1:
-                return bytes[0];
-            default:
-                throw new InvalidOperationException($"Invalid integer length: {bytes.Length}");
-        }
-    }
-
-    private static IPAddress ParseIpAddress(byte[] bytes)
-    {
-        return new IPAddress(bytes);
-    }
-
-    private static DateTime ParseDate(byte[] bytes)
-    {
-        Array.Reverse(bytes);
-        uint seconds = BitConverter.ToUInt32(bytes, 0);
-        return new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddSeconds(seconds);
     }
 }

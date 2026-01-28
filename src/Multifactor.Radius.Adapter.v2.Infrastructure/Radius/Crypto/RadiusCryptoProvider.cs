@@ -44,13 +44,15 @@ public class RadiusCryptoProvider : IRadiusCryptoProvider
         var tempPacket = new byte[packet.Length];
         packet.CopyTo(tempPacket, 0);
         
-        for (int i = 0; i < 16; i++)
-        {
-            tempPacket[position + 2 + i] = 0;
-        }
-        var calculated = CalculateMessageAuthenticator(secret, tempPacket, requestAuth);
-        return calculated.SequenceEqual(messageAuth);
-        // return CryptographicOperations.FixedTimeEquals(calculated, messageAuth);
+        // Replace the Message-Authenticator content only.
+        // messageAuthenticatorPosition is a position of the Message-Authenticator block.
+        // The full-block length is 18: typecode (1), length (1), content (16).
+        // So the Message-Authenticator content position is (messageAuthenticatorPosition + 2).
+        Buffer.BlockCopy(new byte[16], 0, tempPacket, position + 2, 16);
+
+        var calculatedMessageAuthenticator =
+            CalculateMessageAuthenticator(secret, tempPacket, requestAuth);
+        return calculatedMessageAuthenticator.SequenceEqual(messageAuth);
     }
 
     public byte[] DecryptPassword(SharedSecret secret, RadiusAuthenticator authenticator, byte[] encryptedPassword)
@@ -60,16 +62,10 @@ public class RadiusCryptoProvider : IRadiusCryptoProvider
 
     private static byte[] CalculateAuthenticator(SharedSecret secret, byte[] packet, byte[] requestAuth)
     {
-        var buffer = new byte[packet.Length + secret.Bytes.Length];
-        packet.CopyTo(buffer, 0);
-        secret.Bytes.CopyTo(buffer.AsMemory(packet.Length));
-        
-        if (requestAuth.Length == 16)
-        {
-            requestAuth.CopyTo(buffer, 4);
-        }
+        var responseAuthenticator = packet.Concat(secret.Bytes).ToArray();
+        Buffer.BlockCopy(requestAuth, 0, responseAuthenticator, 4, 16);
 
         using var md5 = MD5.Create();
-        return md5.ComputeHash(buffer);
+        return md5.ComputeHash(responseAuthenticator);
     }
 }

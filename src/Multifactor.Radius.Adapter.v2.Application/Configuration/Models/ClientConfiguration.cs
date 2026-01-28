@@ -43,7 +43,7 @@ public class ClientConfiguration
     [ConfigParameter("invalid-credential-delay")]
     public (int min, int max) InvalidCredentialDelay { get; set; }
     [ConfigParameter("calling-station-id-attribute")]
-    public string CallingStationIdAttribute { get; set; }
+    public string CallingStationIdAttribute { get; set; } //TODO not used
     [ConfigParameter("ip-white-list")]
     public IReadOnlyList<IPAddressRange> IpWhiteList { get; set; }
     

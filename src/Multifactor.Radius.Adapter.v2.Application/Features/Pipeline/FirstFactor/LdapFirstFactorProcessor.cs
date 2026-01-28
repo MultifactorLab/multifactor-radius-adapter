@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using Multifactor.Radius.Adapter.v2.Application.Configuration.Models.Enum;
 using Multifactor.Radius.Adapter.v2.Application.Features.Ldap;
 using Multifactor.Radius.Adapter.v2.Application.Features.Ldap.Models;
+using Multifactor.Radius.Adapter.v2.Application.Features.Ldap.Ports;
 using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.FirstFactor.BindNameFormat;
 using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Models;
 using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Models.Enum;
@@ -95,7 +96,7 @@ public class LdapFirstFactorProcessor : IFirstFactorProcessor
             bindName = string.IsNullOrWhiteSpace(formatted) ? login : formatted;
             
             _logger.LogDebug("Use '{name}' for LDAP bind.", bindName);
-            var request = new CheckConnectionRequest
+            var request = new LdapConnectionData
             {
                 ConnectionString = serverConfig.ConnectionString,
                 UserName = bindName,
@@ -103,7 +104,7 @@ public class LdapFirstFactorProcessor : IFirstFactorProcessor
                 BindTimeoutInSeconds = serverConfig.BindTimeoutSeconds
             };
 
-            return _ldapAdapter.CheckConnecion(request);
+            return _ldapAdapter.CheckConnection(request);
         }
         catch (Exception ex)
         {

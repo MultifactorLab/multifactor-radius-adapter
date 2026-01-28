@@ -9,6 +9,7 @@ public class ServerHost : IHostedService
     private readonly ILogger<ServerHost> _logger;
     private Task? _serverTask;
     private CancellationTokenSource? _cts;
+    private const int ShoutDownTimeout = 30;
     
     public ServerHost(AdapterServer server, ILogger<ServerHost> logger)
     {
@@ -44,7 +45,7 @@ public class ServerHost : IHostedService
             if (_serverTask is { IsCompleted: false })
             {
                 await Task.WhenAny(_serverTask, 
-                    Task.Delay(TimeSpan.FromSeconds(30), cancellationToken));
+                    Task.Delay(TimeSpan.FromSeconds(ShoutDownTimeout), cancellationToken));
             }
             
             _logger.LogInformation("RADIUS server host stopped");

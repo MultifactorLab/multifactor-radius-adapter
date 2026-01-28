@@ -27,7 +27,8 @@ public static class SerilogLoggerFactory
         ConfigureLogging(
             loggerConfiguration,
             rootConfiguration.LoggingFormat,
-            rootConfiguration.SyslogOutputTemplate,
+            rootConfiguration.FileLogOutputTemplate,
+            rootConfiguration.LogFileMaxSizeBytes,
             rootConfiguration.ConsoleLogOutputTemplate);
         ConfigureSyslog(loggerConfiguration,
             rootConfiguration.SyslogServer,
@@ -56,6 +57,7 @@ public static class SerilogLoggerFactory
         LoggerConfiguration loggerConfiguration,
         string? loggingFormat,
         string? fileTemplate,
+        int? fileSize,
         string? consoleTemplate)
     {
         var adapterPath = Path.GetDirectoryName(AppDomain.CurrentDomain.BaseDirectory);
@@ -68,7 +70,8 @@ public static class SerilogLoggerFactory
                 .WriteTo.File(formatter,
                     logsPath,
                     flushToDiskInterval: TimeSpan.FromSeconds(1),
-                    rollingInterval: RollingInterval.Day) ;
+                    rollingInterval: RollingInterval.Day,
+                    fileSizeLimitBytes: fileSize) ;
 
             if (!string.IsNullOrWhiteSpace(fileTemplate))
             {
@@ -84,7 +87,6 @@ public static class SerilogLoggerFactory
         if (!string.IsNullOrWhiteSpace(consoleTemplate))
             loggerConfiguration.WriteTo.Console(outputTemplate: consoleTemplate);
         else
-            // loggerConfiguration.WriteTo.Console();TODO remove
             loggerConfiguration.WriteTo.Console(
                 outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}",
                 theme: AnsiConsoleTheme.Code,
@@ -174,24 +176,15 @@ public static class SerilogLoggerFactory
 
     private static void SetLogLevel(LoggingLevelSwitch levelSwitch, string level)
     {
-        switch (level)
+        levelSwitch.MinimumLevel = level switch
         {
-            case "Verbose":
-                levelSwitch.MinimumLevel = LogEventLevel.Verbose;
-                break;
-            case "Debug":
-                levelSwitch.MinimumLevel = LogEventLevel.Debug;
-                break;
-            case "Info":
-                levelSwitch.MinimumLevel = LogEventLevel.Information;
-                break;
-            case "Warn":
-                levelSwitch.MinimumLevel = LogEventLevel.Warning;
-                break;
-            case "Error":
-                levelSwitch.MinimumLevel = LogEventLevel.Error;
-                break;
-        }
+            "Verbose" => LogEventLevel.Verbose,
+            "Debug" => LogEventLevel.Debug,
+            "Info" => LogEventLevel.Information,
+            "Warn" => LogEventLevel.Warning,
+            "Error" => LogEventLevel.Error,
+            _ => levelSwitch.MinimumLevel
+        };
 
         Log.Logger.Information("Logging minimum level: {Level:l}", levelSwitch.MinimumLevel);
     }

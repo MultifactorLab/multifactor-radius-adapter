@@ -13,8 +13,7 @@ public class OpenLdapFormatter: ILdapBindNameFormatter
     {
         var identity = new UserIdentity(userName);
         
-        if (identity.Format == UserIdentityFormat.UserPrincipalName 
-            || identity.Format == UserIdentityFormat.DistinguishedName)
+        if (identity.Format is UserIdentityFormat.UserPrincipalName or UserIdentityFormat.DistinguishedName)
             return userName;
 
         return ldapProfile.Dn.StringRepresentation;

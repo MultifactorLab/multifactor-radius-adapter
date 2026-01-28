@@ -2,7 +2,9 @@ using Microsoft.Extensions.Logging;
 using Multifactor.Radius.Adapter.v2.Application.Cache;
 using Multifactor.Radius.Adapter.v2.Application.Features.Ldap;
 using Multifactor.Radius.Adapter.v2.Application.Features.Ldap.Models;
+using Multifactor.Radius.Adapter.v2.Application.Features.Ldap.Ports;
 using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.AccessChallenge.Models;
+using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.AccessChallenge.Models.Enums;
 using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Models;
 using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Models.Enum;
 using Multifactor.Radius.Adapter.v2.Application.Features.Security;
@@ -53,7 +55,7 @@ public class ChangePasswordChallengeProcessor : IChallengeProcessor
 
     public bool HasChallengeContext(ChallengeIdentifier identifier) => _cache.TryGetValue<object>(identifier.RequestId, out _);
 
-    public async Task<ChallengeStatus> ProcessChallengeAsync(ChallengeIdentifier identifier, RadiusPipelineContext context)
+    public Task<ChallengeStatus> ProcessChallengeAsync(ChallengeIdentifier identifier, RadiusPipelineContext context)
     {
         ArgumentNullException.ThrowIfNull(context);
         ArgumentNullException.ThrowIfNull(context.LdapProfile);
@@ -62,31 +64,34 @@ public class ChangePasswordChallengeProcessor : IChallengeProcessor
         
         var passwordChangeRequest = GetPasswordChangeRequest(identifier.RequestId);
         if (passwordChangeRequest == null)
-            return ChallengeStatus.Accept;
+            return Task.FromResult(ChallengeStatus.Accept);
         
         if (string.IsNullOrWhiteSpace(context.Passphrase.Raw))
         {
             context.ResponseInformation.ReplyMessage = "Password is empty";
             context.FirstFactorStatus = AuthenticationStatus.Reject;
-            return ChallengeStatus.Reject;
+            return Task.FromResult(ChallengeStatus.Reject);
         }
 
         if (string.IsNullOrWhiteSpace(passwordChangeRequest.NewPasswordEncryptedData))
-            return RepeatPasswordChallenge(context, passwordChangeRequest);
+            return Task.FromResult(RepeatPasswordChallenge(context, passwordChangeRequest));
         
         var decryptedNewPassword = ProtectionService.Unprotect(context.ClientConfiguration.MultifactorSharedSecret, passwordChangeRequest.NewPasswordEncryptedData);
         if (decryptedNewPassword != context.Passphrase.Raw)
-            return PasswordsNotMatchChallenge(context, passwordChangeRequest);
+            return Task.FromResult(PasswordsNotMatchChallenge(context, passwordChangeRequest));
 
         var request = new ChangeUserPasswordRequest
         {
-            ConnectionString = context.LdapConfiguration.ConnectionString,
-            UserName = context.LdapConfiguration.Username,
-            Password = context.LdapConfiguration.Password,
+            ConnectionData = new LdapConnectionData
+            {
+                ConnectionString = context.LdapConfiguration.ConnectionString,
+                UserName = context.LdapConfiguration.Username,
+                Password = context.LdapConfiguration.Password,
+                BindTimeoutInSeconds = context.LdapConfiguration.BindTimeoutSeconds
+            },
             LdapSchema = context.LdapSchema,
             DistinguishedName = context.LdapProfile.Dn,
             NewPassword = decryptedNewPassword,
-            BindTimeoutInSeconds = context.LdapConfiguration.BindTimeoutSeconds
         };
         
         var success = _ldapAdapter.ChangeUserPassword(request);
@@ -95,11 +100,11 @@ public class ChangePasswordChallengeProcessor : IChallengeProcessor
         context.ResponseInformation.State = null;
             
         if (success)
-            return ChallengeStatus.Accept;
+            return Task.FromResult(ChallengeStatus.Accept);
 
         context.FirstFactorStatus = AuthenticationStatus.Reject;
 
-        return ChallengeStatus.Reject;
+        return Task.FromResult(ChallengeStatus.Reject);
     }
 
     private PasswordChangeCache? GetPasswordChangeRequest(string id)

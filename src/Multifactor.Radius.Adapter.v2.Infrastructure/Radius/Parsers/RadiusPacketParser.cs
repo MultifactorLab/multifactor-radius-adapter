@@ -1,3 +1,4 @@
+using System.Security.Cryptography;
 using Microsoft.Extensions.Logging;
 using Multifactor.Radius.Adapter.v2.Application.Features.Radius.Models;
 using Multifactor.Radius.Adapter.v2.Application.Features.Radius.Models.Enums;
@@ -11,6 +12,10 @@ public class RadiusPacketParser : IRadiusPacketParser
     private readonly IRadiusCryptoProvider  _cryptoProvider;
     private readonly ILogger<RadiusPacketParser> _logger;
 
+    public const int LengthFieldPosition = 2;
+    public const int LengthFieldLength = 2;
+
+    public const int AttributesFieldPosition = 20;
     public RadiusPacketParser(
         IRadiusAttributeParser attributeParser,
         IRadiusCryptoProvider  cryptoProvider,
@@ -39,20 +44,35 @@ public class RadiusPacketParser : IRadiusPacketParser
         ValidatePacketLength(packetBytes);
         ValidatePacketLengthField(packetBytes);
 
-        var code = (PacketCode)packetBytes[0];
-        var identifier = packetBytes[1];
-        var authenticatorBytes = new byte[16];
-        Buffer.BlockCopy(packetBytes, 4, authenticatorBytes, 0, 16);
-        var authenticator = new RadiusAuthenticator(authenticatorBytes);
-
-        var header = new RadiusPacketHeader(code, identifier, authenticator);
+        var header = RadiusPacketHeader.Parse(packetBytes);
         var packet = new RadiusPacket(header, requestAuthenticator);
+        
+        if (packet.Code == PacketCode.AccountingRequest || packet.Code == PacketCode.DisconnectRequest)
+        {
+            var requestAuth = _cryptoProvider.CalculateRequestAuthenticator(sharedSecret, packetBytes);
+            if (!packet.Authenticator.Value.SequenceEqual(requestAuth))
+            {
+                throw new InvalidOperationException(
+                    $"Invalid request authenticator in packet {packet.Identifier}, check secret?");
+            }
+        }
         
         ParseAttributes(packetBytes, packet, sharedSecret);
         
         return packet;
     }
+    
 
+    private static ushort GetPacketLength(byte[] packetBytes)
+    {
+        var packetLengthbytes = new byte[LengthFieldLength];
+        // Length field always third and fourth bytes in packet (rfc2865)
+        packetLengthbytes[0] = packetBytes[LengthFieldPosition + 1];
+        packetLengthbytes[1] = packetBytes[LengthFieldPosition];
+        var packetLength = BitConverter.ToUInt16(packetLengthbytes, 0);
+        return packetLength;
+    }
+    
     private static void ValidatePacketLength(byte[] packetBytes)
     {
         if (packetBytes.Length < 20)
@@ -83,51 +103,41 @@ public class RadiusPacketParser : IRadiusPacketParser
         RadiusPacket packet,
         SharedSecret sharedSecret)
     {
-        int position = 20;
-        int messageAuthenticatorPosition = -1;
-        byte[] messageAuthenticator = null;
+        int position = AttributesFieldPosition;
+        int messageAuthenticatorPosition = 0;
 
+        ushort packetLength = GetPacketLength(packetBytes);
+        
         while (position < packetBytes.Length)
         {
-            if (position + 1 >= packetBytes.Length)
+            var typeCode = packetBytes[position];
+            var length = packetBytes[position + 1];
+
+            if (position + length > packetLength)
             {
-                throw new InvalidOperationException("Invalid attribute: incomplete header");
+                throw new ArgumentOutOfRangeException();
             }
 
-            byte typeCode = packetBytes[position];
-            byte length = packetBytes[position + 1];
-
-            if (length < 2)
-            {
-                throw new InvalidOperationException($"Invalid attribute length: {length}");
-            }
-
-            if (position + length > packetBytes.Length)
-            {
-                throw new InvalidOperationException(
-                    $"Attribute exceeds packet boundary. Position: {position}, Length: {length}, Packet Length: {packetBytes.Length}");
-            }
-
-            var attributeData = new byte[length];
-            Buffer.BlockCopy(packetBytes, position, attributeData, 0, length);
+            var attributeData = new byte[length - 2];
+            Buffer.BlockCopy(packetBytes, position + 2, attributeData, 0, length - 2);
 
             try
             {
-                var parsedAttribute = _attributeParser.Parse(attributeData, packet.Authenticator, sharedSecret);
+                
+                var parsedAttribute = _attributeParser.Parse(attributeData, typeCode, packet.Authenticator, sharedSecret);
                 
                 if (parsedAttribute != null)
                 {
                     packet.AddAttributeValue(parsedAttribute.Name, parsedAttribute.Value);
-                    
                     if (parsedAttribute.IsMessageAuthenticator)
                     {
                         messageAuthenticatorPosition = position;
-                        if (parsedAttribute.Value is byte[] authBytes)
-                        {
-                            messageAuthenticator = authBytes;
-                        }
                     }
                 }
+            }
+            catch (KeyNotFoundException)
+            {
+                _logger.LogWarning("Attribute {typecode:l} not found in dictionary", typeCode);
             }
             catch (Exception ex)
             {
@@ -138,8 +148,9 @@ public class RadiusPacketParser : IRadiusPacketParser
             position += length;
         }
 
-        if (messageAuthenticatorPosition != -1 && messageAuthenticator != null)
+        if (messageAuthenticatorPosition != 0)
         {
+            var messageAuthenticator = packet.GetAttribute<byte[]>("Message-Authenticator");
             var isValid = _cryptoProvider.ValidateMessageAuthenticator(
                 packetBytes,
                 messageAuthenticator,

@@ -27,10 +27,10 @@ public static class RequestDataExtractor
 
     public static string? GetSecondFactorIdentity(RadiusPipelineContext context)
     {
-        if (string.IsNullOrWhiteSpace(context.LdapConfiguration?.IdentityAttribute))
-            return context.RequestPacket.UserName;
-
-        return GetAttributeValue(context.LdapProfile?.Attributes, context.LdapConfiguration.IdentityAttribute);
+        return string.IsNullOrWhiteSpace(context.LdapConfiguration?.IdentityAttribute) ? context.RequestPacket.UserName 
+            : context.LdapProfile?.Attributes?.Where(attr => attr.Name == context.LdapConfiguration.IdentityAttribute)
+            .SelectMany(attr => attr.Values)
+            .FirstOrDefault(value => !string.IsNullOrWhiteSpace(value));;
     }
 
     public static string? GetUserPhone(RadiusPipelineContext context)
@@ -41,36 +41,14 @@ public static class RequestDataExtractor
 
         foreach (var attribute in context.LdapProfile.Attributes)
         {
-            if (context.LdapConfiguration.PhoneAttributes.Contains(attribute.Name.Value))
+            if (!context.LdapConfiguration.PhoneAttributes.Contains(attribute.Name.Value)) continue;
+            foreach (var value in attribute.GetNotEmptyValues())
             {
-                foreach (var value in attribute.GetNotEmptyValues())
-                {
-                    if (!string.IsNullOrEmpty(value))
-                        return value;
-                }
+                if (!string.IsNullOrEmpty(value))
+                    return value;
             }
         }
-
         return context.LdapProfile.Phone;
-    }
-
-    private static string? GetAttributeValue(IReadOnlyCollection<LdapAttribute>? attributes, string attributeName)
-    {
-        if (attributes == null) return null;
-
-        foreach (var attr in attributes)
-        {
-            if (attr.Name == attributeName)
-            {
-                foreach (var value in attr.Values)
-                {
-                    if (!string.IsNullOrWhiteSpace(value))
-                        return value;
-                }
-            }
-        }
-
-        return null;
     }
 
     public static string? GetCallingStationId(string? callingStationIdAttributeValue, IPEndPoint remoteEndPoint)

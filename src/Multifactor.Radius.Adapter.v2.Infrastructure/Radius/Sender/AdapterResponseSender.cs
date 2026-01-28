@@ -36,55 +36,37 @@ public class AdapterResponseSender : IResponseSender
     {
         if (request == null)
             throw new ArgumentNullException(nameof(request));
-        
+
         if (request.ShouldSkipResponse)
         {
             _logger.LogDebug("Skipping response for request Id={Id}", request.RequestPacket?.Identifier);
             return;
         }
-        
-        if (ShouldProxyResponse(request))
-        {
-            await ProxyResponseAsync(request);
+
+        if (request.ResponsePacket?.IsEapMessageChallenge == true)
+        { 
+            // EAP challenge
+            _logger.LogDebug("Proxying EAP-Message Challenge to {host:l}:{port} id={id}", request.RemoteEndpoint.Address, request.RemoteEndpoint.Port, request.RequestPacket.Identifier);
+            await SendResponsePacketAsync(request.ResponsePacket, request);
             return;
         }
-        
-        var responsePacket = BuildResponsePacket(request);
-        await SendResponsePacketAsync(responsePacket, request);
-        
-        LogResponseSent(responsePacket, request);
-    }
-    
-    private static bool ShouldProxyResponse(SendAdapterResponseRequest request)
-    {
-        // EAP challenge
-        if (request.ResponsePacket?.IsEapMessageChallenge == true)
-            return true;
             
         // Vendor ACL request
         if (request.RequestPacket.IsVendorAclRequest && request.ResponsePacket != null)
-            return true;
-            
-        return false;
-    }
-    
-    private async Task ProxyResponseAsync(SendAdapterResponseRequest request)
-    {
-        if (request.ResponsePacket == null)
+        {
+            //ACL and other rules transfer, just proxy response
+            _logger.LogDebug("Proxying #ACSACL# to {host:l}:{port} id={id}", request.RemoteEndpoint.Address, request.RemoteEndpoint.Port, request.RequestPacket.Identifier);
+            await SendResponsePacketAsync(request.ResponsePacket, request);
             return;
-            
-        var logMessage = request.RequestPacket.IsVendorAclRequest 
-            ? "Proxying #ACSACL#" 
-            : "Proxying EAP-Message Challenge";
-            
-        _logger.LogDebug(
-            "{Action} to {Host}:{Port} id={Id}", 
-            logMessage, 
-            request.RemoteEndpoint.Address, 
-            request.RemoteEndpoint.Port, 
-            request.RequestPacket.Identifier);
-            
-        await SendResponsePacketAsync(request.ResponsePacket, request);
+        }
+        
+        
+        var responsePacket = BuildResponsePacket(request);
+        
+        Console.WriteLine(responsePacket.Authenticator.Value.ToString());
+        await SendResponsePacketAsync(responsePacket, request);
+        
+        LogResponseSent(responsePacket, request);
     }
     
     private RadiusPacket BuildResponsePacket(SendAdapterResponseRequest request)

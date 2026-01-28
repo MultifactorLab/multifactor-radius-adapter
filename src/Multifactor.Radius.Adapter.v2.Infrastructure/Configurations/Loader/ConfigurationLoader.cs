@@ -18,22 +18,18 @@ public class ConfigurationLoader : IConfigurationLoader
     
     public ServiceConfiguration Load()
     {
-        return LoadAsync(CancellationToken.None).GetAwaiter().GetResult();
+        return Task.Run(() => LoadAsync(CancellationToken.None)).GetAwaiter().GetResult();
     }
     
     public async Task<ServiceConfiguration> LoadAsync(CancellationToken cancellationToken)
     {
-        
         var rootConfig = await LoadRootConfigurationAsync(cancellationToken);
-        
         var clients = await LoadClientConfigurationsAsync(cancellationToken);
-        
         var serviceConfig = new ServiceConfiguration
         {
             RootConfiguration = rootConfig,
             ClientsConfigurations = clients
         };
-        
         return serviceConfig;
     }
     

@@ -15,7 +15,6 @@ public class RootConfiguration
     public IPEndPoint? AdapterServerEndpoint { get; set; }
     [ConfigParameter("logging-level")]
     public string LoggingLevel { get; set; }
-    
     [ConfigParameter("logging-format")]
     public string LoggingFormat { get; set; }
     [ConfigParameter("syslog-use-tls")]

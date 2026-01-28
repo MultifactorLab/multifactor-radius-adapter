@@ -34,9 +34,7 @@ namespace Multifactor.Radius.Adapter.v2.Application.Features.Security
             var key = new byte[16 + sharedSecret.Bytes.Length];
             Buffer.BlockCopy(sharedSecret.Bytes, 0, key, 0, sharedSecret.Bytes.Length);
             Buffer.BlockCopy(authenticator.Value, 0, key, sharedSecret.Bytes.Length, authenticator.Value.Length);
-
-            using var md5 = MD5.Create();
-            return md5.ComputeHash(key);
+            return MD5.HashData(key);
         }
 
 

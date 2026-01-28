@@ -41,7 +41,6 @@ public sealed class MultifactorApiService
             _logger.LogWarning("Empty user name for second factor context. Request rejected.");
             return new SecondFactorResponse(AuthenticationStatus.Reject);
         }
-        // return new SecondFactorResponse(AuthenticationStatus.Bypass);
 
         if (_authenticatedClientCache.TryHitCache(
             personalData.CallingStationId, 
@@ -103,7 +102,9 @@ public sealed class MultifactorApiService
         catch (MultifactorApiUnreachableException apiEx)
         {
             return ProcessMfException(apiEx, personalData.Identity,
-                context.ClientConfiguration.BypassSecondFactorWhenApiUnreachable, context.RequestPacket.RemoteEndpoint);
+                context.ClientConfiguration.BypassSecondFactorWhenApiUnreachable, 
+                context.LdapConfiguration?.BypassSecondFactorWhenApiUnreachableGroups, 
+                context.UserGroups, context.RequestPacket.RemoteEndpoint);
         }
         catch (Exception ex)
         {
@@ -159,9 +160,10 @@ public sealed class MultifactorApiService
         }
         catch (MultifactorApiUnreachableException apiEx)
         {
-            return ProcessMfException(apiEx, identity, 
+            return ProcessMfException(apiEx, identity,
                 context.ClientConfiguration.BypassSecondFactorWhenApiUnreachable, 
-                context.RequestPacket.RemoteEndpoint);
+                context.LdapConfiguration?.BypassSecondFactorWhenApiUnreachableGroups, 
+                context.UserGroups, context.RequestPacket.RemoteEndpoint);
         }
         catch (Exception ex)
         {
@@ -232,10 +234,38 @@ public sealed class MultifactorApiService
             Email = personalData.Email,
             Phone = string.IsNullOrWhiteSpace(phone) ? personalData.Phone : phone,
             CalledStationId = personalData.CalledStationId,
-            CallingStationId = personalData.CallingStationId
+            CallingStationId = personalData.CallingStationId,
+            SignUpGroups = string.Join(';', context.ClientConfiguration.SignUpGroups),
+            PassCode = GetPassCodeOrNull(context)
         };
     }
+    
+    private static string? GetPassCodeOrNull(RadiusPipelineContext context)
+    {
+        //check static challenge
+        var challenge = context.RequestPacket.TryGetChallenge();
+        if (challenge != null)
+        {
+            return challenge;
+        }
 
+        //check password challenge (otp or passcode)
+        var passphrase = context.Passphrase;
+        switch (context.ClientConfiguration.PreAuthenticationMethod)
+        {
+            case PreAuthMode.Otp:
+                return passphrase.Otp;
+        }
+
+        if (passphrase.IsEmpty)
+            return null;
+
+        if (context.ClientConfiguration.FirstFactorAuthenticationSource != AuthenticationSource.None)
+            return null;
+
+        return passphrase.Otp ?? passphrase.ProviderCode;
+    }
+    
     private static void ApplyPrivacyMode(ref PersonalData pd, PrivacyMode mode, string[] privacyFields)
     {
         switch (mode)
@@ -270,6 +300,8 @@ public sealed class MultifactorApiService
         MultifactorApiUnreachableException apiEx, 
         string identity, 
         bool bypassSecondFactorWhenApiUnreachable, 
+        IReadOnlyList<string> bypassSecondFactorWhenApiUnreachableGroups,
+        HashSet<string> userGroups,
         IPEndPoint remoteEndpoint)
     {
         _logger.LogError(apiEx,
@@ -278,15 +310,18 @@ public sealed class MultifactorApiService
             remoteEndpoint.Address,
             remoteEndpoint.Port,
             apiEx.Message);
-
-        if (!bypassSecondFactorWhenApiUnreachable)
+        
+        if (bypassSecondFactorWhenApiUnreachable 
+            && bypassSecondFactorWhenApiUnreachableGroups != null 
+            && bypassSecondFactorWhenApiUnreachableGroups.Any() 
+            && bypassSecondFactorWhenApiUnreachableGroups.Intersect(userGroups).Any())
         {
-            var radCode = ConvertToAuthCode(null);
-            return new SecondFactorResponse(radCode);
+            var code = ConvertToAuthCode(AccessRequestResponse.Bypass);
+            return new SecondFactorResponse(code);
         }
-
-        var code = ConvertToAuthCode(AccessRequestResponse.Bypass);
-        return new SecondFactorResponse(code);
+        
+        var radCode = ConvertToAuthCode(null);
+        return new SecondFactorResponse(radCode);
     }
 
     private SecondFactorResponse ProcessException(Exception ex, string identity, IPEndPoint remoteEndpoint)

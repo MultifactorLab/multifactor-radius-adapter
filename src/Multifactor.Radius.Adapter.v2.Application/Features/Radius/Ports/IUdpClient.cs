@@ -5,7 +5,6 @@ namespace Multifactor.Radius.Adapter.v2.Application.Features.Radius.Ports;
 
 public interface IUdpClient : IDisposable
 {
-    Task<int> SendAsync(byte[] datagram, int bytesCount, IPEndPoint endPoint, 
-        CancellationToken cancellationToken = default);
+    Task<int> SendAsync(byte[] datagram, int bytesCount, IPEndPoint endPoint);
     Task<UdpReceiveResult> ReceiveAsync(CancellationToken cancellationToken = default);
 }

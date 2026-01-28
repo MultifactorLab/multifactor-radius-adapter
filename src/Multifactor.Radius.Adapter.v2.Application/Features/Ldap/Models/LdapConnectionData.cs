@@ -1,6 +1,6 @@
 namespace Multifactor.Radius.Adapter.v2.Application.Features.Ldap.Models;
 
-public class CheckConnectionRequest
+public class LdapConnectionData
 {
     public string ConnectionString { get; set; }
     public string UserName { get; set; }

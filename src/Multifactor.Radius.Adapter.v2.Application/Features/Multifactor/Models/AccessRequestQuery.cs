@@ -9,6 +9,5 @@ public class AccessRequestQuery
     public string? PassCode { get; set; }
     public string? CallingStationId { get; set; }
     public string? CalledStationId { get; set; }
-    public bool InlineEnroll { get; set; }
     public string SignUpGroups { get; set; }
 }

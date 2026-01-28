@@ -24,7 +24,7 @@ public class AccessRequestDto
             Phone = query.Phone,
             PassCode = query.PassCode,
             CalledStationId = query.CalledStationId,
-            Capabilities = new Capabilities{ InlineEnroll = query.InlineEnroll },
+            Capabilities = new Capabilities{ InlineEnroll = true },
             GroupPolicyPreset = new GroupPolicyPreset{ SignUpGroups = query.SignUpGroups }
         };
     }

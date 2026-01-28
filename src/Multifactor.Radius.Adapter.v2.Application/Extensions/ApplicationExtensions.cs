@@ -2,9 +2,11 @@ using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
 using Multifactor.Radius.Adapter.v2.Application.Configuration.Models;
 using Multifactor.Radius.Adapter.v2.Application.Features.Multifactor;
+using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline;
 using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.AccessChallenge;
 using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.FirstFactor;
 using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.FirstFactor.BindNameFormat;
+using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Interfaces;
 using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Steps;
 using Multifactor.Radius.Adapter.v2.Application.Features.Radius.Services;
 
@@ -47,6 +49,12 @@ public static class ApplicationExtensions
         services.AddTransient<IChallengeProcessor, ChangePasswordChallengeProcessor>();
         services.AddSingleton<IChallengeProcessorProvider, ChallengeProcessorProvider>();
     }
+    
+    public static void AddPipelines(this IServiceCollection services)
+    {
+        services.AddSingleton<IPipelineProvider, RadiusPipelineProvider>();
+        services.AddSingleton<IRadiusPipelineFactory, RadiusPipelineFactory>();
+    }    
     
     public static void AddPipelineSteps(this IServiceCollection services)
     {

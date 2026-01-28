@@ -23,9 +23,12 @@ public static class ProtectionService
         ArgumentException.ThrowIfNullOrWhiteSpace(data, nameof(data));
         
         var bytes = FromBase64(data);
-        if (!OperatingSystem.IsWindows()) return BytesToString(bytes);
-        var additionalEntropy = StringToBytes(secret);
-        return BytesToString(ProtectedData.Unprotect(bytes, additionalEntropy, DataProtectionScope.CurrentUser));
+        if (OperatingSystem.IsWindows())
+        {
+            var additionalEntropy = StringToBytes(secret);
+            return BytesToString(ProtectedData.Unprotect(bytes, additionalEntropy, DataProtectionScope.CurrentUser));
+        }
+        return BytesToString(bytes);
     }
     
     private static byte[] StringToBytes(string s)

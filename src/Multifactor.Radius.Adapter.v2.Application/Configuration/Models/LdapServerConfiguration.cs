@@ -36,11 +36,13 @@ public class LdapServerConfiguration
     [ConfigParameter("enable-alternative-suffixes")]
     public bool AlternativeSuffixesEnabled { get; init; }
     [ConfigParameter("included-domains")]
-    public IReadOnlyList<string> IncludedDomains { get; init; }
+    public IReadOnlyList<string> IncludedDomains { get; init; }//TODO not used
     [ConfigParameter("excluded-domains")]
-    public IReadOnlyList<string> ExcludedDomains { get; init; }
+    public IReadOnlyList<string> ExcludedDomains { get; init; }//TODO not used
     [ConfigParameter("included-suffixes")]
     public IReadOnlyList<string> IncludedSuffixes { get; init; }
     [ConfigParameter("excluded-suffixes")]
     public IReadOnlyList<string> ExcludedSuffixes { get; init; }
+    [ConfigParameter("bypass-second-factor-when-api-unreachable-groups")]
+    public IReadOnlyList<string> BypassSecondFactorWhenApiUnreachableGroups { get; init; }
 }

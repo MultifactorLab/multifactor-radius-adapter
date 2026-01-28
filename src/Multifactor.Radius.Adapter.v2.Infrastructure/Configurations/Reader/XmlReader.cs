@@ -11,7 +11,6 @@ public static class XmlReader
     {
         try
         {
-
             await using var stream = File.OpenRead(filePath);
             var settings = new XmlReaderSettings
             {

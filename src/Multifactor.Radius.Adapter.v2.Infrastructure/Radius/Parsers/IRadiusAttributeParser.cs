@@ -4,5 +4,6 @@ namespace Multifactor.Radius.Adapter.v2.Infrastructure.Radius.Parsers;
 
 public interface IRadiusAttributeParser
 {
-    ParsedAttribute? Parse(byte[] attributeData, RadiusAuthenticator authenticator, SharedSecret sharedSecret);
+    public ParsedAttribute? Parse(byte[] attributeData, byte typeCode, RadiusAuthenticator authenticator,
+        SharedSecret sharedSecret);
 }

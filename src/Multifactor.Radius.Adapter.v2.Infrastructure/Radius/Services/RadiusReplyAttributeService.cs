@@ -25,13 +25,14 @@ public class RadiusReplyAttributeService : IRadiusReplyAttributeService
     public IDictionary<string, List<object>> GetReplyAttributes(GetReplyAttributesRequest request)
     {
         ArgumentNullException.ThrowIfNull(request, nameof(request));
+        ArgumentNullException.ThrowIfNull(request.ReplyAttributes, nameof(request.ReplyAttributes));
         
         var result = new Dictionary<string, List<object>>();
         
         foreach (var attribute in request.ReplyAttributes)
         {
             var values = ProcessAttribute(attribute.Key, attribute.Value, request);
-            if (values.Any())
+            if (values.Count != 0)
             {
                 result[attribute.Key] = values;
             }
@@ -133,7 +134,7 @@ public class RadiusReplyAttributeService : IRadiusReplyAttributeService
         return false;
     }
     
-    private static bool MatchesUserGroupCondition(IReadOnlyList<string> conditions, HashSet<string> userGroups)
+    private static bool MatchesUserGroupCondition(IReadOnlyList<string> conditions, HashSet<string>? userGroups)
     {
         if (userGroups == null || userGroups.Count == 0)
             return false;

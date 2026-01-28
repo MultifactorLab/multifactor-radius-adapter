@@ -1,5 +1,6 @@
 ﻿namespace Multifactor.Radius.Adapter.v2.Application.Configuration.Models.Enum
 {
+    [Flags]
     public enum PreAuthMode
     {
         /// <summary>

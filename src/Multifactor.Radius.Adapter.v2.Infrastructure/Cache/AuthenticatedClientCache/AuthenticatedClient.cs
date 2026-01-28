@@ -7,14 +7,6 @@ public class AuthenticatedClient
     public string Id { get; }
     public TimeSpan Elapsed => DateTime.Now - _authenticatedAt;
 
-    public AuthenticatedClient(string id, DateTime authenticatedAt)
-    {
-        ArgumentException.ThrowIfNullOrWhiteSpace(id);
-        
-        Id = id;
-        _authenticatedAt = authenticatedAt;
-    }
-
     public AuthenticatedClient(params string?[] components)
     {
         ArgumentNullException.ThrowIfNull(components);

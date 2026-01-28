@@ -54,6 +54,7 @@ public class RadiusUdpAdapter : IRadiusUdpAdapter
         } 
         
         var requestPacket = _radiusPacketService.ParsePacket(payload, new SharedSecret(clientConfiguration.RadiusSharedSecret));
+        Console.WriteLine(Encoding.UTF8.GetString(requestPacket.Authenticator.Value));
         requestPacket.ProxyEndpoint = proxyEndpoint;
         requestPacket.RemoteEndpoint = remoteEndpoint;
         

@@ -3,10 +3,10 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Multifactor.Radius.Adapter.v2.Application.Configuration.Models;
 using Multifactor.Radius.Adapter.v2.Application.Configuration.Models.Enum;
-using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline;
+using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Interfaces;
 using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Steps;
 
-namespace Multifactor.Radius.Adapter.v2.Infrastructure.Pipeline;
+namespace Multifactor.Radius.Adapter.v2.Application.Features.Pipeline;
 
 public class RadiusPipelineFactory : IRadiusPipelineFactory
 {

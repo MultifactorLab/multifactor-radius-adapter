@@ -7,6 +7,7 @@ namespace Multifactor.Radius.Adapter.v2.Application.Configuration.Models.Enum;
 /// <summary>
 /// User information disclosure mode
 /// </summary>
+[Flags]
 public enum PrivacyMode
 {
     /// <summary>

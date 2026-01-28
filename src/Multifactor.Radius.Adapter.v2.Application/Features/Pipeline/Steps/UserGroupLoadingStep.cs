@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Logging;
 using Multifactor.Radius.Adapter.v2.Application.Features.Ldap;
 using Multifactor.Radius.Adapter.v2.Application.Features.Ldap.Models;
+using Multifactor.Radius.Adapter.v2.Application.Features.Ldap.Ports;
 using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Models;
 using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Models.Enum;
 
@@ -61,11 +62,14 @@ public class UserGroupLoadingStep : IRadiusPipelineStep
             _logger.LogDebug("Loading nested groups from '{dn}' at '{domain}' for '{user}'", dn, context.LdapConfiguration.ConnectionString, context.RequestPacket.UserName);
 
             var request = new LoadUserGroupRequest
-            {
-                ConnectionString = context.LdapConfiguration.ConnectionString,
-                UserName = context.LdapConfiguration.Username,
-                Password = context.LdapConfiguration.Password,
-                BindTimeoutInSeconds = context.LdapConfiguration.BindTimeoutSeconds,
+            {           
+                ConnectionData = new LdapConnectionData
+                {
+                    ConnectionString = context.LdapConfiguration.ConnectionString,
+                    UserName = context.LdapConfiguration.Username,
+                    Password = context.LdapConfiguration.Password,
+                    BindTimeoutInSeconds = context.LdapConfiguration.BindTimeoutSeconds
+                },
                 LdapSchema = context.LdapSchema!,
                 UserDN = context.LdapProfile!.Dn,
                 SearchBase = dn
@@ -82,15 +86,18 @@ public class UserGroupLoadingStep : IRadiusPipelineStep
 
     private void LoadUserGroupsFromRoot(RadiusPipelineContext context, HashSet<string> userGroups)
     {
-            var request = new LoadUserGroupRequest
+        var request = new LoadUserGroupRequest
+        {
+            ConnectionData = new LdapConnectionData
             {
                 ConnectionString = context.LdapConfiguration.ConnectionString,
                 UserName = context.LdapConfiguration.Username,
                 Password = context.LdapConfiguration.Password,
-                BindTimeoutInSeconds = context.LdapConfiguration.BindTimeoutSeconds,
-                LdapSchema = context.LdapSchema!,
-                UserDN = context.LdapProfile!.Dn
-            };
+                BindTimeoutInSeconds = context.LdapConfiguration.BindTimeoutSeconds
+            },
+            LdapSchema = context.LdapSchema!,
+            UserDN = context.LdapProfile!.Dn
+        };
             
         _logger.LogDebug("Loading nested groups from root at '{domain}' for '{user}'", context.LdapConfiguration!.ConnectionString, context.RequestPacket.UserName);   
         var groups = _ldapAdapter.LoadUserGroups(request);

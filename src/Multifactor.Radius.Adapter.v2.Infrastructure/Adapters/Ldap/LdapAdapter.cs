@@ -11,6 +11,7 @@ using Multifactor.Core.Ldap.Name;
 using Multifactor.Core.Ldap.Schema;
 using Multifactor.Radius.Adapter.v2.Application.Features.Ldap;
 using Multifactor.Radius.Adapter.v2.Application.Features.Ldap.Models;
+using Multifactor.Radius.Adapter.v2.Application.Features.Ldap.Ports;
 using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Models;
 using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Models.Enum;
 
@@ -38,12 +39,7 @@ public sealed class LdapAdapter : ILdapAdapter
 
     public IReadOnlyList<string> LoadUserGroups(LoadUserGroupRequest request)
     {
-        var options = new LdapConnectionOptions(new LdapConnectionString(request.ConnectionString, true), 
-            AuthType.Basic, 
-            request.UserName, 
-            request.Password, 
-            TimeSpan.FromSeconds(request.BindTimeoutInSeconds));
-        using var connection = _connectionFactory.CreateConnection(options);
+        using var connection = CreateConnection(request.ConnectionData);
         var groupLoader = _ldapGroupLoaderFactory.GetGroupLoader(request.LdapSchema, connection, request.SearchBase ?? request.LdapSchema.NamingContext);
         var groupDns = groupLoader.GetGroups(request.UserDN, pageSize: 20);
         return groupDns.Take(request.Limit).Select(x => x.Components.Deepest.Value).ToList();
@@ -52,13 +48,7 @@ public sealed class LdapAdapter : ILdapAdapter
     #region FindUserProfile
     public ILdapProfile? FindUserProfile(FindUserRequest request)
     {
-        var options = new LdapConnectionOptions(new LdapConnectionString(request.ConnectionString), 
-            AuthType.Basic, 
-            request.UserName, 
-            request.Password, 
-            TimeSpan.FromSeconds(request.BindTimeoutInSeconds));
-        using var connection = _connectionFactory.CreateConnection(options);        
-        
+        using var connection = CreateConnection(request.ConnectionData);   
         var identityToSearch = request.UserIdentity;
         if (request.UserIdentity.Format == UserIdentityFormat.NetBiosName)
         {
@@ -92,7 +82,7 @@ public sealed class LdapAdapter : ILdapAdapter
     };
     #endregion
     
-    public ILdapSchema? LoadSchema(LoadSchemaRequest request)
+    public ILdapSchema? LoadSchema(LdapConnectionData request)
     {
         var options = new LdapConnectionOptions(new LdapConnectionString(request.ConnectionString), 
             AuthType.Basic, 
@@ -102,15 +92,10 @@ public sealed class LdapAdapter : ILdapAdapter
         return _schemaLoader.Load(options);
     }
 
-    public bool CheckConnecion(CheckConnectionRequest request)
+    public bool CheckConnection(LdapConnectionData request)
     {
-        var options = new LdapConnectionOptions(new LdapConnectionString(request.ConnectionString), 
-            AuthType.Basic, 
-            request.UserName, 
-            request.Password, 
-            TimeSpan.FromSeconds(request.BindTimeoutInSeconds));
-            using var connection = _connectionFactory.CreateConnection(options);
-            return true;
+        using var connection = CreateConnection(request);
+        return true; //true of exception
     }
 
     #region IsMemberOf
@@ -119,12 +104,7 @@ public sealed class LdapAdapter : ILdapAdapter
         ArgumentNullException.ThrowIfNull(request);
         if(request.TargetGroups == null || request.TargetGroups.Length == 0)
             throw new InvalidOperationException();
-        var options = new LdapConnectionOptions(new LdapConnectionString(request.ConnectionString), 
-            AuthType.Basic, 
-            request.UserName, 
-            request.Password, 
-            TimeSpan.FromSeconds(request.BindTimeoutInSeconds));
-        var connection = _connectionFactory.CreateConnection(options);
+        using var connection = CreateConnection(request.ConnectionData);
         
         return request.NestedGroupsBaseDns.Length > 0
             ? request.NestedGroupsBaseDns
@@ -145,14 +125,9 @@ public sealed class LdapAdapter : ILdapAdapter
     {
         ArgumentNullException.ThrowIfNull(request, nameof(request));
         
-        var options = new LdapConnectionOptions(new LdapConnectionString(request.ConnectionString), 
-            AuthType.Basic, 
-            request.UserName, 
-            request.Password, 
-            TimeSpan.FromSeconds(request.BindTimeoutInSeconds));
-        using var connection = _connectionFactory.CreateConnection(options);
-        var changePasswordrequest = BuildPasswordChangeRequest(request.LdapSchema, request.DistinguishedName, request.NewPassword);
-        var response = connection.SendRequest(changePasswordrequest);
+        using var connection = CreateConnection(request.ConnectionData);
+        var changePasswordRequest = BuildPasswordChangeRequest(request.LdapSchema, request.DistinguishedName, request.NewPassword);
+        var response = connection.SendRequest(changePasswordRequest);
         return response.ResultCode == ResultCode.Success;
     }
     
@@ -175,5 +150,15 @@ public sealed class LdapAdapter : ILdapAdapter
         return new ModifyRequest(userDn.StringRepresentation, newPasswordAttribute);
     }
     #endregion
+
+    private ILdapConnection CreateConnection(LdapConnectionData data)
+    {
+        var options = new LdapConnectionOptions(new LdapConnectionString(data.ConnectionString, true), 
+            AuthType.Basic, 
+            data.UserName, 
+            data.Password, 
+            TimeSpan.FromSeconds(data.BindTimeoutInSeconds));
+        return _connectionFactory.CreateConnection(options);
+    }
 
 }

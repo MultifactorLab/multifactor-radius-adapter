@@ -27,7 +27,7 @@ public class StatusServerFilteringStep : IRadiusPipelineStep
         }
         
         var uptime = _applicationVariables.UpTime;
-        context.ResponseInformation.ReplyMessage = $"Server up {uptime.Days} days {uptime:hh\\:mm\\:ss}, ver.: {_applicationVariables.AppVersion}";
+        context.ResponseInformation.ReplyMessage = $@"Server up {uptime.Days} days {uptime:hh\:mm\:ss}, ver.: {_applicationVariables.AppVersion}";
         context.FirstFactorStatus = AuthenticationStatus.Accept;
         context.SecondFactorStatus = AuthenticationStatus.Accept;
         context.Terminate();

@@ -4,6 +4,7 @@ using Multifactor.Core.Ldap.Name;
 using Multifactor.Radius.Adapter.v2.Application.Cache;
 using Multifactor.Radius.Adapter.v2.Application.Features.Ldap;
 using Multifactor.Radius.Adapter.v2.Application.Features.Ldap.Models;
+using Multifactor.Radius.Adapter.v2.Application.Features.Ldap.Ports;
 using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Models;
 
 namespace Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Steps;
@@ -73,10 +74,13 @@ public class ProfileLoadingStep : IRadiusPipelineStep
         _logger.LogInformation("Try to find '{userIdentity}' profile at '{domain}'.", userIdentity.Identity, domain.StringRepresentation);
         var request = new FindUserRequest
         {
-            ConnectionString = context.LdapConfiguration.ConnectionString,
-            UserName = context.LdapConfiguration.Username,
-            Password = context.LdapConfiguration.Password,
-            BindTimeoutInSeconds = context.LdapConfiguration.BindTimeoutSeconds,
+            ConnectionData = new LdapConnectionData
+            {
+                ConnectionString = context.LdapConfiguration.ConnectionString,
+                UserName = context.LdapConfiguration.Username,
+                Password = context.LdapConfiguration.Password,
+                BindTimeoutInSeconds = context.LdapConfiguration.BindTimeoutSeconds
+            },
             UserIdentity = userIdentity,
             SearchBase = domain,
             LdapSchema = context.LdapSchema,
@@ -87,7 +91,7 @@ public class ProfileLoadingStep : IRadiusPipelineStep
         if (profile is null)
             return profile;
 
-        var expirationDate = DateTimeOffset.Now.AddHours(0); //context.LdapConfiguration!.UserProfileCacheLifeTimeInHours = 0 ????
+        var expirationDate = DateTimeOffset.Now.AddHours(0); //TODO context.LdapConfiguration!.UserProfileCacheLifeTimeInHours = 0 ????
         SaveToCache(cacheKey, profile, expirationDate);
         
         _logger.LogDebug("'{userIdentity}' profile at '{domain}' is saved in cache till '{expirationDate}'.",  userIdentity.Identity, domain.StringRepresentation, expirationDate.ToString());

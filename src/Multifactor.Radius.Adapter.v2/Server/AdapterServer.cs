@@ -18,7 +18,7 @@ public class AdapterServer : IAsyncDisposable
     private readonly SemaphoreSlim _concurrencyLimiter;
     private readonly ConcurrentBag<Task> _activeProcessingTasks = [];
     
-    //Возможно сразу в конфигурацию вынести
+    //TODO Возможно сразу в конфигурацию вынести
     private const int ShoutDownTimeout = 30;
     private const int MaxConcurrentRequests = 1000;
     
@@ -180,9 +180,9 @@ public class AdapterServer : IAsyncDisposable
     {
         await StopAsync();
         
-        _concurrencyLimiter?.Dispose();
+        _concurrencyLimiter.Dispose();
         _cts?.Dispose();
-        _udpClient?.Dispose();
+        _udpClient.Dispose();
         
         GC.SuppressFinalize(this);
     }

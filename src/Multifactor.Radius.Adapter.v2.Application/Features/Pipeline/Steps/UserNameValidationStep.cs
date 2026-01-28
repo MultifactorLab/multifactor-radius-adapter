@@ -44,7 +44,7 @@ public class UserNameValidationStep : IRadiusPipelineStep
         if (identity.Format != UserIdentityFormat.UserPrincipalName)
             return Task.CompletedTask;
         
-        if (!IsPermittedSuffix(identity.GetUpnSuffix(), serverSettings.IncludedDomains, serverSettings.ExcludedDomains))
+        if (!IsPermittedSuffix(identity.GetUpnSuffix(), serverSettings.IncludedSuffixes, serverSettings.ExcludedSuffixes))
         {
             TerminateWithError(context, "UPN suffix is not permitted.");
             _logger.LogWarning("UPN suffix is not permitted. Provided name: {name}", userName);
@@ -53,15 +53,15 @@ public class UserNameValidationStep : IRadiusPipelineStep
         return Task.CompletedTask;
     }
     
-    private static bool IsPermittedSuffix(string domain, IReadOnlyList<string> includedDomains, IReadOnlyList<string> excludedDomains)
+    private static bool IsPermittedSuffix(string domain, IReadOnlyList<string> includedSuffixes, IReadOnlyList<string> excludedSuffixes)
     {
         if (string.IsNullOrWhiteSpace(domain)) throw new ArgumentNullException(nameof(domain));
 
-        if (includedDomains.Count > 0)
-            return includedDomains.Any(included => included.Equals(domain, StringComparison.CurrentCultureIgnoreCase));
+        if (includedSuffixes.Count > 0)
+            return includedSuffixes.Any(included => included.Equals(domain, StringComparison.CurrentCultureIgnoreCase));
 
-        if (excludedDomains.Count > 0)
-            return excludedDomains.All(excluded => !excluded.Equals(domain, StringComparison.CurrentCultureIgnoreCase));
+        if (excludedSuffixes.Count > 0)
+            return excludedSuffixes.All(excluded => !excluded.Equals(domain, StringComparison.CurrentCultureIgnoreCase));
         
         return true;
     }
@@ -70,7 +70,7 @@ public class UserNameValidationStep : IRadiusPipelineStep
     {
         context.FirstFactorStatus = AuthenticationStatus.Reject;
         context.SecondFactorStatus = AuthenticationStatus.Awaiting;
-        context.Terminate();
         context.ResponseInformation.ReplyMessage = replyMessage;
+        context.Terminate();
     }
 }
