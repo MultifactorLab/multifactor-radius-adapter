@@ -57,10 +57,10 @@ public class UserNameValidationStep : IRadiusPipelineStep
     {
         if (string.IsNullOrWhiteSpace(domain)) throw new ArgumentNullException(nameof(domain));
 
-        if (includedSuffixes.Count > 0)
+        if (includedSuffixes != null && includedSuffixes.Count > 0)
             return includedSuffixes.Any(included => included.Equals(domain, StringComparison.CurrentCultureIgnoreCase));
 
-        if (excludedSuffixes.Count > 0)
+        if (excludedSuffixes != null && excludedSuffixes.Count > 0)
             return excludedSuffixes.All(excluded => !excluded.Equals(domain, StringComparison.CurrentCultureIgnoreCase));
         
         return true;

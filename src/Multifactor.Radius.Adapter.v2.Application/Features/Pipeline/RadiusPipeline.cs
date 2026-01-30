@@ -15,7 +15,7 @@ public class RadiusPipeline : IRadiusPipeline
     
     public async Task ExecuteAsync(RadiusPipelineContext context)
     {
-
+        ArgumentNullException.ThrowIfNull(context);
         foreach (var step in _steps)
         {
             await step.ExecuteAsync(context);
