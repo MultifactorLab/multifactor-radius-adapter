@@ -1,5 +1,4 @@
 using System.Security.Cryptography;
-using Multifactor.Core.Ldap.LangFeatures;
 using Multifactor.Radius.Adapter.v2.Application.Features.Radius.Models.Enums;
 
 namespace Multifactor.Radius.Adapter.v2.Application.Features.Radius.Models
@@ -18,6 +17,7 @@ namespace Multifactor.Radius.Adapter.v2.Application.Features.Radius.Models
         public byte Identifier { get; }
         public RadiusAuthenticator Authenticator { get; }
         
+        public RadiusPacketHeader(){}
         public RadiusPacketHeader(PacketCode code, byte identifier, byte[] authenticator)
         {
             ArgumentNullException.ThrowIfNull(authenticator, nameof(authenticator));

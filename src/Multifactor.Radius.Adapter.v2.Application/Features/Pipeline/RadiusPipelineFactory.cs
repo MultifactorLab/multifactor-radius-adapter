@@ -21,15 +21,16 @@ public class RadiusPipelineFactory : IRadiusPipelineFactory
         _logger = logger;
     }
     
-    public IRadiusPipeline CreatePipeline(ClientConfiguration clientConfig)
+    public IRadiusPipeline CreatePipeline(IClientConfiguration clientConfig)
     {
         var steps = CreatePipelineSteps(clientConfig);
         LogProviderCreated(clientConfig.Name, steps);
         return new RadiusPipeline(steps);
     }
     
-    private List<IRadiusPipelineStep> CreatePipelineSteps(ClientConfiguration clientConfig)
+    private List<IRadiusPipelineStep> CreatePipelineSteps(IClientConfiguration clientConfig)
     {
+        var withLdap = clientConfig.LdapServers?.Count > 0;
         var steps = new List<IRadiusPipelineStep>
         {
             CreateStep<StatusServerFilteringStep>(),
@@ -37,7 +38,7 @@ public class RadiusPipelineFactory : IRadiusPipelineFactory
             CreateStep<AccessRequestFilteringStep>()
         };
 
-        if (clientConfig.LdapServers?.Count > 0)
+        if (withLdap)
         {
             steps.Add(CreateStep<UserNameValidationStep>());
             steps.Add(CreateStep<LdapSchemaLoadingStep>());
@@ -60,7 +61,7 @@ public class RadiusPipelineFactory : IRadiusPipelineFactory
             steps.Add(CreateStep<SecondFactorStep>());
         }
         
-        if (ShouldLoadUserGroups(clientConfig))
+        if (withLdap && ShouldLoadUserGroups(clientConfig))
         {
             steps.Add(CreateStep<UserGroupLoadingStep>());
         }
@@ -86,7 +87,8 @@ public class RadiusPipelineFactory : IRadiusPipelineFactory
         _logger.LogDebug(builder.ToString());
     }
     
-    private static bool ShouldLoadUserGroups(ClientConfiguration config) => config
+    private static bool ShouldLoadUserGroups(IClientConfiguration config) => config
+        .ReplyAttributes != null && config
         .ReplyAttributes
         .Values
         .SelectMany(x => x)

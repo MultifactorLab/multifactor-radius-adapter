@@ -8,9 +8,9 @@ using MultiFactor.Radius.Adapter.Core.Framework.Pipeline;
 using MultiFactor.Radius.Adapter.Extensions;
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration;
 using MultiFactor.Radius.Adapter.Infrastructure.Configuration.ConfigurationLoading;
-using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Core;
 using MultiFactor.Radius.Adapter.Tests.Fixtures.ConfigLoading;
 using System.Net;
+using MultiFactor.Radius.Adapter.Server;
 
 namespace MultiFactor.Radius.Adapter.Tests.Fixtures;
 

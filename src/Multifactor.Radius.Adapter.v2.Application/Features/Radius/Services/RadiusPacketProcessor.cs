@@ -1,6 +1,5 @@
 using Microsoft.Extensions.Logging;
 using Multifactor.Radius.Adapter.v2.Application.Configuration.Models;
-using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline;
 using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Interfaces;
 using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Models;
 using Multifactor.Radius.Adapter.v2.Application.Features.Radius.Exceptions;
@@ -26,13 +25,11 @@ public class RadiusPacketProcessor : IRadiusPacketProcessor
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
     
-    public async Task ProcessPacketAsync(RadiusPacket requestPacket, ClientConfiguration clientConfiguration)
+    public async Task ProcessPacketAsync(RadiusPacket requestPacket, IClientConfiguration clientConfiguration)
     {
-        if (requestPacket == null)
-            throw new ArgumentNullException(nameof(requestPacket));
-        if (clientConfiguration == null)
-            throw new ArgumentNullException(nameof(clientConfiguration));
-        
+        ArgumentNullException.ThrowIfNull(requestPacket);
+        ArgumentNullException.ThrowIfNull(clientConfiguration);
+
         _logger.LogDebug("Start processing '{PacketType}' packet for client '{ClientName}'.", 
             requestPacket.Code, clientConfiguration.Name);
         
@@ -45,10 +42,10 @@ public class RadiusPacketProcessor : IRadiusPacketProcessor
         await TryProcessWithLdapServers(clientConfiguration, requestPacket);
     }
 
-    private async Task TryProcessWithLdapServers(ClientConfiguration clientConfiguration, RadiusPacket requestPacket)
+    private async Task TryProcessWithLdapServers(IClientConfiguration clientConfiguration, RadiusPacket requestPacket)
     {
-        bool processedSuccessfully = false;
-        Exception lastException = null;
+        var processedSuccessfully = false;
+        Exception? lastException = null;
         
         foreach (var serverConfig in clientConfiguration.LdapServers)
         {
@@ -81,9 +78,9 @@ public class RadiusPacketProcessor : IRadiusPacketProcessor
     }
 
     private async Task<bool> ExecutePipeline(
-        ClientConfiguration clientConfiguration, 
+        IClientConfiguration clientConfiguration, 
         RadiusPacket requestPacket, 
-        LdapServerConfiguration? ldapServerConfiguration = null)
+        ILdapServerConfiguration? ldapServerConfiguration = null)
     {
         if (ldapServerConfiguration != null)
         {
@@ -114,7 +111,6 @@ public class RadiusPacketProcessor : IRadiusPacketProcessor
         }
         catch (PipelineNotFoundException ex)
         {
-            // Не логируем как Warning, т.к. это фатальная ошибка конфигурации
             _logger.LogError(ex, "Pipeline configuration error for client {ClientName}", clientConfiguration.Name);
             throw;
         }
@@ -129,13 +125,13 @@ public class RadiusPacketProcessor : IRadiusPacketProcessor
     }
 
     private static RadiusPipelineContext CreatePipelineContext(
-        ClientConfiguration clientConfiguration, 
+        IClientConfiguration clientConfiguration, 
         RadiusPacket requestPacket, 
-        LdapServerConfiguration? ldapServerConfiguration = null)
+        ILdapServerConfiguration? ldapServerConfiguration = null)
     {
         
         var password = requestPacket.TryGetUserPassword();
-        var passphrase = UserPassphrase.Parse(password, clientConfiguration.PreAuthenticationMethod.Value);
+        var passphrase = UserPassphrase.Parse(password, clientConfiguration.PreAuthenticationMethod);
         
         var context = new RadiusPipelineContext(requestPacket, clientConfiguration, ldapServerConfiguration)
         {
@@ -145,7 +141,7 @@ public class RadiusPacketProcessor : IRadiusPacketProcessor
         return context;
     }
 
-    private IRadiusPipeline GetPipeline(ClientConfiguration clientConfiguration)
+    private IRadiusPipeline GetPipeline(IClientConfiguration clientConfiguration)
     {
         var pipeline = _pipelineProvider.GetPipeline(clientConfiguration);
         if (pipeline is null)
@@ -158,7 +154,7 @@ public class RadiusPacketProcessor : IRadiusPacketProcessor
         return pipeline;
     }
     
-    private static bool ShouldProcessWithoutLdap(RadiusPacket requestPacket, ClientConfiguration clientConfiguration)
+    private static bool ShouldProcessWithoutLdap(RadiusPacket requestPacket, IClientConfiguration clientConfiguration)
     {
         if (clientConfiguration.LdapServers.Count <= 0)
             return true;

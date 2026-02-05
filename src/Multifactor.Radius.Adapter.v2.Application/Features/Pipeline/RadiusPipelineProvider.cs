@@ -19,7 +19,7 @@ public class RadiusPipelineProvider : IPipelineProvider
         _logger = logger;
     }
     
-    public IRadiusPipeline GetPipeline(ClientConfiguration clientConfiguration)
+    public IRadiusPipeline GetPipeline(IClientConfiguration clientConfiguration)
     {
         var clientName = clientConfiguration.Name;
         return _pipelineCache.GetOrAdd(clientName, name =>

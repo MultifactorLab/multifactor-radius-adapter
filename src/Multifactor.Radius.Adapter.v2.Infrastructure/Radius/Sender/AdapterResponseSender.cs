@@ -63,7 +63,6 @@ public class AdapterResponseSender : IResponseSender
         
         var responsePacket = BuildResponsePacket(request);
         
-        Console.WriteLine(responsePacket.Authenticator.Value.ToString());
         await SendResponsePacketAsync(responsePacket, request);
         
         LogResponseSent(responsePacket, request);
@@ -76,7 +75,6 @@ public class AdapterResponseSender : IResponseSender
             request.RequestPacket, 
             responsePacketCode);
         
-        // Обработка в зависимости от типа ответа
         switch (responsePacketCode)
         {
             case PacketCode.AccessAccept:
@@ -96,7 +94,6 @@ public class AdapterResponseSender : IResponseSender
                     $"Response packet code {responsePacketCode} is not supported");
         }
         
-        // Добавляем общие атрибуты
         AddCommonAttributes(responsePacket, request);
         
         return responsePacket;

@@ -2,8 +2,8 @@ using System.Net;
 using System.Text;
 using Microsoft.Extensions.Logging;
 using Multifactor.Radius.Adapter.v2.Application.Features.Radius.Models;
-using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Dictionary;
-using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Dictionary.Attributes;
+using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Models.Dictionary;
+using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Models.Dictionary.Attributes;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Radius.Crypto;
 
 namespace Multifactor.Radius.Adapter.v2.Infrastructure.Radius.Parsers;
@@ -11,7 +11,6 @@ namespace Multifactor.Radius.Adapter.v2.Infrastructure.Radius.Parsers;
 public class RadiusAttributeParser : IRadiusAttributeParser
 {
     private readonly IRadiusDictionary _radiusDictionary;
-    private readonly IRadiusCryptoProvider _cryptoProvider;
     private readonly ILogger<RadiusAttributeParser> _logger;
     const int VendorSpecific = 26;
     const int MessageAuthenticator = 80;
@@ -19,11 +18,9 @@ public class RadiusAttributeParser : IRadiusAttributeParser
 
     public RadiusAttributeParser(
         IRadiusDictionary radiusDictionary,
-        IRadiusCryptoProvider cryptoProvider,
         ILogger<RadiusAttributeParser> logger)
     {
         _radiusDictionary = radiusDictionary ?? throw new ArgumentNullException(nameof(radiusDictionary));
-        _cryptoProvider = cryptoProvider ?? throw new ArgumentNullException(nameof(cryptoProvider));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 

@@ -18,7 +18,7 @@ public sealed class CustomUdpClient : IUdpClient
         Throw.IfNull(endPoint, nameof(endPoint));
         
         _logger = logger;
-        _udpClient = new UdpClient();
+        _udpClient = new UdpClient(endPoint);
         
         _logger.LogInformation("UDP client initialized on {Endpoint}", endPoint);
     }

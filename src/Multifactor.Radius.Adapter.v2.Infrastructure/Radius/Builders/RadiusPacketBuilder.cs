@@ -3,8 +3,8 @@ using System.Text;
 using Microsoft.Extensions.Logging;
 using Multifactor.Radius.Adapter.v2.Application.Features.Radius.Models;
 using Multifactor.Radius.Adapter.v2.Application.Features.Radius.Models.Enums;
-using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Dictionary;
-using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Dictionary.Attributes;
+using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Models.Dictionary;
+using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Models.Dictionary.Attributes;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Radius.Crypto;
 
 namespace Multifactor.Radius.Adapter.v2.Infrastructure.Radius.Builders;
@@ -13,8 +13,8 @@ public class RadiusPacketBuilder : IRadiusPacketBuilder
 {
     private readonly IRadiusDictionary _radiusDictionary;
     private readonly IRadiusCryptoProvider _cryptoProvider;
-    private readonly ILogger<RadiusPacketBuilder> _logger;
-    private readonly IRadiusAttributeSerializer _attributeSerializer;
+    // private readonly ILogger<RadiusPacketBuilder> _logger;
+    // private readonly IRadiusAttributeSerializer _attributeSerializer;
     
     
     /// <summary>
@@ -40,14 +40,15 @@ public class RadiusPacketBuilder : IRadiusPacketBuilder
     {
         _radiusDictionary = radiusDictionary ?? throw new ArgumentNullException(nameof(radiusDictionary));
         _cryptoProvider = cryptoProvider ?? throw new ArgumentNullException(nameof(cryptoProvider));
-        _attributeSerializer = attributeSerializer ?? throw new ArgumentNullException(nameof(attributeSerializer));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        // _attributeSerializer = attributeSerializer ?? throw new ArgumentNullException(nameof(attributeSerializer));
+        // _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     public byte[] Build(RadiusPacket packet, SharedSecret sharedSecret)
     {
         ArgumentNullException.ThrowIfNull(packet);
         ArgumentNullException.ThrowIfNull(sharedSecret);
+
 
         var packetBytes = new List<byte>
         {
@@ -60,13 +61,13 @@ public class RadiusPacketBuilder : IRadiusPacketBuilder
         
         // Serialize attributes
         FillAttributes(packetBytes, packet.Authenticator, sharedSecret, packet.Attributes.Values, out int messageAuthenticatorPosition);
-
+        
         // Set packet length
         ushort packetLength = (ushort)packetBytes.Count;
         var lengthBytes = BitConverter.GetBytes(packetLength);
         packetBytes[2] = lengthBytes[1];
         packetBytes[3] = lengthBytes[0];
-
+        
         var packetBytesArray = packetBytes.ToArray();
         
         // Calculate authenticator based on packet type
@@ -81,6 +82,7 @@ public class RadiusPacketBuilder : IRadiusPacketBuilder
                     FillMessageAuthenticator(packetBytesArray, messageAuthenticatorPosition, sharedSecret);
                 }
                 authenticator = _cryptoProvider.CalculateRequestAuthenticator(sharedSecret, packetBytesArray);
+                Buffer.BlockCopy(authenticator, 0, packetBytesArray, 4, 16);
                 break;
                 
             case PacketCode.StatusServer:
@@ -98,7 +100,9 @@ public class RadiusPacketBuilder : IRadiusPacketBuilder
                         messageAuthenticatorPosition, 
                         sharedSecret, 
                         packet.RequestAuthenticator);
-                }
+                }                   
+                Buffer.BlockCopy(authenticator, 0, packetBytesArray, 4, 16);
+
                 break;
                 
             default:
@@ -115,7 +119,7 @@ public class RadiusPacketBuilder : IRadiusPacketBuilder
                         sharedSecret,
                         packet.RequestAuthenticator);
                 }
-
+        
                 if (packet.RequestAuthenticator != null)
                 {
                     authenticator = _cryptoProvider.CalculateResponseAuthenticator(
@@ -126,7 +130,7 @@ public class RadiusPacketBuilder : IRadiusPacketBuilder
                 }
                 break;
         }
-
+        
         
         return packetBytesArray;
     }
@@ -152,24 +156,24 @@ public class RadiusPacketBuilder : IRadiusPacketBuilder
             {
                 var contentBytes = GetAttributeValueBytes(value);
                 var headerBytes = new byte[2];
-
+    
                 var attributeType = _radiusDictionary.GetAttribute(attribute.Name);
                 switch (attributeType)
                 {
                     case DictionaryVendorAttribute vendorAttribute:
                         headerBytes = new byte[8];
                         headerBytes[0] = VendorSpecific; // VSA type
-
+    
                         var vendorId = BitConverter.GetBytes(vendorAttribute.VendorId);
                         Array.Reverse(vendorId);
                         Buffer.BlockCopy(vendorId, 0, headerBytes, 2, 4);
                         headerBytes[6] = (byte)vendorAttribute.VendorCode;
                         headerBytes[7] = (byte)(2 + contentBytes.Length); // length of the vsa part
                         break;
-
+    
                     case DictionaryAttribute dictionaryAttribute:
                         headerBytes[0] = attributeType.Code;
-
+    
                         // Encrypt password if this is a User-Password attribute
                         if (dictionaryAttribute.Code == UserPassword)
                         {
@@ -179,20 +183,20 @@ public class RadiusPacketBuilder : IRadiusPacketBuilder
                         {
                             messageAuthenticatorPosition = packetBytes.Count;
                         }
-
+    
                         break;
                     default:
                         throw new InvalidOperationException(
                             "Unknown attribute {attribute.Key}, check spelling or dictionary");
                 }
-
+    
                 headerBytes[1] = (byte)(headerBytes.Length + contentBytes.Length);
                 packetBytes.AddRange(headerBytes);
                 packetBytes.AddRange(contentBytes);
             }
         }
     }
-
+    
     /// <summary>
     /// Gets the byte representation of an attribute object
     /// </summary>
@@ -220,15 +224,14 @@ public class RadiusPacketBuilder : IRadiusPacketBuilder
                 throw new NotImplementedException();
         }
     }
-
-
+    
     private void FillMessageAuthenticator(
         byte[] packetBytes,
         int position,
         SharedSecret sharedSecret,
         RadiusAuthenticator? requestAuthenticator = null)
     {
-
+    
         var temp = new byte[16];
         Buffer.BlockCopy(temp, 0, packetBytes, position + 2, 16);
         var messageAuthenticator = _cryptoProvider.CalculateMessageAuthenticator(

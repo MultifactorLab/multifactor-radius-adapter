@@ -1,7 +1,7 @@
 using System.Globalization;
 using System.Net;
 using Multifactor.Radius.Adapter.v2.Application.Features.Radius.Services;
-using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Dictionary;
+using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Models.Dictionary;
 
 namespace Multifactor.Radius.Adapter.v2.Infrastructure.Radius.Services;
 

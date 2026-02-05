@@ -5,5 +5,5 @@ namespace Multifactor.Radius.Adapter.v2.Application.Features.Radius.Services;
 
 public interface IRadiusPacketProcessor
 {
-    Task ProcessPacketAsync(RadiusPacket requestPacket, ClientConfiguration clientConfiguration);
+    Task ProcessPacketAsync(RadiusPacket requestPacket, IClientConfiguration clientConfiguration);
 }

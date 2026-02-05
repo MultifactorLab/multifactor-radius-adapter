@@ -49,7 +49,7 @@ namespace Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Models
             ProviderCode = providerCode;
         }
 
-        public static UserPassphrase Parse(string rawPwd, PreAuthMode preAuthnMode)
+        public static UserPassphrase Parse(string rawPwd, PreAuthMode? preAuthnMode)
         {
             var hasOtp = TryGetOtpCode(rawPwd, out var otp);
             if (!hasOtp)
@@ -67,7 +67,7 @@ namespace Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Models
             return new UserPassphrase(rawPwd, pwd, otp, provCode);
         }
 
-        private static string GetPassword(string rawPwd, PreAuthMode preAuthnMode, bool hasOtp)
+        private static string GetPassword(string rawPwd, PreAuthMode? preAuthnMode, bool hasOtp)
         {
             var passwordAndOtp = rawPwd?.Trim() ?? string.Empty;
             switch (preAuthnMode)

@@ -1,77 +1,196 @@
+using System.Net;
 using System.Reflection;
-using Microsoft.Extensions.Logging;
+using System.Text.RegularExpressions;
 using Multifactor.Radius.Adapter.v2.Application.Configuration.Models;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Exceptions;
-using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Parser;
+using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Loader;
+using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Models;
+using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Models.Dictionary;
+using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Models.Dictionary.Attributes;
+using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Reader;
+using Multifactor.Radius.Adapter.v2.Shared.Extensions;
 
-namespace Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Loader;
+namespace Multifactor.Radius.Adapter.v2.Infrastructure.Configurations;
 
 public class ConfigurationLoader : IConfigurationLoader
 {
-    private readonly IConfigurationParser _parser;
+    private readonly IRadiusDictionary _dictionary;
     
-    public ConfigurationLoader(
-        IConfigurationParser parser)
+    public ConfigurationLoader(IRadiusDictionary dictionary)
     {
-        _parser = parser;
+        _dictionary = dictionary;
     }
     
     public ServiceConfiguration Load()
     {
-        return Task.Run(() => LoadAsync(CancellationToken.None)).GetAwaiter().GetResult();
-    }
-    
-    public async Task<ServiceConfiguration> LoadAsync(CancellationToken cancellationToken)
-    {
-        var rootConfig = await LoadRootConfigurationAsync(cancellationToken);
-        var clients = await LoadClientConfigurationsAsync(cancellationToken);
-        var serviceConfig = new ServiceConfiguration
+        var rootConfigPath = GetRootConfigPath();
+        var rootConfig = LoadRootConfiguration(rootConfigPath);
+        var clients = LoadClientConfigurations(rootConfigPath);
+        
+        return new ServiceConfiguration
         {
             RootConfiguration = rootConfig,
-            ClientsConfigurations = clients
+            ClientsConfigurations = clients,
+            SingleClientMode = clients.Count == 1
         };
-        return serviceConfig;
     }
     
-    private async Task<RootConfiguration> LoadRootConfigurationAsync(CancellationToken ct)
+    private static string GetRootConfigPath()
     {
         var assemblyLocation = Assembly.GetEntryAssembly()?.Location;
-        var configPath = $"{assemblyLocation}.config";
-        
+        return $"{assemblyLocation}.config";
+    }
+    
+    private RootConfiguration LoadRootConfiguration(string configPath)
+    {
         if (!File.Exists(configPath))
             throw new InvalidConfigurationException($"Root configuration not found: {configPath}");
         
-        return await _parser.ParseRootConfigAsync(configPath, ct);
+        var config = ReadConfiguration(configPath);
+        return RootConfiguration.FromConfiguration(config);
     }
     
-    private async Task<List<ClientConfiguration>> LoadClientConfigurationsAsync(
-        CancellationToken ct)
+    private List<ClientConfiguration> LoadClientConfigurations(string rootConfigPath)
     {
         var clientsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "clients");
-        var clients = new List<ClientConfiguration>();
         
         if (!Directory.Exists(clientsPath))
         {
-            return clients;
+            var clientConfig = ParseClientConfiguration(rootConfigPath);
+            return [clientConfig];
         }
         
-        var configFiles = Directory.GetFiles(clientsPath, "*.config");
-        if (configFiles.Length == 0)
-        {
-            var assemblyLocation = Assembly.GetEntryAssembly()?.Location;
-            var configPath = $"{assemblyLocation}.config";
+        var clientConfigFiles = Directory.GetFiles(clientsPath, "*.config");
         
-            if (!File.Exists(configPath))
-                throw new InvalidConfigurationException($"Root configuration not found: {configPath}");
+        if (clientConfigFiles.Length == 0)
+        {
+            var clientConfig = ParseClientConfiguration(rootConfigPath);
+            return [clientConfig];
+        }
+        
+        return clientConfigFiles
+            .Select(ParseClientConfiguration)
+            .ToList();
+    }
+    
+    private ClientConfiguration ParseClientConfiguration(string filePath)
+    {
+        var prefix = GetConfigPrefix(filePath);
+        var config = ReadConfiguration(filePath, prefix);
+        
+        var clientConfig = ClientConfiguration.FromConfiguration(config);
+        clientConfig.ReplyAttributes = ParseReplyAttributes(config.RadiusReply);
+        clientConfig.LdapServers = config.LdapServers.Select(LdapServerConfiguration.FromConfiguration).ToList();
+
+        
+        return clientConfig;
+    }
+    
+    private static ConfigurationFile ReadConfiguration(string filePath, string prefix = null)
+    {
+        if (!File.Exists(filePath))
+            throw new InvalidConfigurationException($"Configuration file not found: {filePath}");
             
-            return [await _parser.ParseClientConfigAsync(configPath, ct)];
-        }
-        foreach (var file in configFiles)
+        return ConfigurationReader.Read(filePath, prefix);
+    }
+    
+    private IReadOnlyDictionary<string, IRadiusReplyAttribute[]> ParseReplyAttributes(
+        RadiusReplySection radiusReplySection)
+    {
+        if (radiusReplySection?.Attributes?.Any() != true)
+            return new Dictionary<string, IRadiusReplyAttribute[]>();
+        
+        var result = new Dictionary<string, IRadiusReplyAttribute[]>();
+        
+        var groupedAttributes = radiusReplySection.Attributes
+            .Where(a => !string.IsNullOrWhiteSpace(a.Name))
+            .GroupBy(a => a.Name!);
+        
+        foreach (var group in groupedAttributes)
         {
-            var clientDto = await _parser.ParseClientConfigAsync(file, ct);
-            clients.Add(clientDto);
+            var attributes = group
+                .Select(CreateReplyAttribute)
+                .ToArray();
+            
+            result[group.Key] = attributes;
         }
         
-        return clients;
+        return result;
+    }
+    
+    private IRadiusReplyAttribute CreateReplyAttribute(RadiusAttributeItem item)
+    {
+        var attribute = new RadiusReplyAttribute();
+        
+        if (bool.TryParse(item.Sufficient, out var sufficient))
+        {
+            attribute.Sufficient = sufficient;
+        }
+        
+        if (!string.IsNullOrWhiteSpace(item.From))
+        {
+            attribute.Name = item.From;
+        }
+        else if (!string.IsNullOrWhiteSpace(item.Value))
+        {
+            attribute.Value = ParseRadiusReplyValue(item.Name!, item.Value);
+            
+            if (!string.IsNullOrWhiteSpace(item.When))
+            {
+                ParseWhenCondition(item.When, attribute);
+            }
+        }
+        
+        return attribute;
+    }
+    
+    private object ParseRadiusReplyValue(string attributeName, string value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            throw new InvalidConfigurationException("Radius reply value must be specified");
+        
+        var attribute = _dictionary.GetAttribute(attributeName);
+        
+        return attribute.Type switch
+        {
+            DictionaryAttribute.TypeString or DictionaryAttribute.TypeTaggedString => value,
+            DictionaryAttribute.TypeInteger or DictionaryAttribute.TypeTaggedInteger => uint.Parse(value),
+            DictionaryAttribute.TypeIpAddr => IPAddress.Parse(value),
+            DictionaryAttribute.TypeOctet => value.ToByteArray(),
+            _ => throw new InvalidConfigurationException($"Unknown attribute type: {attribute.Type}")
+        };
+    }
+    
+    private static void ParseWhenCondition(string whenCondition, RadiusReplyAttribute attribute)
+    {
+        var parts = whenCondition.Split('=', 2, StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length != 2) return;
+        
+        var conditionType = parts[0].Trim();
+        var values = parts[1]
+            .Split(';', StringSplitOptions.RemoveEmptyEntries)
+            .Select(v => v.Trim())
+            .ToList();
+        
+        switch (conditionType)
+        {
+            case "UserGroup":
+                attribute.UserGroupCondition = values;
+                break;
+            case "UserName":
+                attribute.UserNameCondition = values;
+                break;
+            default:
+                throw new InvalidConfigurationException($"Unknown condition type: {conditionType}");
+        }
+    }
+    
+    private static string GetConfigPrefix(string filePath)
+    {
+        if (string.IsNullOrWhiteSpace(filePath))
+            return string.Empty;
+        
+        var fileName = Path.GetFileNameWithoutExtension(filePath);
+        return Regex.Replace(fileName, @"\s+", string.Empty);
     }
 }

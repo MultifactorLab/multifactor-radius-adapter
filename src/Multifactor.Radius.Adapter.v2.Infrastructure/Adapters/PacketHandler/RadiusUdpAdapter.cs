@@ -54,7 +54,6 @@ public class RadiusUdpAdapter : IRadiusUdpAdapter
         } 
         
         var requestPacket = _radiusPacketService.ParsePacket(payload, new SharedSecret(clientConfiguration.RadiusSharedSecret));
-        Console.WriteLine(Encoding.UTF8.GetString(requestPacket.Authenticator.Value));
         requestPacket.ProxyEndpoint = proxyEndpoint;
         requestPacket.RemoteEndpoint = remoteEndpoint;
         
@@ -97,9 +96,9 @@ public class RadiusUdpAdapter : IRadiusUdpAdapter
         return true;
     }
 
-    private ClientConfiguration? GetClientConfig(UdpReceiveResult udpPacket)
+    private IClientConfiguration? GetClientConfig(UdpReceiveResult udpPacket)
     {
-        ClientConfiguration? clientConfiguration = null;
+        IClientConfiguration? clientConfiguration = null;
         if (_radiusPacketService.TryGetNasIdentifier(udpPacket.Buffer, out var nasIdentifier))
             clientConfiguration = _serviceConfiguration.GetClientConfiguration(nasIdentifier);
         clientConfiguration ??= _serviceConfiguration.GetClientConfiguration(udpPacket.RemoteEndPoint.Address);

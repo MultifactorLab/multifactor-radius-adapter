@@ -1,6 +1,5 @@
 using Microsoft.Extensions.Logging;
 using Multifactor.Radius.Adapter.v2.Application.Cache;
-using Multifactor.Radius.Adapter.v2.Application.Features.Ldap;
 using Multifactor.Radius.Adapter.v2.Application.Features.Ldap.Models;
 using Multifactor.Radius.Adapter.v2.Application.Features.Ldap.Ports;
 using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.AccessChallenge.Models;
@@ -32,7 +31,7 @@ public class ChangePasswordChallengeProcessor : IChallengeProcessor
     public ChallengeIdentifier AddChallengeContext(RadiusPipelineContext context)
     {
         ArgumentNullException.ThrowIfNull(context);
-        if (string.IsNullOrWhiteSpace(context.Passphrase.Password))
+        if (string.IsNullOrWhiteSpace(context.Passphrase?.Password))
             throw new InvalidOperationException("User password is required.");
         
         if (string.IsNullOrWhiteSpace(context.MustChangePasswordDomain))

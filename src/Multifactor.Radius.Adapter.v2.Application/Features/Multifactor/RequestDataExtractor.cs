@@ -1,5 +1,4 @@
 using System.Net;
-using Multifactor.Core.Ldap.Attributes;
 using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.AccessChallenge.Models;
 using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Models;
 

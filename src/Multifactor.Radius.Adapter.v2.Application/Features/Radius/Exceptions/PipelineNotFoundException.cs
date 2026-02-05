@@ -9,10 +9,4 @@ public class PipelineNotFoundException : Exception
     {
         ClientName = clientName;
     }
-    
-    public PipelineNotFoundException(string message, string clientName, Exception innerException) 
-        : base(message, innerException)
-    {
-        ClientName = clientName;
-    }
 }

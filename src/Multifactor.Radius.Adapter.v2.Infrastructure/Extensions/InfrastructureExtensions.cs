@@ -7,10 +7,8 @@ using Multifactor.Core.Ldap.LdapGroup.Membership;
 using Multifactor.Core.Ldap.Schema;
 using Multifactor.Radius.Adapter.v2.Application.Cache;
 using Multifactor.Radius.Adapter.v2.Application.Configuration.Models;
-using Multifactor.Radius.Adapter.v2.Application.Features.Ldap;
 using Multifactor.Radius.Adapter.v2.Application.Features.Ldap.Ports;
 using Multifactor.Radius.Adapter.v2.Application.Features.Multifactor.Ports;
-using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline;
 using Multifactor.Radius.Adapter.v2.Application.Features.Radius.Ports;
 using Multifactor.Radius.Adapter.v2.Application.Features.Radius.Services;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Adapters.Ldap;
@@ -20,8 +18,9 @@ using Multifactor.Radius.Adapter.v2.Infrastructure.Adapters.PacketHandler;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Adapters.Udp;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Cache;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Cache.AuthenticatedClientCache;
-using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Dictionary;
+using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Loader;
+using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Models.Dictionary;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Parser;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Logging;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Radius.Builders;
@@ -48,7 +47,6 @@ public static class InfrastructureExtensions
             dict.Read();
             return dict;
         });
-        services.AddSingleton<IConfigurationParser, XmlConfigurationParser>();
         services.AddSingleton<IConfigurationLoader, ConfigurationLoader>();
 
         services.AddSingleton<ServiceConfiguration>(provider =>
@@ -85,7 +83,7 @@ public static class InfrastructureExtensions
             .ConfigureHttpClient((serviceProvider, client) =>
             {
                 var config = serviceProvider.GetRequiredService<ServiceConfiguration>();
-                if (config.RootConfiguration.MultifactorApiUrls?.Any() == true)
+                if (config.RootConfiguration.MultifactorApiUrls.Any())
                 {
                     var primaryUrl = config.RootConfiguration.MultifactorApiUrls[0];
                     client.BaseAddress = primaryUrl;
@@ -99,13 +97,11 @@ public static class InfrastructureExtensions
                 .FallbackAsync(
                     fallbackAction: async (outcome, context, cancellationToken) =>
                     {
-                        StartupLogger.Error("start");
                         var urlSelector = serviceProvider.GetRequiredService<IEndpointSelector>();
                         var fallbackUrl = await urlSelector.GetNextEndpointAsync();
                     
                         var fallbackRequest = request.CloneHttpRequestMessage();
                         fallbackRequest.RequestUri = new Uri(fallbackUrl, request.RequestUri!.PathAndQuery);
-                        StartupLogger.Error(fallbackRequest.RequestUri.ToString());
                     
                         var httpClientFactory = serviceProvider.GetRequiredService<IHttpClientFactory>();
                         var httpClient = httpClientFactory.CreateClient("multifactor-api");
@@ -114,9 +110,9 @@ public static class InfrastructureExtensions
                     },
                     onFallbackAsync: (outcome, context) =>
                     {
-                        var logger = serviceProvider.GetRequiredService<ILogger>();
-                        logger.LogWarning("Primary endpoint failed. Trying fallback. Error: {Error}", 
-                            outcome.Exception?.Message ?? outcome.Result?.StatusCode.ToString());
+                        // var logger = serviceProvider.GetRequiredService<ILogger>();
+                        // logger.LogWarning("Primary endpoint failed. Trying fallback. Error: {Error}", 
+                        //     outcome.Exception?.Message ?? outcome.Result?.StatusCode.ToString());
                         return Task.CompletedTask;
                     })
                 .WrapAsync(Policy.TimeoutAsync<HttpResponseMessage>(TimeSpan.FromSeconds(10)))
@@ -131,7 +127,7 @@ public static class InfrastructureExtensions
                 SslProtocols = SslProtocols.Tls13 | SslProtocols.Tls12
             };
             
-            if (config.RootConfiguration.MultifactorApiProxy == null)
+            if (string.IsNullOrWhiteSpace(config.RootConfiguration.MultifactorApiProxy))
                 return handler;
             
             if (!WebProxyFactory.TryCreateWebProxy(config.RootConfiguration.MultifactorApiProxy, out var webProxy))
@@ -151,8 +147,7 @@ public static class InfrastructureExtensions
         services.AddSerilog((provider, loggerConfiguration) =>
         {
             var serviceConfiguration = provider.GetRequiredService<ServiceConfiguration>();
-            var logger = SerilogLoggerFactory.CreateLogger(serviceConfiguration.RootConfiguration);
-            Log.Logger = logger;
+            SerilogLoggerFactory.CreateLogger(loggerConfiguration, serviceConfiguration.RootConfiguration);
         });
     }
 

@@ -17,7 +17,7 @@ public class ServerHost : IHostedService
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    public async Task StartAsync(CancellationToken cancellationToken)
+    public async Task StartAsync(CancellationToken cancellationToken = default)
     {
         _logger.LogInformation("Starting RADIUS server host...");
         _cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
@@ -35,7 +35,7 @@ public class ServerHost : IHostedService
         }
     }
 
-    public async Task StopAsync(CancellationToken cancellationToken)
+    public async Task StopAsync(CancellationToken cancellationToken = default)
     {
         _logger.LogInformation("Stopping RADIUS server host...");
         try

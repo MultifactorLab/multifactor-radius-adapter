@@ -1,4 +1,3 @@
-using Multifactor.Core.Ldap.LangFeatures;
 using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Models.Enum;
 
 namespace Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Models;
@@ -28,7 +27,7 @@ public class UserIdentity
         
         var id = identity.ToLower();
         
-        if (id.Contains("\\"))
+        if (id.Contains('\\'))
             return UserIdentityFormat.NetBiosName;
 
         if (id.Contains('='))

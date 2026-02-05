@@ -10,8 +10,8 @@ namespace Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Models;
 public class RadiusPipelineContext
 {
     public RadiusPacket RequestPacket { get; }
-    public ClientConfiguration ClientConfiguration { get; }
-    public LdapServerConfiguration? LdapConfiguration { get; }
+    public IClientConfiguration ClientConfiguration { get; }
+    public ILdapServerConfiguration? LdapConfiguration { get; }
     public UserPassphrase? Passphrase { get; set; }
     public ILdapSchema? LdapSchema { get; set; }
     public ILdapProfile? LdapProfile { get; set; }
@@ -31,8 +31,8 @@ public class RadiusPipelineContext
 
     public RadiusPipelineContext(
         RadiusPacket requestPacket,
-        ClientConfiguration clientConfiguration,
-        LdapServerConfiguration? ldapServerConfig = null)
+        IClientConfiguration clientConfiguration,
+        ILdapServerConfiguration? ldapServerConfig = null)
     {
         RequestPacket = requestPacket;
         ClientConfiguration = clientConfiguration;

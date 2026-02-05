@@ -1,7 +1,6 @@
 using System.Net;
 using System.Text;
 using Multifactor.Radius.Adapter.v2.Application.Features.Radius.Models.Enums;
-using Multifactor.Radius.Adapter.v2.Shared;
 using Multifactor.Radius.Adapter.v2.Shared.Extensions;
 
 namespace Multifactor.Radius.Adapter.v2.Application.Features.Radius.Models;

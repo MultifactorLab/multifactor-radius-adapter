@@ -1,6 +1,5 @@
 using Multifactor.Core.Ldap.Attributes;
 using Multifactor.Core.Ldap.Entry;
-using Multifactor.Core.Ldap.LangFeatures;
 using Multifactor.Core.Ldap.Name;
 using Multifactor.Core.Ldap.Schema;
 
@@ -26,9 +25,9 @@ public class LdapProfile : ILdapProfile
     
     public DistinguishedName Dn { get; }
     public string? Upn { get; }
-    public string? Phone { get; }
-    public string? Email { get; }
-    public string? DisplayName { get; }
+    public string? Phone { get; set; }
+    public string? Email { get; set; }
+    public string? DisplayName { get; set; }
     public IReadOnlyCollection<DistinguishedName> MemberOf { get; }
     public IReadOnlyCollection<LdapAttribute> Attributes { get; }
 }

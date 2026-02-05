@@ -8,13 +8,13 @@ public class GetReplyAttributesRequest
 {
     public string? UserName { get; }
     public HashSet<string> UserGroups { get; }
-    public IReadOnlyDictionary<string, RadiusReplyAttribute[]> ReplyAttributes { get; }
+    public IReadOnlyDictionary<string, IRadiusReplyAttribute[]> ReplyAttributes { get; }
     private IReadOnlyCollection<LdapAttribute> Attributes { get; }  
     
     public GetReplyAttributesRequest(
         string? userName,
         HashSet<string> userGroups,
-        IReadOnlyDictionary<string, RadiusReplyAttribute[]> replyAttributes,
+        IReadOnlyDictionary<string, IRadiusReplyAttribute[]> replyAttributes,
         IReadOnlyCollection<LdapAttribute> userAttributes)
     {
         ArgumentNullException.ThrowIfNull(userGroups);

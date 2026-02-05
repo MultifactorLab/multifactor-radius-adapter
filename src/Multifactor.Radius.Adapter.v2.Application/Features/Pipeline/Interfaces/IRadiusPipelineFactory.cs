@@ -4,5 +4,5 @@ namespace Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Interfaces
 
 public interface IRadiusPipelineFactory
 {
-    IRadiusPipeline CreatePipeline(ClientConfiguration clientConfig);
+    IRadiusPipeline CreatePipeline(IClientConfiguration clientConfig);
 }

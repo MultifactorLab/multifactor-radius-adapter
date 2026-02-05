@@ -133,7 +133,6 @@ public class MultifactorApi : IMultifactorApi
         }
         
         var content = await response.Content.ReadAsStringAsync(cancellationToken);
-        
         var apiResponse = JsonSerializer.Deserialize<MultiFactorApiResponse<TResponse>>(
             content, 
             _jsonOptions);

@@ -22,10 +22,6 @@
     </ItemGroup>
     
     <ItemGroup>
-        <ProjectReference Include="..\Multifactor.Radius.Adapter.v2\Multifactor.Radius.Adapter.v2.csproj" />
-    </ItemGroup>
-    
-    <ItemGroup>
         <Content Include="Assets\*">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
             <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
@@ -48,6 +44,11 @@
         <None Update="Assets\**">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Multifactor.Radius.Adapter.v2.Application\Multifactor.Radius.Adapter.v2.Application.csproj" />
+      <ProjectReference Include="..\Multifactor.Radius.Adapter.v2.Infrastructure\Multifactor.Radius.Adapter.v2.Infrastructure.csproj" />
     </ItemGroup>
     
 </Project>

@@ -1,6 +1,7 @@
 using Elastic.CommonSchema.Serilog;
 using Multifactor.Radius.Adapter.v2.Application.Configuration.Models;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Exceptions;
+using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Models;
 using Serilog;
 using Serilog.Core;
 using Serilog.Events;
@@ -13,14 +14,13 @@ namespace Multifactor.Radius.Adapter.v2.Infrastructure.Logging;
 
 public static class SerilogLoggerFactory
 {
-    public static ILogger CreateLogger(RootConfiguration rootConfiguration)
+    public static LoggerConfiguration CreateLogger(LoggerConfiguration loggerConfiguration, IRootConfiguration rootConfiguration)
     {
         ArgumentNullException.ThrowIfNull(rootConfiguration);
 
         var levelSwitch = new LoggingLevelSwitch(LogEventLevel.Information);
 
-        var loggerConfiguration = new LoggerConfiguration()
-            .MinimumLevel.ControlledBy(levelSwitch)
+        loggerConfiguration.MinimumLevel.ControlledBy(levelSwitch)
             .MinimumLevel.Override("Microsoft.Extensions.Http.DefaultHttpClientFactory", LogEventLevel.Warning)
             .Enrich.FromLogContext();
 
@@ -40,17 +40,16 @@ public static class SerilogLoggerFactory
             rootConfiguration.SyslogUseTls
             );
         var level = rootConfiguration.LoggingLevel;
-        if (string.IsNullOrWhiteSpace(level))
-        {
-         // throw new InvalidConfigurationException(
-         //     "'{prop}' element not found. Config name: '{0}'",
-         //     rootConfiguration.ConfigurationName);
-        }
+        var skip = string.IsNullOrWhiteSpace(level);
+        // if (string.IsNullOrWhiteSpace(level))
+        // {
+        //  throw new InvalidConfigurationException(
+        //      string.Concat("'{prop}' element not found. Config name: '{0}'", "rootConfiguration.ConfigurationName"));
+        // }
 
         SetLogLevel(levelSwitch, level);
-        var logger = loggerConfiguration.CreateLogger();
 
-        return logger;
+        return loggerConfiguration;
     }
 
     private static void ConfigureLogging(

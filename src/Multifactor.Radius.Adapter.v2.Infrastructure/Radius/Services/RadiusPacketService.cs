@@ -61,8 +61,8 @@ public class RadiusPacketService : IRadiusPacketService
 
     public byte[] SerializePacket(RadiusPacket packet, SharedSecret sharedSecret)
     {
-        if (packet == null) throw new ArgumentNullException(nameof(packet));
-        if (sharedSecret == null) throw new ArgumentNullException(nameof(sharedSecret));
+        ArgumentNullException.ThrowIfNull(packet);
+        ArgumentNullException.ThrowIfNull(sharedSecret);
 
         try
         {

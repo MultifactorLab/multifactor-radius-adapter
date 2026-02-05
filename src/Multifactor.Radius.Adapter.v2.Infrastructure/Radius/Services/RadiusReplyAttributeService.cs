@@ -1,10 +1,9 @@
-// Infrastructure/Radius/Services/RadiusReplyAttributeService.cs
-
 using System.Net;
 using Microsoft.Extensions.Logging;
 using Multifactor.Radius.Adapter.v2.Application.Configuration.Models;
 using Multifactor.Radius.Adapter.v2.Application.Features.Radius.Models;
 using Multifactor.Radius.Adapter.v2.Application.Features.Radius.Services;
+using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Models;
 using Multifactor.Radius.Adapter.v2.Shared.Extensions;
 
 namespace Multifactor.Radius.Adapter.v2.Infrastructure.Radius.Services;
@@ -37,7 +36,6 @@ public class RadiusReplyAttributeService : IRadiusReplyAttributeService
                 result[attribute.Key] = values;
             }
             
-            // Если атрибут достаточный - прекращаем обработку
             if (IsSufficientAttribute(attribute.Value))
             {
                 _logger.LogDebug("Sufficient attribute '{Attribute}' found, stopping processing", attribute.Key);
@@ -51,7 +49,7 @@ public class RadiusReplyAttributeService : IRadiusReplyAttributeService
     
     private List<object> ProcessAttribute(
         string attributeName,
-        RadiusReplyAttribute[] attributeValues,
+        IRadiusReplyAttribute[] attributeValues,
         GetReplyAttributesRequest request)
     {
         var result = new List<object>();
@@ -86,9 +84,8 @@ public class RadiusReplyAttributeService : IRadiusReplyAttributeService
         return result;
     }
     
-    private bool ShouldIncludeAttribute(RadiusReplyAttribute attributeValue, GetReplyAttributesRequest request)
+    private bool ShouldIncludeAttribute(IRadiusReplyAttribute attributeValue, GetReplyAttributesRequest request)
     {
-        // 1. Проверка LDAP атрибутов
         if (attributeValue.FromLdap)
         {
             if (attributeValue.IsMemberOf)
@@ -98,19 +95,16 @@ public class RadiusReplyAttributeService : IRadiusReplyAttributeService
                    request.HasAttribute(attributeValue.Name);
         }
         
-        // 2. Проверка условий по имени пользователя
         if (attributeValue.UserNameCondition.Count > 0)
         {
             return MatchesUserNameCondition(attributeValue.UserNameCondition, request.UserName);
         }
         
-        // 3. Проверка условий по группам
         if (attributeValue.UserGroupCondition.Count > 0)
         {
             return MatchesUserGroupCondition(attributeValue.UserGroupCondition, request.UserGroups);
         }
         
-        // 4. Без условий - всегда включаем
         return true;
     }
     
@@ -144,7 +138,7 @@ public class RadiusReplyAttributeService : IRadiusReplyAttributeService
                 .Any(group => string.Equals(group, condition, StringComparison.OrdinalIgnoreCase)));
     }
     
-    private static List<object?> GetAttributeValues(RadiusReplyAttribute attributeValue, GetReplyAttributesRequest request)
+    private static List<object?> GetAttributeValues(IRadiusReplyAttribute attributeValue, GetReplyAttributesRequest request)
     {
         if (attributeValue.IsMemberOf)
         {
@@ -163,7 +157,7 @@ public class RadiusReplyAttributeService : IRadiusReplyAttributeService
         return [attributeValue.Value];
     }
     
-    private static bool IsSufficientAttribute(RadiusReplyAttribute[] attributeValues)
+    private static bool IsSufficientAttribute(IRadiusReplyAttribute[] attributeValues)
     {
         return attributeValues.Any(av => av.Sufficient);
     }

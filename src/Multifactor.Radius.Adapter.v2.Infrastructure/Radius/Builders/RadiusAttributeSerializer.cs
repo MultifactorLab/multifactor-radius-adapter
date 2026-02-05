@@ -3,8 +3,8 @@ using System.Text;
 using Microsoft.Extensions.Logging;
 using Multifactor.Radius.Adapter.v2.Application.Features.Radius.Models;
 using Multifactor.Radius.Adapter.v2.Application.Features.Security;
-using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Dictionary;
-using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Dictionary.Attributes;
+using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Models.Dictionary;
+using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Models.Dictionary.Attributes;
 
 namespace Multifactor.Radius.Adapter.v2.Infrastructure.Radius.Builders;
 

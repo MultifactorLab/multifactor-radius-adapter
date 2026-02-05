@@ -19,7 +19,7 @@ public class SendAdapterResponseRequest
     public ResponseInformation ResponseInformation { get; set; }
     public SharedSecret RadiusSharedSecret { get; set; }
     public HashSet<string> UserGroups { get; set; }
-    public IReadOnlyDictionary<string, RadiusReplyAttribute[]> RadiusReplyAttributes { get; set; }
+    public IReadOnlyDictionary<string, IRadiusReplyAttribute[]> RadiusReplyAttributes { get; set; }
     public IReadOnlyCollection<LdapAttribute> Attributes { get; set; }
     public (int min, int max)? InvalidCredentialDelay { get; set; }
 

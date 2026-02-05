@@ -1,6 +1,6 @@
 ﻿using MultiFactor.Radius.Adapter.Infrastructure.Configuration.Features.PreAuthModeFeature;
 
-namespace MultiFactor.Radius.Adapter.Tests.AdapterConfig;
+namespace MultiFactor.Radius.Adapter.Tests;
 
 public partial class ConfigurationLoadingTests
 {

@@ -18,7 +18,7 @@ public class AdapterServer : IAsyncDisposable
     private readonly SemaphoreSlim _concurrencyLimiter;
     private readonly ConcurrentBag<Task> _activeProcessingTasks = [];
     
-    //TODO Возможно сразу в конфигурацию вынести
+    //TODO to the configuration
     private const int ShoutDownTimeout = 30;
     private const int MaxConcurrentRequests = 1000;
     
