@@ -1,4 +1,5 @@
 ﻿using FluentAssertions;
+using MultiFactor.Radius.Adapter.Core.Services.Ldap;
 using MultiFactor.Radius.Adapter.Services.Ldap;
 
 namespace MultiFactor.Radius.Adapter.Tests
