@@ -6,11 +6,16 @@ namespace Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Models;
 
 public class ConfigurationFile
 {
-    public ConfigurationFile() { }
+    public ConfigurationFile()
+    {
+        AppSettings = new AppSettingsSection();
+        LdapServers = new List<LdapServerSection>();
+        RadiusReply = new RadiusReplySection();
+    }
     public string FileName { get; set; }
     public AppSettingsSection AppSettings { get; set; } = new();
     
-    public List<LdapServerSection> LdapServers { get; set; } = new();
+    public List<LdapServerSection> LdapServers { get; set; } = [];
     
     public RadiusReplySection RadiusReply { get; set; } = new();
 }

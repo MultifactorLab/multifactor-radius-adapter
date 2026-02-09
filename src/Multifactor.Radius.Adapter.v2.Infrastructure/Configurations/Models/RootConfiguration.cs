@@ -30,29 +30,29 @@ public class RootConfiguration : IRootConfiguration
         ArgumentNullException.ThrowIfNull(configurationFile);
         var conf = new RootConfiguration
         {
-            MultifactorApiProxy = configurationFile.AppSettings.MultifactorApiProxy,
+            MultifactorApiProxy = configurationFile.AppSettings?.MultifactorApiProxy,
             MultifactorApiTimeout = ConfigurationValueProcessor.TryParseTimeout(
-                configurationFile.AppSettings.MultifactorApiTimeout, out var span)
+                configurationFile.AppSettings?.MultifactorApiTimeout, out var span)
                 ? span!.Value : TimeSpan.FromSeconds(65),
-            LoggingFormat = configurationFile.AppSettings.LoggingFormat,
-            SyslogUseTls = configurationFile.AppSettings.SyslogUseTls,
-            SyslogServer = configurationFile.AppSettings.SyslogServer,
-            SyslogFormat =  configurationFile.AppSettings.SyslogFormat, 
-            SyslogFacility = configurationFile.AppSettings.SyslogFacility,
-            SyslogAppName = configurationFile.AppSettings.SyslogAppName ?? "multifactor-radius",
-            SyslogFramer = configurationFile.AppSettings.SyslogFramer,
-            SyslogOutputTemplate = configurationFile.AppSettings.SyslogOutputTemplate,
-            ConsoleLogOutputTemplate = configurationFile.AppSettings.ConsoleLogOutputTemplate,
-            FileLogOutputTemplate = configurationFile.AppSettings.FileLogOutputTemplate,
-            LogFileMaxSizeBytes = configurationFile.AppSettings.LogFileMaxSizeBytes ?? 1073741824,
-            LoggingLevel = configurationFile.AppSettings.LoggingLevel ?? "Debug"
+            LoggingFormat = configurationFile.AppSettings?.LoggingFormat,
+            SyslogUseTls = configurationFile.AppSettings?.SyslogUseTls ?? false,
+            SyslogServer = configurationFile.AppSettings?.SyslogServer,
+            SyslogFormat =  configurationFile.AppSettings?.SyslogFormat, 
+            SyslogFacility = configurationFile.AppSettings?.SyslogFacility,
+            SyslogAppName = configurationFile.AppSettings?.SyslogAppName ?? "multifactor-radius",
+            SyslogFramer = configurationFile.AppSettings?.SyslogFramer,
+            SyslogOutputTemplate = configurationFile.AppSettings?.SyslogOutputTemplate,
+            ConsoleLogOutputTemplate = configurationFile.AppSettings?.ConsoleLogOutputTemplate,
+            FileLogOutputTemplate = configurationFile.AppSettings?.FileLogOutputTemplate,
+            LogFileMaxSizeBytes = configurationFile.AppSettings?.LogFileMaxSizeBytes ?? 1073741824,
+            LoggingLevel = configurationFile.AppSettings?.LoggingLevel ?? "Debug"
         };
-        var urls = !string.IsNullOrWhiteSpace(configurationFile.AppSettings.MultifactorApiUrl) ? configurationFile.AppSettings.MultifactorApiUrl :
-            throw InvalidConfigurationException.RequiredFor(prop => prop.AppSettings.MultifactorApiUrl, configurationFile.FileName);
-        conf.MultifactorApiUrls = ConfigurationValueProcessor.TryParseUrls(urls, out var parsedUrls)
-            ? parsedUrls
-            : throw new InvalidConfigurationException($"Invalid 'multifactor-api-url': '{urls}'", configurationFile.FileName);
-        var endpoint = !string.IsNullOrWhiteSpace(configurationFile.AppSettings.AdapterServerEndpoint) ? configurationFile.AppSettings.AdapterServerEndpoint : throw new InvalidConfigurationException(nameof(conf.AdapterServerEndpoint));
+        var urls = !string.IsNullOrWhiteSpace(configurationFile.AppSettings?.MultifactorApiUrl) ? configurationFile.AppSettings.MultifactorApiUrl :
+            throw InvalidConfigurationException.For(prop => prop.AppSettings.MultifactorApiUrl, "Property '{prop}' is required. Config name: '{0}'",  configurationFile.FileName);
+        conf.MultifactorApiUrls = ConfigurationValueProcessor.TryParseUrls(urls, out var parsedUrls) ? parsedUrls :
+            throw InvalidConfigurationException.For(prop => prop.AppSettings.MultifactorApiUrl, $"Invalid {{prop}}: '{urls}'",  configurationFile.FileName);
+
+        var endpoint = !string.IsNullOrWhiteSpace(configurationFile.AppSettings?.AdapterServerEndpoint) ? configurationFile.AppSettings.AdapterServerEndpoint : throw new InvalidConfigurationException(nameof(conf.AdapterServerEndpoint));
 
         conf.AdapterServerEndpoint = ConfigurationValueProcessor.TryParseEndpoint(endpoint, out var point)
             ? point

@@ -39,12 +39,6 @@ public class InvalidConfigurationException : Exception
 
         return new InvalidConfigurationException(formattedMessage);
     }
-
-    public static InvalidConfigurationException RequiredFor<TProp>(Expression<Func<ConfigurationFile, TProp>> propertySelector, string filePath)
-    {
-        const string message = "Property '{prop}' is required. Config name: '{1}'";
-        return For(c => propertySelector, message, filePath); ;
-    }
     
     private static string Property<TProp>(Expression<Func<ConfigurationFile, TProp>> propertySelector)
     {

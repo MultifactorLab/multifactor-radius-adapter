@@ -28,16 +28,19 @@ public class LdapServerConfiguration : ILdapServerConfiguration
     public IReadOnlyList<string> ExcludedSuffixes { get; init; }
     public IReadOnlyList<string> BypassSecondFactorWhenApiUnreachableGroups { get; init; }
 
-    public static LdapServerConfiguration FromConfiguration(LdapServerSection ldapServerSection)
+    public static LdapServerConfiguration FromConfiguration(LdapServerSection ldapServerSection, string fileName)
     {
         var dto = new LdapServerConfiguration
         {
             ConnectionString = !string.IsNullOrWhiteSpace(ldapServerSection.ConnectionString) ? ldapServerSection.ConnectionString :
-                throw InvalidConfigurationException.RequiredFor(section => section.LdapServers[0].ConnectionString, nameof(ldapServerSection)),
+                throw InvalidConfigurationException.For(prop => prop.LdapServers[0].ConnectionString, "Property '{prop}' is required. Config name: '{0}'",  fileName),
+
             Username = !string.IsNullOrWhiteSpace(ldapServerSection.Username) ? ldapServerSection.Username :
-                throw InvalidConfigurationException.RequiredFor(section => section.LdapServers[0].Username, nameof(ldapServerSection)),
+                throw InvalidConfigurationException.For(prop => prop.LdapServers[0].Username, "Property '{prop}' is required. Config name: '{0}'",  fileName),
+
             Password = !string.IsNullOrWhiteSpace(ldapServerSection.Password) ? ldapServerSection.Password :
-                throw InvalidConfigurationException.RequiredFor(section => section.LdapServers[0].Password, nameof(ldapServerSection)),
+                throw InvalidConfigurationException.For(prop => prop.LdapServers[0].Password, "Property '{prop}' is required. Config name: '{0}'",  fileName),
+
             BindTimeoutSeconds = ldapServerSection.BindTimeoutSeconds ?? 30,
             AccessGroups =
                 ConfigurationValueProcessor.TryParseDistinguishedNames(ldapServerSection.AccessGroups,

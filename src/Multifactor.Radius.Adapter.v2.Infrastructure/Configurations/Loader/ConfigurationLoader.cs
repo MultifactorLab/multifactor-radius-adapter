@@ -80,8 +80,7 @@ public class ConfigurationLoader : IConfigurationLoader
         
         var clientConfig = ClientConfiguration.FromConfiguration(config);
         clientConfig.ReplyAttributes = ParseReplyAttributes(config.RadiusReply);
-        clientConfig.LdapServers = config.LdapServers.Select(LdapServerConfiguration.FromConfiguration).ToList();
-
+        clientConfig.LdapServers = config.LdapServers.Select(conf => LdapServerConfiguration.FromConfiguration(conf, clientConfig.Name)).ToList();
         
         return clientConfig;
     }

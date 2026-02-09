@@ -42,16 +42,16 @@ public class ClientConfiguration : IClientConfiguration
         var dto = new ClientConfiguration
         {
             Name = configurationFile.FileName,
-            MultifactorNasIdentifier = !string.IsNullOrWhiteSpace(configurationFile.AppSettings.MultifactorNasIdentifier) ? configurationFile.AppSettings.MultifactorNasIdentifier 
-                : throw InvalidConfigurationException.RequiredFor(c => c.AppSettings.MultifactorNasIdentifier, configurationFile.FileName),
-            MultifactorSharedSecret = !string.IsNullOrWhiteSpace(configurationFile.AppSettings.MultifactorSharedSecret) ? configurationFile.AppSettings.MultifactorNasIdentifier 
-                : throw InvalidConfigurationException.RequiredFor(c => c.AppSettings.MultifactorSharedSecret, configurationFile.FileName),
+            MultifactorNasIdentifier = !string.IsNullOrWhiteSpace(configurationFile.AppSettings.MultifactorNasIdentifier) ? configurationFile.AppSettings.MultifactorNasIdentifier :
+                throw InvalidConfigurationException.For(prop => prop.AppSettings.MultifactorNasIdentifier, "Property '{prop}' is required. Config name: '{0}'",  configurationFile.FileName),
+            MultifactorSharedSecret = !string.IsNullOrWhiteSpace(configurationFile.AppSettings.MultifactorSharedSecret) ? configurationFile.AppSettings.MultifactorNasIdentifier :
+                throw InvalidConfigurationException.For(prop => prop.AppSettings.MultifactorSharedSecret, "Property '{prop}' is required. Config name: '{0}'",  configurationFile.FileName),
             SignUpGroups = ConfigurationValueProcessor.TryParseStringList(configurationFile.AppSettings.SignUpGroups, out var list) ? list : [],
             BypassSecondFactorWhenApiUnreachable = configurationFile.AppSettings.BypassSecondFactorWhenApiUnreachable,
             RadiusClientIp = ConfigurationValueProcessor.TryParseIpAddress(configurationFile.AppSettings.RadiusClientIp, out var address) ? address : null,
             RadiusClientNasIdentifier = configurationFile.AppSettings.RadiusClientNasIdentifier,
             RadiusSharedSecret = !string.IsNullOrWhiteSpace(configurationFile.AppSettings.RadiusSharedSecret) ? configurationFile.AppSettings.RadiusSharedSecret 
-                : throw InvalidConfigurationException.For(c => c.AppSettings.RadiusSharedSecret, "Property '{prop}' is required. Config name: '{1}'", configurationFile.FileName),
+                : throw InvalidConfigurationException.For(c => c.AppSettings.RadiusSharedSecret, "Property '{prop}' is required. Config name: '{0}'", configurationFile.FileName),
             NpsServerEndpoints = ConfigurationValueProcessor.TryParseEndpoints(configurationFile.AppSettings.NpsServerEndpoints, out var npsServerEndpoints)
                 ? npsServerEndpoints : [],
             NpsServerTimeout = ConfigurationValueProcessor.TryParseTimeout(configurationFile.AppSettings.NpsServerTimeout, out var timeout) ? timeout.Value : TimeSpan.Parse("00:00:05"),
@@ -65,18 +65,22 @@ public class ClientConfiguration : IClientConfiguration
                 : null
         };
 
-        var firstFactorAuthenticationSource = !string.IsNullOrWhiteSpace(configurationFile.AppSettings.FirstFactorAuthenticationSource) ? configurationFile.AppSettings.FirstFactorAuthenticationSource :
-            throw InvalidConfigurationException.RequiredFor(c => c.AppSettings.FirstFactorAuthenticationSource, configurationFile.FileName);
+        var firstFactorAuthenticationSource =
+            !string.IsNullOrWhiteSpace(configurationFile.AppSettings.FirstFactorAuthenticationSource)
+                ? configurationFile.AppSettings.FirstFactorAuthenticationSource
+                : throw InvalidConfigurationException.For(prop => prop.AppSettings.FirstFactorAuthenticationSource,
+                    "Property '{prop}' is required. Config name: '{0}'", configurationFile.FileName);
+
         dto.FirstFactorAuthenticationSource = ConfigurationValueProcessor.TryParseEnum<AuthenticationSource>(firstFactorAuthenticationSource, out var source)
             ? source 
-            : throw InvalidConfigurationException.For(c => c.AppSettings.FirstFactorAuthenticationSource, "Error while cast property '{prop}'. Config name: '{1}'", configurationFile.FileName); ;
+            : throw InvalidConfigurationException.For(c => c.AppSettings.FirstFactorAuthenticationSource, "Error while cast property '{prop}'. Config name: '{0}'", configurationFile.FileName); ;
         
         var adapterClientEndpoint = !string.IsNullOrWhiteSpace(configurationFile.AppSettings.AdapterClientEndpoint) ? configurationFile.AppSettings.AdapterClientEndpoint :
-            throw InvalidConfigurationException.For(c => c.AppSettings.AdapterClientEndpoint, "Property '{prop}' is required. Config name: '{1}'", configurationFile.FileName);
+            throw InvalidConfigurationException.For(c => c.AppSettings.AdapterClientEndpoint, "Property '{prop}' is required. Config name: '{0}'", configurationFile.FileName);
         dto.AdapterClientEndpoint =
             ConfigurationValueProcessor.TryParseEndpoint(adapterClientEndpoint, out var endpoint)
                 ? endpoint! :  
-                throw InvalidConfigurationException.For(c => c.AppSettings.FirstFactorAuthenticationSource, "Error while cast property '{prop}'. Config name: '{1}'", configurationFile.FileName); ;
+                throw InvalidConfigurationException.For(c => c.AppSettings.FirstFactorAuthenticationSource, "Error while cast property '{prop}'. Config name: '{0}'", configurationFile.FileName); ;
         return dto;
     }
 }
