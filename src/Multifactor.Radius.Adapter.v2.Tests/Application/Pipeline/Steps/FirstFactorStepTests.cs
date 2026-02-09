@@ -45,7 +45,8 @@ namespace Multifactor.Radius.Adapter.v2.Tests.Application.Pipeline.Steps
         public async Task ExecuteAsync_WhenStatusNotAwaiting_DoesNothing()
         {
             // Arrange
-            var context = CreateTestContext();
+            var clientConfiguration = CreateTestClientConfiguration();
+            var context = CreateTestContext(clientConfiguration);
             context.FirstFactorStatus = AuthenticationStatus.Accept; // Not Awaiting
 
             // Act
@@ -61,7 +62,8 @@ namespace Multifactor.Radius.Adapter.v2.Tests.Application.Pipeline.Steps
         public async Task ExecuteAsync_WhenStatusAwaiting_GetsAndRunsProcessor()
         {
             // Arrange
-            var context = CreateTestContext();
+            var clientConfiguration = CreateTestClientConfiguration();
+            var context = CreateTestContext(clientConfiguration);
             context.FirstFactorStatus = AuthenticationStatus.Awaiting;
 
             var processorMock = new Mock<IFirstFactorProcessor>();
@@ -86,7 +88,8 @@ namespace Multifactor.Radius.Adapter.v2.Tests.Application.Pipeline.Steps
         public async Task ExecuteAsync_WhenMustChangePasswordDomainEmpty_NoChallenge()
         {
             // Arrange
-            var context = CreateTestContext();
+            var clientConfiguration = CreateTestClientConfiguration();
+            var context = CreateTestContext(clientConfiguration);
             context.FirstFactorStatus = AuthenticationStatus.Awaiting;
             context.MustChangePasswordDomain = ""; // Empty
 
@@ -108,7 +111,8 @@ namespace Multifactor.Radius.Adapter.v2.Tests.Application.Pipeline.Steps
         public async Task ExecuteAsync_WhenMustChangePasswordDomainSet_CreatesChallenge()
         {
             // Arrange
-            var context = CreateTestContext();
+            var clientConfiguration = CreateTestClientConfiguration();
+            var context = CreateTestContext(clientConfiguration);
             context.FirstFactorStatus = AuthenticationStatus.Awaiting;
             context.MustChangePasswordDomain = "test-domain";
 
@@ -141,7 +145,8 @@ namespace Multifactor.Radius.Adapter.v2.Tests.Application.Pipeline.Steps
         public async Task ExecuteAsync_WhenChallengeProcessorNotFound_ThrowsException()
         {
             // Arrange
-            var context = CreateTestContext();
+            var clientConfiguration = CreateTestClientConfiguration();
+            var context = CreateTestContext(clientConfiguration);
             context.FirstFactorStatus = AuthenticationStatus.Awaiting;
             context.MustChangePasswordDomain = "test-domain";
 
@@ -165,7 +170,8 @@ namespace Multifactor.Radius.Adapter.v2.Tests.Application.Pipeline.Steps
         public async Task ExecuteAsync_WhenFirstFactorReject_Terminates()
         {
             // Arrange
-            var context = CreateTestContext();
+            var clientConfiguration = CreateTestClientConfiguration();
+            var context = CreateTestContext(clientConfiguration);
             context.FirstFactorStatus = AuthenticationStatus.Awaiting;
 
             var processorMock = new Mock<IFirstFactorProcessor>();
@@ -187,7 +193,8 @@ namespace Multifactor.Radius.Adapter.v2.Tests.Application.Pipeline.Steps
         public async Task ExecuteAsync_WhenFirstFactorAccept_DoesNotTerminate()
         {
             // Arrange
-            var context = CreateTestContext();
+            var clientConfiguration = CreateTestClientConfiguration();
+            var context = CreateTestContext(clientConfiguration);
             context.FirstFactorStatus = AuthenticationStatus.Awaiting;
 
             var processorMock = new Mock<IFirstFactorProcessor>();
@@ -209,7 +216,8 @@ namespace Multifactor.Radius.Adapter.v2.Tests.Application.Pipeline.Steps
         public async Task ExecuteAsync_LogsDebugMessage()
         {
             // Arrange
-            var context = CreateTestContext();
+            var clientConfiguration = CreateTestClientConfiguration();
+            var context = CreateTestContext(clientConfiguration);
             context.FirstFactorStatus = AuthenticationStatus.Awaiting;
 
             var processorMock = new Mock<IFirstFactorProcessor>();
@@ -244,9 +252,9 @@ namespace Multifactor.Radius.Adapter.v2.Tests.Application.Pipeline.Steps
         public async Task ExecuteAsync_WithLdapSource_GetsCorrectProcessor()
         {
             // Arrange
-            var context = CreateTestContext();
+            var clientConfiguration = CreateTestClientConfiguration(AuthenticationSource.Ldap);
+            var context = CreateTestContext(clientConfiguration);
             context.FirstFactorStatus = AuthenticationStatus.Awaiting;
-            context.ClientConfiguration.FirstFactorAuthenticationSource = AuthenticationSource.Ldap;
 
             var processorMock = new Mock<IFirstFactorProcessor>();
             _processorProviderMock
@@ -266,9 +274,9 @@ namespace Multifactor.Radius.Adapter.v2.Tests.Application.Pipeline.Steps
         public async Task ExecuteAsync_WithNoneSource_GetsCorrectProcessor()
         {
             // Arrange
-            var context = CreateTestContext();
+            var clientConfiguration = CreateTestClientConfiguration(AuthenticationSource.None);
+            var context = CreateTestContext(clientConfiguration);
             context.FirstFactorStatus = AuthenticationStatus.Awaiting;
-            context.ClientConfiguration.FirstFactorAuthenticationSource = AuthenticationSource.None;
 
             var processorMock = new Mock<IFirstFactorProcessor>();
             _processorProviderMock
@@ -284,19 +292,22 @@ namespace Multifactor.Radius.Adapter.v2.Tests.Application.Pipeline.Steps
                 Times.Once);
         }
 
-        private static RadiusPipelineContext CreateTestContext()
+        private static IClientConfiguration CreateTestClientConfiguration(AuthenticationSource source = AuthenticationSource.Radius)
         {
-            var clientConfig = new ClientConfiguration
+            return new ClientConfiguration
             {
                 Name = "test-client",
                 RadiusSharedSecret = "test-secret",
                 FirstFactorAuthenticationSource = AuthenticationSource.Radius
             };
+        }
 
+        private static RadiusPipelineContext CreateTestContext(ClientConfiguration clientConfiguration)
+        {
             var requestPacket = new RadiusPacket(
                 new RadiusPacketHeader(PacketCode.AccessRequest, 1, new byte[16]));
 
-            return new RadiusPipelineContext(requestPacket, clientConfig);
+            return new RadiusPipelineContext(requestPacket, clientConfiguration);
         }
     }
 }

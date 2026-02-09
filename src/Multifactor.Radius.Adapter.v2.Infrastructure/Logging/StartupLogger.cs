@@ -18,20 +18,20 @@ public static class StartupLogger
     {
         SelfLog.Enable(Console.WriteLine);
 
-        // var baseDir = Path.GetDirectoryName(AppDomain.CurrentDomain.BaseDirectory);
-        // var dir = Path.Combine(baseDir!, LogDirectory);
-        // if (!Directory.Exists(dir))
-        // {
-        //     Directory.CreateDirectory(dir);
-        // }
+        var baseDir = Path.GetDirectoryName(AppDomain.CurrentDomain.BaseDirectory);
+        var dir = Path.Combine(baseDir!, LogDirectory);
+        if (!Directory.Exists(dir))
+        {
+            Directory.CreateDirectory(dir);
+        }
 
-        // var path = Path.Combine(dir, StartupLogFile);
+        var path = Path.Combine(dir, StartupLogFile);
         var loggerConfig = new LoggerConfiguration()
-            // .WriteTo.File(path: path,
-            //     LogEventLevel.Verbose,
-            //     FileLogTemplate,
-            //     fileSizeLimitBytes: FileSizeLimitBytes,
-            //     rollOnFileSizeLimit: true)
+            .WriteTo.File(path: path,
+                LogEventLevel.Verbose,
+                FileLogTemplate,
+                fileSizeLimitBytes: FileSizeLimitBytes,
+                rollOnFileSizeLimit: true)
             .WriteTo.Console(LogEventLevel.Verbose, ConsoleLogTemplate)
             .Enrich.FromLogContext();
 

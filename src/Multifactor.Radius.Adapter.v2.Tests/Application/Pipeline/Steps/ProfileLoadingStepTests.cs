@@ -156,7 +156,7 @@ namespace Multifactor.Radius.Adapter.v2.Tests.Application.Pipeline.Steps
             
             // Add some reply attributes
             var replyAttribute = new RadiusReplyAttribute { Name = "department" };
-            context.ClientConfiguration.ReplyAttributes = new Dictionary<string, IRadiusReplyAttribute[]>
+            context.ClientConfiguration.ReplyAttributes = new Dictionary<string, IRadiusReplyAttribute>
             {
                 ["TestAttribute"] = [replyAttribute]
             };
@@ -230,7 +230,7 @@ namespace Multifactor.Radius.Adapter.v2.Tests.Application.Pipeline.Steps
             {
                 Name = "test-client",
                 RadiusSharedSecret = "test-secret",
-                ReplyAttributes = new Dictionary<string, IRadiusReplyAttribute[]>()
+                ReplyAttributes = new Dictionary<string, IReadOnlyList<IRadiusReplyAttribute>>()
             };
             var requestPacket = new RadiusPacket(
                 new RadiusPacketHeader(PacketCode.AccessRequest, 1, new byte[16]))

@@ -3,7 +3,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Multifactor.Radius.Adapter.v2.Server;
 
-public class ServerHost : IHostedService
+internal sealed class ServerHost : IHostedService
 {
     private readonly AdapterServer _server;
     private readonly ILogger<ServerHost> _logger;
@@ -40,7 +40,8 @@ public class ServerHost : IHostedService
         _logger.LogInformation("Stopping RADIUS server host...");
         try
         {
-            await _cts?.CancelAsync();
+            if(_cts != null)
+                await _cts.CancelAsync();
             
             if (_serverTask is { IsCompleted: false })
             {

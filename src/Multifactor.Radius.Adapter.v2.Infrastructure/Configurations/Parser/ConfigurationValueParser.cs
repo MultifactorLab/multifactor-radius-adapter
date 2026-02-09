@@ -1,13 +1,14 @@
 using System.Globalization;
 using System.Net;
 using Multifactor.Core.Ldap.Name;
+using Multifactor.Radius.Adapter.v2.Application.Configuration.Models;
 using Multifactor.Radius.Adapter.v2.Application.Configuration.Models.Enum;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Logging;
 using NetTools;
 
 namespace Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Parser;
 
-public static class ConfigurationValueProcessor
+internal static class ConfigurationValueParser
 {
     public static bool TryParseEnum<T>(string? value, out T result, T defaultValue = default) where T : struct
     {
@@ -241,9 +242,9 @@ public static class ConfigurationValueProcessor
         return true;
     }
 
-    public static bool TryParsePrivacyModeWithFields(string? value, out (PrivacyMode Mode, string[] Fields) result)
+    public static bool TryParsePrivacyModeWithFields(string? value, out Privacy? result)
     {
-        result = (PrivacyMode.None, []);
+        result = null;
         
         if (string.IsNullOrWhiteSpace(value))
             return false;
@@ -255,7 +256,7 @@ public static class ConfigurationValueProcessor
         
         if (parts.Length == 1)
         {
-            result = (mode, []);
+            result = new Privacy(mode, []);
             return true;
         }
         
@@ -264,13 +265,13 @@ public static class ConfigurationValueProcessor
             .Distinct()
             .ToArray();
             
-        result = (mode, fields);
+        result = new Privacy(mode, fields);
         return true;
     }
     
-    public static bool TryParseDelaySettings(string? value, out (int min, int max) result)
+    public static bool TryParseDelaySettings(string? value, out CredentialDelay result)
     {
-        result = (0, 0);
+        result = new CredentialDelay(0, 0);
         
         if (string.IsNullOrWhiteSpace(value))
             return false;
@@ -280,7 +281,7 @@ public static class ConfigurationValueProcessor
             if (delay < 0)
                 return false;
                 
-            result = (delay, delay);
+            result =  new CredentialDelay(delay,delay);
             return true;
         }
 
@@ -292,7 +293,7 @@ public static class ConfigurationValueProcessor
         if (values.Any(x => x < 0))
             return false;
             
-        result = (values[0], values[1]);
+        result = new CredentialDelay(values[0], values[1]);
         return true;
     }
 }

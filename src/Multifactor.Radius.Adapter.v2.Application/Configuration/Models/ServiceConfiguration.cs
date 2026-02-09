@@ -4,8 +4,8 @@ namespace Multifactor.Radius.Adapter.v2.Application.Configuration.Models;
 
 public class ServiceConfiguration
 {
-    public required IRootConfiguration RootConfiguration { get; set; }
-    public required IReadOnlyList<IClientConfiguration> ClientsConfigurations  { get; set; }
+    public required IRootConfiguration RootConfiguration { get; init; }
+    public required IReadOnlyList<IClientConfiguration> ClientsConfigurations  { get; init; }
     public IClientConfiguration? GetClientConfiguration(string nasIdentifier) => ClientsConfigurations.FirstOrDefault(config => config.RadiusClientNasIdentifier == nasIdentifier);
     public IClientConfiguration? GetClientConfiguration(IPAddress ip)
     {
@@ -18,5 +18,5 @@ public class ServiceConfiguration
             config.RadiusClientIp != null && config.RadiusClientIp.Equals(ip));
         
     }
-    public bool SingleClientMode { get; set; }
+    public bool SingleClientMode { get; init; }
 }

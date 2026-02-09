@@ -5,7 +5,7 @@ using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Parser;
 
 namespace Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Models;
 
-public class RootConfiguration : IRootConfiguration
+internal class RootConfiguration : IRootConfiguration
 {    
     public IReadOnlyList<Uri> MultifactorApiUrls { get; set; }
     public string? MultifactorApiProxy { get; set; }
@@ -25,13 +25,13 @@ public class RootConfiguration : IRootConfiguration
     public string? FileLogOutputTemplate { get; set; }
     public int LogFileMaxSizeBytes { get; set; }
 
-    public static RootConfiguration FromConfiguration(ConfigurationFile configurationFile)
+    public static RootConfiguration FromConfiguration(AdapterConfiguration configurationFile)
     {
         ArgumentNullException.ThrowIfNull(configurationFile);
         var conf = new RootConfiguration
         {
             MultifactorApiProxy = configurationFile.AppSettings?.MultifactorApiProxy,
-            MultifactorApiTimeout = ConfigurationValueProcessor.TryParseTimeout(
+            MultifactorApiTimeout = ConfigurationValueParser.TryParseTimeout(
                 configurationFile.AppSettings?.MultifactorApiTimeout, out var span)
                 ? span!.Value : TimeSpan.FromSeconds(65),
             LoggingFormat = configurationFile.AppSettings?.LoggingFormat,
@@ -49,12 +49,12 @@ public class RootConfiguration : IRootConfiguration
         };
         var urls = !string.IsNullOrWhiteSpace(configurationFile.AppSettings?.MultifactorApiUrl) ? configurationFile.AppSettings.MultifactorApiUrl :
             throw InvalidConfigurationException.For(prop => prop.AppSettings.MultifactorApiUrl, "Property '{prop}' is required. Config name: '{0}'",  configurationFile.FileName);
-        conf.MultifactorApiUrls = ConfigurationValueProcessor.TryParseUrls(urls, out var parsedUrls) ? parsedUrls :
+        conf.MultifactorApiUrls = ConfigurationValueParser.TryParseUrls(urls, out var parsedUrls) ? parsedUrls :
             throw InvalidConfigurationException.For(prop => prop.AppSettings.MultifactorApiUrl, $"Invalid {{prop}}: '{urls}'",  configurationFile.FileName);
 
         var endpoint = !string.IsNullOrWhiteSpace(configurationFile.AppSettings?.AdapterServerEndpoint) ? configurationFile.AppSettings.AdapterServerEndpoint : throw new InvalidConfigurationException(nameof(conf.AdapterServerEndpoint));
 
-        conf.AdapterServerEndpoint = ConfigurationValueProcessor.TryParseEndpoint(endpoint, out var point)
+        conf.AdapterServerEndpoint = ConfigurationValueParser.TryParseEndpoint(endpoint, out var point)
             ? point
             : throw new InvalidConfigurationException($"Invalid 'adapter-server-endpoint': '{endpoint}'", configurationFile.FileName);
         return conf;

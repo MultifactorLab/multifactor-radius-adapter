@@ -1,7 +1,6 @@
 using System.Net;
 using Microsoft.Extensions.Logging;
 using Moq;
-using Multifactor.Radius.Adapter.v2.Application.Configuration.Models;
 using Multifactor.Radius.Adapter.v2.Application.Configuration.Models.Enum;
 using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.FirstFactor;
 using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Models;
@@ -16,7 +15,6 @@ namespace Multifactor.Radius.Adapter.v2.Tests.Application.Pipeline.FirstFactor
     public class RadiusFirstFactorProcessorTests
     {
         private readonly Mock<IRadiusPacketService> _radiusPacketServiceMock;
-        private readonly Mock<IRadiusClientFactory> _radiusClientFactoryMock;
         private readonly Mock<ILogger<RadiusFirstFactorProcessor>> _loggerMock;
         private readonly Mock<IRadiusClient> _radiusClientMock;
         private readonly RadiusFirstFactorProcessor _processor;
@@ -24,16 +22,16 @@ namespace Multifactor.Radius.Adapter.v2.Tests.Application.Pipeline.FirstFactor
         public RadiusFirstFactorProcessorTests()
         {
             _radiusPacketServiceMock = new Mock<IRadiusPacketService>();
-            _radiusClientFactoryMock = new Mock<IRadiusClientFactory>();
+            var radiusClientFactoryMock = new Mock<IRadiusClientFactory>();
             _loggerMock = new Mock<ILogger<RadiusFirstFactorProcessor>>();
             _radiusClientMock = new Mock<IRadiusClient>();
             
             _processor = new RadiusFirstFactorProcessor(
                 _radiusPacketServiceMock.Object,
-                _radiusClientFactoryMock.Object,
+                radiusClientFactoryMock.Object,
                 _loggerMock.Object);
 
-            _radiusClientFactoryMock
+            radiusClientFactoryMock
                 .Setup(x => x.CreateRadiusClient(It.IsAny<IPEndPoint>()))
                 .Returns(_radiusClientMock.Object);
         }
@@ -49,8 +47,9 @@ namespace Multifactor.Radius.Adapter.v2.Tests.Application.Pipeline.FirstFactor
         public async Task ProcessFirstFactor_ShouldRejectWhenUserNameMissing()
         {
             // Arrange
+            var clientConfiguration = CreateTestClientConfiguration();
             var requestPacket = CreateRadiusPacket(userName: null);
-            var context = CreateContext(requestPacket);
+            var context = CreateContext(requestPacket, clientConfiguration);
 
             // Act
             await _processor.ProcessFirstFactor(context);
@@ -72,7 +71,8 @@ namespace Multifactor.Radius.Adapter.v2.Tests.Application.Pipeline.FirstFactor
         {
             // Arrange
             var requestPacket = CreateRadiusPacket("testuser");
-            var context = CreateContext(requestPacket);
+            var clientConfiguration = CreateTestClientConfiguration();
+            var context = CreateContext(requestPacket, clientConfiguration);
             
             var responsePacket = new RadiusPacket(
                 new RadiusPacketHeader(PacketCode.AccessAccept, 1, new byte[16]));
@@ -100,7 +100,8 @@ namespace Multifactor.Radius.Adapter.v2.Tests.Application.Pipeline.FirstFactor
         {
             // Arrange
             var requestPacket = CreateRadiusPacket("testuser");
-            var context = CreateContext(requestPacket);
+            var clientConfiguration = CreateTestClientConfiguration();
+            var context = CreateContext(requestPacket, clientConfiguration);
             
             var responsePacket = new RadiusPacket(
                 new RadiusPacketHeader(PacketCode.AccessReject, 1, new byte[16]));
@@ -118,14 +119,16 @@ namespace Multifactor.Radius.Adapter.v2.Tests.Application.Pipeline.FirstFactor
         public async Task ProcessFirstFactor_ShouldTryNextServerWhenFirstFails()
         {
             // Arrange
-            var requestPacket = CreateRadiusPacket("testuser");
-            var context = CreateContext(requestPacket);
-            
-            context.ClientConfiguration.NpsServerEndpoints = new[]
+            var npsServerEndpoints = new[]
             {
                 new IPEndPoint(IPAddress.Parse("192.168.1.1"), 1812),
                 new IPEndPoint(IPAddress.Parse("192.168.1.2"), 1812)
             };
+            var requestPacket = CreateRadiusPacket("testuser");
+            var clientConfiguration = CreateTestClientConfiguration(npsServerEndpoints);
+            var context = CreateContext(requestPacket, clientConfiguration);
+            
+
             
             var responsePacket = new RadiusPacket(
                 new RadiusPacketHeader(PacketCode.AccessAccept, 1, new byte[16]));
@@ -167,14 +170,14 @@ namespace Multifactor.Radius.Adapter.v2.Tests.Application.Pipeline.FirstFactor
         public async Task ProcessFirstFactor_ShouldRejectWhenAllServersFail()
         {
             // Arrange
-            var requestPacket = CreateRadiusPacket("testuser");
-            var context = CreateContext(requestPacket);
-            
-            context.ClientConfiguration.NpsServerEndpoints = new[]
+            var npsServerEndpoints = new[]
             {
                 new IPEndPoint(IPAddress.Parse("192.168.1.1"), 1812),
                 new IPEndPoint(IPAddress.Parse("192.168.1.2"), 1812)
             };
+            var requestPacket = CreateRadiusPacket("testuser");
+            var clientConfiguration = CreateTestClientConfiguration(npsServerEndpoints);
+            var context = CreateContext(requestPacket, clientConfiguration);
             
             _radiusClientMock
                 .Setup(x => x.SendPacketAsync(
@@ -235,16 +238,21 @@ namespace Multifactor.Radius.Adapter.v2.Tests.Application.Pipeline.FirstFactor
             return packet;
         }
 
-        private RadiusPipelineContext CreateContext(RadiusPacket requestPacket)
+        private static ClientConfiguration CreateTestClientConfiguration(IPEndPoint[]? npsServerEndpoints = null)
         {
-            var clientConfig = new ClientConfiguration
+            return new ClientConfiguration
             {
                 Name = "TestClient",
                 RadiusSharedSecret = "shared-secret",
                 AdapterClientEndpoint = new IPEndPoint(IPAddress.Any, 0),
-                NpsServerEndpoints = new[] { new IPEndPoint(IPAddress.Parse("192.168.1.1"), 1812) },
+                NpsServerEndpoints = npsServerEndpoints ?? [new IPEndPoint(IPAddress.Parse("192.168.1.1"), 1812)],
                 NpsServerTimeout = TimeSpan.FromSeconds(5)
             };
+        }
+
+        private static RadiusPipelineContext CreateContext(RadiusPacket requestPacket, ClientConfiguration clientConfig)
+        {
+
             
             var context = new RadiusPipelineContext(requestPacket, clientConfig)
             {

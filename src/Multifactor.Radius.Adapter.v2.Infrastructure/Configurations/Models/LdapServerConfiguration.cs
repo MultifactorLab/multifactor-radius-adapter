@@ -5,7 +5,7 @@ using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Parser;
 
 namespace Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Models;
 
-public class LdapServerConfiguration : ILdapServerConfiguration
+internal class LdapServerConfiguration : ILdapServerConfiguration
 {
     public string ConnectionString { get; init; }
     public string Username { get; init; }
@@ -43,30 +43,30 @@ public class LdapServerConfiguration : ILdapServerConfiguration
 
             BindTimeoutSeconds = ldapServerSection.BindTimeoutSeconds ?? 30,
             AccessGroups =
-                ConfigurationValueProcessor.TryParseDistinguishedNames(ldapServerSection.AccessGroups,
+                ConfigurationValueParser.TryParseDistinguishedNames(ldapServerSection.AccessGroups,
                     out var accessGroups)
                     ? accessGroups
                     : [],
             SecondFaGroups =
-                ConfigurationValueProcessor.TryParseDistinguishedNames(ldapServerSection.SecondFaGroups,
+                ConfigurationValueParser.TryParseDistinguishedNames(ldapServerSection.SecondFaGroups,
                     out var secondFaGroups)
                     ? secondFaGroups
                     : [],
             SecondFaBypassGroups =
-                ConfigurationValueProcessor.TryParseDistinguishedNames(ldapServerSection.SecondFaBypassGroups, out var secondFaBypassGroups)
+                ConfigurationValueParser.TryParseDistinguishedNames(ldapServerSection.SecondFaBypassGroups, out var secondFaBypassGroups)
                     ? secondFaBypassGroups
                     : [],
             LoadNestedGroups =ldapServerSection.LoadNestedGroups,
             NestedGroupsBaseDns =
-                ConfigurationValueProcessor.TryParseDistinguishedNames(ldapServerSection.NestedGroupsBaseDns, out var nestedGroupsBaseDns)
+                ConfigurationValueParser.TryParseDistinguishedNames(ldapServerSection.NestedGroupsBaseDns, out var nestedGroupsBaseDns)
                     ? nestedGroupsBaseDns
                     : [],
             AuthenticationCacheGroups =
-                ConfigurationValueProcessor.TryParseDistinguishedNames(ldapServerSection.AuthenticationCacheGroups, out var authenticationCacheGroups)
+                ConfigurationValueParser.TryParseDistinguishedNames(ldapServerSection.AuthenticationCacheGroups, out var authenticationCacheGroups)
                     ? authenticationCacheGroups
                     : [],
             PhoneAttributes =
-                ConfigurationValueProcessor.TryParseStringList(ldapServerSection.PhoneAttributes,
+                ConfigurationValueParser.TryParseStringList(ldapServerSection.PhoneAttributes,
                     out var phoneAttributes)
                     ? phoneAttributes
                     : [],
@@ -75,26 +75,26 @@ public class LdapServerConfiguration : ILdapServerConfiguration
             TrustedDomainsEnabled = ldapServerSection.TrustedDomainsEnabled,
             AlternativeSuffixesEnabled =ldapServerSection.AlternativeSuffixesEnabled,
             IncludedDomains =
-                ConfigurationValueProcessor.TryParseStringList(ldapServerSection.IncludedDomains,
+                ConfigurationValueParser.TryParseStringList(ldapServerSection.IncludedDomains,
                     out var includedDomains)
                     ? includedDomains
                     : [],
             ExcludedDomains =
-                ConfigurationValueProcessor.TryParseStringList(ldapServerSection.ExcludedDomains,
+                ConfigurationValueParser.TryParseStringList(ldapServerSection.ExcludedDomains,
                     out var excludedDomains)
                     ? excludedDomains
                     : [],
             IncludedSuffixes =
-                ConfigurationValueProcessor.TryParseStringList(ldapServerSection.IncludedSuffixes,
+                ConfigurationValueParser.TryParseStringList(ldapServerSection.IncludedSuffixes,
                     out var includedSuffixes)
                     ? includedSuffixes
                     : [],
             ExcludedSuffixes =
-                ConfigurationValueProcessor.TryParseStringList(ldapServerSection.ExcludedSuffixes,
+                ConfigurationValueParser.TryParseStringList(ldapServerSection.ExcludedSuffixes,
                     out var excludedSuffixes)
                     ? excludedSuffixes
                     : [],
-            BypassSecondFactorWhenApiUnreachableGroups = ConfigurationValueProcessor.TryParseStringList(ldapServerSection.BypassSecondFactorWhenApiUnreachableGroups,
+            BypassSecondFactorWhenApiUnreachableGroups = ConfigurationValueParser.TryParseStringList(ldapServerSection.BypassSecondFactorWhenApiUnreachableGroups,
                 out var bypassSecondFactorWhenApiUnreachableGroups)
                 ? bypassSecondFactorWhenApiUnreachableGroups
                 : []

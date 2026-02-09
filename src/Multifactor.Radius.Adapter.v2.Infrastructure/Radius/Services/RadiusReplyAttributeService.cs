@@ -49,7 +49,7 @@ public class RadiusReplyAttributeService : IRadiusReplyAttributeService
     
     private List<object> ProcessAttribute(
         string attributeName,
-        IRadiusReplyAttribute[] attributeValues,
+        IReadOnlyList<IRadiusReplyAttribute> attributeValues,
         GetReplyAttributesRequest request)
     {
         var result = new List<object>();
@@ -157,7 +157,7 @@ public class RadiusReplyAttributeService : IRadiusReplyAttributeService
         return [attributeValue.Value];
     }
     
-    private static bool IsSufficientAttribute(IRadiusReplyAttribute[] attributeValues)
+    private static bool IsSufficientAttribute(IReadOnlyList<IRadiusReplyAttribute> attributeValues)
     {
         return attributeValues.Any(av => av.Sufficient);
     }

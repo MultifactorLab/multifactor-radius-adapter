@@ -40,12 +40,11 @@ public static class SerilogLoggerFactory
             rootConfiguration.SyslogUseTls
             );
         var level = rootConfiguration.LoggingLevel;
-        var skip = string.IsNullOrWhiteSpace(level);
-        // if (string.IsNullOrWhiteSpace(level))
-        // {
-        //  throw new InvalidConfigurationException(
-        //      string.Concat("'{prop}' element not found. Config name: '{0}'", "rootConfiguration.ConfigurationName"));
-        // }
+        if (string.IsNullOrWhiteSpace(level))
+        {
+         throw new InvalidConfigurationException(
+             string.Concat("'{prop}' element not found. Config name: '{0}'", "rootConfiguration.ConfigurationName"));
+        }
 
         SetLogLevel(levelSwitch, level);
 
@@ -74,10 +73,8 @@ public static class SerilogLoggerFactory
 
             if (!string.IsNullOrWhiteSpace(fileTemplate))
             {
-                // Log.Logger.Warning(
-                //     "The {LoggingFormat:l} parameter cannot be used together with the template. The {FileLogOutputTemplate:l} parameter will be ignored.",
-                //     RadiusAdapterConfigurationDescription.Property(x => x.AppSettings.LoggingFormat),
-                //     RadiusAdapterConfigurationDescription.Property(x => x.AppSettings.FileLogOutputTemplate));
+                Log.Logger.Warning(
+                    "The 'logging-format' parameter cannot be used together with the template. The 'file-log-output-template' parameter will be ignored.");
             }
 
             return;

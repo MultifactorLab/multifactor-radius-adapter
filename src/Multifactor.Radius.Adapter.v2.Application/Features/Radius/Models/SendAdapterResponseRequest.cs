@@ -19,9 +19,9 @@ public class SendAdapterResponseRequest
     public ResponseInformation ResponseInformation { get; set; }
     public SharedSecret RadiusSharedSecret { get; set; }
     public HashSet<string> UserGroups { get; set; }
-    public IReadOnlyDictionary<string, IRadiusReplyAttribute[]> RadiusReplyAttributes { get; set; }
+    public IReadOnlyDictionary<string, IReadOnlyList<IRadiusReplyAttribute>> RadiusReplyAttributes { get; set; }
     public IReadOnlyCollection<LdapAttribute> Attributes { get; set; }
-    public (int min, int max)? InvalidCredentialDelay { get; set; }
+    public CredentialDelay? InvalidCredentialDelay { get; set; }
 
 
     public static SendAdapterResponseRequest FromContext(RadiusPipelineContext context)

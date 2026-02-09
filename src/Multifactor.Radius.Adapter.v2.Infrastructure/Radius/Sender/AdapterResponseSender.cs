@@ -228,11 +228,11 @@ public class AdapterResponseSender : IResponseSender
         
         // Задержка для AccessReject (security feature)
         if (responsePacket.Code == PacketCode.AccessReject 
-            && request.InvalidCredentialDelay.HasValue)
+            && request.InvalidCredentialDelay != null)
         {
             await WaitSomeTimeAsync(
-                request.InvalidCredentialDelay.Value.min, 
-                request.InvalidCredentialDelay.Value.max);
+                request.InvalidCredentialDelay.Min, 
+                request.InvalidCredentialDelay.Max);
         }
         
         await _udpClient.SendAsync(bytes, bytes.Length, endpoint);

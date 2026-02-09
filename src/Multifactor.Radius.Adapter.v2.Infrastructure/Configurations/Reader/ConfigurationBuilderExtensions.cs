@@ -4,14 +4,14 @@ namespace Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Reader;
 
 public static class ConfigurationBuilderExtensions
 {
-    public static IConfigurationBuilder AddLegacyXmlConfig(
+    public static IConfigurationBuilder AddXmlConfig(
         this IConfigurationBuilder builder, 
         string path)
     {
         return builder.Add(new XmlConfigurationSource(path));
     }
     
-    public static IConfigurationBuilder AddPrefixEnvironmentVariables(
+    public static IConfigurationBuilder AddEnvironmentVariables(
         this IConfigurationBuilder builder,
         string prefix)
     {

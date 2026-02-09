@@ -1,12 +1,11 @@
 using System.ComponentModel;
 using System.Xml.Serialization;
-using Microsoft.Extensions.Configuration;
 
 namespace Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Models;
 
-public class ConfigurationFile
+internal class AdapterConfiguration
 {
-    public ConfigurationFile()
+    public AdapterConfiguration()
     {
         AppSettings = new AppSettingsSection();
         LdapServers = new List<LdapServerSection>();
@@ -20,7 +19,7 @@ public class ConfigurationFile
     public RadiusReplySection RadiusReply { get; set; } = new();
 }
 
-public class AppSettingsSection
+internal class AppSettingsSection
 {
     [Description("multifactor-api-url")]
     public string MultifactorApiUrl { get; set; }
@@ -91,7 +90,7 @@ public class AppSettingsSection
     public string IpWhiteList { get; set; }
 }
 
-public class LdapServerSection
+internal class LdapServerSection
 {
     [Description("connection-string")]
     public required string ConnectionString { get; set; }
@@ -135,14 +134,14 @@ public class LdapServerSection
     public string BypassSecondFactorWhenApiUnreachableGroups { get; set; }
 }
 
-public class RadiusReplySection
+internal class RadiusReplySection
 {
     [XmlArray("Attributes")]
     [XmlArrayItem("add")]
     public List<RadiusAttributeItem> Attributes { get; set; }
 }
 
-public class RadiusAttributeItem
+internal class RadiusAttributeItem
 {
     [Description("name")]
     public string Name { get; set; }

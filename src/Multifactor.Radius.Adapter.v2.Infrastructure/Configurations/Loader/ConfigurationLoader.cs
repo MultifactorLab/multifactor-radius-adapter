@@ -3,14 +3,13 @@ using System.Reflection;
 using System.Text.RegularExpressions;
 using Multifactor.Radius.Adapter.v2.Application.Configuration.Models;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Exceptions;
-using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Loader;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Models;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Models.Dictionary;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Models.Dictionary.Attributes;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Reader;
 using Multifactor.Radius.Adapter.v2.Shared.Extensions;
 
-namespace Multifactor.Radius.Adapter.v2.Infrastructure.Configurations;
+namespace Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Loader;
 
 public class ConfigurationLoader : IConfigurationLoader
 {
@@ -85,7 +84,7 @@ public class ConfigurationLoader : IConfigurationLoader
         return clientConfig;
     }
     
-    private static ConfigurationFile ReadConfiguration(string filePath, string prefix = null)
+    private static AdapterConfiguration ReadConfiguration(string filePath, string prefix = null)
     {
         if (!File.Exists(filePath))
             throw new InvalidConfigurationException($"Configuration file not found: {filePath}");
@@ -93,13 +92,13 @@ public class ConfigurationLoader : IConfigurationLoader
         return ConfigurationReader.Read(filePath, prefix);
     }
     
-    private IReadOnlyDictionary<string, IRadiusReplyAttribute[]> ParseReplyAttributes(
+    private IReadOnlyDictionary<string, IReadOnlyList<IRadiusReplyAttribute>> ParseReplyAttributes(
         RadiusReplySection radiusReplySection)
     {
         if (radiusReplySection?.Attributes?.Any() != true)
-            return new Dictionary<string, IRadiusReplyAttribute[]>();
+            return new Dictionary<string, IReadOnlyList<IRadiusReplyAttribute>>();
         
-        var result = new Dictionary<string, IRadiusReplyAttribute[]>();
+        var result = new Dictionary<string, IReadOnlyList<IRadiusReplyAttribute>>();
         
         var groupedAttributes = radiusReplySection.Attributes
             .Where(a => !string.IsNullOrWhiteSpace(a.Name))
@@ -109,7 +108,7 @@ public class ConfigurationLoader : IConfigurationLoader
         {
             var attributes = group
                 .Select(CreateReplyAttribute)
-                .ToArray();
+                .ToList();
             
             result[group.Key] = attributes;
         }

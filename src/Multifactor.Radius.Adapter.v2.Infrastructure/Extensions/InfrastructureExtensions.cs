@@ -165,7 +165,6 @@ public static class InfrastructureExtensions
     {
         services.AddSingleton<ICacheService, CacheService>();
         services.AddSingleton<IAuthenticatedClientCache, AuthenticatedClientCache>();
-        services.AddSingleton<IRadiusAttributeSerializer, RadiusAttributeSerializer>();
         services.AddSingleton<IRadiusPacketBuilder, RadiusPacketBuilder>();
         services.AddTransient<IRadiusPacketService, RadiusPacketService>();
         services.AddSingleton<IRadiusClientFactory, RadiusClientFactory>();

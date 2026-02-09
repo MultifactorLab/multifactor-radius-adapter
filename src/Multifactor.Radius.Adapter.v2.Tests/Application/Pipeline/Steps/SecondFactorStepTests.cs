@@ -317,10 +317,12 @@ namespace Multifactor.Radius.Adapter.v2.Tests.Application.Pipeline.Steps
             var ldapProfileMock = new Mock<ILdapProfile>();
             ldapProfileMock.Setup(x => x.MemberOf).Returns(new List<DistinguishedName>());
 
-            var context = new RadiusPipelineContext(requestPacket, clientConfig, ldapConfig);
-            context.LdapProfile = ldapProfileMock.Object;
-            context.SecondFactorStatus = AuthenticationStatus.Awaiting;
-            
+            var context = new RadiusPipelineContext(requestPacket, clientConfig, ldapConfig)
+            {
+                LdapProfile = ldapProfileMock.Object,
+                SecondFactorStatus = AuthenticationStatus.Awaiting
+            };
+
             return context;
         }
     }

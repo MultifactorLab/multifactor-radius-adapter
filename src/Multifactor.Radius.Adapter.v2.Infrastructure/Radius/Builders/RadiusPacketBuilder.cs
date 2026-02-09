@@ -13,8 +13,6 @@ public class RadiusPacketBuilder : IRadiusPacketBuilder
 {
     private readonly IRadiusDictionary _radiusDictionary;
     private readonly IRadiusCryptoProvider _cryptoProvider;
-    // private readonly ILogger<RadiusPacketBuilder> _logger;
-    // private readonly IRadiusAttributeSerializer _attributeSerializer;
     
     
     /// <summary>
@@ -34,14 +32,10 @@ public class RadiusPacketBuilder : IRadiusPacketBuilder
 
     public RadiusPacketBuilder(
         IRadiusDictionary radiusDictionary,
-        IRadiusCryptoProvider cryptoProvider,
-        IRadiusAttributeSerializer attributeSerializer,
-        ILogger<RadiusPacketBuilder> logger)
+        IRadiusCryptoProvider cryptoProvider)
     {
         _radiusDictionary = radiusDictionary ?? throw new ArgumentNullException(nameof(radiusDictionary));
         _cryptoProvider = cryptoProvider ?? throw new ArgumentNullException(nameof(cryptoProvider));
-        // _attributeSerializer = attributeSerializer ?? throw new ArgumentNullException(nameof(attributeSerializer));
-        // _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     public byte[] Build(RadiusPacket packet, SharedSecret sharedSecret)

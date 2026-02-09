@@ -4,22 +4,21 @@ namespace Multifactor.Radius.Adapter.v2.Application.Configuration.Models;
 
 public interface IRootConfiguration
 {
-    
-    IReadOnlyList<Uri> MultifactorApiUrls { get; set; }
-    string? MultifactorApiProxy { get; set; }
-    TimeSpan MultifactorApiTimeout { get; set; }
-    IPEndPoint? AdapterServerEndpoint { get; set; }
-    string LoggingLevel { get; set; }
-    string? LoggingFormat { get; set; }
-    bool SyslogUseTls { get; set; }
-    string? SyslogServer { get; set; }
-    string? SyslogFormat { get; set; }
-    string? SyslogFacility { get; set; }
-    string SyslogAppName { get; set; }
-    string? SyslogFramer { get; set; }
-    string? SyslogOutputTemplate { get; set; }
+    IReadOnlyList<Uri> MultifactorApiUrls { get; }
+    string? MultifactorApiProxy { get; }
+    TimeSpan MultifactorApiTimeout { get; }
+    IPEndPoint? AdapterServerEndpoint { get; }
+    string LoggingLevel { get; }
+    string? LoggingFormat { get; }
+    bool SyslogUseTls { get; }
+    string? SyslogServer { get; }
+    string? SyslogFormat { get; }
+    string? SyslogFacility { get; }
+    string SyslogAppName { get; }
+    string? SyslogFramer { get; }
+    string? SyslogOutputTemplate { get; }
 
-    string? ConsoleLogOutputTemplate { get; set; }
-    string? FileLogOutputTemplate { get; set; }
-    int LogFileMaxSizeBytes { get; set; }
+    string? ConsoleLogOutputTemplate { get; }
+    string? FileLogOutputTemplate { get; }
+    int LogFileMaxSizeBytes { get; }
 }

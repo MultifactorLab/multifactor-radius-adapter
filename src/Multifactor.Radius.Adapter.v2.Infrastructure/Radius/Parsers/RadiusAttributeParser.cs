@@ -58,7 +58,7 @@ public class RadiusAttributeParser : IRadiusAttributeParser
         byte vendorType = contentBytes[4];
         byte vendorLength = contentBytes[5];
 
-        if (vendorLength < 2 || 2 + vendorLength - 2 > contentBytes.Length)
+        if (vendorLength < 2 || vendorLength > contentBytes.Length)
             return null;
 
         byte[] vendorContentBytes = new byte[vendorLength - 2];

@@ -4,24 +4,24 @@ namespace Multifactor.Radius.Adapter.v2.Application.Configuration.Models;
 
 public interface ILdapServerConfiguration
 {
-    public string ConnectionString { get; init; }
-    public string Username { get; init; }
-    public string Password { get; init; }
-    public int BindTimeoutSeconds{ get; init; }
-    public IReadOnlyList<DistinguishedName> AccessGroups { get; init; }
-    public IReadOnlyList<DistinguishedName> SecondFaGroups { get; init; }
-    public IReadOnlyList<DistinguishedName> SecondFaBypassGroups { get; init; }
-    public bool LoadNestedGroups { get; init; }
-    public IReadOnlyList<DistinguishedName> NestedGroupsBaseDns { get; init; }
-    public IReadOnlyList<DistinguishedName> AuthenticationCacheGroups { get; init; }
-    public IReadOnlyList<string> PhoneAttributes { get; init; }
-    public string IdentityAttribute { get; init; }
-    public bool RequiresUpn { get; init; }
-    public bool TrustedDomainsEnabled { get; init; }
-    public bool AlternativeSuffixesEnabled { get; init; }
-    public IReadOnlyList<string> IncludedDomains { get; init; }//TODO not used
-    public IReadOnlyList<string> ExcludedDomains { get; init; }//TODO not used
-    public IReadOnlyList<string> IncludedSuffixes { get; init; }
-    public IReadOnlyList<string> ExcludedSuffixes { get; init; }
-    public IReadOnlyList<string> BypassSecondFactorWhenApiUnreachableGroups { get; init; }
+    public string ConnectionString { get; }
+    public string Username { get; }
+    public string Password { get; }
+    public int BindTimeoutSeconds{ get; }
+    public IReadOnlyList<DistinguishedName> AccessGroups { get; }
+    public IReadOnlyList<DistinguishedName> SecondFaGroups { get; }
+    public IReadOnlyList<DistinguishedName> SecondFaBypassGroups { get; }
+    public bool LoadNestedGroups { get; }
+    public IReadOnlyList<DistinguishedName> NestedGroupsBaseDns { get; }
+    public IReadOnlyList<DistinguishedName> AuthenticationCacheGroups { get; }
+    public IReadOnlyList<string> PhoneAttributes { get; }
+    public string IdentityAttribute { get; }
+    public bool RequiresUpn { get; }
+    public bool TrustedDomainsEnabled { get; }
+    public bool AlternativeSuffixesEnabled { get; }
+    public IReadOnlyList<string> IncludedDomains { get; }//TODO not used
+    public IReadOnlyList<string> ExcludedDomains { get; }//TODO not used
+    public IReadOnlyList<string> IncludedSuffixes { get; }
+    public IReadOnlyList<string> ExcludedSuffixes { get; }
+    public IReadOnlyList<string> BypassSecondFactorWhenApiUnreachableGroups { get; }
 }

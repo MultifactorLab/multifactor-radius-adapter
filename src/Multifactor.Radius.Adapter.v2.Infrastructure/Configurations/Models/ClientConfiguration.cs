@@ -7,7 +7,7 @@ using NetTools;
 
 namespace Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Models;
 
-public class ClientConfiguration : IClientConfiguration
+internal class ClientConfiguration : IClientConfiguration
 {
     public string Name { get; set; }
     
@@ -21,22 +21,22 @@ public class ClientConfiguration : IClientConfiguration
     public IPAddress? RadiusClientIp { get; set; }
     public string RadiusClientNasIdentifier { get; set; }
     public string RadiusSharedSecret { get; set; }
-    public IPEndPoint[] NpsServerEndpoints { get; set; }
+    public IReadOnlyList<IPEndPoint> NpsServerEndpoints { get; set; }
     public TimeSpan NpsServerTimeout { get; set; }
     
-    public (PrivacyMode PrivacyMode, string[] PrivacyFields) Privacy { get; set; }
+    public Privacy Privacy { get; set; }
 
     public PreAuthMode? PreAuthenticationMethod { get; set; }
     public TimeSpan AuthenticationCacheLifetime { get; set; } = TimeSpan.Zero;
-    public (int min, int max)? InvalidCredentialDelay { get; set; }
+    public CredentialDelay? InvalidCredentialDelay { get; set; }
     public string? CallingStationIdAttribute { get; set; } //TODO not used
     public IReadOnlyList<IPAddressRange> IpWhiteList { get; set; }
     
     public IReadOnlyList<ILdapServerConfiguration>? LdapServers { get; set; }
-    public IReadOnlyDictionary<string, IRadiusReplyAttribute[]>? ReplyAttributes { get; set; }
+    public IReadOnlyDictionary<string, IReadOnlyList<IRadiusReplyAttribute>>? ReplyAttributes { get; set; }
 
 
-    public static ClientConfiguration FromConfiguration(ConfigurationFile configurationFile)
+    public static ClientConfiguration FromConfiguration(AdapterConfiguration configurationFile)
     {
         ArgumentNullException.ThrowIfNull(configurationFile);
         var dto = new ClientConfiguration
@@ -44,23 +44,23 @@ public class ClientConfiguration : IClientConfiguration
             Name = configurationFile.FileName,
             MultifactorNasIdentifier = !string.IsNullOrWhiteSpace(configurationFile.AppSettings.MultifactorNasIdentifier) ? configurationFile.AppSettings.MultifactorNasIdentifier :
                 throw InvalidConfigurationException.For(prop => prop.AppSettings.MultifactorNasIdentifier, "Property '{prop}' is required. Config name: '{0}'",  configurationFile.FileName),
-            MultifactorSharedSecret = !string.IsNullOrWhiteSpace(configurationFile.AppSettings.MultifactorSharedSecret) ? configurationFile.AppSettings.MultifactorNasIdentifier :
+            MultifactorSharedSecret = !string.IsNullOrWhiteSpace(configurationFile.AppSettings.MultifactorSharedSecret) ? configurationFile.AppSettings.MultifactorSharedSecret :
                 throw InvalidConfigurationException.For(prop => prop.AppSettings.MultifactorSharedSecret, "Property '{prop}' is required. Config name: '{0}'",  configurationFile.FileName),
-            SignUpGroups = ConfigurationValueProcessor.TryParseStringList(configurationFile.AppSettings.SignUpGroups, out var list) ? list : [],
+            SignUpGroups = ConfigurationValueParser.TryParseStringList(configurationFile.AppSettings.SignUpGroups, out var list) ? list : [],
             BypassSecondFactorWhenApiUnreachable = configurationFile.AppSettings.BypassSecondFactorWhenApiUnreachable,
-            RadiusClientIp = ConfigurationValueProcessor.TryParseIpAddress(configurationFile.AppSettings.RadiusClientIp, out var address) ? address : null,
+            RadiusClientIp = ConfigurationValueParser.TryParseIpAddress(configurationFile.AppSettings.RadiusClientIp, out var address) ? address : null,
             RadiusClientNasIdentifier = configurationFile.AppSettings.RadiusClientNasIdentifier,
             RadiusSharedSecret = !string.IsNullOrWhiteSpace(configurationFile.AppSettings.RadiusSharedSecret) ? configurationFile.AppSettings.RadiusSharedSecret 
                 : throw InvalidConfigurationException.For(c => c.AppSettings.RadiusSharedSecret, "Property '{prop}' is required. Config name: '{0}'", configurationFile.FileName),
-            NpsServerEndpoints = ConfigurationValueProcessor.TryParseEndpoints(configurationFile.AppSettings.NpsServerEndpoints, out var npsServerEndpoints)
+            NpsServerEndpoints = ConfigurationValueParser.TryParseEndpoints(configurationFile.AppSettings.NpsServerEndpoints, out var npsServerEndpoints)
                 ? npsServerEndpoints : [],
-            NpsServerTimeout = ConfigurationValueProcessor.TryParseTimeout(configurationFile.AppSettings.NpsServerTimeout, out var timeout) ? timeout.Value : TimeSpan.Parse("00:00:05"),
-            Privacy = ConfigurationValueProcessor.TryParsePrivacyModeWithFields(configurationFile.AppSettings.Privacy, out var privacy) ?  privacy : new(PrivacyMode.None, []),
-            PreAuthenticationMethod = ConfigurationValueProcessor.TryParseEnum<PreAuthMode>(configurationFile.AppSettings.PreAuthenticationMethod, out var mode) ? mode : PreAuthMode.None,
-            AuthenticationCacheLifetime = ConfigurationValueProcessor.TryParseTimeSpan(configurationFile.AppSettings.AuthenticationCacheLifetime, out var span) ? span : TimeSpan.Zero,
+            NpsServerTimeout = ConfigurationValueParser.TryParseTimeout(configurationFile.AppSettings.NpsServerTimeout, out var timeout) ? timeout.Value : TimeSpan.Parse("00:00:05"),
+            Privacy = ConfigurationValueParser.TryParsePrivacyModeWithFields(configurationFile.AppSettings.Privacy, out var privacy) ?  privacy : new(PrivacyMode.None, []),
+            PreAuthenticationMethod = ConfigurationValueParser.TryParseEnum<PreAuthMode>(configurationFile.AppSettings.PreAuthenticationMethod, out var mode) ? mode : PreAuthMode.None,
+            AuthenticationCacheLifetime = ConfigurationValueParser.TryParseTimeSpan(configurationFile.AppSettings.AuthenticationCacheLifetime, out var span) ? span : TimeSpan.Zero,
             CallingStationIdAttribute = configurationFile.AppSettings.CallingStationIdAttribute,
-            IpWhiteList = ConfigurationValueProcessor.TryParseIpRanges(configurationFile.AppSettings.IpWhiteList, out var ipWhiteList) ? ipWhiteList : [],
-            InvalidCredentialDelay = ConfigurationValueProcessor.TryParseDelaySettings(configurationFile.AppSettings.InvalidCredentialDelay, out var tuple)
+            IpWhiteList = ConfigurationValueParser.TryParseIpRanges(configurationFile.AppSettings.IpWhiteList, out var ipWhiteList) ? ipWhiteList : [],
+            InvalidCredentialDelay = ConfigurationValueParser.TryParseDelaySettings(configurationFile.AppSettings.InvalidCredentialDelay, out var tuple)
                 ? tuple
                 : null
         };
@@ -71,16 +71,17 @@ public class ClientConfiguration : IClientConfiguration
                 : throw InvalidConfigurationException.For(prop => prop.AppSettings.FirstFactorAuthenticationSource,
                     "Property '{prop}' is required. Config name: '{0}'", configurationFile.FileName);
 
-        dto.FirstFactorAuthenticationSource = ConfigurationValueProcessor.TryParseEnum<AuthenticationSource>(firstFactorAuthenticationSource, out var source)
+        dto.FirstFactorAuthenticationSource = ConfigurationValueParser.TryParseEnum<AuthenticationSource>(firstFactorAuthenticationSource, out var source)
             ? source 
-            : throw InvalidConfigurationException.For(c => c.AppSettings.FirstFactorAuthenticationSource, "Error while cast property '{prop}'. Config name: '{0}'", configurationFile.FileName); ;
+            : throw InvalidConfigurationException.For(c => c.AppSettings.FirstFactorAuthenticationSource, "Error while cast property '{prop}'. Value: {0}. Config name: '{1}'", firstFactorAuthenticationSource, configurationFile.FileName); ;
         
-        var adapterClientEndpoint = !string.IsNullOrWhiteSpace(configurationFile.AppSettings.AdapterClientEndpoint) ? configurationFile.AppSettings.AdapterClientEndpoint :
+        var adapterClientEndpoint = dto.FirstFactorAuthenticationSource != AuthenticationSource.Radius || !string.IsNullOrWhiteSpace(configurationFile.AppSettings.AdapterClientEndpoint) ? configurationFile.AppSettings.AdapterClientEndpoint :
             throw InvalidConfigurationException.For(c => c.AppSettings.AdapterClientEndpoint, "Property '{prop}' is required. Config name: '{0}'", configurationFile.FileName);
-        dto.AdapterClientEndpoint =
-            ConfigurationValueProcessor.TryParseEndpoint(adapterClientEndpoint, out var endpoint)
+        if(!string.IsNullOrWhiteSpace(configurationFile.AppSettings.AdapterClientEndpoint))
+            dto.AdapterClientEndpoint =
+            ConfigurationValueParser.TryParseEndpoint(adapterClientEndpoint, out var endpoint)
                 ? endpoint! :  
-                throw InvalidConfigurationException.For(c => c.AppSettings.FirstFactorAuthenticationSource, "Error while cast property '{prop}'. Config name: '{0}'", configurationFile.FileName); ;
+                throw InvalidConfigurationException.For(c => c.AppSettings.AdapterClientEndpoint, "Error while cast property '{prop}'. Value: {0}. Config name: '{1}'", adapterClientEndpoint, configurationFile.FileName); ;
         return dto;
     }
 }

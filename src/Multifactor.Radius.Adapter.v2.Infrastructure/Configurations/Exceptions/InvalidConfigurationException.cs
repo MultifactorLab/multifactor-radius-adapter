@@ -8,7 +8,7 @@ namespace Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Exceptions
 /// <summary>
 /// The Radius adapter configuration is invalid.
 /// </summary>
-public class InvalidConfigurationException : Exception
+internal class InvalidConfigurationException : Exception
 {
     public InvalidConfigurationException(string message)
         : base($"Configuration error: {message}") { }
@@ -18,7 +18,7 @@ public class InvalidConfigurationException : Exception
     public InvalidConfigurationException(string message, Exception inner)
         : base($"Configuration error: {message}", inner) { }
     
-    public static InvalidConfigurationException For<TProp>(Expression<Func<ConfigurationFile, TProp>> propertySelector, 
+    public static InvalidConfigurationException For<TProp>(Expression<Func<AdapterConfiguration, TProp>> propertySelector, 
         string formattedMessage,
         params object[] args)
     {
@@ -40,7 +40,7 @@ public class InvalidConfigurationException : Exception
         return new InvalidConfigurationException(formattedMessage);
     }
     
-    private static string Property<TProp>(Expression<Func<ConfigurationFile, TProp>> propertySelector)
+    private static string Property<TProp>(Expression<Func<AdapterConfiguration, TProp>> propertySelector)
     {
         if (propertySelector is null)
         {

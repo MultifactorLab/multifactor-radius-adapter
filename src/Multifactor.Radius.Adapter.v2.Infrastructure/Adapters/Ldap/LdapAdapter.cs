@@ -83,7 +83,7 @@ public sealed class LdapAdapter : ILdapAdapter
     
     public ILdapSchema? LoadSchema(LdapConnectionData request)
     {
-        var options = new LdapConnectionOptions(new LdapConnectionString(request.ConnectionString), 
+        var options = new LdapConnectionOptions(new LdapConnectionString(request.ConnectionString, true), 
             AuthType.Basic, 
             request.UserName, 
             request.Password, 
@@ -152,7 +152,7 @@ public sealed class LdapAdapter : ILdapAdapter
 
     private ILdapConnection CreateConnection(LdapConnectionData data)
     {
-        var options = new LdapConnectionOptions(new LdapConnectionString(data.ConnectionString, true), 
+        var options = new LdapConnectionOptions(new LdapConnectionString(data.ConnectionString, true, false), 
             AuthType.Basic, 
             data.UserName, 
             data.Password, 

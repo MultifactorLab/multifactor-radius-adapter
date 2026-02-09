@@ -42,13 +42,13 @@ try
 }
 catch (Exception ex)
 {
-    if(ex is InvalidConfigurationException)
-        StartupLogger.Error(null, "Unable to start: {Message:l}", ex.Message);
-    else
-    {
+    // if(ex is InvalidConfigurationException)
+    //     StartupLogger.Error(ex, "Unable to start: {Message:l}", ex.Message);
+    // else
+    // {
         var errorMessage = FlattenException(ex);
         StartupLogger.Error(ex, "Unable to start: {Message:l}", errorMessage);
-    }
+    // }
 }
 finally
 {

@@ -6,7 +6,7 @@ using Multifactor.Radius.Adapter.v2.Application.Features.Radius.Ports;
 
 namespace Multifactor.Radius.Adapter.v2.Server;
 
-public class AdapterServer : IAsyncDisposable
+internal sealed class AdapterServer : IAsyncDisposable
 {
     private readonly IUdpClient _udpClient;
     private readonly IRadiusUdpAdapter _packetAdapter;
@@ -28,10 +28,10 @@ public class AdapterServer : IAsyncDisposable
         ServiceConfiguration serviceConfiguration,
         ILogger<AdapterServer> logger)
     {
-        _udpClient = udpClient ?? throw new ArgumentNullException(nameof(udpClient));
-        _packetAdapter = packetAdapter ?? throw new ArgumentNullException(nameof(packetAdapter));
-        _serviceConfiguration = serviceConfiguration ?? throw new ArgumentNullException(nameof(serviceConfiguration));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _udpClient = udpClient;
+        _packetAdapter = packetAdapter;
+        _serviceConfiguration = serviceConfiguration;
+        _logger = logger;
         
         _concurrencyLimiter = new SemaphoreSlim(MaxConcurrentRequests);
     }
@@ -127,7 +127,8 @@ public class AdapterServer : IAsyncDisposable
     {
         _logger.LogInformation("Stopping RADIUS server...");
         
-        await _cts?.CancelAsync();
+        if(_cts != null)
+            await _cts.CancelAsync();
         
         if (_receiveLoopTask != null)
         {
