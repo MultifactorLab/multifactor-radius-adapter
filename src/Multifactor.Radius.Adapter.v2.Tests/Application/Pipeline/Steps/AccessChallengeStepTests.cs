@@ -1,6 +1,5 @@
 using Microsoft.Extensions.Logging;
 using Moq;
-using Multifactor.Radius.Adapter.v2.Application.Configuration.Models;
 using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.AccessChallenge;
 using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.AccessChallenge.Models;
 using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.AccessChallenge.Models.Enums;

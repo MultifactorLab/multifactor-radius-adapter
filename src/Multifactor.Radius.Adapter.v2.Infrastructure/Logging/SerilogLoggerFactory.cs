@@ -1,7 +1,6 @@
 using Elastic.CommonSchema.Serilog;
 using Multifactor.Radius.Adapter.v2.Application.Configuration.Models;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Exceptions;
-using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Models;
 using Serilog;
 using Serilog.Core;
 using Serilog.Events;

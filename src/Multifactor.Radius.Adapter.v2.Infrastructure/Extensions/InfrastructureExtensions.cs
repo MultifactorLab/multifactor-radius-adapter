@@ -18,10 +18,8 @@ using Multifactor.Radius.Adapter.v2.Infrastructure.Adapters.PacketHandler;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Adapters.Udp;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Cache;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Cache.AuthenticatedClientCache;
-using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Loader;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Models.Dictionary;
-using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Parser;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Logging;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Radius.Builders;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Radius.Client;
@@ -90,8 +88,7 @@ public static class InfrastructureExtensions
                     client.Timeout = config.RootConfiguration.MultifactorApiTimeout;
                 }
             })
-            .AddPolicyHandler((serviceProvider, request) =>
-            Policy<HttpResponseMessage>
+            .AddPolicyHandler((serviceProvider, request) => Policy<HttpResponseMessage>
                 .Handle<HttpRequestException>()
                 .OrResult(response => !response.IsSuccessStatusCode && (int)response.StatusCode >= 500)
                 .FallbackAsync(
@@ -110,12 +107,12 @@ public static class InfrastructureExtensions
                     },
                     onFallbackAsync: (outcome, context) =>
                     {
-                        // var logger = serviceProvider.GetRequiredService<ILogger>();
-                        // logger.LogWarning("Primary endpoint failed. Trying fallback. Error: {Error}", 
-                        //     outcome.Exception?.Message ?? outcome.Result?.StatusCode.ToString());
+                        var logger = serviceProvider.GetRequiredService<ILogger>();
+                        logger.LogWarning("Primary endpoint failed. Trying fallback. Error: {Error}", 
+                            outcome.Exception?.Message ?? outcome.Result?.StatusCode.ToString());
                         return Task.CompletedTask;
                     })
-                .WrapAsync(Policy.TimeoutAsync<HttpResponseMessage>(TimeSpan.FromSeconds(10)))
+                .WrapAsync(Policy.TimeoutAsync<HttpResponseMessage>(serviceProvider.GetRequiredService<ServiceConfiguration>().RootConfiguration.MultifactorApiTimeout))
         )
         .AddHttpMessageHandler<MfTraceIdHeaderSetter>()
         .ConfigurePrimaryHttpMessageHandler(provider =>

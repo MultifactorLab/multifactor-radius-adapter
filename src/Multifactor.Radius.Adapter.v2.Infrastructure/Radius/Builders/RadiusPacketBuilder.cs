@@ -1,6 +1,5 @@
 using System.Net;
 using System.Text;
-using Microsoft.Extensions.Logging;
 using Multifactor.Radius.Adapter.v2.Application.Features.Radius.Models;
 using Multifactor.Radius.Adapter.v2.Application.Features.Radius.Models.Enums;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Models.Dictionary;

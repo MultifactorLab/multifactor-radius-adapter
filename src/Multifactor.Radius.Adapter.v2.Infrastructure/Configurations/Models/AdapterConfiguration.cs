@@ -109,7 +109,7 @@ internal class LdapServerSection
     [Description("load-nested-groups")]
     public bool LoadNestedGroups { get; set; }
     [Description("nested-groups-base-dn")]
-    public string NestedGroupsBaseDns { get; set; }
+    public string NestedGroupsBaseDn { get; set; }
     [Description("authentication-cache-groups")]
     public string AuthenticationCacheGroups { get; set; }
     [Description("phone-attributes")]

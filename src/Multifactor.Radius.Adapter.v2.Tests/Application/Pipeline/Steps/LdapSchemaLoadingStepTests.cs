@@ -2,7 +2,6 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using Multifactor.Core.Ldap.Schema;
 using Multifactor.Radius.Adapter.v2.Application.Cache;
-using Multifactor.Radius.Adapter.v2.Application.Configuration.Models;
 using Multifactor.Radius.Adapter.v2.Application.Features.Ldap.Models;
 using Multifactor.Radius.Adapter.v2.Application.Features.Ldap.Ports;
 using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Models;

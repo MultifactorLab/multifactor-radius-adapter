@@ -34,7 +34,7 @@ public sealed class MultifactorApiService
     public async Task<SecondFactorResponse> CreateSecondFactorRequestAsync(RadiusPipelineContext context, bool cacheEnabled)
     {
         ArgumentNullException.ThrowIfNull(context, nameof(context));
-        
+        _logger.LogInformation($"Creating second-factor request for user {context.RequestPacket.UserName}");
         var personalData = RequestDataExtractor.ExtractPersonalData(context);
         if (string.IsNullOrWhiteSpace(personalData.Identity))
         {

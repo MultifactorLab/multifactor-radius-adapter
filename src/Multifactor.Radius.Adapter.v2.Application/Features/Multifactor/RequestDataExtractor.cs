@@ -29,7 +29,7 @@ public static class RequestDataExtractor
         return string.IsNullOrWhiteSpace(context.LdapConfiguration?.IdentityAttribute) ? context.RequestPacket.UserName 
             : context.LdapProfile?.Attributes?.Where(attr => attr.Name == context.LdapConfiguration.IdentityAttribute)
             .SelectMany(attr => attr.Values)
-            .FirstOrDefault(value => !string.IsNullOrWhiteSpace(value));;
+            .FirstOrDefault(value => !string.IsNullOrWhiteSpace(value));
     }
 
     public static string? GetUserPhone(RadiusPipelineContext context)

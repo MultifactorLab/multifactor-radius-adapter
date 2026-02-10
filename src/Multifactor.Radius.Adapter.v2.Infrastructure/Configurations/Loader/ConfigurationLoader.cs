@@ -7,6 +7,7 @@ using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Models;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Models.Dictionary;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Models.Dictionary.Attributes;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Reader;
+using Multifactor.Radius.Adapter.v2.Infrastructure.Logging;
 using Multifactor.Radius.Adapter.v2.Shared.Extensions;
 
 namespace Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Loader;
@@ -44,7 +45,7 @@ public class ConfigurationLoader : IConfigurationLoader
     {
         if (!File.Exists(configPath))
             throw new InvalidConfigurationException($"Root configuration not found: {configPath}");
-        
+        StartupLogger.Debug($"Loading root configuration from {configPath}");
         var config = ReadConfiguration(configPath);
         return RootConfiguration.FromConfiguration(config);
     }
@@ -55,6 +56,7 @@ public class ConfigurationLoader : IConfigurationLoader
         
         if (!Directory.Exists(clientsPath))
         {
+            StartupLogger.Debug($"Loading client configuration from {rootConfigPath}");
             var clientConfig = ParseClientConfiguration(rootConfigPath);
             return [clientConfig];
         }
@@ -63,6 +65,7 @@ public class ConfigurationLoader : IConfigurationLoader
         
         if (clientConfigFiles.Length == 0)
         {
+            StartupLogger.Debug($"Loading client configuration from {rootConfigPath}");
             var clientConfig = ParseClientConfiguration(rootConfigPath);
             return [clientConfig];
         }
@@ -74,6 +77,7 @@ public class ConfigurationLoader : IConfigurationLoader
     
     private ClientConfiguration ParseClientConfiguration(string filePath)
     {
+        StartupLogger.Debug($"Loading client configuration from {filePath}");
         var prefix = GetConfigPrefix(filePath);
         var config = ReadConfiguration(filePath, prefix);
         

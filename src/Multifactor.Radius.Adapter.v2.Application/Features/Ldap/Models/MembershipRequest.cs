@@ -14,7 +14,7 @@ public class MembershipRequest
 
     public static MembershipRequest FromContext(RadiusPipelineContext context, IReadOnlyList<DistinguishedName> groups)
     {
-        if (context.LdapConfiguration?.AccessGroups.Count == 0)
+        if (groups.Count == 0)
             throw new ArgumentNullException();
         
         return new MembershipRequest

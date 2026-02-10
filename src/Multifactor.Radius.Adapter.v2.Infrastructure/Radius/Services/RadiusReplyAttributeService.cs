@@ -3,7 +3,6 @@ using Microsoft.Extensions.Logging;
 using Multifactor.Radius.Adapter.v2.Application.Configuration.Models;
 using Multifactor.Radius.Adapter.v2.Application.Features.Radius.Models;
 using Multifactor.Radius.Adapter.v2.Application.Features.Radius.Services;
-using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Models;
 using Multifactor.Radius.Adapter.v2.Shared.Extensions;
 
 namespace Multifactor.Radius.Adapter.v2.Infrastructure.Radius.Services;

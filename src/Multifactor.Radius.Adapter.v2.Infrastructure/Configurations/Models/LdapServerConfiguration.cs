@@ -56,10 +56,10 @@ internal class LdapServerConfiguration : ILdapServerConfiguration
                 ConfigurationValueParser.TryParseDistinguishedNames(ldapServerSection.SecondFaBypassGroups, out var secondFaBypassGroups)
                     ? secondFaBypassGroups
                     : [],
-            LoadNestedGroups =ldapServerSection.LoadNestedGroups,
+            LoadNestedGroups = ldapServerSection.LoadNestedGroups,
             NestedGroupsBaseDns =
-                ConfigurationValueParser.TryParseDistinguishedNames(ldapServerSection.NestedGroupsBaseDns, out var nestedGroupsBaseDns)
-                    ? nestedGroupsBaseDns
+                ConfigurationValueParser.TryParseDistinguishedNames(ldapServerSection.NestedGroupsBaseDn, out var nestedGroupsBaseDn)
+                    ? nestedGroupsBaseDn
                     : [],
             AuthenticationCacheGroups =
                 ConfigurationValueParser.TryParseDistinguishedNames(ldapServerSection.AuthenticationCacheGroups, out var authenticationCacheGroups)

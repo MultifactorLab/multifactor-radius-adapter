@@ -23,26 +23,9 @@ public sealed class CustomUdpClient : IUdpClient
         _logger.LogInformation("UDP client initialized on {Endpoint}", endPoint);
     }
     
-    public async Task<UdpReceiveResult> ReceiveAsync(CancellationToken cancellationToken = default)
-    {
-        try
-        {
-            return await _udpClient.ReceiveAsync(cancellationToken);
-        }
-        catch (SocketException ex) when (ex.SocketErrorCode == SocketError.Interrupted)
-        {
-            throw new OperationCanceledException("UDP receive was interrupted", ex, cancellationToken);
-        }
-        catch (ObjectDisposedException) when (cancellationToken.IsCancellationRequested)
-        {
-            throw new OperationCanceledException(cancellationToken);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "UDP receive error");
-            throw;
-        }
-    }
+    public async Task<UdpReceiveResult> ReceiveAsync(CancellationToken cancellationToken = default) 
+        => await _udpClient.ReceiveAsync(cancellationToken);
+    
     
     public async Task<int> SendAsync(
         byte[] datagram, 

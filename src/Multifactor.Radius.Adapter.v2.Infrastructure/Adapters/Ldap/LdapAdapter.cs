@@ -83,11 +83,13 @@ public sealed class LdapAdapter : ILdapAdapter
     
     public ILdapSchema? LoadSchema(LdapConnectionData request)
     {
-        var options = new LdapConnectionOptions(new LdapConnectionString(request.ConnectionString, true), 
+        var options = new LdapConnectionOptions(
+            new LdapConnectionString(request.ConnectionString, true), 
             AuthType.Basic, 
             request.UserName, 
             request.Password, 
-            TimeSpan.FromSeconds(request.BindTimeoutInSeconds));
+            TimeSpan.FromSeconds(request.BindTimeoutInSeconds)
+            );
         return _schemaLoader.Load(options);
     }
 

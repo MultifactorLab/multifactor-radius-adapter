@@ -4,7 +4,6 @@ using Microsoft.Extensions.Hosting;
 using Multifactor.Radius.Adapter.v2.Application.Features.Radius.Ports;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Extensions;
 using Multifactor.Radius.Adapter.v2.Application.Extensions;
-using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Exceptions;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Logging;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Radius.Sender;
 using Multifactor.Radius.Adapter.v2.Server;
