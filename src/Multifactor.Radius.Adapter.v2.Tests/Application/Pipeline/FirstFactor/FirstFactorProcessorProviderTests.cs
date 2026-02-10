@@ -1,5 +1,5 @@
 using Moq;
-using Multifactor.Radius.Adapter.v2.Application.Configuration.Models.Enum;
+using Multifactor.Radius.Adapter.v2.Application.Core.Models.Enum;
 using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.FirstFactor;
 
 namespace Multifactor.Radius.Adapter.v2.Tests.Application.Pipeline.FirstFactor

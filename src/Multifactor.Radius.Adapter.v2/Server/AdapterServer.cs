@@ -10,6 +10,7 @@ internal sealed class AdapterServer : IAsyncDisposable
 {
     private readonly IUdpClient _udpClient;
     private readonly IRadiusUdpAdapter _packetAdapter;
+    private readonly ApplicationVariables _applicationVariables;
     private readonly ILogger<AdapterServer> _logger;
     private readonly ServiceConfiguration _serviceConfiguration;
     
@@ -25,11 +26,13 @@ internal sealed class AdapterServer : IAsyncDisposable
     public AdapterServer(
         IUdpClient udpClient,
         IRadiusUdpAdapter packetAdapter,
+        ApplicationVariables applicationVariables,
         ServiceConfiguration serviceConfiguration,
         ILogger<AdapterServer> logger)
     {
         _udpClient = udpClient;
         _packetAdapter = packetAdapter;
+        _applicationVariables = applicationVariables;
         _serviceConfiguration = serviceConfiguration;
         _logger = logger;
         
@@ -88,10 +91,6 @@ internal sealed class AdapterServer : IAsyncDisposable
                     packet.RemoteEndPoint.Address, packet.RemoteEndPoint.Port);
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
-            {
-                break;
-            }
-            catch (SocketException ex) when (ex.SocketErrorCode is SocketError.Interrupted or SocketError.ConnectionReset)
             {
                 break;
             }
@@ -169,6 +168,7 @@ internal sealed class AdapterServer : IAsyncDisposable
 
     private void LogStartupMessage()
     {
+        _logger.LogInformation("Multifactor (c) cross-platform RADIUS Adapter, v. {Version:l}", _applicationVariables.AppVersion);
         var endpoint = _serviceConfiguration.RootConfiguration.AdapterServerEndpoint;
         _logger.LogInformation(
             "Starting RADIUS server on {Host}:{Port} (Max concurrent: {MaxConcurrent})", 

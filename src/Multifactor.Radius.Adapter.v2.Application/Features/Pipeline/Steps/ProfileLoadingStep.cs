@@ -69,8 +69,6 @@ public class ProfileLoadingStep : IRadiusPipelineStep
             _logger.LogDebug("Loaded '{user}' profile from cache.", userIdentity.Identity);
             return profile;
         }
-                
-        _logger.LogInformation("Try to find '{userIdentity}' profile at '{domain}'.", userIdentity.Identity, domain.StringRepresentation);
         var request = new FindUserRequest
         {
             ConnectionData = new LdapConnectionData

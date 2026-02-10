@@ -47,6 +47,7 @@ public sealed class LdapAdapter : ILdapAdapter
     #region FindUserProfile
     public ILdapProfile? FindUserProfile(FindUserRequest request)
     {
+        _logger.LogInformation("Try to find '{userIdentity}' profile at '{domain}'.", request.UserIdentity.Identity, request.SearchBase.StringRepresentation);
         using var connection = CreateConnection(request.ConnectionData);   
         var identityToSearch = request.UserIdentity;
         if (request.UserIdentity.Format == UserIdentityFormat.NetBiosName)
@@ -58,6 +59,7 @@ public sealed class LdapAdapter : ILdapAdapter
             identityToSearch = new UserIdentity(userName);
         }
         var filter = GetFilter(identityToSearch, request.LdapSchema);
+        _logger.LogDebug("Search base = '{searchBase}'. Filter for search = '{filter}'", request.SearchBase.StringRepresentation, filter);
         var result = connection.Find(request.SearchBase, filter, SearchScope.Subtree, attributes: request.AttributeNames ?? []);
         var entry = result.FirstOrDefault();
         return entry is null ? null : new LdapProfile(entry, request.LdapSchema);

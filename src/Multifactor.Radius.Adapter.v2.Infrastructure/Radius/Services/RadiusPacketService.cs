@@ -24,11 +24,11 @@ public class RadiusPacketService : IRadiusPacketService
         INasIdentifierExtractor nasIdentifierExtractor,
         ILogger<RadiusPacketService> logger)
     {
-        _parser = parser ?? throw new ArgumentNullException(nameof(parser));
-        _builder = builder ?? throw new ArgumentNullException(nameof(builder));
-        _validator = validator ?? throw new ArgumentNullException(nameof(validator));
-        _nasIdentifierExtractor = nasIdentifierExtractor ?? throw new ArgumentNullException(nameof(nasIdentifierExtractor));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _parser = parser;
+        _builder = builder;
+        _validator = validator;
+        _nasIdentifierExtractor = nasIdentifierExtractor;
+        _logger = logger;
     }
 
     public RadiusPacket ParsePacket(byte[] packetBytes, SharedSecret sharedSecret, RadiusAuthenticator? requestAuthenticator = null)

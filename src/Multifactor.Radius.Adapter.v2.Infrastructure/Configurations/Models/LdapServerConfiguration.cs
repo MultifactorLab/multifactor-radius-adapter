@@ -1,3 +1,5 @@
+using Elastic.CommonSchema;
+using Microsoft.AspNetCore.Hosting.Server;
 using Multifactor.Core.Ldap.Name;
 using Multifactor.Radius.Adapter.v2.Application.Configuration.Models;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Exceptions;
@@ -19,9 +21,9 @@ internal class LdapServerConfiguration : ILdapServerConfiguration
     public IReadOnlyList<DistinguishedName> AuthenticationCacheGroups { get; init; }
     public IReadOnlyList<string> PhoneAttributes { get; init; }
     public string IdentityAttribute { get; init; }
-    public bool RequiresUpn { get; init; }
-    public bool TrustedDomainsEnabled { get; init; }
-    public bool AlternativeSuffixesEnabled { get; init; }
+    public bool RequiresUpn { get; init; }//TODO not used
+    public bool TrustedDomainsEnabled { get; init; }//TODO not used
+    public bool AlternativeSuffixesEnabled { get; init; }//TODO not used
     public IReadOnlyList<string> IncludedDomains { get; init; }//TODO not used
     public IReadOnlyList<string> ExcludedDomains { get; init; }//TODO not used
     public IReadOnlyList<string> IncludedSuffixes { get; init; }
@@ -30,6 +32,14 @@ internal class LdapServerConfiguration : ILdapServerConfiguration
 
     public static LdapServerConfiguration FromConfiguration(LdapServerSection ldapServerSection, string fileName)
     {
+        if (ldapServerSection is { TrustedDomainsEnabled: true, RequiresUpn: false })
+            throw new InvalidConfigurationException($"Config name: '{fileName}', LDAP server: '{ldapServerSection.ConnectionString}'. To use trusted domains also set 'requires-upn' to 'true'.");
+
+        if (!string.IsNullOrWhiteSpace(ldapServerSection.IncludedDomains) && !string.IsNullOrWhiteSpace(ldapServerSection.ExcludedDomains))
+            throw new InvalidConfigurationException($"Config name: '{fileName}', LDAP server: '{ldapServerSection.ConnectionString}'. Simultaneous use of 'included-domains' and 'excluded-domains' is not allowed.");
+
+        if (!string.IsNullOrWhiteSpace(ldapServerSection.IncludedSuffixes) && !string.IsNullOrWhiteSpace(ldapServerSection.ExcludedSuffixes))
+            throw new InvalidConfigurationException($"Config name: '{fileName}', LDAP server: '{ldapServerSection.ConnectionString}'. Simultaneous use of 'included-suffixes' and 'excluded-suffixes' is not allowed.");
         var dto = new LdapServerConfiguration
         {
             ConnectionString = !string.IsNullOrWhiteSpace(ldapServerSection.ConnectionString) ? ldapServerSection.ConnectionString :
@@ -73,7 +83,7 @@ internal class LdapServerConfiguration : ILdapServerConfiguration
             IdentityAttribute = ldapServerSection.IdentityAttribute,
             RequiresUpn = ldapServerSection.RequiresUpn,
             TrustedDomainsEnabled = ldapServerSection.TrustedDomainsEnabled,
-            AlternativeSuffixesEnabled =ldapServerSection.AlternativeSuffixesEnabled,
+            AlternativeSuffixesEnabled = ldapServerSection.AlternativeSuffixesEnabled,
             IncludedDomains =
                 ConfigurationValueParser.TryParseStringList(ldapServerSection.IncludedDomains,
                     out var includedDomains)
@@ -98,6 +108,7 @@ internal class LdapServerConfiguration : ILdapServerConfiguration
                 out var bypassSecondFactorWhenApiUnreachableGroups)
                 ? bypassSecondFactorWhenApiUnreachableGroups
                 : []
+
         };
         return dto;
     }

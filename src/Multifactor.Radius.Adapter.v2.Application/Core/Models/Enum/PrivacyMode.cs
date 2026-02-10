@@ -2,7 +2,7 @@
 //Please see licence at 
 //https://github.com/MultifactorLab/multifactor-radius-adapter/blob/main/LICENSE.md
 
-namespace Multifactor.Radius.Adapter.v2.Application.Configuration.Models.Enum;
+namespace Multifactor.Radius.Adapter.v2.Application.Core.Models.Enum;
 
 /// <summary>
 /// User information disclosure mode

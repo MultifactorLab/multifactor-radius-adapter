@@ -73,7 +73,7 @@ internal class AppSettingsSection
     [Description("radius-shared-secret")]
     public string RadiusSharedSecret { get; set; }
     [Description("nps-server-endpoint")]
-    public string NpsServerEndpoints { get; set; }
+    public string NpsServerEndpoint { get; set; }
     [Description("nps-server-timeout")]
     public string NpsServerTimeout { get; set; }
     [Description("privacy-mode")]

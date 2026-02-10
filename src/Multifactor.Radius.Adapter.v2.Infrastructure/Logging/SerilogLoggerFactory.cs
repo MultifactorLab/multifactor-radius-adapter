@@ -82,10 +82,7 @@ public static class SerilogLoggerFactory
         if (!string.IsNullOrWhiteSpace(consoleTemplate))
             loggerConfiguration.WriteTo.Console(outputTemplate: consoleTemplate);
         else
-            loggerConfiguration.WriteTo.Console(
-                outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}",
-                theme: AnsiConsoleTheme.Code,
-                restrictedToMinimumLevel: LogEventLevel.Information);
+            loggerConfiguration.WriteTo.Console();
         
         if (!string.IsNullOrWhiteSpace(fileTemplate))
         {

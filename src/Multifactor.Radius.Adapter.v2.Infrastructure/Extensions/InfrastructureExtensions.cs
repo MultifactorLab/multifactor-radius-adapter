@@ -27,7 +27,6 @@ using Multifactor.Radius.Adapter.v2.Infrastructure.Radius.Crypto;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Radius.Parsers;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Radius.Services;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Radius.Validators;
-using Multifactor.Radius.Adapter.v2.Shared.Extensions;
 using Polly;
 using Serilog;
 

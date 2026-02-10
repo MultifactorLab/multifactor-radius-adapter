@@ -1,6 +1,7 @@
 using System.Net;
 using Multifactor.Radius.Adapter.v2.Application.Configuration.Models;
-using Multifactor.Radius.Adapter.v2.Application.Configuration.Models.Enum;
+using Multifactor.Radius.Adapter.v2.Application.Core.Models;
+using Multifactor.Radius.Adapter.v2.Application.Core.Models.Enum;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Exceptions;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Parser;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Logging;
@@ -40,7 +41,7 @@ internal class ClientConfiguration : IClientConfiguration
     public static ClientConfiguration FromConfiguration(AdapterConfiguration configurationFile)
     {
         ArgumentNullException.ThrowIfNull(configurationFile);
-        const string formatedMessage = "Invalid '{prop}' in configuration. Value '{0}' cannot be parsed.";
+        const string formatedMessage = "Invalid '{prop}'. Value '{0}' cannot be parsed.";
         var dto = new ClientConfiguration
         {
             Name = configurationFile.FileName,
@@ -97,16 +98,16 @@ internal class ClientConfiguration : IClientConfiguration
                 dto.RadiusClientIps = [];
             }
 
-        if (!string.IsNullOrWhiteSpace(configurationFile.AppSettings.NpsServerEndpoints))
-            if (ConfigurationValueParser.TryParseEndpoints(configurationFile.AppSettings.NpsServerEndpoints,
+        if (!string.IsNullOrWhiteSpace(configurationFile.AppSettings.NpsServerEndpoint))
+            if (ConfigurationValueParser.TryParseEndpoints(configurationFile.AppSettings.NpsServerEndpoint,
                     out var npsServerEndpoints))
             {
                 dto.NpsServerEndpoints = npsServerEndpoints;
             }
             else
             {
-                var exception = InvalidConfigurationException.For(c => c.AppSettings.NpsServerEndpoints,
-                    formatedMessage, configurationFile.AppSettings.NpsServerEndpoints);
+                var exception = InvalidConfigurationException.For(c => c.AppSettings.NpsServerEndpoint,
+                    formatedMessage, configurationFile.AppSettings.NpsServerEndpoint);
                 StartupLogger.Warning(exception.Message);
                 dto.NpsServerEndpoints = [];
             }

@@ -100,8 +100,6 @@ public class RadiusPacketProcessor : IRadiusPacketProcessor
         
         try
         {
-            var logMessage = $"Start executing pipeline for '{clientConfiguration.Name}'" + (ldapServerConfiguration is not null ? $" at '{ldapServerConfiguration.ConnectionString}'" : string.Empty);
-            _logger.LogDebug(logMessage);
             await pipeline.ExecuteAsync(context);
             
             var responseRequest = SendAdapterResponseRequest.FromContext(context);

@@ -23,6 +23,9 @@ public class ConfigurationLoader : IConfigurationLoader
     
     public ServiceConfiguration Load()
     {
+        StartupLogger.Information("===== Multifactor RADIUS Adapter =====");
+        StartupLogger.Information("Application initialization started");
+        StartupLogger.Information(_dictionary.GetInfo());
         var rootConfigPath = GetRootConfigPath();
         var rootConfig = LoadRootConfiguration(rootConfigPath);
         var clients = LoadClientConfigurations(rootConfigPath);
@@ -45,7 +48,8 @@ public class ConfigurationLoader : IConfigurationLoader
     {
         if (!File.Exists(configPath))
             throw new InvalidConfigurationException($"Root configuration not found: {configPath}");
-        StartupLogger.Debug($"Loading root configuration from {configPath}");
+        var fileName = Path.GetFileNameWithoutExtension(configPath);
+        StartupLogger.Information($"Loading root configuration from '{fileName}'");
         var config = ReadConfiguration(configPath);
         return RootConfiguration.FromConfiguration(config);
     }
@@ -56,7 +60,8 @@ public class ConfigurationLoader : IConfigurationLoader
         
         if (!Directory.Exists(clientsPath))
         {
-            StartupLogger.Debug($"Loading client configuration from {rootConfigPath}");
+            var fileName = Path.GetFileNameWithoutExtension(rootConfigPath);
+            StartupLogger.Information($"Loading client configuration from '{fileName}'");
             var clientConfig = ParseClientConfiguration(rootConfigPath);
             return [clientConfig];
         }
@@ -65,7 +70,8 @@ public class ConfigurationLoader : IConfigurationLoader
         
         if (clientConfigFiles.Length == 0)
         {
-            StartupLogger.Debug($"Loading client configuration from {rootConfigPath}");
+            var fileName = Path.GetFileNameWithoutExtension(rootConfigPath);
+            StartupLogger.Information($"Loading client configuration from '{fileName}'");
             var clientConfig = ParseClientConfiguration(rootConfigPath);
             return [clientConfig];
         }
@@ -77,7 +83,8 @@ public class ConfigurationLoader : IConfigurationLoader
     
     private ClientConfiguration ParseClientConfiguration(string filePath)
     {
-        StartupLogger.Debug($"Loading client configuration from {filePath}");
+        var fileName = Path.GetFileNameWithoutExtension(filePath);
+        StartupLogger.Information($"Loading client configuration from '{fileName}'");
         var prefix = GetConfigPrefix(filePath);
         var config = ReadConfiguration(filePath, prefix);
         

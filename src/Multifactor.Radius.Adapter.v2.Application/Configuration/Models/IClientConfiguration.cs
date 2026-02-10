@@ -1,5 +1,6 @@
 using System.Net;
-using Multifactor.Radius.Adapter.v2.Application.Configuration.Models.Enum;
+using Multifactor.Radius.Adapter.v2.Application.Core.Models;
+using Multifactor.Radius.Adapter.v2.Application.Core.Models.Enum;
 using NetTools;
 
 namespace Multifactor.Radius.Adapter.v2.Application.Configuration.Models;
@@ -33,6 +34,3 @@ public interface IClientConfiguration
     public IReadOnlyDictionary<string, IReadOnlyList<IRadiusReplyAttribute>>? ReplyAttributes { get; }
 }
 
-public record Privacy(PrivacyMode PrivacyMode, string[] PrivacyFields);
-
-public record CredentialDelay(int Min, int Max);

@@ -3,7 +3,7 @@
 //https://github.com/MultifactorLab/multifactor-radius-adapter/blob/main/LICENSE.md
 
 using System.Text.RegularExpressions;
-using Multifactor.Radius.Adapter.v2.Application.Configuration.Models.Enum;
+using Multifactor.Radius.Adapter.v2.Application.Core.Models.Enum;
 
 namespace Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Models
 {
