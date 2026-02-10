@@ -15,7 +15,7 @@ public class ServiceConfiguration
         }
         
         return ClientsConfigurations.FirstOrDefault(config =>
-            config.RadiusClientIp != null && config.RadiusClientIp.Equals(ip));
+            config.RadiusClientIps != null && config.RadiusClientIps.Any() && config.RadiusClientIps.Contains(ip));
         
     }
     public bool SingleClientMode { get; init; }

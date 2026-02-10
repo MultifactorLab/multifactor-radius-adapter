@@ -14,12 +14,12 @@ internal class ClientConfiguration : IClientConfiguration
 
     public string MultifactorNasIdentifier { get; set; }
     public string MultifactorSharedSecret { get; set; }
-    public IReadOnlyList<string> SignUpGroups { get; set; } = [];
+    public IReadOnlyList<string> SignUpGroups { get; set; }
     public bool BypassSecondFactorWhenApiUnreachable { get; set; }
     public AuthenticationSource FirstFactorAuthenticationSource { get; set; }
     public IPEndPoint AdapterClientEndpoint { get; set; }
 
-    public IPAddress? RadiusClientIp { get; set; }
+    public IReadOnlyList<IPAddress>? RadiusClientIps { get; set; }
     public string RadiusClientNasIdentifier { get; set; }
     public string RadiusSharedSecret { get; set; }
     public IReadOnlyList<IPEndPoint> NpsServerEndpoints { get; set; }
@@ -27,7 +27,7 @@ internal class ClientConfiguration : IClientConfiguration
 
     public Privacy Privacy { get; set; }
 
-    public PreAuthMode? PreAuthenticationMethod { get; set; }
+    public PreAuthMode? PreAuthenticationMethod { get; set; } = PreAuthMode.None;
     public TimeSpan AuthenticationCacheLifetime { get; set; } = TimeSpan.Zero;
     public CredentialDelay? InvalidCredentialDelay { get; set; }
     public string? CallingStationIdAttribute { get; set; } //TODO not used
@@ -59,7 +59,16 @@ internal class ClientConfiguration : IClientConfiguration
                     "Property '{prop}' is required. Config name: '{0}'", configurationFile.FileName),
             RadiusClientNasIdentifier = configurationFile.AppSettings.RadiusClientNasIdentifier,
             CallingStationIdAttribute = configurationFile.AppSettings.CallingStationIdAttribute,
-            BypassSecondFactorWhenApiUnreachable = configurationFile.AppSettings.BypassSecondFactorWhenApiUnreachable
+            BypassSecondFactorWhenApiUnreachable = configurationFile.AppSettings.BypassSecondFactorWhenApiUnreachable,
+            Privacy = new Privacy(PrivacyMode.None, []),
+            PreAuthenticationMethod = PreAuthMode.None,
+            AuthenticationCacheLifetime = TimeSpan.Zero,
+            InvalidCredentialDelay = null,
+            NpsServerEndpoints = [],
+            NpsServerTimeout = TimeSpan.Parse("00:00:05"),
+            SignUpGroups = [],
+            RadiusClientIps = [],
+            IpWhiteList = [],
         };
         if (!string.IsNullOrWhiteSpace(configurationFile.AppSettings.SignUpGroups))
             if (ConfigurationValueParser.TryParseStringList(configurationFile.AppSettings.SignUpGroups, out var list))
@@ -71,19 +80,21 @@ internal class ClientConfiguration : IClientConfiguration
                 var exception = InvalidConfigurationException.For(c => c.AppSettings.SignUpGroups,
                     formatedMessage, configurationFile.AppSettings.SignUpGroups);
                 StartupLogger.Warning(exception.Message);
+                dto.SignUpGroups = [];
             }
 
         if (!string.IsNullOrWhiteSpace(configurationFile.AppSettings.RadiusClientIp))
             if (ConfigurationValueParser.TryParseIpAddress(configurationFile.AppSettings.RadiusClientIp,
                     out var address))
             {
-                dto.RadiusClientIp = address;
+                dto.RadiusClientIps = address;
             }
             else
             {
                 var exception = InvalidConfigurationException.For(c => c.AppSettings.RadiusClientIp,
                     formatedMessage, configurationFile.AppSettings.RadiusClientIp);
                 StartupLogger.Warning(exception.Message);
+                dto.RadiusClientIps = [];
             }
 
         if (!string.IsNullOrWhiteSpace(configurationFile.AppSettings.NpsServerEndpoints))
@@ -97,6 +108,7 @@ internal class ClientConfiguration : IClientConfiguration
                 var exception = InvalidConfigurationException.For(c => c.AppSettings.NpsServerEndpoints,
                     formatedMessage, configurationFile.AppSettings.NpsServerEndpoints);
                 StartupLogger.Warning(exception.Message);
+                dto.NpsServerEndpoints = [];
             }
 
         if (!string.IsNullOrWhiteSpace(configurationFile.AppSettings.NpsServerTimeout))
@@ -164,6 +176,7 @@ internal class ClientConfiguration : IClientConfiguration
             }
             else
             {
+                dto.IpWhiteList = [];
                 var exception = InvalidConfigurationException.For(c => c.AppSettings.IpWhiteList,
                     formatedMessage, configurationFile.AppSettings.IpWhiteList);
                 StartupLogger.Warning(exception.Message);
@@ -194,7 +207,6 @@ internal class ClientConfiguration : IClientConfiguration
                 : throw InvalidConfigurationException.For(c => c.AppSettings.FirstFactorAuthenticationSource,
                     "Error while cast property '{prop}'. Value: {0}. Config name: '{1}'",
                     firstFactorAuthenticationSource, configurationFile.FileName);
-        ;
 
         var adapterClientEndpoint =
             dto.FirstFactorAuthenticationSource != AuthenticationSource.Radius ||

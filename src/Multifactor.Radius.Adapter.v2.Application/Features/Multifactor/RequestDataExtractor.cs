@@ -15,7 +15,7 @@ public static class RequestDataExtractor
 
         return new PersonalData
         {
-            Identity = identity ?? string.Empty,
+            Identity = identity,
             DisplayName = context.LdapProfile?.DisplayName,
             Email = context.LdapProfile?.Email,
             Phone = GetUserPhone(context),

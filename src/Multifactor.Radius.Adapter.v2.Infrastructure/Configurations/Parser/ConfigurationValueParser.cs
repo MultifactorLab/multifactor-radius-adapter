@@ -131,20 +131,29 @@ internal static class ConfigurationValueParser
         return true;
     }
 
-    public static bool TryParseIpAddress(string? value, out IPAddress? result)
+    public static bool TryParseIpAddress(string? value, out IReadOnlyList<IPAddress>? result)
     {
         result = null;
         
         if (string.IsNullOrWhiteSpace(value))
             return false;
         
-        if (IPAddress.TryParse(value, out var ipAddress))
+        var addresses = new List<IPAddress>();
+        var parts = value.Split(';', StringSplitOptions.RemoveEmptyEntries);
+
+
+        foreach (var part in parts)
         {
-            result = ipAddress;
-            return true;
+            var trimmed = part.Trim();
+            if (!IPAddress.TryParse(trimmed, out var ipAddress))
+            {
+                return false;
+            }
+            addresses.Add(ipAddress);
         }
         
-        return false;
+        result = addresses;
+        return true;
     }
 
     public static bool TryParseUrls(string? value, out IReadOnlyList<Uri> result)

@@ -15,7 +15,7 @@ public interface IClientConfiguration
     public AuthenticationSource FirstFactorAuthenticationSource { get; }
     public IPEndPoint AdapterClientEndpoint { get; }
     
-    public IPAddress? RadiusClientIp { get; }
+    public IReadOnlyList<IPAddress?> RadiusClientIps { get; }
     public string RadiusClientNasIdentifier { get; }
     public string RadiusSharedSecret { get; }
     public IReadOnlyList<IPEndPoint> NpsServerEndpoints { get; }

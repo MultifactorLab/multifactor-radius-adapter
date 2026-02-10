@@ -39,7 +39,7 @@ public class ChangePasswordChallengeProcessor : IChallengeProcessor
         
         var encryptedPassword = ProtectionService.Protect(context.ClientConfiguration.MultifactorSharedSecret, context.Passphrase.Password);
 
-        var passwordRequest = new PasswordChangeCache()
+        var passwordRequest = new PasswordChangeCache
         {
             Domain = context.MustChangePasswordDomain,
             CurrentPasswordEncryptedData = encryptedPassword
