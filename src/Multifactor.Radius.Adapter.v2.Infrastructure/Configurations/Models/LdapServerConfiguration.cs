@@ -70,7 +70,7 @@ internal class LdapServerConfiguration : ILdapServerConfiguration
                     out var phoneAttributes)
                     ? phoneAttributes
                     : [],
-            IdentityAttribute = ldapServerSection.IdentityAttribute ?? "sAMAccountName",
+            IdentityAttribute = ldapServerSection.IdentityAttribute,
             RequiresUpn = ldapServerSection.RequiresUpn,
             TrustedDomainsEnabled = ldapServerSection.TrustedDomainsEnabled,
             AlternativeSuffixesEnabled =ldapServerSection.AlternativeSuffixesEnabled,

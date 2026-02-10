@@ -91,7 +91,7 @@ internal sealed class AdapterServer : IAsyncDisposable
             {
                 break;
             }
-            catch (SocketException ex) when (ex.SocketErrorCode == SocketError.Interrupted)
+            catch (SocketException ex) when (ex.SocketErrorCode is SocketError.Interrupted or SocketError.ConnectionReset)
             {
                 break;
             }

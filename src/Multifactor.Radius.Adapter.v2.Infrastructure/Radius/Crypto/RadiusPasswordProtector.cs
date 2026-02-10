@@ -1,43 +1,96 @@
-using System.Security.Cryptography;
 using Multifactor.Radius.Adapter.v2.Application.Features.Radius.Models;
+using System.Security.Cryptography;
+using System.Text;
 
-namespace Multifactor.Radius.Adapter.v2.Infrastructure.Radius.Crypto;
-
-public static class RadiusPasswordProtector
+namespace Multifactor.Radius.Adapter.v2.Infrastructure.Radius.Crypto
 {
-    public static byte[] Encrypt(SharedSecret secret, RadiusAuthenticator authenticator, byte[] password)
+    public static class RadiusPasswordProtector
     {
-        if (password.Length == 0)
-            return password;
-
-        var result = new byte[password.Length];
-        var paddedLength = ((password.Length + 15) / 16) * 16;
-        var paddedPassword = new byte[paddedLength];
-        password.CopyTo(paddedPassword, 0);
-
-        byte[] lastRound = authenticator.Value.ToArray();
-
-        for (int i = 0; i < paddedLength; i += 16)
+        /// <summary>
+        /// Encrypt/decrypt using XOR
+        /// </summary>
+        /// <param name="input"></param>
+        /// <param name="key"></param>
+        /// <returns></returns>
+        private static byte[] EncryptDecrypt(byte[] input, byte[] key)
         {
-            using var md5 = MD5.Create();
-            md5.TransformBlock(secret.Bytes.ToArray(), 0, secret.Bytes.Length, null, 0);
-            md5.TransformFinalBlock(lastRound, 0, 16);
-            lastRound = md5.Hash!;
-
-            for (int j = 0; j < 16; j++)
+            var output = new byte[input.Length];
+            for (int i = 0; i < input.Length; i++)
             {
-                if (i + j < password.Length)
-                {
-                    result[i + j] = (byte)(paddedPassword[i + j] ^ lastRound[j]);
-                }
+                output[i] = (byte)(input[i] ^ key[i]);
             }
+            return output;
         }
 
-        return result;
-    }
 
-    public static byte[] Decrypt(SharedSecret secret, RadiusAuthenticator authenticator, byte[] encryptedPassword)
-    {
-        return Encrypt(secret, authenticator, encryptedPassword); // XOR is symmetric
+        /// <summary>
+        /// Create a radius shared secret key
+        /// </summary>
+        /// <param name="sharedSecret"></param>
+        /// <param name="Stuff"></param>
+        /// <returns></returns>
+        private static byte[] CreateKey(SharedSecret sharedSecret, RadiusAuthenticator authenticator)
+        {
+            var key = new byte[16 + sharedSecret.Bytes.Length];
+            Buffer.BlockCopy(sharedSecret.Bytes, 0, key, 0, sharedSecret.Bytes.Length);
+            Buffer.BlockCopy(authenticator.Value, 0, key, sharedSecret.Bytes.Length, authenticator.Value.Length);
+
+            using var md5 = MD5.Create();
+            return md5.ComputeHash(key);
+        }
+
+
+        /// <summary>
+        /// Decrypt user password
+        /// </summary>
+        /// <param name="sharedSecret"></param>
+        /// <param name="authenticator"></param>
+        /// <param name="passwordBytes"></param>
+        /// <returns></returns>
+        public static string Decrypt(SharedSecret sharedSecret, RadiusAuthenticator authenticator, byte[] passwordBytes)
+        {
+            var key = CreateKey(sharedSecret, authenticator);
+            var bytes = new List<byte>();
+
+            for (var n = 1; n <= passwordBytes.Length / 16; n++)
+            {
+                var temp = new byte[16];
+                Buffer.BlockCopy(passwordBytes, (n - 1) * 16, temp, 0, 16);
+
+                var block = EncryptDecrypt(temp, key);
+                bytes.AddRange(block);
+
+                key = CreateKey(sharedSecret, new RadiusAuthenticator(temp));
+            }
+
+            var ret = Encoding.UTF8.GetString(bytes.ToArray());
+            return ret.Replace("\0", "");
+        }
+
+
+        /// <summary>
+        /// Encrypt a password
+        /// </summary>
+        /// <param name="sharedSecret"></param>
+        /// <param name="authenticator"></param>
+        /// <param name="passwordBytes"></param>
+        /// <returns></returns>
+        public static byte[] Encrypt(SharedSecret sharedSecret, RadiusAuthenticator authenticator, byte[] passwordBytes)
+        {
+            Array.Resize(ref passwordBytes, passwordBytes.Length + (16 - passwordBytes.Length % 16));
+
+            var key = CreateKey(sharedSecret, authenticator);
+            var bytes = new List<byte>();
+            for (var n = 1; n <= passwordBytes.Length / 16; n++)
+            {
+                var temp = new byte[16];
+                Buffer.BlockCopy(passwordBytes, (n - 1) * 16, temp, 0, 16);
+                var xor = EncryptDecrypt(temp, key);
+                bytes.AddRange(xor);
+                key = CreateKey(sharedSecret, new RadiusAuthenticator(xor));
+            }
+
+            return bytes.ToArray();
+        }
     }
 }

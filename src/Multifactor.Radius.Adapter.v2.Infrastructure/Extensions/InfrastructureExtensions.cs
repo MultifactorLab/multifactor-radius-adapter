@@ -30,7 +30,6 @@ using Multifactor.Radius.Adapter.v2.Infrastructure.Radius.Validators;
 using Multifactor.Radius.Adapter.v2.Shared.Extensions;
 using Polly;
 using Serilog;
-using ILogger = Microsoft.Extensions.Logging.ILogger;
 
 namespace Multifactor.Radius.Adapter.v2.Infrastructure.Extensions;
 
@@ -88,31 +87,30 @@ public static class InfrastructureExtensions
                     client.Timeout = config.RootConfiguration.MultifactorApiTimeout;
                 }
             })
-            .AddPolicyHandler((serviceProvider, request) => Policy<HttpResponseMessage>
+            .AddPolicyHandler((serviceProvider, request) => {
+
+                var config = serviceProvider.GetRequiredService<ServiceConfiguration>();
+                var timeout = config.RootConfiguration.MultifactorApiTimeout;
+                var selector = serviceProvider.GetRequiredService<IEndpointSelector>();
+                var logger = serviceProvider.GetRequiredService<ILogger<IMultifactorApi>>();
+
+                return Policy<HttpResponseMessage>
                 .Handle<HttpRequestException>()
                 .OrResult(response => !response.IsSuccessStatusCode && (int)response.StatusCode >= 500)
-                .FallbackAsync(
-                    fallbackAction: async (outcome, context, cancellationToken) =>
+                .RetryAsync(
+                    retryCount: config.RootConfiguration.MultifactorApiUrls.Count - 1,
+                    onRetryAsync: async (outcome, retryNumber, context) =>
                     {
-                        var urlSelector = serviceProvider.GetRequiredService<IEndpointSelector>();
-                        var fallbackUrl = await urlSelector.GetNextEndpointAsync();
-                    
-                        var fallbackRequest = request.CloneHttpRequestMessage();
-                        fallbackRequest.RequestUri = new Uri(fallbackUrl, request.RequestUri!.PathAndQuery);
-                    
-                        var httpClientFactory = serviceProvider.GetRequiredService<IHttpClientFactory>();
-                        var httpClient = httpClientFactory.CreateClient("multifactor-api");
-                    
-                        return await httpClient.SendAsync(fallbackRequest, cancellationToken);
-                    },
-                    onFallbackAsync: (outcome, context) =>
-                    {
-                        var logger = serviceProvider.GetRequiredService<ILogger>();
-                        logger.LogWarning("Primary endpoint failed. Trying fallback. Error: {Error}", 
-                            outcome.Exception?.Message ?? outcome.Result?.StatusCode.ToString());
-                        return Task.CompletedTask;
+                        logger.LogWarning("Attempt {RetryNumber} failed. Trying next endpoint. Error: {Error}",
+                                                retryNumber,
+                                                outcome.Exception?.Message ?? outcome.Result?.StatusCode.ToString());
+
+                        // Для каждого retry выбираем новый endpoint
+                        var fallbackUrl = await selector.GetNextEndpointAsync();
+                        request.RequestUri = new Uri(fallbackUrl, request.RequestUri!.PathAndQuery);
                     })
-                .WrapAsync(Policy.TimeoutAsync<HttpResponseMessage>(serviceProvider.GetRequiredService<ServiceConfiguration>().RootConfiguration.MultifactorApiTimeout))
+                .WrapAsync(Policy.TimeoutAsync<HttpResponseMessage>(timeout));
+            } 
         )
         .AddHttpMessageHandler<MfTraceIdHeaderSetter>()
         .ConfigurePrimaryHttpMessageHandler(provider =>

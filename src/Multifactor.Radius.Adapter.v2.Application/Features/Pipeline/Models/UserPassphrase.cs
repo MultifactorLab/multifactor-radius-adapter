@@ -73,7 +73,7 @@ namespace Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Models
             switch (preAuthnMode)
             {
                 case PreAuthMode.Otp:
-                    var length = 10;
+                    var length = 6;
                     if (passwordAndOtp.Length < length)
                     {
                         return passwordAndOtp;

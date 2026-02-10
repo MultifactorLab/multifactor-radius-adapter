@@ -55,7 +55,7 @@ public class RadiusCryptoProvider : IRadiusCryptoProvider
         return calculatedMessageAuthenticator.SequenceEqual(messageAuth);
     }
 
-    public byte[] DecryptPassword(SharedSecret secret, RadiusAuthenticator authenticator, byte[] encryptedPassword)
+    public string DecryptPassword(SharedSecret secret, RadiusAuthenticator authenticator, byte[] encryptedPassword)
     {
         return RadiusPasswordProtector.Decrypt(secret, authenticator, encryptedPassword);
     }

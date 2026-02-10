@@ -311,10 +311,10 @@ public sealed class MultifactorApiService
             remoteEndpoint.Port,
             apiEx.Message);
         
-        if (bypassSecondFactorWhenApiUnreachable 
-            && bypassSecondFactorWhenApiUnreachableGroups != null 
-            && bypassSecondFactorWhenApiUnreachableGroups.Any() 
-            && bypassSecondFactorWhenApiUnreachableGroups.Intersect(userGroups).Any())
+        if (bypassSecondFactorWhenApiUnreachable && 
+                (!bypassSecondFactorWhenApiUnreachableGroups.Any() 
+                || bypassSecondFactorWhenApiUnreachableGroups.Intersect(userGroups).Any())
+            )
         {
             var code = ConvertToAuthCode(AccessRequestResponse.Bypass);
             return new SecondFactorResponse(code);
