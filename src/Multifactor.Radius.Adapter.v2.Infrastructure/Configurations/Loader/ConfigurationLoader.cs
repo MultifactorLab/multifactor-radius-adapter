@@ -61,7 +61,6 @@ public class ConfigurationLoader : IConfigurationLoader
         if (!Directory.Exists(clientsPath))
         {
             var fileName = Path.GetFileNameWithoutExtension(rootConfigPath);
-            StartupLogger.Information($"Loading client configuration from '{fileName}'");
             var clientConfig = ParseClientConfiguration(rootConfigPath);
             return [clientConfig];
         }
@@ -71,7 +70,6 @@ public class ConfigurationLoader : IConfigurationLoader
         if (clientConfigFiles.Length == 0)
         {
             var fileName = Path.GetFileNameWithoutExtension(rootConfigPath);
-            StartupLogger.Information($"Loading client configuration from '{fileName}'");
             var clientConfig = ParseClientConfiguration(rootConfigPath);
             return [clientConfig];
         }

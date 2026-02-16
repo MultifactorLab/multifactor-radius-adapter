@@ -37,7 +37,7 @@ public class XmlConfigurationProvider : ConfigurationProvider, IConfigurationSou
     {
         var xml = XDocument.Load(_path);
         var root = xml.Root;
-        
+
         if (root is null)
         {
             throw new Exception("Root XML element not found");
@@ -48,7 +48,6 @@ public class XmlConfigurationProvider : ConfigurationProvider, IConfigurationSou
         {
             var appSettingsElements = appSettings.Elements().ToArray();
             XmlAssert.HasUniqueElements(appSettingsElements, x => x.Attribute("key")?.Value);
-
             FillAppSettingsSection(appSettingsElements);
         }
 
@@ -59,7 +58,91 @@ public class XmlConfigurationProvider : ConfigurationProvider, IConfigurationSou
 
         foreach (var section in sections)
         {
-            FillSection(section);
+            ProcessSection(section);
+        }
+    }
+
+    private void ProcessSection(XElement section, string parentKey = null)
+    {
+        var sectionName = section.Name.ToString();
+        var currentKey = parentKey != null ? $"{parentKey}:{sectionName}" : sectionName;
+
+        var childElements = section.Elements().ToArray();
+
+        if (childElements.Length > 0)
+        {
+            var groups = childElements.GroupBy(x => x.Name);
+
+            foreach (var group in groups)
+            {
+                if (group.Count() == 1)
+                {
+                    ProcessElement(group.First(), currentKey);
+                }
+                else
+                {
+                    var index = 0;
+                    foreach (var element in group)
+                    {
+                        ProcessElement(element, currentKey, index);
+                        index++;
+                    }
+                }
+            }
+        }
+        else
+        {
+            ProcessAttributes(section, currentKey);
+        }
+    }
+
+    private void ProcessElement(XElement element, string parentKey, int? index = null)
+    {
+        string elementKey;
+
+        if (index.HasValue)
+        {
+            elementKey = $"{parentKey}:{index.Value}";
+        }
+        else
+        {
+            elementKey = $"{parentKey}:{element.Name}";
+        }
+
+        ProcessAttributes(element, elementKey);
+
+        var nestedElements = element.Elements().ToArray();
+        if (nestedElements.Length > 0)
+        {
+            var nestedGroups = nestedElements.GroupBy(x => x.Name);
+            foreach (var group in nestedGroups)
+            {
+                if (group.Count() == 1)
+                {
+                    ProcessElement(group.First(), elementKey);
+                }
+                else
+                {
+                    var nestedIndex = 0;
+                    foreach (var nestedElement in group)
+                    {
+                        ProcessElement(nestedElement, elementKey, nestedIndex);
+                        nestedIndex++;
+                    }
+                }
+            }
+        }
+    }
+
+    private void ProcessAttributes(XElement element, string baseKey)
+    {
+        if (element.HasAttributes)
+        {
+            foreach (var attr in element.Attributes())
+            {
+                var attrKey = $"{baseKey}:{ToPascalCase(attr.Name.LocalName)}";
+                Data[attrKey] = attr.Value;
+            }
         }
     }
 
@@ -75,17 +158,22 @@ public class XmlConfigurationProvider : ConfigurationProvider, IConfigurationSou
         }
     }
 
-    private void FillSection(XElement section, string parentKey = null, string postfix = null)
+    private void FillSection(XElement section, string parentKey = null, int? index = null)
     {
-        var sectionKey = section.Name.ToString();
-        if (parentKey != null)
-        {
-            sectionKey = $"{parentKey}:{sectionKey}";
-        }
+        string sectionKey;
 
-        if (postfix != null)
+        if (index.HasValue)
         {
-            sectionKey = $"{sectionKey}:{postfix}";
+
+            sectionKey = $"{parentKey}:{index.Value}";
+        }
+        else
+        {
+            sectionKey = section.Name.ToString();
+            if (parentKey != null)
+            {
+                sectionKey = $"{parentKey}:{sectionKey}";
+            }
         }
 
         if (section.HasAttributes)
@@ -111,11 +199,11 @@ public class XmlConfigurationProvider : ConfigurationProvider, IConfigurationSou
                 continue;
             }
 
-            var index = 0;
+            var index2 = 0;
             foreach (var arrEntry in group)
             {
-                FillSection(arrEntry, sectionKey, index.ToString());
-                index++;
+                FillSection(arrEntry, sectionKey, index2);
+                index2++;
             }
         }
     }
