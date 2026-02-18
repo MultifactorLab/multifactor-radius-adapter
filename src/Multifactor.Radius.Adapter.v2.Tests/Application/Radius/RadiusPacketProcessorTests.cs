@@ -1,8 +1,8 @@
 using Microsoft.Extensions.Logging;
 using Moq;
+using Multifactor.Radius.Adapter.v2.Application.Core;
 using Multifactor.Radius.Adapter.v2.Application.Core.Models.Enum;
 using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Interfaces;
-using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Models;
 using Multifactor.Radius.Adapter.v2.Application.Features.Radius.Exceptions;
 using Multifactor.Radius.Adapter.v2.Application.Features.Radius.Models;
 using Multifactor.Radius.Adapter.v2.Application.Features.Radius.Models.Enums;

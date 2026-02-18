@@ -62,6 +62,7 @@ public static class ApplicationExtensions
         services.AddTransient<AccessRequestFilteringStep>();
         services.AddTransient<LdapSchemaLoadingStep>();
         services.AddTransient<ProfileLoadingStep>();
+        services.AddTransient<LoadLdapForestStep>();
         services.AddTransient<AccessGroupsCheckingStep>();
         services.AddTransient<AccessChallengeStep>();
         services.AddTransient<FirstFactorStep>();

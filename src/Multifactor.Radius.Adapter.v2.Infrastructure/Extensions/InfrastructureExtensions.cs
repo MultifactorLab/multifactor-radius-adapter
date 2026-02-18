@@ -8,6 +8,7 @@ using Multifactor.Core.Ldap.Schema;
 using Multifactor.Radius.Adapter.v2.Application.Cache;
 using Multifactor.Radius.Adapter.v2.Application.Configuration.Models;
 using Multifactor.Radius.Adapter.v2.Application.Features.Ldap.Ports;
+using Multifactor.Radius.Adapter.v2.Application.Features.LoadLdapForest.Port;
 using Multifactor.Radius.Adapter.v2.Application.Features.Multifactor.Ports;
 using Multifactor.Radius.Adapter.v2.Application.Features.Radius.Ports;
 using Multifactor.Radius.Adapter.v2.Application.Features.Radius.Services;
@@ -20,6 +21,7 @@ using Multifactor.Radius.Adapter.v2.Infrastructure.Cache;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Cache.AuthenticatedClientCache;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Loader;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Models.Dictionary;
+using Multifactor.Radius.Adapter.v2.Infrastructure.Features.LoadLdapForest;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Logging;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Radius.Builders;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Radius.Client;
@@ -94,21 +96,21 @@ public static class InfrastructureExtensions
                 var logger = serviceProvider.GetRequiredService<ILogger<IMultifactorApi>>();
 
                 return Policy<HttpResponseMessage>
-                .Handle<HttpRequestException>()
-                .OrResult(response => !response.IsSuccessStatusCode && (int)response.StatusCode >= 500)
-                .RetryAsync(
-                    retryCount: config.RootConfiguration.MultifactorApiUrls.Count - 1,
-                    onRetryAsync: async (outcome, retryNumber, context) =>
-                    {
-                        logger.LogWarning("Attempt {RetryNumber} failed. Trying next endpoint. Error: {Error}",
-                                                retryNumber,
-                                                outcome.Exception?.Message ?? outcome.Result?.StatusCode.ToString());
+                    .Handle<HttpRequestException>()
+                    .OrResult(response => !response.IsSuccessStatusCode && (int)response.StatusCode >= 500)
+                    .RetryAsync(
+                        retryCount: config.RootConfiguration.MultifactorApiUrls.Count - 1,
+                        onRetryAsync: async (outcome, retryNumber, context) =>
+                        {
+                            logger.LogWarning("Attempt {RetryNumber} failed. Trying next endpoint. Error: {Error}",
+                                                    retryNumber,
+                                                    outcome.Exception?.Message ?? outcome.Result?.StatusCode.ToString());
 
-                        // Для каждого retry выбираем новый endpoint
-                        var fallbackUrl = await selector.GetNextEndpointAsync();
-                        request.RequestUri = new Uri(fallbackUrl, request.RequestUri!.PathAndQuery);
-                    })
-                .WrapAsync(Policy.TimeoutAsync<HttpResponseMessage>(timeout));
+                            // Для каждого retry выбираем новый endpoint
+                            var fallbackUrl = await selector.GetNextEndpointAsync();
+                            request.RequestUri = new Uri(fallbackUrl, request.RequestUri!.PathAndQuery);
+                        })
+                    .WrapAsync(Policy.TimeoutAsync<HttpResponseMessage>(timeout));
             } 
         )
         .AddHttpMessageHandler<MfTraceIdHeaderSetter>()
@@ -153,6 +155,7 @@ public static class InfrastructureExtensions
         services.AddSingleton<IMembershipCheckerFactory, MembershipCheckerFactory>();
         services.AddSingleton<LdapSchemaLoader>();
         services.AddTransient<ILdapAdapter, LdapAdapter>();
+        services.AddTransient<ILdapForestLoad, LdapForestLoad>();
     }
 
     public static void AddInfraServices(this IServiceCollection services)

@@ -42,6 +42,7 @@ public class RadiusPipelineFactory : IRadiusPipelineFactory
         {
             steps.Add(CreateStep<UserNameValidationStep>());
             steps.Add(CreateStep<LdapSchemaLoadingStep>());
+            steps.Add(CreateStep<LoadLdapForestStep>());
             steps.Add(CreateStep<ProfileLoadingStep>());
             steps.Add(CreateStep<AccessGroupsCheckingStep>());
         }

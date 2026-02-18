@@ -38,7 +38,7 @@ internal class ClientConfiguration : IClientConfiguration
     public IReadOnlyDictionary<string, IReadOnlyList<IRadiusReplyAttribute>>? ReplyAttributes { get; set; }
 
 
-    public static ClientConfiguration FromConfiguration(AdapterConfiguration configurationFile)
+    public static ClientConfiguration FromConfiguration(AdapterConfiguration configurationFile, bool isRoot)
     {
         ArgumentNullException.ThrowIfNull(configurationFile);
         const string formatedMessage = "Invalid '{prop}'. Value '{0}' cannot be parsed.";
@@ -58,7 +58,6 @@ internal class ClientConfiguration : IClientConfiguration
                 ? configurationFile.AppSettings.RadiusSharedSecret
                 : throw InvalidConfigurationException.For(c => c.AppSettings.RadiusSharedSecret,
                     "Property '{prop}' is required. Config name: '{0}'", configurationFile.FileName),
-            RadiusClientNasIdentifier = configurationFile.AppSettings.RadiusClientNasIdentifier,
             CallingStationIdAttribute = configurationFile.AppSettings.CallingStationIdAttribute,
             BypassSecondFactorWhenApiUnreachable = configurationFile.AppSettings.BypassSecondFactorWhenApiUnreachable,
             Privacy = new Privacy(PrivacyMode.None, []),
@@ -83,20 +82,26 @@ internal class ClientConfiguration : IClientConfiguration
                 StartupLogger.Warning(exception.Message);
                 dto.SignUpGroups = [];
             }
+        if (!isRoot)
+        {
+            if (string.IsNullOrWhiteSpace(configurationFile.AppSettings.RadiusClientIp) && !string.IsNullOrWhiteSpace(configurationFile.AppSettings.RadiusClientNasIdentifier))
+                throw new InvalidConfigurationException("Fields 'radius-client-ip' or 'radius-client-nas-identifier' is required");
+            if (!string.IsNullOrWhiteSpace(configurationFile.AppSettings.RadiusClientIp))
+                if (ConfigurationValueParser.TryParseIpAddress(configurationFile.AppSettings.RadiusClientIp,
+                        out var address))
+                {
+                    dto.RadiusClientIps = address;
+                }
+                else
+                {
+                    var exception = InvalidConfigurationException.For(c => c.AppSettings.RadiusClientIp,
+                        formatedMessage, configurationFile.AppSettings.RadiusClientIp);
+                    StartupLogger.Warning(exception.Message);
+                    dto.RadiusClientIps = [];
+                }
 
-        if (!string.IsNullOrWhiteSpace(configurationFile.AppSettings.RadiusClientIp))
-            if (ConfigurationValueParser.TryParseIpAddress(configurationFile.AppSettings.RadiusClientIp,
-                    out var address))
-            {
-                dto.RadiusClientIps = address;
-            }
-            else
-            {
-                var exception = InvalidConfigurationException.For(c => c.AppSettings.RadiusClientIp,
-                    formatedMessage, configurationFile.AppSettings.RadiusClientIp);
-                StartupLogger.Warning(exception.Message);
-                dto.RadiusClientIps = [];
-            }
+            dto.RadiusClientNasIdentifier = configurationFile.AppSettings.RadiusClientNasIdentifier;
+        }
 
         if (!string.IsNullOrWhiteSpace(configurationFile.AppSettings.NpsServerEndpoint))
             if (ConfigurationValueParser.TryParseEndpoints(configurationFile.AppSettings.NpsServerEndpoint,
