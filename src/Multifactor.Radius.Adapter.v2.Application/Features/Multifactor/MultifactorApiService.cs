@@ -1,13 +1,13 @@
 using System.Net;
 using Microsoft.Extensions.Logging;
 using Multifactor.Radius.Adapter.v2.Application.Cache;
+using Multifactor.Radius.Adapter.v2.Application.Core;
 using Multifactor.Radius.Adapter.v2.Application.Core.Models.Enum;
 using Multifactor.Radius.Adapter.v2.Application.Features.Multifactor.Exceptions;
 using Multifactor.Radius.Adapter.v2.Application.Features.Multifactor.Models;
 using Multifactor.Radius.Adapter.v2.Application.Features.Multifactor.Models.Enum;
 using Multifactor.Radius.Adapter.v2.Application.Features.Multifactor.Ports;
 using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.AccessChallenge.Models;
-using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Models;
 using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Models.Enum;
 
 namespace Multifactor.Radius.Adapter.v2.Application.Features.Multifactor;

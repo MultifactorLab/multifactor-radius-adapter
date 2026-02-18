@@ -3,6 +3,7 @@ using System.Net;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Multifactor.Core.Ldap.Schema;
+using Multifactor.Radius.Adapter.v2.Application.Core;
 using Multifactor.Radius.Adapter.v2.Application.Core.Models.Enum;
 using Multifactor.Radius.Adapter.v2.Application.Features.Ldap.Models;
 using Multifactor.Radius.Adapter.v2.Application.Features.Ldap.Ports;

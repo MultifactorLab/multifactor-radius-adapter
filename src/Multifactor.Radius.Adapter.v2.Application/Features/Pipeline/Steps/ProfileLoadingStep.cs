@@ -2,9 +2,11 @@ using Microsoft.Extensions.Logging;
 using Multifactor.Core.Ldap.Attributes;
 using Multifactor.Core.Ldap.Name;
 using Multifactor.Radius.Adapter.v2.Application.Cache;
+using Multifactor.Radius.Adapter.v2.Application.Core;
 using Multifactor.Radius.Adapter.v2.Application.Features.Ldap.Models;
 using Multifactor.Radius.Adapter.v2.Application.Features.Ldap.Ports;
 using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Models;
+using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Models.Enum;
 
 namespace Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Steps;
 
@@ -45,20 +47,78 @@ public class ProfileLoadingStep : IRadiusPipelineStep
         
         var userIdentity = new UserIdentity(context.RequestPacket.UserName);
         var attributes = GetAttributes(context).ToArray();
-        var domain = context.LdapSchema.NamingContext;
-        
-        var profile = TryGetUserProfile(userIdentity, domain, attributes, context);
+        // ОПРЕДЕЛЯЕМ, В КАКОМ ДОМЕНЕ ИСКАТЬ
+        var searchBase = DetermineSearchBase(context, userIdentity);
+
+        var profile = TryGetUserProfile(userIdentity, searchBase, attributes, context);
         
         if (profile is null)
         {
-            _logger.LogWarning("Unable to load profile for user '{user}' from '{domain}'", userIdentity.Identity, domain.StringRepresentation);
+            _logger.LogWarning("Unable to load profile for user '{user}' from '{domain}'", userIdentity.Identity, searchBase.StringRepresentation);
             throw new InvalidOperationException();
         }
         
         context.LdapProfile = profile;
-        _logger.LogInformation("Successfully found '{userIdentity}' profile at '{domain}'.", userIdentity.Identity, domain.StringRepresentation);
+        _logger.LogInformation("Successfully found '{userIdentity}' profile at '{domain}'.", userIdentity.Identity, searchBase.StringRepresentation);
         
         return Task.CompletedTask;
+    }
+
+    private DistinguishedName DetermineSearchBase(RadiusPipelineContext context, UserIdentity userIdentity)
+    {
+        // Если есть метаданные леса - используем их
+        if (context.ForestMetadata != null)
+        {
+            // Для UPN - ищем по суффиксу
+            if (userIdentity.Format == UserIdentityFormat.UserPrincipalName)
+            {
+                var suffix = userIdentity.GetUpnSuffix();
+                if (context.ForestMetadata.UpnSuffixes.TryGetValue(suffix, out var domain))
+                {
+                    _logger.LogDebug("Found domain '{domain}' for UPN suffix '{suffix}'",
+                        domain.DnsName, suffix);
+                    return new DistinguishedName(domain.DistinguishedName);
+                }
+
+                // Частичное совпадение (для дочерних доменов)
+                foreach (var kv in context.ForestMetadata.UpnSuffixes)
+                {
+                    if (suffix.EndsWith(kv.Key))
+                    {
+                        _logger.LogDebug("Found partial match: domain '{domain}' for suffix '{suffix}'",
+                            kv.Value.DnsName, suffix);
+                        return new DistinguishedName(kv.Value.DistinguishedName);
+                    }
+                }
+            }
+
+            // Для NetBIOS - ищем по NetBIOS имени
+            if (userIdentity.Format == UserIdentityFormat.NetBiosName &&
+                context.ForestMetadata.NetBiosNames.TryGetValue(userIdentity.Identity, out var netbiosDomain))
+            {
+                _logger.LogDebug("Found domain '{domain}' for NetBIOS name '{netbios}'",
+                    netbiosDomain.DnsName, userIdentity.Identity);
+                return new DistinguishedName(netbiosDomain.DistinguishedName);
+            }
+
+            // Для SAM Account Name без домена - используем корневой домен
+            if (userIdentity.Format == UserIdentityFormat.SamAccountName)
+            {
+                var rootDomain = context.ForestMetadata.Domains.Values
+                    .FirstOrDefault(d => d.DnsName == context.ForestMetadata.RootDomain);
+
+                if (rootDomain != null)
+                {
+                    _logger.LogDebug("Using root domain '{domain}' for SAM account name",
+                        rootDomain.DnsName);
+                    return new DistinguishedName(rootDomain.DistinguishedName);
+                }
+            }
+        }
+
+        // Fallback - используем naming context из схемы
+        _logger.LogDebug("Using schema naming context as fallback");
+        return context.LdapSchema.NamingContext;
     }
 
     private ILdapProfile? TryGetUserProfile(UserIdentity userIdentity, DistinguishedName domain, LdapAttributeName[] attributes, RadiusPipelineContext context)

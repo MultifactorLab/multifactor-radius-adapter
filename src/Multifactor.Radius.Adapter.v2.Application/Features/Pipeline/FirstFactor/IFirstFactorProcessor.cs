@@ -1,5 +1,5 @@
+using Multifactor.Radius.Adapter.v2.Application.Core;
 using Multifactor.Radius.Adapter.v2.Application.Core.Models.Enum;
-using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Models;
 
 namespace Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.FirstFactor;
 

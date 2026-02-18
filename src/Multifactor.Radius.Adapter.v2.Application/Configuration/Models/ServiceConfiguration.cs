@@ -6,10 +6,19 @@ public class ServiceConfiguration
 {
     public required IRootConfiguration RootConfiguration { get; init; }
     public required IReadOnlyList<IClientConfiguration> ClientsConfigurations  { get; init; }
-    public IClientConfiguration? GetClientConfiguration(string nasIdentifier) => ClientsConfigurations.FirstOrDefault(config => config.RadiusClientNasIdentifier == nasIdentifier);
+    public bool isRootClientMode { get; init; }
+    public IClientConfiguration? GetClientConfiguration(string nasIdentifier) 
+    {
+        if (isRootClientMode)
+        {
+            return ClientsConfigurations.FirstOrDefault();
+        }
+
+        return ClientsConfigurations.FirstOrDefault(config => config.RadiusClientNasIdentifier == nasIdentifier);
+    } 
     public IClientConfiguration? GetClientConfiguration(IPAddress ip)
     {
-        if (SingleClientMode)
+        if (isRootClientMode)
         {
             return ClientsConfigurations.FirstOrDefault();
         }
@@ -18,5 +27,4 @@ public class ServiceConfiguration
             config.RadiusClientIps != null && config.RadiusClientIps.Any() && config.RadiusClientIps.Contains(ip));
         
     }
-    public bool SingleClientMode { get; init; }
 }

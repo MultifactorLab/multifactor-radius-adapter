@@ -19,8 +19,8 @@ public interface ILdapServerConfiguration
     public bool RequiresUpn { get; }
     public bool TrustedDomainsEnabled { get; }
     public bool AlternativeSuffixesEnabled { get; }
-    public IReadOnlyList<string> IncludedDomains { get; }//TODO not used
-    public IReadOnlyList<string> ExcludedDomains { get; }//TODO not used
+    public IReadOnlyList<string> IncludedDomains { get; }
+    public IReadOnlyList<string> ExcludedDomains { get; }
     public IReadOnlyList<string> IncludedSuffixes { get; }
     public IReadOnlyList<string> ExcludedSuffixes { get; }
     public IReadOnlyList<string> BypassSecondFactorWhenApiUnreachableGroups { get; }

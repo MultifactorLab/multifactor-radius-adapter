@@ -27,7 +27,7 @@ public interface IClientConfiguration
     public PreAuthMode? PreAuthenticationMethod { get; }
     public TimeSpan AuthenticationCacheLifetime { get; }
     public CredentialDelay? InvalidCredentialDelay { get; }
-    public string? CallingStationIdAttribute { get; } //TODO not used
+    public string? CallingStationIdAttribute { get; }  
     public IReadOnlyList<IPAddressRange> IpWhiteList { get; }
     
     public IReadOnlyList<ILdapServerConfiguration>? LdapServers { get; }

@@ -28,13 +28,13 @@ public class ConfigurationLoader : IConfigurationLoader
         StartupLogger.Information(_dictionary.GetInfo());
         var rootConfigPath = GetRootConfigPath();
         var rootConfig = LoadRootConfiguration(rootConfigPath);
-        var clients = LoadClientConfigurations(rootConfigPath);
+        var clients = LoadClientConfigurations(rootConfigPath, out var isRootMode);
         
         return new ServiceConfiguration
         {
             RootConfiguration = rootConfig,
             ClientsConfigurations = clients,
-            SingleClientMode = clients.Count == 1
+            isRootClientMode = isRootMode
         };
     }
     
@@ -54,15 +54,15 @@ public class ConfigurationLoader : IConfigurationLoader
         return RootConfiguration.FromConfiguration(config);
     }
     
-    private List<ClientConfiguration> LoadClientConfigurations(string rootConfigPath)
+    private List<ClientConfiguration> LoadClientConfigurations(string rootConfigPath, out bool isRootMode)
     {
         var clientsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "clients");
         
         if (!Directory.Exists(clientsPath))
         {
             var fileName = Path.GetFileNameWithoutExtension(rootConfigPath);
-            StartupLogger.Information($"Loading client configuration from '{fileName}'");
-            var clientConfig = ParseClientConfiguration(rootConfigPath);
+            var clientConfig = ParseClientConfiguration(rootConfigPath, true);
+            isRootMode = true;
             return [clientConfig];
         }
         
@@ -71,24 +71,25 @@ public class ConfigurationLoader : IConfigurationLoader
         if (clientConfigFiles.Length == 0)
         {
             var fileName = Path.GetFileNameWithoutExtension(rootConfigPath);
-            StartupLogger.Information($"Loading client configuration from '{fileName}'");
-            var clientConfig = ParseClientConfiguration(rootConfigPath);
+            var clientConfig = ParseClientConfiguration(rootConfigPath, true);
+            isRootMode = true;
             return [clientConfig];
         }
-        
+
+        isRootMode = false;
         return clientConfigFiles
-            .Select(ParseClientConfiguration)
+            .Select(c => ParseClientConfiguration(c))
             .ToList();
     }
     
-    private ClientConfiguration ParseClientConfiguration(string filePath)
+    private ClientConfiguration ParseClientConfiguration(string filePath, bool isRoot = false)
     {
         var fileName = Path.GetFileNameWithoutExtension(filePath);
         StartupLogger.Information($"Loading client configuration from '{fileName}'");
         var prefix = GetConfigPrefix(filePath);
         var config = ReadConfiguration(filePath, prefix);
         
-        var clientConfig = ClientConfiguration.FromConfiguration(config);
+        var clientConfig = ClientConfiguration.FromConfiguration(config, isRoot);
         clientConfig.ReplyAttributes = ParseReplyAttributes(config.RadiusReply);
         clientConfig.LdapServers = config.LdapServers.Select(conf => LdapServerConfiguration.FromConfiguration(conf, clientConfig.Name)).ToList();
         

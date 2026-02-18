@@ -1,4 +1,6 @@
 using Microsoft.Extensions.Logging;
+using Multifactor.Radius.Adapter.v2.Application.Core;
+using Multifactor.Radius.Adapter.v2.Application.Features.LoadLdapForest.Models;
 using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Models;
 using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Models.Enum;
 
@@ -44,7 +46,7 @@ public class UserNameValidationStep : IRadiusPipelineStep
         if (identity.Format != UserIdentityFormat.UserPrincipalName)
             return Task.CompletedTask;
         
-        if (!IsPermittedSuffix(identity.GetUpnSuffix(), serverSettings.IncludedSuffixes, serverSettings.ExcludedSuffixes))
+        if (!IsPermittedSuffix(identity.GetUpnSuffix(), serverSettings.IncludedSuffixes, serverSettings.ExcludedSuffixes, context.ForestMetadata))
         {
             TerminateWithError(context, "UPN suffix is not permitted.");
             _logger.LogWarning("UPN suffix is not permitted. Provided name: {name}", userName);
@@ -52,17 +54,36 @@ public class UserNameValidationStep : IRadiusPipelineStep
 
         return Task.CompletedTask;
     }
-    
-    private static bool IsPermittedSuffix(string domain, IReadOnlyList<string> includedSuffixes, IReadOnlyList<string> excludedSuffixes)
-    {
-        if (string.IsNullOrWhiteSpace(domain)) throw new ArgumentNullException(nameof(domain));
 
+    private bool IsPermittedSuffix(
+        string domain,
+        IReadOnlyList<string> includedSuffixes,
+        IReadOnlyList<string> excludedSuffixes,
+        IForestMetadata? forestMetadata) // НОВЫЙ ПАРАМЕТР
+    {
+        if (string.IsNullOrWhiteSpace(domain))
+            throw new ArgumentNullException(nameof(domain));
+
+        // Если есть метаданные леса - проверяем, что суффикс вообще существует в лесу
+        if (forestMetadata != null)
+        {
+            var existsInForest = forestMetadata.UpnSuffixes.ContainsKey(domain) ||
+                                forestMetadata.UpnSuffixes.Keys.Any(s => domain.EndsWith(s));
+
+            if (!existsInForest)
+            {
+                _logger.LogDebug("UPN suffix '{suffix}' not found in forest metadata", domain);
+                return false;
+            }
+        }
+
+        // Дальше стандартная проверка по конфигурации
         if (includedSuffixes != null && includedSuffixes.Count > 0)
             return includedSuffixes.Any(included => included.Equals(domain, StringComparison.CurrentCultureIgnoreCase));
 
         if (excludedSuffixes != null && excludedSuffixes.Count > 0)
             return excludedSuffixes.All(excluded => !excluded.Equals(domain, StringComparison.CurrentCultureIgnoreCase));
-        
+
         return true;
     }
 

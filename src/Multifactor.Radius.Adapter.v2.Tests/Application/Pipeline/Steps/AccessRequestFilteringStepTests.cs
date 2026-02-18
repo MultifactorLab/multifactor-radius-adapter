@@ -1,7 +1,7 @@
 using System.Net;
 using Microsoft.Extensions.Logging;
 using Moq;
-using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Models;
+using Multifactor.Radius.Adapter.v2.Application.Core;
 using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Steps;
 using Multifactor.Radius.Adapter.v2.Application.Features.Radius.Models;
 using Multifactor.Radius.Adapter.v2.Application.Features.Radius.Models.Enums;

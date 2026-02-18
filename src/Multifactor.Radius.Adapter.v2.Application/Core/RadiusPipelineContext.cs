@@ -1,11 +1,13 @@
 using Multifactor.Core.Ldap.Schema;
 using Multifactor.Radius.Adapter.v2.Application.Configuration.Models;
 using Multifactor.Radius.Adapter.v2.Application.Features.Ldap.Models;
+using Multifactor.Radius.Adapter.v2.Application.Features.LoadLdapForest.Models;
+using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Models;
 using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Models.Enum;
 using Multifactor.Radius.Adapter.v2.Application.Features.Radius.Models;
 using Multifactor.Radius.Adapter.v2.Application.Features.Radius.Models.Enums;
 
-namespace Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Models;
+namespace Multifactor.Radius.Adapter.v2.Application.Core;
 
 public class RadiusPipelineContext
 {
@@ -17,6 +19,7 @@ public class RadiusPipelineContext
     public ILdapProfile? LdapProfile { get; set; }
     public string MustChangePasswordDomain  { get; set; }
     public HashSet<string> UserGroups { get; set; } = [];
+    public IForestMetadata? ForestMetadata { get; set; }
 
     public RadiusPacket? ResponsePacket { get; set; }
     public ResponseInformation ResponseInformation { get; set; } = new();
