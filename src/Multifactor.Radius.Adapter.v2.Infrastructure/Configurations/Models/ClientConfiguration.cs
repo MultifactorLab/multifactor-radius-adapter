@@ -84,7 +84,7 @@ internal class ClientConfiguration : IClientConfiguration
             }
         if (!isRoot)
         {
-            if (string.IsNullOrWhiteSpace(configurationFile.AppSettings.RadiusClientIp) && !string.IsNullOrWhiteSpace(configurationFile.AppSettings.RadiusClientNasIdentifier))
+            if (string.IsNullOrWhiteSpace(configurationFile.AppSettings.RadiusClientIp) && string.IsNullOrWhiteSpace(configurationFile.AppSettings.RadiusClientNasIdentifier))
                 throw new InvalidConfigurationException("Fields 'radius-client-ip' or 'radius-client-nas-identifier' is required");
             if (!string.IsNullOrWhiteSpace(configurationFile.AppSettings.RadiusClientIp))
                 if (ConfigurationValueParser.TryParseIpAddress(configurationFile.AppSettings.RadiusClientIp,
