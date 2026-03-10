@@ -12,4 +12,5 @@ public class FindUserRequest
     public DistinguishedName SearchBase { get; set; }
     public ILdapSchema LdapSchema { get; set; }
     public LdapAttributeName[]? AttributeNames { get; set; }
+    public DistinguishedName? Domain { get; set; }
 }

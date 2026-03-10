@@ -119,7 +119,7 @@ internal class LdapServerSection
     [Description("requires-upn")]
     public bool RequiresUpn { get; set; }
     [Description("enable-trusted-domains")]
-    public bool TrustedDomainsEnabled { get; set; }
+    public bool EnableTrustedDomains { get; set; }
     [Description("enable-alternative-suffixes")]
     public bool AlternativeSuffixesEnabled { get; set; }
     [Description("included-domains")]

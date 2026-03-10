@@ -21,7 +21,8 @@ internal sealed class AdapterServer : IAsyncDisposable
     
     //TODO to the configuration
     private const int ShoutDownTimeout = 30;
-    private const int MaxConcurrentRequests = 1000;
+
+    private const int MaxConcurrentRequests = 10000;
     
     public AdapterServer(
         IUdpClient udpClient,

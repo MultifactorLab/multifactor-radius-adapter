@@ -26,7 +26,6 @@ public sealed class CustomUdpClient : IUdpClient
     public async Task<UdpReceiveResult> ReceiveAsync(CancellationToken cancellationToken = default) 
         => await _udpClient.ReceiveAsync(cancellationToken);
     
-    
     public async Task<int> SendAsync(
         byte[] datagram, 
         int bytesCount, 

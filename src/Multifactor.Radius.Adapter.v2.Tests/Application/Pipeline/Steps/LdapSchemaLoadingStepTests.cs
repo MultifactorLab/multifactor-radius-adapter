@@ -5,7 +5,7 @@ using Multifactor.Radius.Adapter.v2.Application.Cache;
 using Multifactor.Radius.Adapter.v2.Application.Core;
 using Multifactor.Radius.Adapter.v2.Application.Features.Ldap.Models;
 using Multifactor.Radius.Adapter.v2.Application.Features.Ldap.Ports;
-using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Steps;
+using Multifactor.Radius.Adapter.v2.Application.Features.LoadLdapSchema;
 using Multifactor.Radius.Adapter.v2.Application.Features.Radius.Models;
 using Multifactor.Radius.Adapter.v2.Application.Features.Radius.Models.Enums;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Models;

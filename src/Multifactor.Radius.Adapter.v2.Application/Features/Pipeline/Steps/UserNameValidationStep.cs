@@ -59,12 +59,11 @@ public class UserNameValidationStep : IRadiusPipelineStep
         string domain,
         IReadOnlyList<string> includedSuffixes,
         IReadOnlyList<string> excludedSuffixes,
-        IForestMetadata? forestMetadata) // НОВЫЙ ПАРАМЕТР
+        IForestMetadata? forestMetadata)
     {
         if (string.IsNullOrWhiteSpace(domain))
             throw new ArgumentNullException(nameof(domain));
 
-        // Если есть метаданные леса - проверяем, что суффикс вообще существует в лесу
         if (forestMetadata != null)
         {
             var existsInForest = forestMetadata.UpnSuffixes.ContainsKey(domain) ||
@@ -77,7 +76,6 @@ public class UserNameValidationStep : IRadiusPipelineStep
             }
         }
 
-        // Дальше стандартная проверка по конфигурации
         if (includedSuffixes != null && includedSuffixes.Count > 0)
             return includedSuffixes.Any(included => included.Equals(domain, StringComparison.CurrentCultureIgnoreCase));
 

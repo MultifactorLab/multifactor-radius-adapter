@@ -5,11 +5,11 @@ VisualStudioVersion = 17.4.33103.184
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{1FDA0815-14C7-4C4A-B632-52BFF4AF7788}"
 	ProjectSection(SolutionItems) = preProject
+		compose.yaml = compose.yaml
 		..\LICENSE.md = ..\LICENSE.md
 		..\LICENSE.ru.md = ..\LICENSE.ru.md
 		..\README.md = ..\README.md
 		..\README.ru.md = ..\README.ru.md
-		compose.yaml = compose.yaml
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Multifactor.Radius.Adapter.v2", "Multifactor.Radius.Adapter.v2\Multifactor.Radius.Adapter.v2.csproj", "{03C86912-C263-4CF9-A0D8-94167AB647BE}"

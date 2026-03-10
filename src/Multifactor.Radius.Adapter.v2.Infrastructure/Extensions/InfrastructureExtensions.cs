@@ -22,6 +22,7 @@ using Multifactor.Radius.Adapter.v2.Infrastructure.Cache.AuthenticatedClientCach
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Loader;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Models.Dictionary;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Features.LoadLdapForest;
+using Multifactor.Radius.Adapter.v2.Infrastructure.Features.LoadProfile;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Logging;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Radius.Builders;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Radius.Client;
@@ -156,6 +157,7 @@ public static class InfrastructureExtensions
         services.AddSingleton<LdapSchemaLoader>();
         services.AddTransient<ILdapAdapter, LdapAdapter>();
         services.AddTransient<ILdapForestLoad, LdapForestLoad>();
+        services.AddProfileSearch();
     }
 
     public static void AddInfraServices(this IServiceCollection services)

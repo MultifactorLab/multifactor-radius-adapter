@@ -17,7 +17,7 @@ public interface ILdapServerConfiguration
     public IReadOnlyList<string> PhoneAttributes { get; }
     public string IdentityAttribute { get; }
     public bool RequiresUpn { get; }
-    public bool TrustedDomainsEnabled { get; }
+    public bool EnableTrustedDomains { get; }
     public bool AlternativeSuffixesEnabled { get; }
     public IReadOnlyList<string> IncludedDomains { get; }
     public IReadOnlyList<string> ExcludedDomains { get; }

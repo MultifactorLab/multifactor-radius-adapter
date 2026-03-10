@@ -3,6 +3,9 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Multifactor.Radius.Adapter.v2.Application.Configuration.Models;
 using Multifactor.Radius.Adapter.v2.Application.Core.Models.Enum;
+using Multifactor.Radius.Adapter.v2.Application.Features.LoadLdapForest;
+using Multifactor.Radius.Adapter.v2.Application.Features.LoadLdapSchema;
+using Multifactor.Radius.Adapter.v2.Application.Features.LoadProfile;
 using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Interfaces;
 using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Steps;
 
@@ -40,9 +43,10 @@ public class RadiusPipelineFactory : IRadiusPipelineFactory
 
         if (withLdap)
         {
+            if (OperatingSystem.IsWindows())
+                steps.Add(CreateStep<LoadLdapForestStep>());
             steps.Add(CreateStep<UserNameValidationStep>());
             steps.Add(CreateStep<LdapSchemaLoadingStep>());
-            steps.Add(CreateStep<LoadLdapForestStep>());
             steps.Add(CreateStep<ProfileLoadingStep>());
             steps.Add(CreateStep<AccessGroupsCheckingStep>());
         }

@@ -4,14 +4,7 @@ namespace Multifactor.Radius.Adapter.v2.Shared.Extensions;
 
 public static class StringExtension
 {
-    public static string[] CustomSplit(this string? target, string separator = ";")
-    {
-        return target?
-            .Split(separator, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .ToArray() ?? [];
-    }
-    
+   
     public static string CanonicalizeUserName(this string userName)
     {
         if (string.IsNullOrEmpty(userName))

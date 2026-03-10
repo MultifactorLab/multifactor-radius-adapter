@@ -5,21 +5,23 @@ using Multifactor.Radius.Adapter.v2.Application.Cache;
 using Multifactor.Radius.Adapter.v2.Application.Core;
 using Multifactor.Radius.Adapter.v2.Application.Features.Ldap.Models;
 using Multifactor.Radius.Adapter.v2.Application.Features.Ldap.Ports;
+using Multifactor.Radius.Adapter.v2.Application.Features.LoadProfile.Ports;
 using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Models;
 using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Models.Enum;
+using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Steps;
 
-namespace Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Steps;
+namespace Multifactor.Radius.Adapter.v2.Application.Features.LoadProfile;
 
 public class ProfileLoadingStep : IRadiusPipelineStep
 {
-    private readonly ILdapAdapter _ldapAdapter;
+    private readonly IProfileSearch _profileSearch;
     private readonly ILogger<ProfileLoadingStep> _logger;
     private readonly ICacheService _cache;
 
-    public ProfileLoadingStep(ILdapAdapter ldapAdapter, ICacheService cache, ILogger<ProfileLoadingStep> logger)
+    public ProfileLoadingStep(ILdapAdapter ldapAdapter, IProfileSearch profileSearch, ICacheService cache, ILogger<ProfileLoadingStep> logger)
     {
-        _ldapAdapter = ldapAdapter;
         _cache = cache;
+        _profileSearch = profileSearch;
         _logger = logger;
     }
 
@@ -142,8 +144,9 @@ public class ProfileLoadingStep : IRadiusPipelineStep
             SearchBase = domain,
             LdapSchema = context.LdapSchema,
             AttributeNames = attributes,
+            Domain = domain,
         };
-        profile = _ldapAdapter.FindUserProfile(request);
+        profile = _profileSearch.Execute(request);
 
         if (profile is null)
             return profile;

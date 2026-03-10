@@ -7,8 +7,6 @@ public interface ILdapAdapter
 {
     IReadOnlyList<string> LoadUserGroups(LoadUserGroupRequest request);
     bool IsMemberOf(MembershipRequest request);
-    ILdapProfile? FindUserProfile(FindUserRequest request);
     bool ChangeUserPassword(ChangeUserPasswordRequest request);
-    ILdapSchema? LoadSchema(LdapConnectionData request);
     bool CheckConnection(LdapConnectionData request);
 }

@@ -2,13 +2,10 @@
 using Multifactor.Core.Ldap;
 using Multifactor.Core.Ldap.Connection;
 using Multifactor.Core.Ldap.Connection.LdapConnectionFactory;
-using Multifactor.Core.Ldap.LdapGroup.Membership;
-using Multifactor.Core.Ldap.Schema;
 using Multifactor.Radius.Adapter.v2.Application.Features.Ldap.Models;
 using Multifactor.Radius.Adapter.v2.Application.Features.LoadLdapForest.Models;
 using Multifactor.Radius.Adapter.v2.Application.Features.LoadLdapForest.Port;
 using System.DirectoryServices.Protocols;
-using System.Net;
 
 namespace Multifactor.Radius.Adapter.v2.Infrastructure.Features.LoadLdapForest;
 
@@ -24,9 +21,9 @@ public class LdapForestLoad : ILdapForestLoad
     }
 
     private readonly ILogger<ILdapForestLoad> _logger;
-    private readonly string _domainLocation = "cn=System";
+    private readonly string _domainLocation = "CN=System";
     private readonly string _domainObjectClass = "trustedDomain";
-    private readonly string _suffixLocation = "cn=Partitions,cn=Configuration";
+    private readonly string _suffixLocation = "CN=Partitions,CN=Configuration";
     private readonly string _suffixAttribute = "uPNSuffixes";
 
     /// <summary>
@@ -39,10 +36,8 @@ public class LdapForestLoad : ILdapForestLoad
         {
             _logger.LogDebug("Loading forest metadata from {connectionString}", connectionData.ConnectionString);
 
-            // Создаем подключение
             using var connection = CreateConnection(connectionData);
 
-            // Получаем корневой DN из connection string
             var (rootDn, domain) = GetDomainName(connection);
 
             _logger.LogDebug("Root domain: {domain}, Root DN: {rootDn}", domain, rootDn);
@@ -145,9 +140,6 @@ public class LdapForestLoad : ILdapForestLoad
         }
     }
 
-    /// <summary>
-    /// Создает LDAP подключение
-    /// </summary>
     private ILdapConnection CreateConnection(LdapConnectionData data)
     {
         var options = new LdapConnectionOptions(new LdapConnectionString(data.ConnectionString, true, false),
@@ -158,17 +150,14 @@ public class LdapForestLoad : ILdapForestLoad
         return _connectionFactory.CreateConnection(options);
     }
 
-    /// <summary>
-    /// Преобразует DNS имя в Distinguished Name
-    /// </summary>
     private string ConvertToDn(string domain)
     {
         var parts = domain.Split('.');
         return string.Join(",", parts.Select(p => $"DC={p}"));
     }
+
     private string ExtractDnsFromDn(string dn)
     {
-        // Из DC=company,DC=com → company.com
         var parts = dn.Split(',')
             .Where(p => p.Trim().StartsWith("DC=", StringComparison.OrdinalIgnoreCase))
             .Select(p => p.Substring(3).Trim())
@@ -177,9 +166,6 @@ public class LdapForestLoad : ILdapForestLoad
         return string.Join(".", parts);
     }
 
-    /// <summary>
-    /// Получает информацию о домене
-    /// </summary>
     private DomainInfo? GetDomainInfo(ILdapConnection connection, string dn, string dnsName, bool isTrusted)
     {
         try
@@ -198,7 +184,6 @@ public class LdapForestLoad : ILdapForestLoad
             var entry = response.Entries[0];
             var netBiosName = GetAttributeValue(entry, "netbiosname");
 
-            // Если нет netbiosname, берем первую часть DNS имени
             if (string.IsNullOrEmpty(netBiosName))
             {
                 netBiosName = dnsName.Split('.')[0].ToUpperInvariant();
@@ -219,19 +204,14 @@ public class LdapForestLoad : ILdapForestLoad
         }
     }
 
-    /// <summary>
-    /// Получает список доверенных доменов
-    /// </summary>
     private List<DomainInfo> GetTrustedDomains(ILdapConnection connection, string rootDn)
     {
         var trustedDomains = new List<DomainInfo>();
-
         try
         {
-            // Ищем объекты trustedDomain в CN=System
             var searchRequest = new SearchRequest(
-                $"CN=System,{rootDn}",
-                "(objectClass=trustedDomain)",
+                $"{_domainLocation},{rootDn}",
+                $"(objectClass={_domainObjectClass})",
                 SearchScope.OneLevel,
                 "cn", "trustPartner", "trustDirection", "trustType", "trustAttributes");
 
@@ -241,10 +221,7 @@ public class LdapForestLoad : ILdapForestLoad
             {
                 try
                 {
-                    // cn = NetBIOS имя доверенного домена
                     var netBiosName = GetAttributeValue(entry, "cn");
-
-                    // trustPartner = DNS имя доверенного домена
                     var dnsName = GetAttributeValue(entry, "trustPartner");
 
                     // Если нет trustPartner, используем cn как DNS имя
@@ -253,7 +230,6 @@ public class LdapForestLoad : ILdapForestLoad
                         dnsName = netBiosName;
                     }
 
-                    // Преобразуем DNS имя в DN
                     var dn = ConvertToDn(dnsName);
 
                     var domainInfo = new DomainInfo
@@ -283,29 +259,23 @@ public class LdapForestLoad : ILdapForestLoad
         return trustedDomains;
     }
 
-    /// <summary>
-    /// Получает UPN-суффиксы для домена
-    /// </summary>
     private List<string> GetUpnSuffixes(ILdapConnection connection, string domainDn, bool alternativeSuffixesEnabled)
     {
         var suffixes = new List<string>();
-        // Основной суффикс всегда добавляем
         suffixes.Add(ExtractDnsFromDn(domainDn));
 
-        // Если альтернативные отключены - только основной
         if (!alternativeSuffixesEnabled)
             return suffixes;
 
         try
         {
-            // Ищем в контейнере Partitions в Configuration
-            var configDn = $"CN=Partitions,CN=Configuration,{domainDn}";
+            var configDn = $"{_suffixLocation},{domainDn}";
 
             var searchRequest = new SearchRequest(
                 configDn,
                 "(objectClass=*)",
                 SearchScope.Base,
-                "uPNSuffixes");
+                _suffixAttribute);
 
             var response = (SearchResponse)connection.SendRequest(searchRequest);
 
@@ -338,26 +308,16 @@ public class LdapForestLoad : ILdapForestLoad
         return suffixes;
     }
 
-    /// <summary>
-    /// Добавляет домен в метаданные
-    /// </summary>
     private void AddDomainToMetadata(ForestMetadata metadata, DomainInfo domainInfo)
     {
-        // Добавляем в словарь доменов (по DNS имени)
         metadata.Domains[domainInfo.DnsName.ToLowerInvariant()] = domainInfo;
 
-        // Добавляем в словарь NetBIOS имен
         if (!string.IsNullOrEmpty(domainInfo.NetBiosName))
         {
             metadata.NetBiosNames[domainInfo.NetBiosName.ToUpperInvariant()] = domainInfo;
         }
-
-        // UPN-суффиксы добавим позже, после загрузки
     }
 
-    /// <summary>
-    /// Получает значение атрибута из записи
-    /// </summary>
     private string? GetAttributeValue(SearchResultEntry entry, string attributeName)
     {
         if (entry.Attributes.Contains(attributeName))

@@ -2,20 +2,21 @@ using Microsoft.Extensions.Logging;
 using Multifactor.Core.Ldap.Schema;
 using Multifactor.Radius.Adapter.v2.Application.Cache;
 using Multifactor.Radius.Adapter.v2.Application.Core;
-using Multifactor.Radius.Adapter.v2.Application.Features.Ldap.Models;
-using Multifactor.Radius.Adapter.v2.Application.Features.Ldap.Ports;
+using Multifactor.Radius.Adapter.v2.Application.Features.LoadLdapSchema.Models;
+using Multifactor.Radius.Adapter.v2.Application.Features.LoadLdapSchema.Ports;
+using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Steps;
 
-namespace Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Steps;
+namespace Multifactor.Radius.Adapter.v2.Application.Features.LoadLdapSchema;
 
 public class LdapSchemaLoadingStep: IRadiusPipelineStep
 {
-    private readonly ILdapAdapter _ldapAdapter;
+    private readonly ILoadLdapSchema _loadLdapSchema;
     private readonly ICacheService _cache;
     private readonly ILogger<LdapSchemaLoadingStep> _logger;
     private const int LdapSchemaCacheLifeTimeInHours = 1;
-    public LdapSchemaLoadingStep(ILdapAdapter ldapAdapter, ICacheService cache, ILogger<LdapSchemaLoadingStep> logger)
+    public LdapSchemaLoadingStep(ILoadLdapSchema loadLdapSchema, ICacheService cache, ILogger<LdapSchemaLoadingStep> logger)
     {
-        _ldapAdapter = ldapAdapter;
+        _loadLdapSchema = loadLdapSchema;
         _cache = cache;
         _logger = logger;
     }
@@ -47,14 +48,14 @@ public class LdapSchemaLoadingStep: IRadiusPipelineStep
             return schema;
         }
 
-        var request = new LdapConnectionData
+        var request = new LoadLdapSchemaDto
         {
             ConnectionString = context.LdapConfiguration.ConnectionString,
             UserName = context.LdapConfiguration.Username,
             Password = context.LdapConfiguration.Password,
             BindTimeoutInSeconds = context.LdapConfiguration.BindTimeoutSeconds
         };
-        schema = _ldapAdapter.LoadSchema(request);
+        schema = _loadLdapSchema.Execute(request);
 
         if (schema is null)
             return schema;

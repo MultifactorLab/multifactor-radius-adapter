@@ -1,7 +1,4 @@
-﻿using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Models;
-using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Models.Enum;
-
-namespace Multifactor.Radius.Adapter.v2.Application.Features.LoadLdapForest.Models;
+﻿namespace Multifactor.Radius.Adapter.v2.Application.Features.LoadLdapForest.Models;
 
 public class DomainInfo
 {
@@ -44,11 +41,9 @@ public class ForestMetadata : IForestMetadata
         suffix = suffix.ToLowerInvariant();
         var result = new List<DomainInfo>();
 
-        // Точные совпадения
         if (UpnSuffixes.TryGetValue(suffix, out var exact))
             result.Add(exact);
 
-        // Частичные совпадения
         foreach (var kv in UpnSuffixes)
         {
             if (suffix.EndsWith(kv.Key) && !result.Contains(kv.Value))

@@ -22,7 +22,7 @@ internal class LdapServerConfiguration : ILdapServerConfiguration
     public IReadOnlyList<string> PhoneAttributes { get; init; }
     public string IdentityAttribute { get; init; }
     public bool RequiresUpn { get; init; }//TODO not used
-    public bool TrustedDomainsEnabled { get; init; }//TODO not used
+    public bool EnableTrustedDomains { get; init; }//TODO not used
     public bool AlternativeSuffixesEnabled { get; init; }//TODO not used
     public IReadOnlyList<string> IncludedDomains { get; init; }//TODO not used
     public IReadOnlyList<string> ExcludedDomains { get; init; }//TODO not used
@@ -32,7 +32,7 @@ internal class LdapServerConfiguration : ILdapServerConfiguration
 
     public static LdapServerConfiguration FromConfiguration(LdapServerSection ldapServerSection, string fileName)
     {
-        if (ldapServerSection is { TrustedDomainsEnabled: true, RequiresUpn: false })
+        if (ldapServerSection is { EnableTrustedDomains: true, RequiresUpn: false })
             throw new InvalidConfigurationException($"Config name: '{fileName}', LDAP server: '{ldapServerSection.ConnectionString}'. To use trusted domains also set 'requires-upn' to 'true'.");
 
         if (!string.IsNullOrWhiteSpace(ldapServerSection.IncludedDomains) && !string.IsNullOrWhiteSpace(ldapServerSection.ExcludedDomains))
@@ -82,7 +82,7 @@ internal class LdapServerConfiguration : ILdapServerConfiguration
                     : [],
             IdentityAttribute = ldapServerSection.IdentityAttribute,
             RequiresUpn = ldapServerSection.RequiresUpn,
-            TrustedDomainsEnabled = ldapServerSection.TrustedDomainsEnabled,
+            EnableTrustedDomains = ldapServerSection.EnableTrustedDomains,
             AlternativeSuffixesEnabled = ldapServerSection.AlternativeSuffixesEnabled,
             IncludedDomains =
                 ConfigurationValueParser.TryParseStringList(ldapServerSection.IncludedDomains,

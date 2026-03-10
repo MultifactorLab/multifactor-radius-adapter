@@ -1,4 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
+using Multifactor.Core.Ldap;
+using Multifactor.Core.Ldap.Name;
 using Multifactor.Core.Ldap.Schema;
 using Multifactor.Radius.Adapter.v2.Application.Core;
 using Multifactor.Radius.Adapter.v2.Application.Core.Models.Enum;
@@ -19,7 +21,6 @@ public class LdapFirstFactorProcessor : IFirstFactorProcessor
     private readonly ILdapBindNameFormatterProvider _ldapBindNameFormatterProvider;
     private readonly ILogger<LdapFirstFactorProcessor> _logger;
     private readonly ILdapAdapter _ldapAdapter;
-
     public AuthenticationSource AuthenticationSource => AuthenticationSource.Ldap;
 
     public LdapFirstFactorProcessor(
@@ -108,11 +109,14 @@ public class LdapFirstFactorProcessor : IFirstFactorProcessor
         var variants = new List<AuthenticationVariant>();
         var userIdentity = new UserIdentity(context.RequestPacket.UserName);
 
+        var domain2 = DetermineSearchBase(context, userIdentity);
+        var connectionstring = GetDomainConnectionString(new LdapConnectionString(context.LdapConfiguration!.ConnectionString), domain2);
+
         // ВАРИАНТ 1: Сначала пробуем с original именем (как пришло)
         variants.Add(new AuthenticationVariant
         {
             BindName = context.RequestPacket.UserName,
-            ConnectionString = context.LdapConfiguration!.ConnectionString,
+            ConnectionString = connectionstring,
             Domain = null
         });
 
@@ -130,7 +134,7 @@ public class LdapFirstFactorProcessor : IFirstFactorProcessor
                 variants.Add(new AuthenticationVariant
                 {
                     BindName = upnName,
-                    ConnectionString = context.LdapConfiguration!.ConnectionString,
+                    ConnectionString = connectionstring,
                     Domain = domain
                 });
 
@@ -156,7 +160,7 @@ public class LdapFirstFactorProcessor : IFirstFactorProcessor
                 variants.Add(new AuthenticationVariant
                 {
                     BindName = context.RequestPacket.UserName, // То же имя
-                    ConnectionString = context.LdapConfiguration!.ConnectionString,
+                    ConnectionString = connectionstring,
                     Domain = domain
                 });
 
@@ -180,7 +184,7 @@ public class LdapFirstFactorProcessor : IFirstFactorProcessor
                     variants.Add(new AuthenticationVariant
                     {
                         BindName = formatted,
-                        ConnectionString = context.LdapConfiguration!.ConnectionString
+                        ConnectionString = connectionstring
                     });
 
                     _logger.LogDebug("Added formatted bind name variant: {original} -> {formatted}",
@@ -196,22 +200,21 @@ public class LdapFirstFactorProcessor : IFirstFactorProcessor
         RadiusPipelineContext context,
         string login,
         string password,
-        string connectionString) // ДОБАВИЛИ connectionString
+        string connectionString)
     {
         var serverConfig = context.LdapConfiguration;
         if (serverConfig is null)
             throw new InvalidOperationException("No Ldap servers configured.");
 
-        var bindName = string.Empty;
+        var bindName = login;
 
         try
         {
-            bindName = login;
-
             _logger.LogDebug("Use '{name}' for LDAP bind.", bindName);
+
             var request = new LdapConnectionData
             {
-                ConnectionString = connectionString, // Используем переданную строку
+                ConnectionString = connectionString,
                 UserName = bindName,
                 Password = password,
                 BindTimeoutInSeconds = serverConfig.BindTimeoutSeconds
@@ -237,7 +240,14 @@ public class LdapFirstFactorProcessor : IFirstFactorProcessor
 
         return false;
     }
-
+    private string GetDomainConnectionString(LdapConnectionString ldapConnectionString, DistinguishedName name)
+    {
+        var ncs = name.Components.Reverse();
+        var newHost = string.Join(".", ncs.Select(x => x.Value));
+        var initialLdapSchema = ldapConnectionString.Scheme;
+        var initialLdapPort = ldapConnectionString.Port;
+        return $"{initialLdapSchema}://{newHost}:{initialLdapPort}";
+    }
 
     private static void Reject(RadiusPipelineContext context)
     {
@@ -302,6 +312,63 @@ public class LdapFirstFactorProcessor : IFirstFactorProcessor
                 break;
         }
         return false;
+    }
+
+    private DistinguishedName DetermineSearchBase(RadiusPipelineContext context, UserIdentity userIdentity)
+    {
+        // Если есть метаданные леса - используем их
+        if (context.ForestMetadata != null)
+        {
+            // Для UPN - ищем по суффиксу
+            if (userIdentity.Format == UserIdentityFormat.UserPrincipalName)
+            {
+                var suffix = userIdentity.GetUpnSuffix();
+                if (context.ForestMetadata.UpnSuffixes.TryGetValue(suffix, out var domain))
+                {
+                    _logger.LogDebug("Found domain '{domain}' for UPN suffix '{suffix}'",
+                        domain.DnsName, suffix);
+                    return new DistinguishedName(domain.DistinguishedName);
+                }
+
+                // Частичное совпадение (для дочерних доменов)
+                foreach (var kv in context.ForestMetadata.UpnSuffixes)
+                {
+                    if (suffix.EndsWith(kv.Key))
+                    {
+                        _logger.LogDebug("Found partial match: domain '{domain}' for suffix '{suffix}'",
+                            kv.Value.DnsName, suffix);
+                        return new DistinguishedName(kv.Value.DistinguishedName);
+                    }
+                }
+            }
+
+            // Для NetBIOS - ищем по NetBIOS имени
+            if (userIdentity.Format == UserIdentityFormat.NetBiosName &&
+                context.ForestMetadata.NetBiosNames.TryGetValue(userIdentity.Identity, out var netbiosDomain))
+            {
+                _logger.LogDebug("Found domain '{domain}' for NetBIOS name '{netbios}'",
+                    netbiosDomain.DnsName, userIdentity.Identity);
+                return new DistinguishedName(netbiosDomain.DistinguishedName);
+            }
+
+            // Для SAM Account Name без домена - используем корневой домен
+            if (userIdentity.Format == UserIdentityFormat.SamAccountName)
+            {
+                var rootDomain = context.ForestMetadata.Domains.Values
+                    .FirstOrDefault(d => d.DnsName == context.ForestMetadata.RootDomain);
+
+                if (rootDomain != null)
+                {
+                    _logger.LogDebug("Using root domain '{domain}' for SAM account name",
+                        rootDomain.DnsName);
+                    return new DistinguishedName(rootDomain.DistinguishedName);
+                }
+            }
+        }
+
+        // Fallback - используем naming context из схемы
+        _logger.LogDebug("Using schema naming context as fallback");
+        return context.LdapSchema.NamingContext;
     }
 
     /// <summary>

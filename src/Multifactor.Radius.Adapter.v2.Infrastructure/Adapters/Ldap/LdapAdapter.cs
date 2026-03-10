@@ -1,36 +1,30 @@
-using System.DirectoryServices.Protocols;
-using System.Text;
 using Microsoft.Extensions.Logging;
 using Multifactor.Core.Ldap;
 using Multifactor.Core.Ldap.Connection;
 using Multifactor.Core.Ldap.Connection.LdapConnectionFactory;
-using Multifactor.Core.Ldap.Extensions;
 using Multifactor.Core.Ldap.LdapGroup.Load;
 using Multifactor.Core.Ldap.LdapGroup.Membership;
 using Multifactor.Core.Ldap.Name;
 using Multifactor.Core.Ldap.Schema;
 using Multifactor.Radius.Adapter.v2.Application.Features.Ldap.Models;
 using Multifactor.Radius.Adapter.v2.Application.Features.Ldap.Ports;
-using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Models;
-using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Models.Enum;
+using System.DirectoryServices.Protocols;
+using System.Text;
 
 namespace Multifactor.Radius.Adapter.v2.Infrastructure.Adapters.Ldap;
 
 public sealed class LdapAdapter : ILdapAdapter
 {
     private readonly ILdapConnectionFactory _connectionFactory;
-    private readonly LdapSchemaLoader _schemaLoader;
     private readonly IMembershipCheckerFactory _ldapMembershipCheckerFactory;
     private readonly ILdapGroupLoaderFactory  _ldapGroupLoaderFactory;
     private readonly ILogger<LdapAdapter> _logger;
 
     public LdapAdapter(
         ILdapConnectionFactory connectionFactory,
-        LdapSchemaLoader schemaLoader,
         ILogger<LdapAdapter> logger, IMembershipCheckerFactory ldapMembershipCheckerFactory, ILdapGroupLoaderFactory ldapGroupLoaderFactory)
     {
         _connectionFactory = connectionFactory ?? throw new ArgumentNullException(nameof(connectionFactory));
-        _schemaLoader = schemaLoader ?? throw new ArgumentNullException(nameof(schemaLoader));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _ldapMembershipCheckerFactory = ldapMembershipCheckerFactory;
         _ldapGroupLoaderFactory = ldapGroupLoaderFactory;
@@ -44,56 +38,6 @@ public sealed class LdapAdapter : ILdapAdapter
         return groupDns.Take(request.Limit).Select(x => x.Components.Deepest.Value).ToList();
     }
 
-    #region FindUserProfile
-    public ILdapProfile? FindUserProfile(FindUserRequest request)
-    {
-        _logger.LogInformation("Try to find '{userIdentity}' profile at '{domain}'.", request.UserIdentity.Identity, request.SearchBase.StringRepresentation);
-        using var connection = CreateConnection(request.ConnectionData);   
-        var identityToSearch = request.UserIdentity;
-        if (request.UserIdentity.Format == UserIdentityFormat.NetBiosName)
-        {
-            var index = request.UserIdentity.Identity.IndexOf('\\');
-            if (index <= 0)
-                throw new ArgumentException($"Invalid NetBIOS identity: {request.UserIdentity.Identity}");
-            var userName = request.UserIdentity.Identity[(index + 1)..];
-            identityToSearch = new UserIdentity(userName);
-        }
-        var filter = GetFilter(identityToSearch, request.LdapSchema);
-        _logger.LogDebug("Search base = '{searchBase}'. Filter for search = '{filter}'", request.SearchBase.StringRepresentation, filter);
-        var result = connection.Find(request.SearchBase, filter, SearchScope.Subtree, attributes: request.AttributeNames ?? []);
-        var entry = result.FirstOrDefault();
-        return entry is null ? null : new LdapProfile(entry, request.LdapSchema);
-    }
-    
-    private string GetFilter(UserIdentity identity, ILdapSchema schema)
-    {
-        var identityAttribute = GetIdentityAttribute(identity, schema);
-        var objectClass = schema.ObjectClass;
-        var classValue = schema.UserObjectClass;
-
-        return $"(&({objectClass}={classValue})({identityAttribute}={identity.Identity}))";
-    }
-    
-    private static string GetIdentityAttribute(UserIdentity identity, ILdapSchema schema) => identity.Format switch
-    {
-        UserIdentityFormat.UserPrincipalName => "userPrincipalName",
-        UserIdentityFormat.DistinguishedName => schema.Dn,
-        UserIdentityFormat.SamAccountName => schema.Uid,
-        _ => throw new NotSupportedException("Unsupported user identity format")
-    };
-    #endregion
-    
-    public ILdapSchema? LoadSchema(LdapConnectionData request)
-    {
-        var options = new LdapConnectionOptions(
-            new LdapConnectionString(request.ConnectionString, true), 
-            AuthType.Basic, 
-            request.UserName, 
-            request.Password, 
-            TimeSpan.FromSeconds(request.BindTimeoutInSeconds)
-            );
-        return _schemaLoader.Load(options);
-    }
 
     public bool CheckConnection(LdapConnectionData request)
     {

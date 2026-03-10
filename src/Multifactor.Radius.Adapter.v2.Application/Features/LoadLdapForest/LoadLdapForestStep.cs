@@ -2,13 +2,11 @@
 using Multifactor.Radius.Adapter.v2.Application.Cache;
 using Multifactor.Radius.Adapter.v2.Application.Core;
 using Multifactor.Radius.Adapter.v2.Application.Features.Ldap.Models;
-using Multifactor.Radius.Adapter.v2.Application.Features.Ldap.Ports;
 using Multifactor.Radius.Adapter.v2.Application.Features.LoadLdapForest.Models;
 using Multifactor.Radius.Adapter.v2.Application.Features.LoadLdapForest.Port;
-using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Models;
-using System.DirectoryServices.Protocols;
+using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Steps;
 
-namespace Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Steps;
+namespace Multifactor.Radius.Adapter.v2.Application.Features.LoadLdapForest;
 
 /// <summary>
 /// Шаг загрузки метаданных леса Active Directory
@@ -52,7 +50,6 @@ public class LoadLdapForestStep : IRadiusPipelineStep
             forestMetadata = CreateFallbackMetadata(context.LdapConfiguration.ConnectionString);
         }
 
-        // Применяем фильтры доменов из конфига
         if (context.LdapConfiguration.IncludedDomains.Count > 0 ||
             context.LdapConfiguration.ExcludedDomains.Count > 0)
         {
@@ -67,7 +64,7 @@ public class LoadLdapForestStep : IRadiusPipelineStep
             "Loaded forest metadata: {domainCount} domains, {suffixCount} suffixes (trusted:{trusted}, altSuffixes:{altSuffixes})",
             forestMetadata.Domains.Count,
             forestMetadata.UpnSuffixes.Count,
-            context.LdapConfiguration.TrustedDomainsEnabled,
+            context.LdapConfiguration.EnableTrustedDomains,
             context.LdapConfiguration.AlternativeSuffixesEnabled);
 
         return Task.CompletedTask;
@@ -80,8 +77,7 @@ public class LoadLdapForestStep : IRadiusPipelineStep
         if (_cache.TryGetValue(cacheKey, out IForestMetadata? cached))
             return cached;
 
-        // Если доверенные домены отключены - только текущий домен
-        if (!context.LdapConfiguration.TrustedDomainsEnabled)
+        if (!context.LdapConfiguration.EnableTrustedDomains)
         {
             _logger.LogDebug("Trusted domains disabled");
             var singleDomain = CreateSingleDomainMetadata(context);
@@ -112,16 +108,14 @@ public class LoadLdapForestStep : IRadiusPipelineStep
 
     private IForestMetadata CreateSingleDomainMetadata(RadiusPipelineContext context)
     {
-        // Используем информацию из уже загруженной схемы!
         var namingContext = context.LdapSchema?.NamingContext;
 
-        if (namingContext == null)
+        if (namingContext is null)
         {
             _logger.LogError("No schema available, falling back to connection string parsing");
             throw new Exception("No schema available, falling back to connection string parsing");
         }
 
-        // Извлекаем DNS имя из DN (DC=company,DC=com → company.com)
         var dnsName = ExtractDnsFromDn(namingContext.StringRepresentation);
         var netBiosName = dnsName.Split('.')[0].ToUpperInvariant();
 
@@ -156,7 +150,6 @@ public class LoadLdapForestStep : IRadiusPipelineStep
     }
     private string ExtractDnsFromDn(string dn)
     {
-        // Из DC=company,DC=com → company.com
         var parts = dn.Split(',')
             .Where(p => p.Trim().StartsWith("DC=", StringComparison.OrdinalIgnoreCase))
             .Select(p => p.Substring(3).Trim())
@@ -167,8 +160,6 @@ public class LoadLdapForestStep : IRadiusPipelineStep
 
     private IForestMetadata CreateFallbackMetadata(string connectionString)
     {
-        // Fallback на случай, если не удалось загрузить лес
-        // Используем только тот домен, который указан в connection string
         var uri = new Uri(connectionString);
         var domain = uri.Host;
 
@@ -221,7 +212,6 @@ public class LoadLdapForestStep : IRadiusPipelineStep
 
         foreach (var domain in metadata.Domains.Values)
         {
-            // Проверяем включение
             if (included.Count > 0 && !included.Any(i =>
                 domain.DnsName.Equals(i, StringComparison.OrdinalIgnoreCase) ||
                 domain.NetBiosName.Equals(i, StringComparison.OrdinalIgnoreCase)))
@@ -230,7 +220,6 @@ public class LoadLdapForestStep : IRadiusPipelineStep
                 continue;
             }
 
-            // Проверяем исключение
             if (excluded.Count > 0 && excluded.Any(e =>
                 domain.DnsName.Equals(e, StringComparison.OrdinalIgnoreCase) ||
                 domain.NetBiosName.Equals(e, StringComparison.OrdinalIgnoreCase)))
@@ -239,10 +228,8 @@ public class LoadLdapForestStep : IRadiusPipelineStep
                 continue;
             }
 
-            // Добавляем домен в отфильтрованные метаданные
             AddDomainToMetadata(filteredMetadata, domain);
 
-            // Добавляем UPN-суффиксы
             foreach (var suffix in domain.UpnSuffixes)
             {
                 filteredMetadata.UpnSuffixes[suffix] = domain;
@@ -254,17 +241,13 @@ public class LoadLdapForestStep : IRadiusPipelineStep
 
         return filteredMetadata;
     }
-        private void AddDomainToMetadata(ForestMetadata metadata, DomainInfo domainInfo)
+    private void AddDomainToMetadata(ForestMetadata metadata, DomainInfo domainInfo)
     {
-        // Добавляем в словарь доменов (по DNS имени)
         metadata.Domains[domainInfo.DnsName.ToLowerInvariant()] = domainInfo;
         
-        // Добавляем в словарь NetBIOS имен
         if (!string.IsNullOrEmpty(domainInfo.NetBiosName))
         {
             metadata.NetBiosNames[domainInfo.NetBiosName.ToUpperInvariant()] = domainInfo;
         }
-        
-        // UPN-суффиксы добавим позже, после загрузки
     }
 }
