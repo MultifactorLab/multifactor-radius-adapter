@@ -5,17 +5,15 @@ using Multifactor.Core.Ldap.Connection.LdapConnectionFactory;
 using Multifactor.Core.Ldap.LdapGroup.Load;
 using Multifactor.Core.Ldap.LdapGroup.Membership;
 using Multifactor.Core.Ldap.Schema;
-using Multifactor.Radius.Adapter.v2.Application.Cache;
-using Multifactor.Radius.Adapter.v2.Application.Configuration.Models;
-using Multifactor.Radius.Adapter.v2.Application.Features.Ldap.Ports;
+using Multifactor.Radius.Adapter.v2.Application.Core.Models;
 using Multifactor.Radius.Adapter.v2.Application.Features.LoadLdapForest.Port;
-using Multifactor.Radius.Adapter.v2.Application.Features.Multifactor.Ports;
-using Multifactor.Radius.Adapter.v2.Application.Features.Radius.Ports;
-using Multifactor.Radius.Adapter.v2.Application.Features.Radius.Services;
+using Multifactor.Radius.Adapter.v2.Application.Features.SecondFactor.Multifactor.Ports;
+using Multifactor.Radius.Adapter.v2.Application.Features.SecondFactor.Ports;
+using Multifactor.Radius.Adapter.v2.Application.Radius.Ports;
+using Multifactor.Radius.Adapter.v2.Application.SharedPorts;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Adapters.Ldap;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Adapters.Multifactor;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Adapters.Multifactor.Http;
-using Multifactor.Radius.Adapter.v2.Infrastructure.Adapters.PacketHandler;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Adapters.Udp;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Cache;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Cache.AuthenticatedClientCache;
@@ -28,6 +26,7 @@ using Multifactor.Radius.Adapter.v2.Infrastructure.Radius.Builders;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Radius.Client;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Radius.Crypto;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Radius.Parsers;
+using Multifactor.Radius.Adapter.v2.Infrastructure.Radius.Sender;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Radius.Services;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Radius.Validators;
 using Polly;
@@ -70,7 +69,6 @@ public static class InfrastructureExtensions
         services.AddSingleton<IRadiusPacketParser, RadiusPacketParser>();
         services.AddSingleton<IRadiusCryptoProvider, RadiusCryptoProvider>();
         
-        services.AddSingleton<IRadiusUdpAdapter, RadiusUdpAdapter>();
     }
     
 
@@ -107,7 +105,6 @@ public static class InfrastructureExtensions
                                                     retryNumber,
                                                     outcome.Exception?.Message ?? outcome.Result?.StatusCode.ToString());
 
-                            // Для каждого retry выбираем новый endpoint
                             var fallbackUrl = await selector.GetNextEndpointAsync();
                             request.RequestUri = new Uri(fallbackUrl, request.RequestUri!.PathAndQuery);
                         })
@@ -155,7 +152,6 @@ public static class InfrastructureExtensions
         services.AddSingleton<ILdapGroupLoaderFactory, LdapGroupLoaderFactory>();
         services.AddSingleton<IMembershipCheckerFactory, MembershipCheckerFactory>();
         services.AddSingleton<LdapSchemaLoader>();
-        services.AddTransient<ILdapAdapter, LdapAdapter>();
         services.AddTransient<ILdapForestLoad, LdapForestLoad>();
         services.AddProfileSearch();
     }
@@ -171,5 +167,10 @@ public static class InfrastructureExtensions
         services.AddTransient<IRadiusAttributeTypeConverter, RadiusAttributeTypeConverter>();
         services.AddSingleton<INasIdentifierExtractor, RadiusNasIdentifierExtractor>();
         services.AddSingleton<IRadiusPacketValidator, RadiusPacketValidator>();
+    }
+
+    public static void AddResponseSender(this IServiceCollection services)
+    {
+        services.AddTransient<IResponseSender, AdapterResponseSender>();
     }
 }

@@ -1,8 +1,6 @@
 using Microsoft.Extensions.Logging;
-using Multifactor.Radius.Adapter.v2.Application.Configuration.Models;
-using Multifactor.Radius.Adapter.v2.Application.Core;
-using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Models.Enum;
-using Multifactor.Radius.Adapter.v2.Application.Features.Radius.Models.Enums;
+using Multifactor.Radius.Adapter.v2.Application.Core.Enum;
+using Multifactor.Radius.Adapter.v2.Application.Core.Models;
 
 namespace Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Steps;
 

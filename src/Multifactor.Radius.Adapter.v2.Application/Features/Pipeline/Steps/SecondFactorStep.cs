@@ -1,28 +1,30 @@
 using Microsoft.Extensions.Logging;
-using Multifactor.Radius.Adapter.v2.Application.Core;
-using Multifactor.Radius.Adapter.v2.Application.Core.Models.Enum;
-using Multifactor.Radius.Adapter.v2.Application.Features.Ldap.Models;
-using Multifactor.Radius.Adapter.v2.Application.Features.Ldap.Ports;
-using Multifactor.Radius.Adapter.v2.Application.Features.Multifactor;
-using Multifactor.Radius.Adapter.v2.Application.Features.Multifactor.Models;
-using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.AccessChallenge;
-using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.AccessChallenge.Models.Enums;
-using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Models.Enum;
+using Multifactor.Radius.Adapter.v2.Application.Core.Enum;
+using Multifactor.Radius.Adapter.v2.Application.Core.Models;
+using Multifactor.Radius.Adapter.v2.Application.Core.Models.Dto;
+using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Steps.AccessChallenge;
+using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Steps.AccessChallenge.Models.Enums;
+using Multifactor.Radius.Adapter.v2.Application.Features.SecondFactor.Multifactor;
+using Multifactor.Radius.Adapter.v2.Application.Features.SecondFactor.Multifactor.Models;
+using Multifactor.Radius.Adapter.v2.Application.SharedPorts;
 
 namespace Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Steps;
 
-public class SecondFactorStep : IRadiusPipelineStep
+internal sealed class SecondFactorStep : IRadiusPipelineStep
 {
     private readonly MultifactorApiService _multifactorApiService;
     private readonly IChallengeProcessorProvider _challengeProcessorProvider;
-    private readonly ILdapAdapter _ldapAdapter;
+    private readonly ICheckMembership _checkMembership;
     private readonly ILogger<SecondFactorStep> _logger;
-    public SecondFactorStep(MultifactorApiService multifactorApiService, IChallengeProcessorProvider challengeProcessorProvider, ILdapAdapter ldapAdapter, ILogger<SecondFactorStep> logger)
+    public SecondFactorStep(MultifactorApiService multifactorApiService, 
+        IChallengeProcessorProvider challengeProcessorProvider, 
+        ICheckMembership checkMembership, 
+        ILogger<SecondFactorStep> logger)
     {
         _multifactorApiService = multifactorApiService;
         _challengeProcessorProvider = challengeProcessorProvider;
-        _ldapAdapter = ldapAdapter;
         _logger = logger;
+        _checkMembership = checkMembership;
     }
 
     public async Task ExecuteAsync(RadiusPipelineContext context)
@@ -82,8 +84,8 @@ public class SecondFactorStep : IRadiusPipelineStep
 
         if (serverConfig.SecondFaBypassGroups.Any())
         {
-            var request = MembershipRequest.FromContext(context, serverConfig.SecondFaBypassGroups);
-            bypassMember = context.LdapProfile.MemberOf.Intersect(serverConfig.SecondFaBypassGroups).Any() || _ldapAdapter.IsMemberOf(request);
+            var request = MembershipDto.FromContext(context, serverConfig.SecondFaBypassGroups);
+            bypassMember = context.LdapProfile.MemberOf.Intersect(serverConfig.SecondFaBypassGroups).Any() || _checkMembership.Execute(request);
         }
 
         if (bypassMember is true)
@@ -95,8 +97,8 @@ public class SecondFactorStep : IRadiusPipelineStep
         bool? secondFactorMember = null;
         if (serverConfig.SecondFaGroups.Any())
         {
-            var request = MembershipRequest.FromContext(context, serverConfig.SecondFaGroups);
-            secondFactorMember = context.LdapProfile.MemberOf.Intersect(serverConfig.SecondFaGroups).Any() || _ldapAdapter.IsMemberOf(request);
+            var request = MembershipDto.FromContext(context, serverConfig.SecondFaGroups);
+            secondFactorMember = context.LdapProfile.MemberOf.Intersect(serverConfig.SecondFaGroups).Any() || _checkMembership.Execute(request);
             if (secondFactorMember is false)
                 _logger.LogInformation("User '{user:l}' is not a member of the 2FA group at '{domain:l}'", context.RequestPacket.UserName, serverConfig.ConnectionString);
         }
@@ -121,8 +123,8 @@ public class SecondFactorStep : IRadiusPipelineStep
             return false;
         }
         
-        var request = MembershipRequest.FromContext(context, context.LdapConfiguration.AuthenticationCacheGroups);
-        var isMember = context.LdapProfile.MemberOf.Intersect(context.LdapConfiguration.AuthenticationCacheGroups).Any() || _ldapAdapter.IsMemberOf(request);
+        var request = MembershipDto.FromContext(context, context.LdapConfiguration.AuthenticationCacheGroups);
+        var isMember = context.LdapProfile.MemberOf.Intersect(context.LdapConfiguration.AuthenticationCacheGroups).Any() || _checkMembership.Execute(request);
         var groupsStr = string.Join(',', context.LdapConfiguration.AuthenticationCacheGroups);
         var username = context.RequestPacket.UserName;
         if (!isMember)

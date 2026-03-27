@@ -1,13 +1,11 @@
-using Elastic.CommonSchema;
-using Microsoft.AspNetCore.Hosting.Server;
 using Multifactor.Core.Ldap.Name;
-using Multifactor.Radius.Adapter.v2.Application.Configuration.Models;
+using Multifactor.Radius.Adapter.v2.Application.Core.Models.Abstractions;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Exceptions;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Parser;
 
 namespace Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Models;
 
-internal class LdapServerConfiguration : ILdapServerConfiguration
+internal sealed class LdapServerConfiguration : ILdapServerConfiguration
 {
     public string ConnectionString { get; init; }
     public string Username { get; init; }

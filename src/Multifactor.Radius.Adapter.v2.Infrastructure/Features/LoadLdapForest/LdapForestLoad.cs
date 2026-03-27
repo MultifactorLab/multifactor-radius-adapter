@@ -2,16 +2,16 @@
 using Multifactor.Core.Ldap;
 using Multifactor.Core.Ldap.Connection;
 using Multifactor.Core.Ldap.Connection.LdapConnectionFactory;
-using Multifactor.Radius.Adapter.v2.Application.Features.Ldap.Models;
 using Multifactor.Radius.Adapter.v2.Application.Features.LoadLdapForest.Models;
 using Multifactor.Radius.Adapter.v2.Application.Features.LoadLdapForest.Port;
 using System.DirectoryServices.Protocols;
 
 namespace Multifactor.Radius.Adapter.v2.Infrastructure.Features.LoadLdapForest;
 
-public class LdapForestLoad : ILdapForestLoad
+internal class LdapForestLoad : ILdapForestLoad
 {
     private readonly ILdapConnectionFactory _connectionFactory;
+    private readonly ILogger<ILdapForestLoad> _logger;
 
     public LdapForestLoad(ILdapConnectionFactory connectionFactory,
         ILogger<ILdapForestLoad> logger)
@@ -20,23 +20,22 @@ public class LdapForestLoad : ILdapForestLoad
         _logger = logger;
     }
 
-    private readonly ILogger<ILdapForestLoad> _logger;
-    private readonly string _domainLocation = "CN=System";
-    private readonly string _domainObjectClass = "trustedDomain";
-    private readonly string _suffixLocation = "CN=Partitions,CN=Configuration";
-    private readonly string _suffixAttribute = "uPNSuffixes";
+    private const string DomainLocation = "CN=System";
+    private const string DomainObjectClass = "trustedDomain";
+    private const string SuffixLocation = "CN=Partitions,CN=Configuration";
+    private const string SuffixAttribute = "uPNSuffixes";
 
     /// <summary>
     /// Загружает метаданные леса Active Directory
     /// </summary>
-    public IForestMetadata? Execute(LoadMetadataDto request)
+    public IForestMetadata? Execute(LoadMetadataDto dto)
     {
-        var connectionData = request.ConnectionData;
         try
         {
-            _logger.LogDebug("Loading forest metadata from {connectionString}", connectionData.ConnectionString);
+            _logger.LogDebug("Loading forest metadata from {connectionString}", dto.ConnectionString);
 
-            using var connection = CreateConnection(connectionData);
+            using var connection = CreateConnection(dto.ConnectionString, dto.UserName, 
+                dto.Password, dto.BindTimeoutInSeconds);
 
             var (rootDn, domain) = GetDomainName(connection);
 
@@ -68,22 +67,18 @@ public class LdapForestLoad : ILdapForestLoad
             // ШАГ 3: Для каждого домена получаем UPN-суффиксы
             foreach (var domainInfo in metadata.Domains.Values.ToList())
             {
-                var suffixes = GetUpnSuffixes(connection, domainInfo.DistinguishedName, request.AlternativeSuffixesEnabled);
-                foreach (var suffix in suffixes)
+                var suffixes = GetUpnSuffixes(connection, domainInfo.DistinguishedName, dto.AlternativeSuffixesEnabled);
+                foreach (var suffix in suffixes.Where(suffix => !metadata.UpnSuffixes.ContainsKey(suffix)))
                 {
-                    if (!metadata.UpnSuffixes.ContainsKey(suffix))
-                    {
-                        metadata.UpnSuffixes[suffix] = domainInfo;
-                        domainInfo.UpnSuffixes.Add(suffix);
-                        _logger.LogDebug("UPN suffix '{suffix}' -> domain '{domain}'",
-                            suffix, domainInfo.DnsName);
-                    }
+                    metadata.UpnSuffixes[suffix] = domainInfo;
+                    domainInfo.UpnSuffixes.Add(suffix);
+                    _logger.LogDebug("UPN suffix '{suffix}' -> domain '{domain}'",
+                        suffix, domainInfo.DnsName);
                 }
 
                 // Добавляем основной DNS суффикс, если его еще нет
-                if (!metadata.UpnSuffixes.ContainsKey(domainInfo.DnsName))
+                if (metadata.UpnSuffixes.TryAdd(domainInfo.DnsName, domainInfo))
                 {
-                    metadata.UpnSuffixes[domainInfo.DnsName] = domainInfo;
                     domainInfo.UpnSuffixes.Add(domainInfo.DnsName);
                 }
             }
@@ -98,7 +93,7 @@ public class LdapForestLoad : ILdapForestLoad
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to load forest metadata from {connectionString}",
-                connectionData.ConnectionString);
+                dto.ConnectionString);
             return null;
         }
     }
@@ -140,23 +135,23 @@ public class LdapForestLoad : ILdapForestLoad
         }
     }
 
-    private ILdapConnection CreateConnection(LdapConnectionData data)
+    private ILdapConnection CreateConnection(string connectionString, string userName, string password, int bindTimeoutInSeconds)
     {
-        var options = new LdapConnectionOptions(new LdapConnectionString(data.ConnectionString, true, false),
-            AuthType.Basic,
-            data.UserName,
-            data.Password,
-            TimeSpan.FromSeconds(data.BindTimeoutInSeconds));
+        var options = new LdapConnectionOptions(new LdapConnectionString(connectionString, true, false), 
+            AuthType.Basic, 
+            userName, 
+            password, 
+            TimeSpan.FromSeconds(bindTimeoutInSeconds));
         return _connectionFactory.CreateConnection(options);
     }
 
-    private string ConvertToDn(string domain)
+    private static string ConvertToDn(string domain)
     {
         var parts = domain.Split('.');
         return string.Join(",", parts.Select(p => $"DC={p}"));
     }
 
-    private string ExtractDnsFromDn(string dn)
+    private static string ExtractDnsFromDn(string dn)
     {
         var parts = dn.Split(',')
             .Where(p => p.Trim().StartsWith("DC=", StringComparison.OrdinalIgnoreCase))
@@ -210,8 +205,8 @@ public class LdapForestLoad : ILdapForestLoad
         try
         {
             var searchRequest = new SearchRequest(
-                $"{_domainLocation},{rootDn}",
-                $"(objectClass={_domainObjectClass})",
+                $"{DomainLocation},{rootDn}",
+                $"(objectClass={DomainObjectClass})",
                 SearchScope.OneLevel,
                 "cn", "trustPartner", "trustDirection", "trustType", "trustAttributes");
 
@@ -261,21 +256,20 @@ public class LdapForestLoad : ILdapForestLoad
 
     private List<string> GetUpnSuffixes(ILdapConnection connection, string domainDn, bool alternativeSuffixesEnabled)
     {
-        var suffixes = new List<string>();
-        suffixes.Add(ExtractDnsFromDn(domainDn));
+        var suffixes = new List<string> { ExtractDnsFromDn(domainDn) };
 
         if (!alternativeSuffixesEnabled)
             return suffixes;
 
         try
         {
-            var configDn = $"{_suffixLocation},{domainDn}";
+            var configDn = $"{SuffixLocation},{domainDn}";
 
             var searchRequest = new SearchRequest(
                 configDn,
                 "(objectClass=*)",
                 SearchScope.Base,
-                _suffixAttribute);
+                SuffixAttribute);
 
             var response = (SearchResponse)connection.SendRequest(searchRequest);
 
@@ -308,7 +302,7 @@ public class LdapForestLoad : ILdapForestLoad
         return suffixes;
     }
 
-    private void AddDomainToMetadata(ForestMetadata metadata, DomainInfo domainInfo)
+    private static void AddDomainToMetadata(ForestMetadata metadata, DomainInfo domainInfo)
     {
         metadata.Domains[domainInfo.DnsName.ToLowerInvariant()] = domainInfo;
 
@@ -318,14 +312,14 @@ public class LdapForestLoad : ILdapForestLoad
         }
     }
 
-    private string? GetAttributeValue(SearchResultEntry entry, string attributeName)
+    private static string? GetAttributeValue(SearchResultEntry entry, string attributeName)
     {
         if (entry.Attributes.Contains(attributeName))
         {
             var values = entry.Attributes[attributeName].GetValues(typeof(string));
             if (values != null && values.Length > 0)
             {
-                return values[0]?.ToString();
+                return values[0].ToString();
             }
         }
         return null;

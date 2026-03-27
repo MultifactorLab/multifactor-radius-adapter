@@ -15,7 +15,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\Multifactor.Radius.Adapter.v2.Shared\Multifactor.Radius.Adapter.v2.Shared.csproj" />
+      <Folder Include="Radius\Services\" />
     </ItemGroup>
 
 </Project>

@@ -1,10 +1,10 @@
 using Microsoft.Extensions.Logging;
-using Multifactor.Radius.Adapter.v2.Application.Core;
-using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Models.Enum;
+using Multifactor.Radius.Adapter.v2.Application.Core.Enum;
+using Multifactor.Radius.Adapter.v2.Application.Core.Models;
 
 namespace Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Steps;
 
-public class PreAuthPostCheck : IRadiusPipelineStep
+internal sealed class PreAuthPostCheck : IRadiusPipelineStep
 {
     private readonly ILogger<PreAuthPostCheck> _logger;
 

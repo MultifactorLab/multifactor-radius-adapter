@@ -1,22 +1,21 @@
 using Microsoft.Extensions.Logging;
-using Multifactor.Radius.Adapter.v2.Application.Core;
-using Multifactor.Radius.Adapter.v2.Application.Features.Ldap.Models;
-using Multifactor.Radius.Adapter.v2.Application.Features.Ldap.Ports;
-using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Models.Enum;
+using Multifactor.Radius.Adapter.v2.Application.Core.Enum;
+using Multifactor.Radius.Adapter.v2.Application.Core.Models;
+using Multifactor.Radius.Adapter.v2.Application.Core.Models.Dto;
+using Multifactor.Radius.Adapter.v2.Application.SharedPorts;
 
 namespace Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Steps;
 
-public class AccessGroupsCheckingStep : IRadiusPipelineStep
+internal sealed class AccessGroupsCheckingStep : IRadiusPipelineStep
 {
-    private readonly ILdapAdapter _ldapAdapter;
+    private readonly ICheckMembership _checkMembership;
     private readonly ILogger<AccessGroupsCheckingStep> _logger;
 
     public AccessGroupsCheckingStep(
-        ILdapAdapter ldapAdapter,
-        ILogger<AccessGroupsCheckingStep> logger)
+        ILogger<AccessGroupsCheckingStep> logger, ICheckMembership checkMembership)
     {
-        _ldapAdapter = ldapAdapter;
         _logger = logger;
+        _checkMembership = checkMembership;
     }
 
     public Task ExecuteAsync(RadiusPipelineContext context)
@@ -31,8 +30,8 @@ public class AccessGroupsCheckingStep : IRadiusPipelineStep
         
         ArgumentNullException.ThrowIfNull(context.LdapProfile, nameof(context.LdapProfile));
         var accessGroup = context.LdapConfiguration.AccessGroups;
-        var request = MembershipRequest.FromContext(context, accessGroup);
-        var isMember = context.LdapProfile.MemberOf.Intersect(accessGroup).Any() || _ldapAdapter.IsMemberOf(request);
+        var request = MembershipDto.FromContext(context, accessGroup);
+        var isMember = context.LdapProfile.MemberOf.Intersect(accessGroup).Any() || _checkMembership.Execute(request);
 
         return isMember ? Task.CompletedTask : TerminatePipeline(context);
     }

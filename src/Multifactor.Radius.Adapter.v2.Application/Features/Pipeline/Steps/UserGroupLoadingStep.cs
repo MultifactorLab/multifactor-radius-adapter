@@ -1,19 +1,19 @@
 using Microsoft.Extensions.Logging;
-using Multifactor.Radius.Adapter.v2.Application.Core;
-using Multifactor.Radius.Adapter.v2.Application.Features.Ldap.Models;
-using Multifactor.Radius.Adapter.v2.Application.Features.Ldap.Ports;
-using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Models.Enum;
+using Multifactor.Radius.Adapter.v2.Application.Core.Enum;
+using Multifactor.Radius.Adapter.v2.Application.Core.Models;
+using Multifactor.Radius.Adapter.v2.Application.Features.UserGroupLoading.Models;
+using Multifactor.Radius.Adapter.v2.Application.Features.UserGroupLoading.Ports;
 
 namespace Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Steps;
 
 public class UserGroupLoadingStep : IRadiusPipelineStep
 {
-    private readonly ILdapAdapter _ldapAdapter;
+    private readonly ILoadGroups _loadGroups;
     private readonly ILogger<UserGroupLoadingStep> _logger;
 
-    public UserGroupLoadingStep(ILdapAdapter ldapAdapter, ILogger<UserGroupLoadingStep> logger)
+    public UserGroupLoadingStep(ILoadGroups loadGroups, ILogger<UserGroupLoadingStep> logger)
     {
-        _ldapAdapter = ldapAdapter;
+        _loadGroups = loadGroups;
         _logger = logger;
     }
 
@@ -60,21 +60,18 @@ public class UserGroupLoadingStep : IRadiusPipelineStep
         {
             _logger.LogDebug("Loading nested groups from '{dn}' at '{domain}' for '{user}'", dn, context.LdapConfiguration.ConnectionString, context.RequestPacket.UserName);
 
-            var request = new LoadUserGroupRequest
-            {           
-                ConnectionData = new LdapConnectionData
-                {
-                    ConnectionString = context.LdapConfiguration.ConnectionString,
-                    UserName = context.LdapConfiguration.Username,
-                    Password = context.LdapConfiguration.Password,
-                    BindTimeoutInSeconds = context.LdapConfiguration.BindTimeoutSeconds
-                },
+            var dto = new LoadUserGroupDto()
+            { 
+                ConnectionString = context.LdapConfiguration.ConnectionString,
+                UserName = context.LdapConfiguration.Username,
+                Password = context.LdapConfiguration.Password,
+                BindTimeoutInSeconds = context.LdapConfiguration.BindTimeoutSeconds,
                 LdapSchema = context.LdapSchema!,
                 UserDN = context.LdapProfile!.Dn,
                 SearchBase = dn
             };
             
-            var groups = _ldapAdapter.LoadUserGroups(request);
+            var groups = _loadGroups.Execute(dto);
             var groupLog = string.Join("\n", groups);
             _logger.LogDebug("Found groups at '{domain}' for '{user}': {groups}", dn, context.RequestPacket.UserName, groupLog);
                 
@@ -85,21 +82,18 @@ public class UserGroupLoadingStep : IRadiusPipelineStep
 
     private void LoadUserGroupsFromRoot(RadiusPipelineContext context, HashSet<string> userGroups)
     {
-        var request = new LoadUserGroupRequest
+        var dto = new LoadUserGroupDto()
         {
-            ConnectionData = new LdapConnectionData
-            {
-                ConnectionString = context.LdapConfiguration.ConnectionString,
-                UserName = context.LdapConfiguration.Username,
-                Password = context.LdapConfiguration.Password,
-                BindTimeoutInSeconds = context.LdapConfiguration.BindTimeoutSeconds
-            },
+            ConnectionString = context.LdapConfiguration.ConnectionString,
+            UserName = context.LdapConfiguration.Username,
+            Password = context.LdapConfiguration.Password,
+            BindTimeoutInSeconds = context.LdapConfiguration.BindTimeoutSeconds,
             LdapSchema = context.LdapSchema!,
             UserDN = context.LdapProfile!.Dn
         };
             
         _logger.LogDebug("Loading nested groups from root at '{domain}' for '{user}'", context.LdapConfiguration!.ConnectionString, context.RequestPacket.UserName);   
-        var groups = _ldapAdapter.LoadUserGroups(request);
+        var groups = _loadGroups.Execute(dto);
             
         var groupLog = string.Join("\n", groups);
         _logger.LogDebug("Found groups at root for '{user}': {groups}", context.RequestPacket.UserName, groupLog);

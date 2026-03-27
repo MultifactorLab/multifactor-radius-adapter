@@ -1,10 +1,10 @@
 using Microsoft.Extensions.Logging;
-using Multifactor.Radius.Adapter.v2.Application.Core;
-using Multifactor.Radius.Adapter.v2.Application.Features.Radius.Models.Enums;
+using Multifactor.Radius.Adapter.v2.Application.Core.Enum;
+using Multifactor.Radius.Adapter.v2.Application.Core.Models;
 
 namespace Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Steps;
 
-public class AccessRequestFilteringStep : IRadiusPipelineStep
+internal sealed class AccessRequestFilteringStep : IRadiusPipelineStep
 {
     private readonly ILogger<AccessRequestFilteringStep> _logger;
     private const string StepName = nameof(AccessRequestFilteringStep);
@@ -19,9 +19,7 @@ public class AccessRequestFilteringStep : IRadiusPipelineStep
         _logger.LogDebug("'{StepName}' started", StepName);
         
         if (context.RequestPacket.Code == PacketCode.AccessRequest)
-        {
             return Task.CompletedTask;
-        }
         
         LogUnprocessablePacket(context);
         context.Terminate();
@@ -37,8 +35,8 @@ public class AccessRequestFilteringStep : IRadiusPipelineStep
         var clientInfo = client?.ToString() ?? "unknown";
         
         _logger.LogWarning(
-            "Unprocessable packet type: {PacketCode}, from {Client}", 
-            context.RequestPacket.Code.ToString(), 
+            "Unprocessable packet type: {PacketCode}, from {Client}",
+            context.RequestPacket.Code.ToString(),
             clientInfo);
     }
 }

@@ -6,7 +6,7 @@ namespace Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Reader;
 
 internal static class ConfigurationReader
 {
-    internal static AdapterConfiguration? Read(string filePath, string prefix = null)
+    internal static AdapterConfiguration? Read(string filePath, string? prefix = null)
     {
         var builder = new ConfigurationBuilder()
             .AddXmlConfig(filePath)

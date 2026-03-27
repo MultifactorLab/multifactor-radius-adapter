@@ -3,7 +3,7 @@ using System.Net;
 using System.Net.Sockets;
 using Microsoft.Extensions.Logging;
 using Multifactor.Core.Ldap.LangFeatures;
-using Multifactor.Radius.Adapter.v2.Application.Features.Radius.Ports;
+using Multifactor.Radius.Adapter.v2.Application.Radius.Ports;
 
 namespace Multifactor.Radius.Adapter.v2.Infrastructure.Radius.Client;
 

@@ -3,10 +3,10 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
-using Multifactor.Radius.Adapter.v2.Application.Features.Multifactor.Exceptions;
-using Multifactor.Radius.Adapter.v2.Application.Features.Multifactor.Models;
-using Multifactor.Radius.Adapter.v2.Application.Features.Multifactor.Models.Enum;
-using Multifactor.Radius.Adapter.v2.Application.Features.Multifactor.Ports;
+using Multifactor.Radius.Adapter.v2.Application.Features.SecondFactor.Multifactor.Exceptions;
+using Multifactor.Radius.Adapter.v2.Application.Features.SecondFactor.Multifactor.Models;
+using Multifactor.Radius.Adapter.v2.Application.Features.SecondFactor.Multifactor.Models.Enum;
+using Multifactor.Radius.Adapter.v2.Application.Features.SecondFactor.Multifactor.Ports;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Adapters.Multifactor.Http;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Adapters.Multifactor.Models;
 
@@ -43,13 +43,12 @@ public class MultifactorApi : IMultifactorApi
     }
     
     public async Task<AccessRequestResponse> SendChallengeAsync(
-        ChallengeRequestQuery query, 
+        ChallengeRequestDto dto, 
         MultifactorAuthData authData, 
         CancellationToken cancellationToken)
     {
-        ArgumentNullException.ThrowIfNull(query, nameof(query));
+        ArgumentNullException.ThrowIfNull(dto, nameof(dto));
         
-        var dto = ChallengeRequestDto.FromQuery(query);
         return await SendRequestAsync<ChallengeRequestDto, AccessRequestResponse>(
             endpoint: "access/requests/ra/challenge",
             data: dto,

@@ -1,10 +1,9 @@
 using System.Text;
 using Microsoft.Extensions.Logging;
-using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Models.Enum;
-using Multifactor.Radius.Adapter.v2.Application.Features.Radius.Models;
-using Multifactor.Radius.Adapter.v2.Application.Features.Radius.Models.Enums;
-using Multifactor.Radius.Adapter.v2.Application.Features.Radius.Ports;
-using Multifactor.Radius.Adapter.v2.Application.Features.Radius.Services;
+using Multifactor.Radius.Adapter.v2.Application.Core.Enum;
+using Multifactor.Radius.Adapter.v2.Application.Core.Models;
+using Multifactor.Radius.Adapter.v2.Application.Radius.Ports;
+using Multifactor.Radius.Adapter.v2.Infrastructure.Radius.Services;
 
 namespace Multifactor.Radius.Adapter.v2.Infrastructure.Radius.Sender;
 

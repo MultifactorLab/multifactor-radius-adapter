@@ -1,14 +1,20 @@
 using System.Net;
 using System.Text;
-using Multifactor.Radius.Adapter.v2.Application.Features.Radius.Models;
-using Multifactor.Radius.Adapter.v2.Application.Features.Radius.Models.Enums;
+using Multifactor.Radius.Adapter.v2.Application.Core.Enum;
+using Multifactor.Radius.Adapter.v2.Application.Core.Models;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Models.Dictionary;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Models.Dictionary.Attributes;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Radius.Crypto;
 
 namespace Multifactor.Radius.Adapter.v2.Infrastructure.Radius.Builders;
 
-public class RadiusPacketBuilder : IRadiusPacketBuilder
+public interface IRadiusPacketBuilder
+{
+    byte[] Build(RadiusPacket packet, SharedSecret sharedSecret);
+    RadiusPacket CreateResponse(RadiusPacket request, PacketCode responseCode);
+}
+
+public sealed class RadiusPacketBuilder : IRadiusPacketBuilder
 {
     private readonly IRadiusDictionary _radiusDictionary;
     private readonly IRadiusCryptoProvider _cryptoProvider;
@@ -17,17 +23,17 @@ public class RadiusPacketBuilder : IRadiusPacketBuilder
     /// <summary>
     /// User-Password
     /// </summary>
-    public const int UserPassword = 2;
+    private const int UserPassword = 2;
 
     /// <summary>
     /// Vendor-Specific
     /// </summary>
-    public const int VendorSpecific = 26;
+    private const int VendorSpecific = 26;
 
     /// <summary>
     /// Message-Authenticator
     /// </summary>
-    public const int MessageAuthenticator = 80;
+    private const int MessageAuthenticator = 80;
 
     public RadiusPacketBuilder(
         IRadiusDictionary radiusDictionary,

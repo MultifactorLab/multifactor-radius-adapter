@@ -22,4 +22,8 @@
       <ProjectReference Include="..\Multifactor.Radius.Adapter.v2.Application\Multifactor.Radius.Adapter.v2.Application.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="Adapters\PacketHandler\" />
+    </ItemGroup>
+
 </Project>

@@ -3,7 +3,7 @@ using System.Xml.Serialization;
 
 namespace Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Models;
 
-internal class AdapterConfiguration
+internal sealed class AdapterConfiguration
 {
     public AdapterConfiguration()
     {
@@ -19,7 +19,7 @@ internal class AdapterConfiguration
     public RadiusReplySection RadiusReply { get; set; } = new();
 }
 
-internal class AppSettingsSection
+internal sealed class AppSettingsSection
 {
     [Description("multifactor-api-url")]
     public string MultifactorApiUrl { get; set; }
@@ -90,7 +90,7 @@ internal class AppSettingsSection
     public string IpWhiteList { get; set; }
 }
 
-internal class LdapServerSection
+internal sealed class LdapServerSection
 {
     [Description("connection-string")]
     public required string ConnectionString { get; set; }
@@ -134,14 +134,14 @@ internal class LdapServerSection
     public string BypassSecondFactorWhenApiUnreachableGroups { get; set; }
 }
 
-internal class RadiusReplySection
+internal sealed class RadiusReplySection
 {
     [XmlArray("Attributes")]
     [XmlArrayItem("add")]
     public List<RadiusAttributeItem> Attributes { get; set; }
 }
 
-internal class RadiusAttributeItem
+internal sealed class RadiusAttributeItem
 {
     [Description("name")]
     public string Name { get; set; }

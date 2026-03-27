@@ -1,6 +1,6 @@
 using System.Collections.Concurrent;
 using Microsoft.Extensions.Logging;
-using Multifactor.Radius.Adapter.v2.Application.Configuration.Models;
+using Multifactor.Radius.Adapter.v2.Application.Core.Models;
 
 namespace Multifactor.Radius.Adapter.v2.Infrastructure.Adapters.Multifactor.Http;
 
@@ -12,7 +12,7 @@ public interface IEndpointSelector
 public class RoundRobinEndpointSelector : IEndpointSelector
 {
     private readonly IReadOnlyList<Uri> _endpoints;
-    private readonly ConcurrentDictionary<Uri, bool> _failedEndpoints;
+    private readonly ConcurrentBag<Uri> _failedEndpoints;
     private int _currentIndex = -1;
     private readonly object _lock = new();
     private readonly ILogger<RoundRobinEndpointSelector> _logger;
@@ -21,7 +21,7 @@ public class RoundRobinEndpointSelector : IEndpointSelector
         ILogger<RoundRobinEndpointSelector> logger)
     {
         _endpoints = configuration.RootConfiguration.MultifactorApiUrls;
-        _failedEndpoints = new ConcurrentDictionary<Uri, bool>();
+        _failedEndpoints = [];
         _logger = logger;
     }
 
@@ -35,14 +35,15 @@ public class RoundRobinEndpointSelector : IEndpointSelector
         if (_endpoints.Count == 0)
             throw new InvalidOperationException("No endpoints configured");
 
-        lock (_lock)
+        lock (_lock)//TODO fix
         {
             foreach (var _ in _endpoints)
             {
+                _failedEndpoints.Add(_);
                 _currentIndex = (_currentIndex + 1) % _endpoints.Count;
                 var endpoint = _endpoints[_currentIndex];
 
-                if (_failedEndpoints.ContainsKey(endpoint)) continue;
+                if (_failedEndpoints.Contains(endpoint)) continue;
                 _logger.LogDebug("Selected endpoint: {Endpoint}", endpoint);
                 return Task.FromResult(endpoint);
             }

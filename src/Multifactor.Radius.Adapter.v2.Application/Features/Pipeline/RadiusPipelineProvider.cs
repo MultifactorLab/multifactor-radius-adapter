@@ -1,11 +1,15 @@
 using System.Collections.Concurrent;
 using Microsoft.Extensions.Logging;
-using Multifactor.Radius.Adapter.v2.Application.Configuration.Models;
-using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Interfaces;
+using Multifactor.Radius.Adapter.v2.Application.Core.Models.Abstractions;
 
 namespace Multifactor.Radius.Adapter.v2.Application.Features.Pipeline;
 
-public class RadiusPipelineProvider : IPipelineProvider
+public interface IPipelineProvider
+{
+    public IRadiusPipeline GetPipeline(IClientConfiguration clientConfiguration);
+}
+
+internal sealed class RadiusPipelineProvider : IPipelineProvider
 {
     private readonly IRadiusPipelineFactory _pipelineFactory;
     private readonly ILogger<RadiusPipelineProvider> _logger;
@@ -28,5 +32,4 @@ public class RadiusPipelineProvider : IPipelineProvider
             return _pipelineFactory.CreatePipeline(clientConfiguration);
         });
     }
-    
 }

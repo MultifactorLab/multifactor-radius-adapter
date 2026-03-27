@@ -1,11 +1,14 @@
 using System.Net;
 using Microsoft.Extensions.Logging;
-using Multifactor.Radius.Adapter.v2.Application.Configuration.Models;
-using Multifactor.Radius.Adapter.v2.Application.Features.Radius.Models;
-using Multifactor.Radius.Adapter.v2.Application.Features.Radius.Services;
-using Multifactor.Radius.Adapter.v2.Shared.Extensions;
+using Multifactor.Radius.Adapter.v2.Application.Core.Models;
+using Multifactor.Radius.Adapter.v2.Application.Core.Models.Abstractions;
 
 namespace Multifactor.Radius.Adapter.v2.Infrastructure.Radius.Services;
+
+public interface IRadiusReplyAttributeService
+{
+    IDictionary<string, List<object>> GetReplyAttributes(GetReplyAttributesRequest request);
+}
 
 public class RadiusReplyAttributeService : IRadiusReplyAttributeService
 {
@@ -83,7 +86,7 @@ public class RadiusReplyAttributeService : IRadiusReplyAttributeService
         return result;
     }
     
-    private bool ShouldIncludeAttribute(IRadiusReplyAttribute attributeValue, GetReplyAttributesRequest request)
+    private static bool ShouldIncludeAttribute(IRadiusReplyAttribute attributeValue, GetReplyAttributesRequest request)
     {
         if (attributeValue.FromLdap)
         {
@@ -112,11 +115,11 @@ public class RadiusReplyAttributeService : IRadiusReplyAttributeService
         if (string.IsNullOrWhiteSpace(userName))
             return false;
             
-        var canonicalUserName = userName.CanonicalizeUserName();
+        var canonicalUserName = CanonicalizeUserName(userName);
         
         foreach (var condition in conditions)
         {
-            var nameToMatch = condition.IsCanonicalUserName()
+            var nameToMatch = IsCanonicalUserName(condition)
                 ? canonicalUserName 
                 : userName;
             
@@ -175,13 +178,44 @@ public class RadiusReplyAttributeService : IRadiusReplyAttributeService
     
     private static string GetLoggableValue(object value)
     {
-        if (value is IPAddress ip)
-            return ip.ToString();
-        if (value is DateTime dt)
-            return dt.ToString("O");
-        if (value is string str && str.Length > 50)
-            return $"{str[..50]}...";
-            
-        return value.ToString() ?? "null";
+        return value switch
+        {
+            IPAddress ip => ip.ToString(),
+            DateTime dt => dt.ToString("O"),
+            string str when str.Length > 50 => $"{str[..50]}...",
+            _ => value.ToString() ?? "null"
+        };
+    }
+
+    private static bool IsCanonicalUserName(string userName)
+    {
+        if (string.IsNullOrEmpty(userName))
+        {
+            throw new ArgumentNullException(nameof(userName));
+        }
+        return userName.IndexOfAny(['\\', '@']) == -1;
+    }
+    
+    private static string CanonicalizeUserName(string userName)
+    {
+        if (string.IsNullOrEmpty(userName))
+        {
+            throw new ArgumentNullException(nameof(userName));
+        }
+
+        var identity = userName.ToLower();
+        var index = identity.IndexOf('\\', StringComparison.Ordinal);
+        if (index > 0)
+        {
+            identity = identity[(index + 1)..];
+        }
+
+        index = identity.IndexOf('@', StringComparison.Ordinal);
+        if (index > 0)
+        {
+            identity = identity[..index];
+        }
+
+        return identity;
     }
 }

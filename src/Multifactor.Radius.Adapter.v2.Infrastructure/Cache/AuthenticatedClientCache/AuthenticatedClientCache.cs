@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
-using Multifactor.Radius.Adapter.v2.Application.Cache;
+using Multifactor.Radius.Adapter.v2.Application.Features.SecondFactor.Ports;
 
 namespace Multifactor.Radius.Adapter.v2.Infrastructure.Cache.AuthenticatedClientCache;
 

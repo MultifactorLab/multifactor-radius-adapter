@@ -2,7 +2,7 @@ using System.Net;
 using System.Net.Sockets;
 using Microsoft.Extensions.Logging;
 using Multifactor.Core.Ldap.LangFeatures;
-using Multifactor.Radius.Adapter.v2.Application.Features.Radius.Ports;
+using Multifactor.Radius.Adapter.v2.Application.Radius.Ports;
 
 namespace Multifactor.Radius.Adapter.v2.Infrastructure.Adapters.Udp;
 
@@ -16,10 +16,8 @@ public sealed class CustomUdpClient : IUdpClient
         ILogger<CustomUdpClient> logger)
     {
         Throw.IfNull(endPoint, nameof(endPoint));
-        
         _logger = logger;
         _udpClient = new UdpClient(endPoint);
-        
         _logger.LogInformation("UDP client initialized on {Endpoint}", endPoint);
     }
     

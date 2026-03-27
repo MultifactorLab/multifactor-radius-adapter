@@ -2,7 +2,7 @@ namespace Multifactor.Radius.Adapter.v2.Infrastructure.Adapters.Multifactor.Http
 
 public class ActivityContext
 {
-    private static readonly AsyncLocal<ActivityContext> _value = new();
+    private static readonly AsyncLocal<ActivityContext> Value = new();
 
     /// <summary>
     /// Current context activity id.
@@ -14,8 +14,8 @@ public class ActivityContext
     /// </summary>
     public static ActivityContext Current
     {
-        get => _value.Value ??= new ActivityContext();
-        set => _value.Value = value;
+        get => Value.Value ??= new ActivityContext();
+        private set => Value.Value = value;
     }
 
     private ActivityContext()

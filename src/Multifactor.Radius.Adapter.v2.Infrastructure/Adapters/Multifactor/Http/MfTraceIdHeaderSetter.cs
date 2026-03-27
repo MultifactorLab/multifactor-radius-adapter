@@ -1,6 +1,6 @@
 namespace Multifactor.Radius.Adapter.v2.Infrastructure.Adapters.Multifactor.Http;
 
-public class MfTraceIdHeaderSetter : DelegatingHandler
+public class MfTraceIdHeaderSetter : DelegatingHandler//TODO TELEMETRY
 {
     private const string _key = "mf-trace-id";
 

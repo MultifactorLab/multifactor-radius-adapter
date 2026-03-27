@@ -6,17 +6,12 @@ namespace Multifactor.Radius.Adapter.v2.Infrastructure.Adapters.Ldap;
 
 public class CustomLdapConnectionFactory : ILdapConnectionFactory
 {
-    private LdapConnectionFactory _factory;
-    
-    public CustomLdapConnectionFactory()
-    {
-        _factory = LdapConnectionFactory.Create();
-    }
+    private readonly LdapConnectionFactory _factory = LdapConnectionFactory.Create();
 
     public ILdapConnection CreateConnection(LdapConnectionOptions ldapConnectionOptions)
     {
         return new LdapConnection(_factory.CreateConnection(ldapConnectionOptions));
     }
 
-    public OSPlatform TargetPlatform { get; }
+    public OSPlatform TargetPlatform { get; init; }
 }

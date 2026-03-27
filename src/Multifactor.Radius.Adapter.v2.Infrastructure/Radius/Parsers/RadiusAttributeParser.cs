@@ -1,20 +1,27 @@
 using System.Net;
 using System.Text;
 using Microsoft.Extensions.Logging;
-using Multifactor.Radius.Adapter.v2.Application.Features.Radius.Models;
+using Multifactor.Radius.Adapter.v2.Application.Core.Models;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Models.Dictionary;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Models.Dictionary.Attributes;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Radius.Crypto;
+using Multifactor.Radius.Adapter.v2.Infrastructure.Radius.Parsers.Models;
 
 namespace Multifactor.Radius.Adapter.v2.Infrastructure.Radius.Parsers;
 
-public class RadiusAttributeParser : IRadiusAttributeParser
+internal interface IRadiusAttributeParser
+{
+    public ParsedAttribute? Parse(byte[] attributeData, byte typeCode, RadiusAuthenticator authenticator,
+        SharedSecret sharedSecret);
+}
+
+internal sealed class RadiusAttributeParser : IRadiusAttributeParser
 {
     private readonly IRadiusDictionary _radiusDictionary;
     private readonly ILogger<RadiusAttributeParser> _logger;
-    const int VendorSpecific = 26;
-    const int MessageAuthenticator = 80;
-    const int UserPassword = 2;
+    private const int VendorSpecific = 26;
+    private const int MessageAuthenticator = 80;
+    private const int UserPassword = 2;
 
     public RadiusAttributeParser(
         IRadiusDictionary radiusDictionary,

@@ -1,9 +1,13 @@
 using System.Globalization;
 using System.Net;
-using Multifactor.Radius.Adapter.v2.Application.Features.Radius.Services;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Models.Dictionary;
 
 namespace Multifactor.Radius.Adapter.v2.Infrastructure.Radius.Services;
+
+public interface IRadiusAttributeTypeConverter
+{
+    object ConvertType(string attributeName, object value);
+}
 
 public class RadiusAttributeTypeConverter : IRadiusAttributeTypeConverter
 {

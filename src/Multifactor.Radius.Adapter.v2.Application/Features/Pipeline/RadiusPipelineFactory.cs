@@ -1,17 +1,18 @@
 using System.Text;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Multifactor.Radius.Adapter.v2.Application.Configuration.Models;
-using Multifactor.Radius.Adapter.v2.Application.Core.Models.Enum;
-using Multifactor.Radius.Adapter.v2.Application.Features.LoadLdapForest;
-using Multifactor.Radius.Adapter.v2.Application.Features.LoadLdapSchema;
-using Multifactor.Radius.Adapter.v2.Application.Features.LoadProfile;
-using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Interfaces;
+using Multifactor.Radius.Adapter.v2.Application.Core.Enum;
+using Multifactor.Radius.Adapter.v2.Application.Core.Models.Abstractions;
 using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Steps;
 
 namespace Multifactor.Radius.Adapter.v2.Application.Features.Pipeline;
 
-public class RadiusPipelineFactory : IRadiusPipelineFactory
+public interface IRadiusPipelineFactory
+{
+    IRadiusPipeline CreatePipeline(IClientConfiguration clientConfig);
+}
+
+internal sealed class RadiusPipelineFactory : IRadiusPipelineFactory
 {
     private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<IRadiusPipelineFactory> _logger;
@@ -43,8 +44,7 @@ public class RadiusPipelineFactory : IRadiusPipelineFactory
 
         if (withLdap)
         {
-            if (OperatingSystem.IsWindows())
-                steps.Add(CreateStep<LoadLdapForestStep>());
+            if (OperatingSystem.IsWindows()) steps.Add(CreateStep<LoadLdapForestStep>());
             steps.Add(CreateStep<UserNameValidationStep>());
             steps.Add(CreateStep<LdapSchemaLoadingStep>());
             steps.Add(CreateStep<ProfileLoadingStep>());
@@ -88,7 +88,6 @@ public class RadiusPipelineFactory : IRadiusPipelineFactory
         {
             builder.AppendLine($"{i+1}. {steps[i].GetType().Name}");
         }
-        
         _logger.LogDebug(builder.ToString());
     }
     

@@ -22,25 +22,23 @@
 //OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 //SOFTWARE.
 
-namespace Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Models.Dictionary.Attributes
+namespace Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Models.Dictionary.Attributes;
+
+public class DictionaryVendorAttribute : DictionaryAttribute
 {
-    public class DictionaryVendorAttribute : DictionaryAttribute
+    public readonly uint VendorId;
+    public readonly uint VendorCode;
+    
+    /// <summary>
+    /// Create a dictionary vendor specific attribute
+    /// </summary>
+    /// <param name="vendorId"></param>
+    /// <param name="name"></param>
+    /// <param name="vendorCode"></param>        
+    /// <param name="type"></param>
+    public DictionaryVendorAttribute(uint vendorId, string name, uint vendorCode, string type) : base(name, 26, type)
     {
-        public readonly uint VendorId;
-        public readonly uint VendorCode;
-
-
-        /// <summary>
-        /// Create a dictionary vendor specific attribute
-        /// </summary>
-        /// <param name="vendorId"></param>
-        /// <param name="name"></param>
-        /// <param name="vendorCode"></param>        
-        /// <param name="type"></param>
-        public DictionaryVendorAttribute(uint vendorId, string name, uint vendorCode, string type) : base(name, 26, type)
-        {
-            VendorId = vendorId;
-            VendorCode = vendorCode;
-        }
+        VendorId = vendorId;
+        VendorCode = vendorCode;
     }
 }

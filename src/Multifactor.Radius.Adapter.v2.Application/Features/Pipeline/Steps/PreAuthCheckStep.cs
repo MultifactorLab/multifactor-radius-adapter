@@ -1,18 +1,17 @@
 using Microsoft.Extensions.Logging;
-using Multifactor.Radius.Adapter.v2.Application.Core;
-using Multifactor.Radius.Adapter.v2.Application.Core.Models.Enum;
-using Multifactor.Radius.Adapter.v2.Application.Features.Ldap.Models;
-using Multifactor.Radius.Adapter.v2.Application.Features.Ldap.Ports;
-using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Models.Enum;
+using Multifactor.Radius.Adapter.v2.Application.Core.Enum;
+using Multifactor.Radius.Adapter.v2.Application.Core.Models;
+using Multifactor.Radius.Adapter.v2.Application.Core.Models.Dto;
+using Multifactor.Radius.Adapter.v2.Application.SharedPorts;
 
 namespace Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Steps;
 
 public class PreAuthCheckStep : IRadiusPipelineStep
 {
     private readonly ILogger<PreAuthCheckStep> _logger;
-    private readonly ILdapAdapter _ldapAdapter;
+    private readonly ICheckMembership _ldapAdapter;
     
-    public PreAuthCheckStep(ILogger<PreAuthCheckStep> logger, ILdapAdapter ldapAdapter)
+    public PreAuthCheckStep(ILogger<PreAuthCheckStep> logger, ICheckMembership ldapAdapter)
     {
         _logger = logger;
         _ldapAdapter = ldapAdapter;
@@ -54,8 +53,8 @@ public class PreAuthCheckStep : IRadiusPipelineStep
         if (!serverConfig.SecondFaBypassGroups.Any())
             return true;
         
-        var request = MembershipRequest.FromContext(context, serverConfig.SecondFaBypassGroups);
-        var isMemberOfBypassGroups = _ldapAdapter.IsMemberOf(request);
+        var request = MembershipDto.FromContext(context, serverConfig.SecondFaBypassGroups);
+        var isMemberOfBypassGroups = _ldapAdapter.Execute(request);
         
         return !isMemberOfBypassGroups;
     }

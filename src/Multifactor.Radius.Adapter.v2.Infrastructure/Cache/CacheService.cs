@@ -1,5 +1,5 @@
 using Microsoft.Extensions.Caching.Memory;
-using Multifactor.Radius.Adapter.v2.Application.Cache;
+using Multifactor.Radius.Adapter.v2.Application.SharedPorts;
 
 namespace Multifactor.Radius.Adapter.v2.Infrastructure.Cache;
 

@@ -1,8 +1,15 @@
 using Microsoft.Extensions.Logging;
-using Multifactor.Radius.Adapter.v2.Application.Features.Radius.Models;
-using Multifactor.Radius.Adapter.v2.Application.Features.Radius.Models.Enums;
+using Multifactor.Radius.Adapter.v2.Application.Core.Enum;
+using Multifactor.Radius.Adapter.v2.Application.Core.Models;
 
 namespace Multifactor.Radius.Adapter.v2.Infrastructure.Radius.Validators;
+
+public interface IRadiusPacketValidator
+{
+    void ValidateRawPacket(byte[] packetBytes);
+    void ValidateParsedPacket(RadiusPacket packet, SharedSecret sharedSecret);
+    void ValidatePacketForSerialization(RadiusPacket packet);
+}
 
 public class RadiusPacketValidator : IRadiusPacketValidator
 {

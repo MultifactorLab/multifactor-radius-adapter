@@ -1,11 +1,17 @@
 using Microsoft.Extensions.Logging;
-using Multifactor.Radius.Adapter.v2.Application.Features.Radius.Models;
-using Multifactor.Radius.Adapter.v2.Application.Features.Radius.Models.Enums;
+using Multifactor.Radius.Adapter.v2.Application.Core.Enum;
+using Multifactor.Radius.Adapter.v2.Application.Core.Models;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Radius.Crypto;
 
 namespace Multifactor.Radius.Adapter.v2.Infrastructure.Radius.Parsers;
 
-public class RadiusPacketParser : IRadiusPacketParser
+public interface IRadiusPacketParser
+{
+    RadiusPacket Parse(byte[] packetBytes, SharedSecret sharedSecret);
+    RadiusPacket Parse(byte[] packetBytes, SharedSecret sharedSecret, RadiusAuthenticator requestAuthenticator);
+}
+
+internal sealed class RadiusPacketParser : IRadiusPacketParser
 {
     private readonly IRadiusAttributeParser _attributeParser;
     private readonly IRadiusCryptoProvider  _cryptoProvider;

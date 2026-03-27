@@ -19,7 +19,7 @@ public interface IForestMetadata
     IReadOnlyList<DomainInfo> GetDomainsByUpnSuffix(string suffix);
 }
 
-public class ForestMetadata : IForestMetadata
+public sealed class ForestMetadata : IForestMetadata //TODO
 {
     public string RootDomain { get; set; }
     public Dictionary<string, DomainInfo> Domains { get; set; } = new();
@@ -32,10 +32,10 @@ public class ForestMetadata : IForestMetadata
 
     public DomainInfo? GetDomainByNetBios(string netBiosName)
     {
-        if (string.IsNullOrEmpty(netBiosName)) return null;
-        return NetBiosNames.TryGetValue(netBiosName.ToUpperInvariant(), out var domain)
-            ? domain : null;
+        return string.IsNullOrEmpty(netBiosName) ? null 
+            : NetBiosNames.GetValueOrDefault(netBiosName.ToUpperInvariant());
     }
+    
     public IReadOnlyList<DomainInfo> GetDomainsByUpnSuffix(string suffix)
     {
         suffix = suffix.ToLowerInvariant();
@@ -44,12 +44,10 @@ public class ForestMetadata : IForestMetadata
         if (UpnSuffixes.TryGetValue(suffix, out var exact))
             result.Add(exact);
 
-        foreach (var kv in UpnSuffixes)
+        foreach (var kv in UpnSuffixes.Where(kv => suffix.EndsWith(kv.Key) && !result.Contains(kv.Value)))
         {
-            if (suffix.EndsWith(kv.Key) && !result.Contains(kv.Value))
-                result.Add(kv.Value);
+            result.Add(kv.Value);
         }
-
         return result;
     }
 

@@ -1,11 +1,11 @@
 using System.Net;
-using Multifactor.Radius.Adapter.v2.Application.Configuration.Models;
+using Multifactor.Radius.Adapter.v2.Application.Core.Models.Abstractions;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Exceptions;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Parser;
 
 namespace Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Models;
 
-internal class RootConfiguration : IRootConfiguration
+internal sealed class RootConfiguration : IRootConfiguration
 {    
     public IReadOnlyList<Uri> MultifactorApiUrls { get; set; }
     public string? MultifactorApiProxy { get; set; }

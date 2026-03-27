@@ -1,8 +1,10 @@
 using System.Collections.Concurrent;
 using System.Net.Sockets;
 using Microsoft.Extensions.Logging;
-using Multifactor.Radius.Adapter.v2.Application.Configuration.Models;
-using Multifactor.Radius.Adapter.v2.Application.Features.Radius.Ports;
+using Multifactor.Radius.Adapter.v2.Application.Core.Models;
+using Multifactor.Radius.Adapter.v2.Application.Radius.Ports;
+using Multifactor.Radius.Adapter.v2.Features;
+using Multifactor.Radius.Adapter.v2.Features.PacketHandle;
 
 namespace Multifactor.Radius.Adapter.v2.Server;
 
@@ -21,7 +23,6 @@ internal sealed class AdapterServer : IAsyncDisposable
     
     //TODO to the configuration
     private const int ShoutDownTimeout = 30;
-
     private const int MaxConcurrentRequests = 10000;
     
     public AdapterServer(

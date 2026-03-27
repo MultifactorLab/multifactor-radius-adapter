@@ -1,11 +1,11 @@
 using System.Net;
 using Microsoft.Extensions.Logging;
-using Multifactor.Radius.Adapter.v2.Application.Core;
-using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Models.Enum;
+using Multifactor.Radius.Adapter.v2.Application.Core.Enum;
+using Multifactor.Radius.Adapter.v2.Application.Core.Models;
 
 namespace Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Steps;
 
-public class IpWhiteListStep : IRadiusPipelineStep
+internal sealed class IpWhiteListStep : IRadiusPipelineStep
 {
     private readonly ILogger<IpWhiteListStep> _logger;
     
@@ -20,11 +20,10 @@ public class IpWhiteListStep : IRadiusPipelineStep
         if (ipWhiteList.Count == 0)
             return Task.CompletedTask;
         
-        var callingStationId = context.RequestPacket.CallingStationIdAttribute ?? string.Empty;
+        var callingStationId = context.RequestPacket.CallingStationIdAttribute ?? context.ClientConfiguration.CallingStationIdAttribute ?? null;
 
         var clientIp =  IPAddress.TryParse(callingStationId, out var callingStationIp)
-            ? callingStationIp
-            : context.RequestPacket.RemoteEndpoint.Address;
+            ? callingStationIp : context.RequestPacket.RemoteEndpoint.Address;
         
         var isIpInRange = ipWhiteList.Any(x => x.Contains(clientIp));
         var rangesStr = string.Join(", ", ipWhiteList);

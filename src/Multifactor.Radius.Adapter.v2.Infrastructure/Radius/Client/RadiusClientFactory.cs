@@ -1,10 +1,10 @@
 using System.Net;
 using Microsoft.Extensions.Logging;
-using Multifactor.Radius.Adapter.v2.Application.Features.Radius.Ports;
+using Multifactor.Radius.Adapter.v2.Application.Radius.Ports;
 
 namespace Multifactor.Radius.Adapter.v2.Infrastructure.Radius.Client;
 
-public class RadiusClientFactory : IRadiusClientFactory
+public sealed class RadiusClientFactory : IRadiusClientFactory
 {
     private readonly ILogger<RadiusClient> _logger;
     

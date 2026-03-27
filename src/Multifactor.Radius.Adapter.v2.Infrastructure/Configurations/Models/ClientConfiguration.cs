@@ -1,7 +1,7 @@
 using System.Net;
-using Multifactor.Radius.Adapter.v2.Application.Configuration.Models;
+using Multifactor.Radius.Adapter.v2.Application.Core.Enum;
 using Multifactor.Radius.Adapter.v2.Application.Core.Models;
-using Multifactor.Radius.Adapter.v2.Application.Core.Models.Enum;
+using Multifactor.Radius.Adapter.v2.Application.Core.Models.Abstractions;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Exceptions;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Parser;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Logging;

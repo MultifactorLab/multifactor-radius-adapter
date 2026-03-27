@@ -22,29 +22,28 @@
 //OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 //SOFTWARE.
 
-namespace Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Models.Dictionary.Attributes
+namespace Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Models.Dictionary.Attributes;
+
+public class DictionaryAttribute
 {
-    public class DictionaryAttribute
+    public const string TypeString = "string";
+    public const string TypeTaggedString = "tagged-string";
+    public const string TypeInteger = "integer";
+    public const string TypeTaggedInteger = "tagged-integer";
+    public const string TypeOctet = "octet";
+    public const string TypeIpAddr = "ipaddr";
+
+    public readonly byte Code;
+    public readonly string Name;
+    public readonly string Type;
+
+    /// <summary>
+    /// Create a dictionary rfc attribute
+    /// </summary>
+    public DictionaryAttribute(string name, byte code, string type)
     {
-        public const string TypeString = "string";
-        public const string TypeTaggedString = "tagged-string";
-        public const string TypeInteger = "integer";
-        public const string TypeTaggedInteger = "tagged-integer";
-        public const string TypeOctet = "octet";
-        public const string TypeIpAddr = "ipaddr";
-
-        public readonly byte Code;
-        public readonly string Name;
-        public readonly string Type;
-
-        /// <summary>
-        /// Create a dictionary rfc attribute
-        /// </summary>
-        public DictionaryAttribute(string name, byte code, string type)
-        {
-            Code = code;
-            Name = name;
-            Type = type;
-        }
+        Code = code;
+        Name = name;
+        Type = type;
     }
 }

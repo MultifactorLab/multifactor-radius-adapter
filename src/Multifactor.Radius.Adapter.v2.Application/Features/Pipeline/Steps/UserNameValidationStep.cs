@@ -1,12 +1,11 @@
 using Microsoft.Extensions.Logging;
-using Multifactor.Radius.Adapter.v2.Application.Core;
+using Multifactor.Radius.Adapter.v2.Application.Core.Enum;
+using Multifactor.Radius.Adapter.v2.Application.Core.Models;
 using Multifactor.Radius.Adapter.v2.Application.Features.LoadLdapForest.Models;
-using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Models;
-using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Models.Enum;
 
 namespace Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Steps;
 
-public class UserNameValidationStep : IRadiusPipelineStep
+internal sealed class UserNameValidationStep : IRadiusPipelineStep
 {
     private readonly ILogger<UserNameValidationStep> _logger;
     

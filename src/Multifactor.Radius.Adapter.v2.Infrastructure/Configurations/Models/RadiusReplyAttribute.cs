@@ -1,8 +1,8 @@
-using Multifactor.Radius.Adapter.v2.Application.Configuration.Models;
+using Multifactor.Radius.Adapter.v2.Application.Core.Models.Abstractions;
 
 namespace Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Models;
 
-public class RadiusReplyAttribute : IRadiusReplyAttribute
+internal sealed class RadiusReplyAttribute : IRadiusReplyAttribute
 {
     public string Name { get; set; } = string.Empty;
     public object Value { get; set; } = string.Empty;

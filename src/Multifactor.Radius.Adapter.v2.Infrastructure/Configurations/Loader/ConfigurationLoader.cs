@@ -1,16 +1,21 @@
 using System.Net;
 using System.Reflection;
 using System.Text.RegularExpressions;
-using Multifactor.Radius.Adapter.v2.Application.Configuration.Models;
+using Multifactor.Radius.Adapter.v2.Application.Core.Models;
+using Multifactor.Radius.Adapter.v2.Application.Core.Models.Abstractions;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Exceptions;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Models;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Models.Dictionary;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Models.Dictionary.Attributes;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Reader;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Logging;
-using Multifactor.Radius.Adapter.v2.Shared.Extensions;
 
 namespace Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Loader;
+
+public interface IConfigurationLoader
+{
+    ServiceConfiguration Load(); 
+}
 
 public class ConfigurationLoader : IConfigurationLoader
 {
@@ -34,7 +39,7 @@ public class ConfigurationLoader : IConfigurationLoader
         {
             RootConfiguration = rootConfig,
             ClientsConfigurations = clients,
-            isRootClientMode = isRootMode
+            IsRootClientMode = isRootMode
         };
     }
     
@@ -44,7 +49,7 @@ public class ConfigurationLoader : IConfigurationLoader
         return $"{assemblyLocation}.config";
     }
     
-    private RootConfiguration LoadRootConfiguration(string configPath)
+    private static RootConfiguration LoadRootConfiguration(string configPath)
     {
         if (!File.Exists(configPath))
             throw new InvalidConfigurationException($"Root configuration not found: {configPath}");
@@ -60,7 +65,6 @@ public class ConfigurationLoader : IConfigurationLoader
         
         if (!Directory.Exists(clientsPath))
         {
-            var fileName = Path.GetFileNameWithoutExtension(rootConfigPath);
             var clientConfig = ParseClientConfiguration(rootConfigPath, true);
             isRootMode = true;
             return [clientConfig];
@@ -70,7 +74,6 @@ public class ConfigurationLoader : IConfigurationLoader
         
         if (clientConfigFiles.Length == 0)
         {
-            var fileName = Path.GetFileNameWithoutExtension(rootConfigPath);
             var clientConfig = ParseClientConfiguration(rootConfigPath, true);
             isRootMode = true;
             return [clientConfig];
@@ -96,7 +99,7 @@ public class ConfigurationLoader : IConfigurationLoader
         return clientConfig;
     }
     
-    private static AdapterConfiguration ReadConfiguration(string filePath, string prefix = null)
+    private static AdapterConfiguration? ReadConfiguration(string filePath, string? prefix = null)
     {
         if (!File.Exists(filePath))
             throw new InvalidConfigurationException($"Configuration file not found: {filePath}");
@@ -166,7 +169,7 @@ public class ConfigurationLoader : IConfigurationLoader
             DictionaryAttribute.TypeString or DictionaryAttribute.TypeTaggedString => value,
             DictionaryAttribute.TypeInteger or DictionaryAttribute.TypeTaggedInteger => uint.Parse(value),
             DictionaryAttribute.TypeIpAddr => IPAddress.Parse(value),
-            DictionaryAttribute.TypeOctet => value.ToByteArray(),
+            DictionaryAttribute.TypeOctet => ToByteArray(value),
             _ => throw new InvalidConfigurationException($"Unknown attribute type: {attribute.Type}")
         };
     }
@@ -202,5 +205,18 @@ public class ConfigurationLoader : IConfigurationLoader
         
         var fileName = Path.GetFileNameWithoutExtension(filePath);
         return Regex.Replace(fileName, @"\s+", string.Empty);
+    }
+    
+    private static byte[] ToByteArray(string hex)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(hex);
+        
+        var bytes = new byte[hex.Length / 2];
+        for (int i = 0; i < hex.Length; i += 2)
+        {
+            bytes[i / 2] = Convert.ToByte(hex.Substring(i, 2), 16);
+        }
+
+        return bytes;
     }
 }

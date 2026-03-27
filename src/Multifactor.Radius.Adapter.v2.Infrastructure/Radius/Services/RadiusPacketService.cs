@@ -1,8 +1,7 @@
 using Microsoft.Extensions.Logging;
-using Multifactor.Radius.Adapter.v2.Application.Features.Radius.Exceptions;
-using Multifactor.Radius.Adapter.v2.Application.Features.Radius.Models;
-using Multifactor.Radius.Adapter.v2.Application.Features.Radius.Models.Enums;
-using Multifactor.Radius.Adapter.v2.Application.Features.Radius.Ports;
+using Multifactor.Radius.Adapter.v2.Application.Core.Enum;
+using Multifactor.Radius.Adapter.v2.Application.Core.Models;
+using Multifactor.Radius.Adapter.v2.Application.Radius.Ports;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Radius.Builders;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Radius.Parsers;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Radius.Validators;
@@ -33,8 +32,8 @@ public class RadiusPacketService : IRadiusPacketService
 
     public RadiusPacket ParsePacket(byte[] packetBytes, SharedSecret sharedSecret, RadiusAuthenticator? requestAuthenticator = null)
     {
-        if (packetBytes == null) throw new ArgumentNullException(nameof(packetBytes));
-        if (sharedSecret == null) throw new ArgumentNullException(nameof(sharedSecret));
+        ArgumentNullException.ThrowIfNull(packetBytes);
+        ArgumentNullException.ThrowIfNull(sharedSecret);
 
         try
         {
@@ -55,7 +54,7 @@ public class RadiusPacketService : IRadiusPacketService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to parse RADIUS packet. Length: {Length}", packetBytes.Length);
-            throw new RadiusPacketException("Failed to parse RADIUS packet", ex);
+            throw new Exception("Failed to parse RADIUS packet", ex);
         }
     }
 
@@ -80,14 +79,14 @@ public class RadiusPacketService : IRadiusPacketService
         {
             _logger.LogError(ex, "Failed to serialize RADIUS packet: Code={Code}, Id={Id}", 
                 packet.Code, packet.Identifier);
-            throw new RadiusPacketException("Failed to serialize RADIUS packet", ex);
+            throw new Exception("Failed to serialize RADIUS packet", ex);
         }
     }
 
 
     public RadiusPacket CreateResponse(RadiusPacket request, PacketCode responseCode)
     {
-        if (request == null) throw new ArgumentNullException(nameof(request));
+        ArgumentNullException.ThrowIfNull(request);
 
         try
         {
@@ -104,14 +103,13 @@ public class RadiusPacketService : IRadiusPacketService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to create response packet for request Id={Id}", request.Identifier);
-            throw new RadiusPacketException("Failed to create response packet", ex);
+            throw new Exception("Failed to create response packet", ex);
         }
     }
 
     public bool TryGetNasIdentifier(byte[] packetBytes, out string nasIdentifier)
     {
-        if (packetBytes == null) throw new ArgumentNullException(nameof(packetBytes));
-        
-        return _nasIdentifierExtractor.TryExtract(packetBytes, out nasIdentifier);
+        return packetBytes == null ? throw new ArgumentNullException(nameof(packetBytes)) 
+            : _nasIdentifierExtractor.TryExtract(packetBytes, out nasIdentifier);
     }
 }

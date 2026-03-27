@@ -1,4 +1,4 @@
-using Multifactor.Radius.Adapter.v2.Application.Features.Multifactor.Models;
+using Multifactor.Radius.Adapter.v2.Application.Features.SecondFactor.Multifactor.Models;
 
 namespace Multifactor.Radius.Adapter.v2.Infrastructure.Adapters.Multifactor.Models;
 

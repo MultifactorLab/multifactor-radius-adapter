@@ -1,10 +1,13 @@
-using Multifactor.Radius.Adapter.v2.Application.Core;
-using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Interfaces;
+using Multifactor.Radius.Adapter.v2.Application.Core.Models;
 using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline.Steps;
 
 namespace Multifactor.Radius.Adapter.v2.Application.Features.Pipeline;
+public interface IRadiusPipeline
+{
+    Task ExecuteAsync(RadiusPipelineContext context);
+}
 
-public class RadiusPipeline : IRadiusPipeline
+internal sealed class RadiusPipeline : IRadiusPipeline
 {
     private readonly List<IRadiusPipelineStep> _steps;
     
