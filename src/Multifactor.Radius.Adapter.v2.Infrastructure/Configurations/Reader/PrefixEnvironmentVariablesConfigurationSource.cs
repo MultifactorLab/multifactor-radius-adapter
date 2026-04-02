@@ -2,7 +2,7 @@ using Microsoft.Extensions.Configuration;
 
 namespace Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Reader;
 
-public class PrefixEnvironmentVariablesConfigurationSource : IConfigurationSource
+internal sealed class PrefixEnvironmentVariablesConfigurationSource : IConfigurationSource
 {
     private readonly string _prefix;
     

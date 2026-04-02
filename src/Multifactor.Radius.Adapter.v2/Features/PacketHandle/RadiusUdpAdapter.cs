@@ -4,7 +4,7 @@ using System.Text;
 using Microsoft.Extensions.Logging;
 using Multifactor.Radius.Adapter.v2.Application.Core.Models;
 using Multifactor.Radius.Adapter.v2.Application.Core.Models.Abstractions;
-using Multifactor.Radius.Adapter.v2.Application.Radius.Ports;
+using Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.Ports;
 using Multifactor.Radius.Adapter.v2.Application.SharedPorts;
 
 namespace Multifactor.Radius.Adapter.v2.Features.PacketHandle;
@@ -14,26 +14,25 @@ internal interface IRadiusUdpAdapter
     Task Handle(UdpReceiveResult udpPacket);
 }
 
-internal class RadiusUdpAdapter : IRadiusUdpAdapter
+internal sealed class RadiusUdpAdapter : IRadiusUdpAdapter
 {
     private readonly ILogger<IRadiusUdpAdapter> _logger;
     private readonly ServiceConfiguration _serviceConfiguration;
-    private readonly IRadiusPacketService _radiusPacketService;
-    private readonly ICacheService _cache;
+    private readonly IPacketParser _packetParser;
+    private readonly IPacketKeyCache _cache;
     private readonly IRadiusPacketProcessor _radiusPacketProcessor;
 
     public RadiusUdpAdapter(
         ServiceConfiguration serviceConfiguration,
-        IRadiusPacketService packetService,
         IRadiusPacketProcessor radiusPacketProcessor,
-        ICacheService cache,
-        ILogger<IRadiusUdpAdapter> logger)
+        IPacketKeyCache cache,
+        ILogger<IRadiusUdpAdapter> logger, IPacketParser packetParser)
     {
         _serviceConfiguration = serviceConfiguration;
-        _radiusPacketService = packetService;
         _radiusPacketProcessor = radiusPacketProcessor;
         _cache = cache;
         _logger = logger;
+        _packetParser = packetParser;
     }
     
     public async Task Handle(UdpReceiveResult udpPacket)
@@ -56,7 +55,7 @@ internal class RadiusUdpAdapter : IRadiusUdpAdapter
             return;
         } 
         
-        var requestPacket = _radiusPacketService.ParsePacket(payload, new SharedSecret(clientConfiguration.RadiusSharedSecret));
+        var requestPacket = _packetParser.Execute(payload, new SharedSecret(clientConfiguration.RadiusSharedSecret));
         requestPacket.ProxyEndpoint = proxyEndpoint;
         requestPacket.RemoteEndpoint = remoteEndpoint;
         
@@ -69,10 +68,9 @@ internal class RadiusUdpAdapter : IRadiusUdpAdapter
         await _radiusPacketProcessor.Execute(requestPacket, clientConfiguration);
     }
 
+    ///https://www.haproxy.org/download/1.8/doc/proxy-protocol.txt
     private static bool IsProxyProtocol(byte[] payload, out IPEndPoint? sourceEndpoint, out byte[]? requestWithoutProxyHeader)
     {
-        //https://www.haproxy.org/download/1.8/doc/proxy-protocol.txt
-
         sourceEndpoint = null;
         requestWithoutProxyHeader = null;
 
@@ -102,7 +100,11 @@ internal class RadiusUdpAdapter : IRadiusUdpAdapter
     private IClientConfiguration? GetClientConfig(UdpReceiveResult udpPacket)
     {
         IClientConfiguration? clientConfiguration = null;
-        if (_radiusPacketService.TryGetNasIdentifier(udpPacket.Buffer, out var nasIdentifier))
+        if (udpPacket.Buffer is null)
+        {
+            throw new ArgumentNullException(nameof(udpPacket.Buffer));
+        }
+        if(RadiusNasIdentifierExtractor.TryExtract(udpPacket.Buffer, out var nasIdentifier))
             clientConfiguration = _serviceConfiguration.GetClientConfiguration(nasIdentifier);
         clientConfiguration ??= _serviceConfiguration.GetClientConfiguration(udpPacket.RemoteEndPoint.Address);
 
@@ -112,11 +114,9 @@ internal class RadiusUdpAdapter : IRadiusUdpAdapter
     private bool IsRetransmission(RadiusPacket requestPacket)
     {
         var packetKey = CreateUniquePacketKey(requestPacket);
-        if (_cache.TryGetValue<object>(packetKey, out _))
+        if (_cache.HasValue(packetKey))
             return true;
-
-        _cache.Set(packetKey, 1, DateTimeOffset.UtcNow.AddMinutes(1));
-
+        _cache.Set(packetKey);
         return false;
     }
 

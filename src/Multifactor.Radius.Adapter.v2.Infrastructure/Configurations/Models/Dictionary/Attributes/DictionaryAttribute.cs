@@ -24,7 +24,7 @@
 
 namespace Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Models.Dictionary.Attributes;
 
-public class DictionaryAttribute
+internal class DictionaryAttribute
 {
     public const string TypeString = "string";
     public const string TypeTaggedString = "tagged-string";

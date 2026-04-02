@@ -7,7 +7,7 @@ public sealed class UserIdentity
     public string Identity { get; init; }
     public UserIdentityFormat Format { get; init; }
 
-    public UserIdentity(string identity)
+    public UserIdentity(string? identity)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(identity, nameof(identity));
         Identity = identity;

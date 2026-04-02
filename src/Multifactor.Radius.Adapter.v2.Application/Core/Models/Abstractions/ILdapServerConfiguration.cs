@@ -14,14 +14,14 @@ public interface ILdapServerConfiguration
     public bool LoadNestedGroups { get; }
     public IReadOnlyList<DistinguishedName> NestedGroupsBaseDns { get; }
     public IReadOnlyList<DistinguishedName> AuthenticationCacheGroups { get; }
-    public IReadOnlyList<string> PhoneAttributes { get; }
+    public IReadOnlyList<string>? PhoneAttributes { get; }
     public string IdentityAttribute { get; }
     public bool RequiresUpn { get; }
     public bool EnableTrustedDomains { get; }
     public bool AlternativeSuffixesEnabled { get; }
-    public IReadOnlyList<string> IncludedDomains { get; }
-    public IReadOnlyList<string> ExcludedDomains { get; }
-    public IReadOnlyList<string> IncludedSuffixes { get; }
-    public IReadOnlyList<string> ExcludedSuffixes { get; }
+    public IReadOnlyList<string>? IncludedDomains { get; }
+    public IReadOnlyList<string>? ExcludedDomains { get; }
+    public IReadOnlyList<string>? IncludedSuffixes { get; }
+    public IReadOnlyList<string>? ExcludedSuffixes { get; }
     public IReadOnlyList<string> BypassSecondFactorWhenApiUnreachableGroups { get; }
 }

@@ -14,7 +14,7 @@ public static class StartupLogger
     private const string FileLogTemplate = "[{Timestamp:yyyy-MM-dd HH:mm:ss.fff}|{Level:u3}|{SourceContext:l}] {Message:lj}{NewLine}{Exception}{Properties}{NewLine}";
     private const string ConsoleLogTemplate = "[{Timestamp:yyyy-MM-dd HH:mm:ss.fff} {Level:u3} {SourceContext:l}] {Message:lj} {Exception}{NewLine}";
 
-    private static readonly Lazy<Logger> _logger = new(() =>
+    private static readonly Lazy<Logger> Logger = new(() =>
     {
         SelfLog.Enable(Console.WriteLine);
 
@@ -39,18 +39,18 @@ public static class StartupLogger
     });
 
     /// <inheritdoc cref="Logger.Verbose"/>
-    public static void Verbose(string message, params object?[] values) => _logger.Value.Verbose(message, values);
+    public static void Verbose(string message, params object?[] values) => Logger.Value.Verbose(message, values);
 
     /// <inheritdoc cref="System.Diagnostics.Debug"/>
-    public static void Debug(string message, params object?[] values) => _logger.Value.Debug(message, values);
+    public static void Debug(string message, params object?[] values) => Logger.Value.Debug(message, values);
 
     /// <inheritdoc cref="Microsoft.VisualBasic.Information"/>
-    public static void Information(string message, params object?[] values) => _logger.Value.Information(message, values);
-    public static void Warning(string message, params object?[] values) => _logger.Value.Warning(message, values);
+    public static void Information(string message, params object?[] values) => Logger.Value.Information(message, values);
+    public static void Warning(string message, params object?[] values) => Logger.Value.Warning(message, values);
 
     /// <inheritdoc cref="JSType.Error"/>
-    public static void Error(string message, params object?[] values) => _logger.Value.Error(message, values);
+    public static void Error(string message, params object?[] values) => Logger.Value.Error(message, values);
 
     /// <inheritdoc cref="JSType.Error"/>
-    public static void Error(Exception ex, string message, params object?[] values) => _logger.Value.Error(ex, message, values);
+    public static void Error(Exception ex, string message, params object?[] values) => Logger.Value.Error(ex, message, values);
 }

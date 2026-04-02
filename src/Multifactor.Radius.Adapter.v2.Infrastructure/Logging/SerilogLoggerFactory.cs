@@ -45,7 +45,6 @@ public static class SerilogLoggerFactory
         }
 
         SetLogLevel(levelSwitch, level);
-
         return loggerConfiguration;
     }
 
@@ -78,10 +77,9 @@ public static class SerilogLoggerFactory
             return;
         }
 
-        if (!string.IsNullOrWhiteSpace(consoleTemplate))
+        if (!string.IsNullOrWhiteSpace(consoleTemplate)) 
             loggerConfiguration.WriteTo.Console(outputTemplate: consoleTemplate);
-        else
-            loggerConfiguration.WriteTo.Console();
+        else loggerConfiguration.WriteTo.Console();
         
         if (!string.IsNullOrWhiteSpace(fileTemplate))
         {
@@ -162,7 +160,6 @@ public static class SerilogLoggerFactory
             default:
                 throw new NotImplementedException($"Unknown scheme {uri.Scheme} for syslog-server {server}. Expected udp or tcp");
         }
-
     }
 
     private static void SetLogLevel(LoggingLevelSwitch levelSwitch, string level)
@@ -176,7 +173,6 @@ public static class SerilogLoggerFactory
             "Error" => LogEventLevel.Error,
             _ => levelSwitch.MinimumLevel
         };
-
         Log.Logger.Information("Logging minimum level: {Level:l}", levelSwitch.MinimumLevel);
     }
 

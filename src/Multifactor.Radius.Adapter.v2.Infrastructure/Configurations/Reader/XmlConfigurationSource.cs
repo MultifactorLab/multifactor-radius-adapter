@@ -2,7 +2,7 @@ using Microsoft.Extensions.Configuration;
 
 namespace Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Reader;
 
-public class XmlConfigurationSource : IConfigurationSource
+internal sealed class XmlConfigurationSource : IConfigurationSource
 {
     private readonly string _path;
     

@@ -2,9 +2,9 @@ using Microsoft.Extensions.Logging;
 using Multifactor.Radius.Adapter.v2.Application.Core.Enum;
 using Multifactor.Radius.Adapter.v2.Application.Core.Models;
 using Multifactor.Radius.Adapter.v2.Application.Core.Models.Abstractions;
-using Multifactor.Radius.Adapter.v2.Application.Features.Pipeline;
-using Multifactor.Radius.Adapter.v2.Application.Radius.Exceptions;
-using Multifactor.Radius.Adapter.v2.Application.Radius.Ports;
+using Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.Exceptions;
+using Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.Pipeline;
+using Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.Ports;
 
 namespace Multifactor.Radius.Adapter.v2.Features.PacketHandle;
 
@@ -15,8 +15,8 @@ internal interface IRadiusPacketProcessor
 
 internal sealed class RadiusPacketProcessor : IRadiusPacketProcessor
 {
-    private readonly IPipelineProvider _pipelineProvider;
     private readonly IResponseSender _responseSender;
+    private readonly IPipelineProvider _pipelineProvider;
     private readonly ILogger<RadiusPacketProcessor> _logger;
 
     public RadiusPacketProcessor(
@@ -24,9 +24,9 @@ internal sealed class RadiusPacketProcessor : IRadiusPacketProcessor
         IResponseSender responseSender,
         ILogger<RadiusPacketProcessor> logger)
     {
-        _pipelineProvider = pipelineProvider ?? throw new ArgumentNullException(nameof(pipelineProvider));
-        _responseSender = responseSender ?? throw new ArgumentNullException(nameof(responseSender));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _pipelineProvider = pipelineProvider;
+        _responseSender = responseSender;
+        _logger = logger;
     }
     
     public async Task Execute(RadiusPacket requestPacket, IClientConfiguration clientConfiguration)
@@ -125,6 +125,17 @@ internal sealed class RadiusPacketProcessor : IRadiusPacketProcessor
         }
     }
 
+    private IRadiusPipeline GetPipeline(IClientConfiguration clientConfiguration)
+    {
+        var pipeline = _pipelineProvider.GetPipeline(clientConfiguration);
+        if (pipeline is null)
+        {
+            throw new PipelineNotFoundException($"No pipeline found for client '{clientConfiguration.Name}'. " +
+                                                "Check adapter configuration and restart the adapter.");
+        }
+        return pipeline;
+    }
+
     private static RadiusPipelineContext CreatePipelineContext(
         IClientConfiguration clientConfiguration, 
         RadiusPacket requestPacket, 
@@ -140,17 +151,6 @@ internal sealed class RadiusPacketProcessor : IRadiusPacketProcessor
         };
         
         return context;
-    }
-
-    private IRadiusPipeline GetPipeline(IClientConfiguration clientConfiguration)
-    {
-        var pipeline = _pipelineProvider.GetPipeline(clientConfiguration);
-        if (pipeline is null)
-        {
-            throw new PipelineNotFoundException($"No pipeline found for client '{clientConfiguration.Name}'. " +
-                                                "Check adapter configuration and restart the adapter.");
-        }
-        return pipeline;
     }
     
     private static bool ShouldProcessWithoutLdap(RadiusPacket requestPacket, IClientConfiguration clientConfiguration)

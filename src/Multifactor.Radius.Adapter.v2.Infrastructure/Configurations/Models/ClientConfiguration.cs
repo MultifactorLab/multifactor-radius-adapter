@@ -9,30 +9,30 @@ using NetTools;
 
 namespace Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Models;
 
-internal class ClientConfiguration : IClientConfiguration
+internal sealed class ClientConfiguration : IClientConfiguration
 {
-    public string Name { get; set; }
+    public string Name { get; private init; }
 
-    public string MultifactorNasIdentifier { get; set; }
-    public string MultifactorSharedSecret { get; set; }
-    public IReadOnlyList<string> SignUpGroups { get; set; }
-    public bool BypassSecondFactorWhenApiUnreachable { get; set; }
-    public AuthenticationSource FirstFactorAuthenticationSource { get; set; }
-    public IPEndPoint AdapterClientEndpoint { get; set; }
+    public string MultifactorNasIdentifier { get; private init; }
+    public string MultifactorSharedSecret { get; private init; }
+    public IReadOnlyList<string> SignUpGroups { get; private set; }
+    public bool BypassSecondFactorWhenApiUnreachable { get; private init; }
+    public AuthenticationSource FirstFactorAuthenticationSource { get; private set; }
+    public IPEndPoint AdapterClientEndpoint { get; private set; }
 
-    public IReadOnlyList<IPAddress>? RadiusClientIps { get; set; }
-    public string RadiusClientNasIdentifier { get; set; }
-    public string RadiusSharedSecret { get; set; }
-    public IReadOnlyList<IPEndPoint> NpsServerEndpoints { get; set; }
-    public TimeSpan NpsServerTimeout { get; set; }
+    public IReadOnlyList<IPAddress>? RadiusClientIps { get; private set; }
+    public string RadiusClientNasIdentifier { get; private set; }
+    public string RadiusSharedSecret { get; private init; }
+    public IReadOnlyList<IPEndPoint> NpsServerEndpoints { get; private set; }
+    public TimeSpan NpsServerTimeout { get; private set; }
 
-    public Privacy Privacy { get; set; }
+    public Privacy Privacy { get; private set; }
 
-    public PreAuthMode? PreAuthenticationMethod { get; set; } = PreAuthMode.None;
-    public TimeSpan AuthenticationCacheLifetime { get; set; } = TimeSpan.Zero;
-    public CredentialDelay? InvalidCredentialDelay { get; set; }
-    public string? CallingStationIdAttribute { get; set; } //TODO not used
-    public IReadOnlyList<IPAddressRange> IpWhiteList { get; set; }
+    public PreAuthMode? PreAuthenticationMethod { get; private set; } = PreAuthMode.None;
+    public TimeSpan AuthenticationCacheLifetime { get; private set; } = TimeSpan.Zero;
+    public CredentialDelay? InvalidCredentialDelay { get; private set; }
+    public string? CallingStationIdAttribute { get; private init; }
+    public IReadOnlyList<IPAddressRange> IpWhiteList { get; private set; }
 
     public IReadOnlyList<ILdapServerConfiguration>? LdapServers { get; set; }
     public IReadOnlyDictionary<string, IReadOnlyList<IRadiusReplyAttribute>>? ReplyAttributes { get; set; }
@@ -139,7 +139,7 @@ internal class ClientConfiguration : IClientConfiguration
             }
             else
             {
-                dto.Privacy = new(PrivacyMode.None, []);
+                dto.Privacy = new Privacy(PrivacyMode.None, []);
                 var exception = InvalidConfigurationException.For(c => c.AppSettings.Privacy,
                     formatedMessage, configurationFile.AppSettings.Privacy);
                 StartupLogger.Warning(exception.Message);

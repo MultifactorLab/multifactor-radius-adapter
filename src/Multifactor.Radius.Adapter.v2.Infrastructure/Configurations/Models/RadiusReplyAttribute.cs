@@ -9,6 +9,6 @@ internal sealed class RadiusReplyAttribute : IRadiusReplyAttribute
     public IReadOnlyList<string> UserGroupCondition { get; set; } = [];
     public IReadOnlyList<string> UserNameCondition { get; set; } = [];
     public bool Sufficient { get; set; }
-    public bool IsMemberOf => Name?.ToLower() == "memberof";
+    public bool IsMemberOf => Name.Equals("memberof", StringComparison.CurrentCultureIgnoreCase);
     public bool FromLdap => !string.IsNullOrWhiteSpace(Name);
 }

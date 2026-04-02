@@ -1,3 +1,4 @@
+using System.DirectoryServices.Protocols;
 using Multifactor.Core.Ldap.Name;
 using Multifactor.Core.Ldap.Schema;
 
@@ -13,6 +14,7 @@ public sealed record MembershipDto
     public DistinguishedName DistinguishedName  { get; set; }
     public DistinguishedName[] TargetGroups { get; set; }
     public DistinguishedName[] NestedGroupsBaseDns { get; set; }
+    public AuthType AuthType  { get; set; }
 
     public static MembershipDto FromContext(RadiusPipelineContext context, IReadOnlyList<DistinguishedName> groups)
     {

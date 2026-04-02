@@ -2,8 +2,7 @@ using System.Collections.Concurrent;
 using System.Net.Sockets;
 using Microsoft.Extensions.Logging;
 using Multifactor.Radius.Adapter.v2.Application.Core.Models;
-using Multifactor.Radius.Adapter.v2.Application.Radius.Ports;
-using Multifactor.Radius.Adapter.v2.Features;
+using Multifactor.Radius.Adapter.v2.Application.SharedPorts;
 using Multifactor.Radius.Adapter.v2.Features.PacketHandle;
 
 namespace Multifactor.Radius.Adapter.v2.Server;
@@ -13,15 +12,15 @@ internal sealed class AdapterServer : IAsyncDisposable
     private readonly IUdpClient _udpClient;
     private readonly IRadiusUdpAdapter _packetAdapter;
     private readonly ApplicationVariables _applicationVariables;
-    private readonly ILogger<AdapterServer> _logger;
     private readonly ServiceConfiguration _serviceConfiguration;
+    private readonly ILogger<AdapterServer> _logger;
     
+    //todo check debug
     private Task? _receiveLoopTask;
     private CancellationTokenSource? _cts;
     private readonly SemaphoreSlim _concurrencyLimiter;
     private readonly ConcurrentBag<Task> _activeProcessingTasks = [];
     
-    //TODO to the configuration
     private const int ShoutDownTimeout = 30;
     private const int MaxConcurrentRequests = 10000;
     

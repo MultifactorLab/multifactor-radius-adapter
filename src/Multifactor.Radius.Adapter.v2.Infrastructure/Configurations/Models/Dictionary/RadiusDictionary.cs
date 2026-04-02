@@ -1,14 +1,12 @@
 ﻿using System.Text;
-using Multifactor.Radius.Adapter.v2.Application.Core.Models;
 using DictionaryAttribute = Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Models.Dictionary.Attributes.DictionaryAttribute;
 using DictionaryVendorAttribute = Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Models.Dictionary.Attributes.DictionaryVendorAttribute;
 
 namespace Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Models.Dictionary;
 
-public interface IRadiusDictionary
+internal interface IRadiusDictionary
 {
     string GetInfo();
-    void Read();
     /// <summary>
     /// Get a vendor specific attribute by vendorId and vendorCode
     /// </summary>
@@ -21,7 +19,7 @@ public interface IRadiusDictionary
     /// </summary>
     /// <param name="code"></param>
     /// <returns></returns>
-    DictionaryAttribute? GetAttribute(byte code);
+    DictionaryAttribute GetAttribute(byte code);
     /// <summary>
     /// Get an attribute or vendor attribute by name
     /// </summary>
@@ -35,23 +33,20 @@ internal sealed class RadiusDictionary : IRadiusDictionary
     private readonly Dictionary<byte, DictionaryAttribute> _attributes = new();
     private readonly Dictionary<(uint VendorId, byte VendorCode), DictionaryVendorAttribute> _vendorAttributes = new();
     private readonly Dictionary<string, DictionaryAttribute> _attributeNames = new();
-    private readonly ApplicationVariables _variables;
     private readonly string _filePath;
 
-    public RadiusDictionary(ApplicationVariables variables, string? filePath = null)
+    public RadiusDictionary(string? filePath = null)
     {
-        _variables = variables;
         _filePath = ResolveFilePath(filePath);
     }
 
-    private string ResolveFilePath(string? filePath)
+    private static string ResolveFilePath(string? filePath)
     {
         if (!string.IsNullOrEmpty(filePath) && Path.IsPathRooted(filePath))
             return filePath;
 
-        var basePath = string.IsNullOrEmpty(_variables.AppPath) 
-            ? AppDomain.CurrentDomain.BaseDirectory 
-            : _variables.AppPath;
+        var basePath = Path.GetDirectoryName(AppDomain.CurrentDomain.BaseDirectory)
+                       ?? AppDomain.CurrentDomain.BaseDirectory;
 
         var relativePath = string.IsNullOrEmpty(filePath)
             ? Path.Combine("content", "radius.dictionary")
@@ -66,19 +61,16 @@ internal sealed class RadiusDictionary : IRadiusDictionary
             throw new FileNotFoundException($"Dictionary file not found: {_filePath}");
 
         using var reader = new StreamReader(_filePath, Encoding.UTF8);
-            
-        string? line;
-        while ((line = reader.ReadLine()) != null)
+
+        while (reader.ReadLine() is { } line)
         {
             ProcessLine(line.Trim());
         }
-
-        GetInfo();
     }
 
     private void ProcessLine(string line)
     {
-        if (string.IsNullOrWhiteSpace(line) || line.StartsWith("#"))
+        if (string.IsNullOrWhiteSpace(line) || line.StartsWith('#'))
             return;
 
         var parts = SplitLine(line);
@@ -112,8 +104,6 @@ internal sealed class RadiusDictionary : IRadiusDictionary
         var dataType = parts[3];
 
         var attribute = new DictionaryAttribute(name, typeCode, dataType);
-            
-        // Обновляем существующие записи
         _attributes[typeCode] = attribute;
         _attributeNames[name] = attribute;
     }
@@ -132,8 +122,6 @@ internal sealed class RadiusDictionary : IRadiusDictionary
         var vsa = new DictionaryVendorAttribute(vendorId, name, vendorCode, dataType);
             
         var key = (vendorId, vendorCode);
-            
-        // Обновляем существующие записи
         _vendorAttributes[key] = vsa;
         _attributeNames[name] = vsa;
     }
@@ -149,19 +137,15 @@ internal sealed class RadiusDictionary : IRadiusDictionary
         return _vendorAttributes.TryGetValue(key, out var attribute) ? attribute : null;
     }
 
-    public DictionaryAttribute? GetAttribute(byte code)
+    public DictionaryAttribute GetAttribute(byte code)
     {
-        if (_attributes.TryGetValue(code, out var attribute))
-            return attribute;
-                
-        throw new KeyNotFoundException($"Attribute with code {code} not found");
+        return _attributes.TryGetValue(code, out var attribute) ? attribute 
+            : throw new KeyNotFoundException($"Attribute with code {code} not found");
     }
 
     public DictionaryAttribute GetAttribute(string name)
     {
-        if (_attributeNames.TryGetValue(name, out var attribute))
-            return attribute;
-                
-        throw new KeyNotFoundException($"Attribute with name '{name}' not found");
+        return _attributeNames.TryGetValue(name, out var attribute) ? attribute 
+            : throw new KeyNotFoundException($"Attribute with name '{name}' not found");
     }
 }

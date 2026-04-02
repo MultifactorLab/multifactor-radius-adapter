@@ -8,7 +8,7 @@ using Microsoft.Extensions.Configuration;
 
 namespace Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Reader;
 
-public class XmlConfigurationProvider : ConfigurationProvider, IConfigurationSource
+internal sealed class XmlConfigurationProvider : ConfigurationProvider, IConfigurationSource
 {
     private const string AppSettingsElement = "appSettings";
     
@@ -62,7 +62,7 @@ public class XmlConfigurationProvider : ConfigurationProvider, IConfigurationSou
         }
     }
 
-    private void ProcessSection(XElement section, string parentKey = null)
+    private void ProcessSection(XElement section, string? parentKey = null)
     {
         var sectionName = section.Name.ToString();
         var currentKey = parentKey != null ? $"{parentKey}:{sectionName}" : sectionName;
@@ -157,57 +157,7 @@ public class XmlConfigurationProvider : ConfigurationProvider, IConfigurationSou
             Data.Add(newKey, value);
         }
     }
-
-    private void FillSection(XElement section, string parentKey = null, int? index = null)
-    {
-        string sectionKey;
-
-        if (index.HasValue)
-        {
-
-            sectionKey = $"{parentKey}:{index.Value}";
-        }
-        else
-        {
-            sectionKey = section.Name.ToString();
-            if (parentKey != null)
-            {
-                sectionKey = $"{parentKey}:{sectionKey}";
-            }
-        }
-
-        if (section.HasAttributes)
-        {
-            foreach (var attr in section.Attributes())
-            {
-                var attrKey = $"{sectionKey}:{ToPascalCase(attr.Name.LocalName)}";
-                Data[attrKey] = attr.Value;
-            }
-        }
-
-        if (!section.HasElements)
-        {
-            return;
-        }
-
-        var groups = section.Elements().GroupBy(x => x.Name);
-        foreach (var group in groups)
-        {
-            if (group.Count() == 1)
-            {
-                FillSection(group.First(), sectionKey);
-                continue;
-            }
-
-            var index2 = 0;
-            foreach (var arrEntry in group)
-            {
-                FillSection(arrEntry, sectionKey, index2);
-                index2++;
-            }
-        }
-    }
-
+    
     private static string ToPascalCase(string input)
     {
         if (string.IsNullOrWhiteSpace(input))

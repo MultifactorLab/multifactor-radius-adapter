@@ -24,7 +24,7 @@
 
 namespace Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Models.Dictionary.Attributes;
 
-public class DictionaryVendorAttribute : DictionaryAttribute
+internal sealed class DictionaryVendorAttribute : DictionaryAttribute
 {
     public readonly uint VendorId;
     public readonly uint VendorCode;

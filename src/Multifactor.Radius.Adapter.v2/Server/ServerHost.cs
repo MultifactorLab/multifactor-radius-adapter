@@ -8,7 +8,7 @@ internal sealed class ServerHost : IHostedService
     private readonly AdapterServer _server;
     private readonly ILogger<ServerHost> _logger;
     private Task? _serverTask;
-    private CancellationTokenSource? _cts;
+    private CancellationTokenSource? _cts;//TODO debug
     
     private const int ShoutDownTimeout = 30;
     

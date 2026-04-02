@@ -25,7 +25,7 @@ internal sealed class RootConfiguration : IRootConfiguration
     public string? FileLogOutputTemplate { get; set; }
     public int LogFileMaxSizeBytes { get; set; }
 
-    public static RootConfiguration FromConfiguration(AdapterConfiguration configurationFile)
+    public static RootConfiguration FromConfiguration(AdapterConfiguration? configurationFile)
     {
         ArgumentNullException.ThrowIfNull(configurationFile);
         var conf = new RootConfiguration

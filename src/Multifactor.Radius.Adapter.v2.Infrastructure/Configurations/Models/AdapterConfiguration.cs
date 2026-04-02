@@ -5,18 +5,12 @@ namespace Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Models;
 
 internal sealed class AdapterConfiguration
 {
-    public AdapterConfiguration()
-    {
-        AppSettings = new AppSettingsSection();
-        LdapServers = new List<LdapServerSection>();
-        RadiusReply = new RadiusReplySection();
-    }
-    public string FileName { get; set; }
-    public AppSettingsSection AppSettings { get; set; } = new();
-    
-    public List<LdapServerSection> LdapServers { get; set; } = [];
-    
-    public RadiusReplySection RadiusReply { get; set; } = new();
+    public string? FileName { get; set; }
+    public AppSettingsSection AppSettings { get; init; } = new();
+
+    public List<LdapServerSection> LdapServers { get; init; } = new();
+
+    public RadiusReplySection RadiusReply { get; init; } = new();
 }
 
 internal sealed class AppSettingsSection
@@ -85,7 +79,7 @@ internal sealed class AppSettingsSection
     [Description("invalid-credential-delay")]
     public string InvalidCredentialDelay { get; set; }
     [Description("calling-station-id-attribute")]
-    public string CallingStationIdAttribute { get; set; } //TODO not used
+    public string CallingStationIdAttribute { get; set; }
     [Description("ip-white-list")]
     public string IpWhiteList { get; set; }
 }

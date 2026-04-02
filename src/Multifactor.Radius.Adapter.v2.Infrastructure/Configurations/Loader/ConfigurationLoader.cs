@@ -12,12 +12,12 @@ using Multifactor.Radius.Adapter.v2.Infrastructure.Logging;
 
 namespace Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Loader;
 
-public interface IConfigurationLoader
+internal interface IConfigurationLoader
 {
     ServiceConfiguration Load(); 
 }
 
-public class ConfigurationLoader : IConfigurationLoader
+internal sealed class ConfigurationLoader : IConfigurationLoader
 {
     private readonly IRadiusDictionary _dictionary;
     
@@ -153,7 +153,6 @@ public class ConfigurationLoader : IConfigurationLoader
                 ParseWhenCondition(item.When, attribute);
             }
         }
-        
         return attribute;
     }
     
@@ -212,11 +211,10 @@ public class ConfigurationLoader : IConfigurationLoader
         ArgumentException.ThrowIfNullOrWhiteSpace(hex);
         
         var bytes = new byte[hex.Length / 2];
-        for (int i = 0; i < hex.Length; i += 2)
+        for (var i = 0; i < hex.Length; i += 2)
         {
             bytes[i / 2] = Convert.ToByte(hex.Substring(i, 2), 16);
         }
-
         return bytes;
     }
 }

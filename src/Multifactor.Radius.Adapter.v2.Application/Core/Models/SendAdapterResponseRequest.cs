@@ -13,7 +13,6 @@ public sealed class SendAdapterResponseRequest
     public IPEndPoint RemoteEndpoint { get; init; }
     public IPEndPoint? ProxyEndpoint { get; init; }
     public AuthenticationStatus FirstFactorStatus { get; init; }
-    
     public AuthenticationStatus SecondFactorStatus { get; init; }
     public ResponseInformation ResponseInformation { get; init; }
     public SharedSecret RadiusSharedSecret { get; init; }

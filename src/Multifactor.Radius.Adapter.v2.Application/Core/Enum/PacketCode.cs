@@ -1,6 +1,6 @@
 namespace Multifactor.Radius.Adapter.v2.Application.Core.Enum;
 
-// See https://datatracker.ietf.org/doc/html/rfc2865#section-3
+/// See https://datatracker.ietf.org/doc/html/rfc2865#section-3
 public enum PacketCode
 {
     AccessRequest = 1,

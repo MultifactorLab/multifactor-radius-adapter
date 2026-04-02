@@ -6,7 +6,7 @@ using Multifactor.Radius.Adapter.v2.Application.SharedPorts;
 
 namespace Multifactor.Radius.Adapter.v2.Infrastructure.ShaderAdapters;
 
-internal class LoadLdapSchema : ILoadLdapSchema
+internal sealed class LoadLdapSchema : ILoadLdapSchema
 {
     private readonly LdapSchemaLoader _schemaLoader;
 

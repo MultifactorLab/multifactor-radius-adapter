@@ -1,7 +1,7 @@
 using Multifactor.Core.Ldap.Schema;
 using Multifactor.Radius.Adapter.v2.Application.Core.Enum;
 using Multifactor.Radius.Adapter.v2.Application.Core.Models.Abstractions;
-using Multifactor.Radius.Adapter.v2.Application.Features.LoadLdapForest.Models;
+using Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCases.LoadLdapForest.Models;
 
 namespace Multifactor.Radius.Adapter.v2.Application.Core.Models;
 
