@@ -19,11 +19,11 @@ internal sealed class LdapServerConfiguration : ILdapServerConfiguration
     public IReadOnlyList<DistinguishedName> AuthenticationCacheGroups { get; private init; }
     public IReadOnlyList<string> PhoneAttributes { get; private init; }
     public string IdentityAttribute { get; private init; }
-    public bool RequiresUpn { get; private init; }//TODO not used
+    public bool RequiresUpn { get; private init; }
     public bool EnableTrustedDomains { get; private init; }
-    public bool AlternativeSuffixesEnabled { get; private init; }//TODO not used
-    public IReadOnlyList<string> IncludedDomains { get; init; }//TODO not used
-    public IReadOnlyList<string> ExcludedDomains { get; init; }//TODO not used
+    public bool AlternativeSuffixesEnabled { get; private init; }
+    public IReadOnlyList<string> IncludedDomains { get; init; }
+    public IReadOnlyList<string> ExcludedDomains { get; init; }
     public IReadOnlyList<string> IncludedSuffixes { get; init; }
     public IReadOnlyList<string> ExcludedSuffixes { get; init; }
     public IReadOnlyList<string> BypassSecondFactorWhenApiUnreachableGroups { get; init; }

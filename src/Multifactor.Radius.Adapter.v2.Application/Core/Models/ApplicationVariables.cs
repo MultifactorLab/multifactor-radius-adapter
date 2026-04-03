@@ -1,6 +1,6 @@
 ﻿namespace Multifactor.Radius.Adapter.v2.Application.Core.Models;
 
-//TODO ???
+
 public sealed class ApplicationVariables
 {
     public string? AppVersion { get; init; }

@@ -12,45 +12,58 @@ internal interface IEndpointSelector
 internal sealed class RoundRobinEndpointSelector : IEndpointSelector
 {
     private readonly IReadOnlyList<Uri> _endpoints;
-    private readonly ConcurrentBag<Uri> _failedEndpoints;
+    private readonly ConcurrentDictionary<Uri, DateTime> _failedEndpoints;
     private int _currentIndex = -1;
     private readonly object _lock = new();
     private readonly ILogger<RoundRobinEndpointSelector> _logger;
+    private readonly TimeSpan _failureRetryPeriod = TimeSpan.FromMinutes(5);
 
-    public RoundRobinEndpointSelector(ServiceConfiguration configuration, 
+    public RoundRobinEndpointSelector(
+        ServiceConfiguration configuration, 
         ILogger<RoundRobinEndpointSelector> logger)
     {
         _endpoints = configuration.RootConfiguration.MultifactorApiUrls;
-        _failedEndpoints = [];
+        _failedEndpoints = new ConcurrentDictionary<Uri, DateTime>();
         _logger = logger;
     }
 
-    public async Task<Uri> GetNextEndpointAsync()
+    public Task<Uri> GetNextEndpointAsync()
     {
-        return await GetNextHealthyEndpointAsync();
+        return Task.FromResult(GetNextHealthyEndpoint());
     }
 
-    private Task<Uri> GetNextHealthyEndpointAsync()
+    private Uri GetNextHealthyEndpoint()
     {
         if (_endpoints.Count == 0)
             throw new InvalidOperationException("No endpoints configured");
 
-        lock (_lock)//TODO fix
+        CleanupOldFailures();
+
+        lock (_lock)
         {
-            foreach (var _ in _endpoints)
+            for (int i = 0; i < _endpoints.Count; i++)
             {
-                _failedEndpoints.Add(_);
                 _currentIndex = (_currentIndex + 1) % _endpoints.Count;
                 var endpoint = _endpoints[_currentIndex];
-
-                if (_failedEndpoints.Contains(endpoint)) continue;
+                if (_failedEndpoints.ContainsKey(endpoint)) continue;
                 _logger.LogDebug("Selected endpoint: {Endpoint}", endpoint);
-                return Task.FromResult(endpoint);
+                return endpoint;
             }
-            _failedEndpoints.Clear();
-            _currentIndex = 0;
-            _logger.LogWarning("All endpoints failed, resetting to first");
-            return Task.FromResult(_endpoints[0]);
+            _logger.LogWarning("All endpoints are marked as failed, trying first endpoint");
+            return _endpoints[0];
+        }
+    }
+
+    private void CleanupOldFailures()
+    {
+        var cutoff = DateTime.UtcNow - _failureRetryPeriod;
+        foreach (var kvp in _failedEndpoints)
+        {
+            if (kvp.Value < cutoff)
+            {
+                _failedEndpoints.TryRemove(kvp.Key, out _);
+                _logger.LogDebug("Removed expired failure for {Endpoint}", kvp.Key);
+            }
         }
     }
 }

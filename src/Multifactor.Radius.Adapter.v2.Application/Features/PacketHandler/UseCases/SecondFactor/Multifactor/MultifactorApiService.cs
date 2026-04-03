@@ -85,10 +85,12 @@ public sealed class MultifactorApiService
                 _logger.LogDebug("Skip 2FA response caching for user '{user}'.", context.RequestPacket.UserName);
                 return mfResponse;
             }
-            
-            LogGrantedInfo(personalData.Identity, response, context.RequestPacket.CallingStationIdAttribute ?? context.ClientConfiguration.CallingStationIdAttribute);
-            _authenticatedClientCache.SetCache(
-                personalData.CallingStationId, 
+
+            var callingStationIdAttribute = context.ClientConfiguration.IsIpFromUdp
+                ? context.RequestPacket.CallingStationIdAttribute
+                : context.ClientConfiguration.CallingStationIdAttribute;
+            LogGrantedInfo(personalData.Identity, response, callingStationIdAttribute);
+            _authenticatedClientCache.SetCache(callingStationIdAttribute, 
                 personalData.Identity, 
                 context.ClientConfiguration.Name, 
                 context.ClientConfiguration.AuthenticationCacheLifetime);
@@ -120,7 +122,9 @@ public sealed class MultifactorApiService
 
         var dto = new ChallengeRequestDto(identity, answer, requestId);
 
-        var callingStationIdAttr = context.RequestPacket.CallingStationIdAttribute ?? context.ClientConfiguration.CallingStationIdAttribute;
+        var callingStationIdAttr = context.ClientConfiguration.IsIpFromUdp
+            ? context.RequestPacket.CallingStationIdAttribute
+            : context.ClientConfiguration.CallingStationIdAttribute;
         var callingStationId = RequestDataExtractor.GetCallingStationId(callingStationIdAttr, context.RequestPacket.RemoteEndpoint);
         
         try

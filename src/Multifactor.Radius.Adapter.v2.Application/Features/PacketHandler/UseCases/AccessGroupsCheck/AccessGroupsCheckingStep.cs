@@ -8,7 +8,7 @@ namespace Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCa
 
 internal sealed class AccessGroupsCheckingStep : IRadiusPipelineStep
 {
-    private readonly ICheckMembership _checkMembership; //TODO Add use forest
+    private readonly ICheckMembership _checkMembership;
     private readonly ILogger<AccessGroupsCheckingStep> _logger;
     private const string StepName = nameof(AccessGroupsCheckingStep);
 
@@ -30,8 +30,11 @@ internal sealed class AccessGroupsCheckingStep : IRadiusPipelineStep
             return Task.CompletedTask;
         
         ArgumentNullException.ThrowIfNull(context.LdapProfile, nameof(context.LdapProfile));
+        
+        var userIdentity = new UserIdentity(context.RequestPacket.UserName);
+        var domainInfo = context.ForestMetadata?.DetermineForestDomain(userIdentity);
         var accessGroup = context.LdapConfiguration.AccessGroups;
-        var request = MembershipDto.FromContext(context, accessGroup);
+        var request = MembershipDto.FromContext(context, accessGroup, domainInfo);
         var isMember = context.LdapProfile.MemberOf.Intersect(accessGroup).Any() || _checkMembership.Execute(request);
 
         return isMember ? Task.CompletedTask : TerminatePipeline(context);

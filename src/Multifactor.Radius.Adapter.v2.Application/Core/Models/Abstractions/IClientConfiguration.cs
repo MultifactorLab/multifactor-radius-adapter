@@ -27,7 +27,10 @@ public interface IClientConfiguration
     public TimeSpan AuthenticationCacheLifetime { get; }
     public CredentialDelay? InvalidCredentialDelay { get; }
     public string? CallingStationIdAttribute { get; }  
+    public bool IsIpFromUdp { get; }  
     public IReadOnlyList<IPAddressRange> IpWhiteList { get; }
+    public bool? IsAccessChallengePassword { get; }
+
     
     public IReadOnlyList<ILdapServerConfiguration>? LdapServers { get; }
     public IReadOnlyDictionary<string, IReadOnlyList<IRadiusReplyAttribute>>? ReplyAttributes { get; }

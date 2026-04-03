@@ -30,7 +30,6 @@ internal sealed class SendChallenge: ISendChallenge
     public async Task<AccessRequestResponse> Execute(ChallengeRequestDto dto, MultifactorAuthData authData, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(dto, nameof(dto));
-        //TODO dto
         using var client = CreateClient(authData);
         try
         {

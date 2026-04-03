@@ -7,7 +7,7 @@ namespace Multifactor.Radius.Adapter.v2.Infrastructure.Features.PacketHandler.Us
 internal sealed class ForestCache : IForestCache
 {
     private static readonly TimeSpan CacheDuration = TimeSpan.FromHours(1);
-    private const string CacheKeyPrefix = "ForestMetadata";
+    private const string CacheKeyPrefix = "Forest";
     private readonly IMemoryCache _memoryCache;
     public ForestCache(IMemoryCache memoryCache)
     {

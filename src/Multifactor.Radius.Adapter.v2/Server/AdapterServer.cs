@@ -15,7 +15,6 @@ internal sealed class AdapterServer : IAsyncDisposable
     private readonly ServiceConfiguration _serviceConfiguration;
     private readonly ILogger<AdapterServer> _logger;
     
-    //todo check debug
     private Task? _receiveLoopTask;
     private CancellationTokenSource? _cts;
     private readonly SemaphoreSlim _concurrencyLimiter;

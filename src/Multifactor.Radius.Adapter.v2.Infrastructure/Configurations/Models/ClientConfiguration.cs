@@ -32,7 +32,10 @@ internal sealed class ClientConfiguration : IClientConfiguration
     public TimeSpan AuthenticationCacheLifetime { get; private set; } = TimeSpan.Zero;
     public CredentialDelay? InvalidCredentialDelay { get; private set; }
     public string? CallingStationIdAttribute { get; private init; }
+    public bool IsIpFromUdp { get; private init; }  
     public IReadOnlyList<IPAddressRange> IpWhiteList { get; private set; }
+    public bool? IsAccessChallengePassword { get; private init; }
+
 
     public IReadOnlyList<ILdapServerConfiguration>? LdapServers { get; set; }
     public IReadOnlyDictionary<string, IReadOnlyList<IRadiusReplyAttribute>>? ReplyAttributes { get; set; }
@@ -59,6 +62,7 @@ internal sealed class ClientConfiguration : IClientConfiguration
                 : throw InvalidConfigurationException.For(c => c.AppSettings.RadiusSharedSecret,
                     "Property '{prop}' is required. Config name: '{0}'", configurationFile.FileName),
             CallingStationIdAttribute = configurationFile.AppSettings.CallingStationIdAttribute,
+            IsIpFromUdp = configurationFile.AppSettings.IpFromUdp ?? true,
             BypassSecondFactorWhenApiUnreachable = configurationFile.AppSettings.BypassSecondFactorWhenApiUnreachable,
             Privacy = new Privacy(PrivacyMode.None, []),
             PreAuthenticationMethod = PreAuthMode.None,
@@ -69,6 +73,7 @@ internal sealed class ClientConfiguration : IClientConfiguration
             SignUpGroups = [],
             RadiusClientIps = [],
             IpWhiteList = [],
+            IsAccessChallengePassword = configurationFile.AppSettings.AccessChallengePassword
         };
         if (!string.IsNullOrWhiteSpace(configurationFile.AppSettings.SignUpGroups))
             if (ConfigurationValueParser.TryParseStringList(configurationFile.AppSettings.SignUpGroups, out var list))

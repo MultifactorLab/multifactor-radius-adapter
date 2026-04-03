@@ -1,11 +1,9 @@
 using System.DirectoryServices.Protocols;
-using System.Text.RegularExpressions;
 using Microsoft.Extensions.Logging;
 using Multifactor.Core.Ldap;
 using Multifactor.Core.Ldap.Attributes;
 using Multifactor.Core.Ldap.Name;
 using Multifactor.Core.Ldap.Schema;
-using Multifactor.Radius.Adapter.v2.Application.Core.Enum;
 using Multifactor.Radius.Adapter.v2.Application.Core.Models;
 using Multifactor.Radius.Adapter.v2.Application.Core.Models.Abstractions;
 using Multifactor.Radius.Adapter.v2.Application.Core.Models.Dto;
@@ -19,7 +17,6 @@ namespace Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCa
 internal sealed class ProfileLoadingStep : IRadiusPipelineStep
 {
     private readonly IProfileSearch _profileSearch;
-    private readonly ILoadLdapSchema _loadLdapSchema;
     private readonly ILogger<ProfileLoadingStep> _logger;
     private const string StepName = nameof(ProfileLoadingStep); 
     
@@ -35,11 +32,9 @@ internal sealed class ProfileLoadingStep : IRadiusPipelineStep
     
     public ProfileLoadingStep(
         IProfileSearch profileSearch,
-        ILoadLdapSchema loadLdapSchema,
         ILogger<ProfileLoadingStep> logger)
     {
         _profileSearch = profileSearch;
-        _loadLdapSchema = loadLdapSchema;
         _logger = logger;
     }
 
@@ -53,11 +48,8 @@ internal sealed class ProfileLoadingStep : IRadiusPipelineStep
         ValidateContext(context);
 
         var userIdentity = new UserIdentity(context.RequestPacket.UserName);
-        
         var attributes = GetAttributes(context);
-        
         var profile = await LoadUserProfileAsync(userIdentity, attributes, context);
-        
         if (profile is null)
         {
             var searchBase = GetSearchBaseInfo(context);
@@ -67,7 +59,6 @@ internal sealed class ProfileLoadingStep : IRadiusPipelineStep
                 searchBase);
             throw new InvalidOperationException($"Failed to load profile for user {userIdentity.Identity}");
         }
-
         context.LdapProfile = profile;
         _logger.LogInformation(
             "Successfully found '{UserIdentity}' profile at '{Domain}'.", 
@@ -96,11 +87,11 @@ internal sealed class ProfileLoadingStep : IRadiusPipelineStep
         List<LdapAttributeName> attributes, 
         RadiusPipelineContext context)
     {
-        var searchBase = DetermineForestDomain(context.ForestMetadata, userIdentity);
+        var domainInfo = context.ForestMetadata?.DetermineForestDomain(userIdentity);
         
-        if (searchBase is not null)
+        if (domainInfo is not null)
         {
-            return await LoadProfileFromSpecificDomainAsync(userIdentity, attributes, context, searchBase);
+            return await LoadProfileFromSpecificDomainAsync(userIdentity, attributes, context, domainInfo);
         }
 
         return TryGetUserProfile(userIdentity, attributes, context);
@@ -110,22 +101,15 @@ internal sealed class ProfileLoadingStep : IRadiusPipelineStep
         UserIdentity userIdentity,
         List<LdapAttributeName> attributes,
         RadiusPipelineContext context,
-        DistinguishedName searchBase)
+        DomainInfo domainInfo)
     {
-        var connectionString = BuildConnectionStringForDomain(context.LdapConfiguration!.ConnectionString, searchBase);
-        
-        var schema = LoadSchemaForDomainAsync(connectionString, context);
-        if (schema is null)
-        {
-            _logger.LogWarning("Failed to load schema for domain '{Domain}'", searchBase.StringRepresentation);
-            return Task.FromResult<ILdapProfile?>(null);
-        }
-
+        var searchBase = new DistinguishedName(domainInfo.DistinguishedName);
         var request = CreateFindUserRequest(
-            connectionString.ToString(),
+            domainInfo.ConnectionString,
+            AuthType.Negotiate,
             userIdentity,
             searchBase,
-            schema,
+            domainInfo.Schema,
             attributes,
             context.LdapConfiguration);
 
@@ -139,28 +123,9 @@ internal sealed class ProfileLoadingStep : IRadiusPipelineStep
         return Task.FromResult(profile);
     }
 
-    private ILdapSchema? LoadSchemaForDomainAsync(
-        LdapConnectionString connectionString,
-        RadiusPipelineContext context)
-    {
-        var dto = new LoadLdapSchemaDto(connectionString.ToString(),
-            ConvertToUpn(context.RequestPacket.UserName),
-            context.LdapConfiguration!.Password,
-            context.LdapConfiguration.BindTimeoutSeconds,
-            AuthType.Negotiate);
-
-        return _loadLdapSchema.Execute(dto);
-    }
-
-    private static LdapConnectionString BuildConnectionStringForDomain(string baseConnectionString, DistinguishedName domain)
-    {
-        var preConnectionString = new LdapConnectionString(baseConnectionString, true);
-        var fqdn = DnToFqdn(domain);
-        return CopySchemaAndPort(preConnectionString, fqdn);
-    }
-
     private static FindUserDto CreateFindUserRequest(
         string connectionString,
+        AuthType authType,
         UserIdentity userIdentity,
         DistinguishedName searchBase,
         ILdapSchema schema,
@@ -170,6 +135,7 @@ internal sealed class ProfileLoadingStep : IRadiusPipelineStep
         return new FindUserDto
         {
             ConnectionString = connectionString,
+            AuthType = authType,
             UserName = config.Username,
             Password = config.Password,
             BindTimeoutInSeconds = config.BindTimeoutSeconds,
@@ -187,6 +153,7 @@ internal sealed class ProfileLoadingStep : IRadiusPipelineStep
     {
         var request = CreateFindUserRequest(
             context.LdapConfiguration!.ConnectionString,
+            AuthType.Basic,
             userIdentity,
             context.LdapSchema!.NamingContext,
             context.LdapSchema,
@@ -215,103 +182,10 @@ internal sealed class ProfileLoadingStep : IRadiusPipelineStep
 
     private static string GetSearchBaseInfo(RadiusPipelineContext context)
     {
-        return context.ForestMetadata?.RootDomain 
-               ?? context.LdapSchema?.NamingContext?.StringRepresentation 
+        return context.LdapSchema?.NamingContext.StringRepresentation 
                ?? "unknown";
     }
-
-    private static string ConvertToUpn(string username)
-    {
-        if (string.IsNullOrEmpty(username))
-            throw new ArgumentNullException(nameof(username));
-
-        // Если уже UPN
-        if (username.Contains('@') && Regex.IsMatch(username, @"^[^@]+@[^@]+\.[^@]+$"))
-            return username;
-
-        // Если DN
-        if (username.Contains('=') && (username.Contains("CN=") || username.Contains("DC=")))
-        {
-            var domain = ExtractDomainFromDn(username);
-            var cn = ExtractCn(username);
-            return string.IsNullOrEmpty(domain) || string.IsNullOrEmpty(cn) 
-                ? username 
-                : $"{cn}@{domain}";
-        }
-
-        return username;
-    }
-
-    private static string ExtractDomainFromDn(string distinguishedName)
-    {
-        return string.Join(".", 
-            distinguishedName.Split(',')
-                .Select(p => p.Trim())
-                .Where(p => p.StartsWith("DC=", StringComparison.OrdinalIgnoreCase))
-                .Select(p => p[3..]));
-    }
-
-    private static string ExtractCn(string distinguishedName)
-    {
-        return distinguishedName.Split(',')
-            .Select(p => p.Trim())
-            .FirstOrDefault(p => p.StartsWith("CN=", StringComparison.OrdinalIgnoreCase))
-            ?[3..] ?? string.Empty;
-    }
-
-    private DistinguishedName? DetermineForestDomain(IForestMetadata? metadata, UserIdentity userIdentity)
-    {
-        if (metadata is not null)
-            return userIdentity.Format switch
-            {
-                UserIdentityFormat.UserPrincipalName => FindDomainByUpnSuffix(metadata, userIdentity.GetUpnSuffix()),
-                UserIdentityFormat.NetBiosName => FindDomainByNetBios(metadata, userIdentity.Identity),
-                UserIdentityFormat.SamAccountName => GetRootDomain(metadata),
-                _ => null
-            };
-        _logger.LogDebug("No forest metadata available, using schema naming context as fallback");
-        return null;
-    }
-
-    private DistinguishedName? FindDomainByUpnSuffix(IForestMetadata metadata, string suffix)
-    {
-        if (metadata.UpnSuffixes.TryGetValue(suffix, out var domain))
-        {
-            _logger.LogDebug("Found domain '{Domain}' for UPN suffix '{Suffix}'", domain.DnsName, suffix);
-            return new DistinguishedName(domain.DistinguishedName);
-        }
-
-        // Partial match
-        foreach (var kv in metadata.UpnSuffixes)
-        {
-            if (!suffix.EndsWith(kv.Key)) continue;
-            
-            _logger.LogDebug("Found partial match: domain '{Domain}' for suffix '{Suffix}'", 
-                kv.Value.DnsName, suffix);
-            return new DistinguishedName(kv.Value.DistinguishedName);
-        }
-
-        return null;
-    }
-
-    private DistinguishedName? FindDomainByNetBios(IForestMetadata metadata, string netBiosName)
-    {
-        if (!metadata.NetBiosNames.TryGetValue(netBiosName, out var domain)) return null;
-        _logger.LogDebug("Found domain '{Domain}' for NetBIOS name '{NetBios}'", 
-            domain.DnsName, netBiosName);
-        return new DistinguishedName(domain.DistinguishedName);
-    }
-
-    private DistinguishedName? GetRootDomain(IForestMetadata metadata)
-    {
-        var rootDomain = metadata.Domains.Values
-            .FirstOrDefault(d => d.DnsName == metadata.RootDomain);
-
-        if (rootDomain is null) return null;
-        _logger.LogDebug("Using root domain '{Domain}' for SAM account name", rootDomain.DnsName);
-        return new DistinguishedName(rootDomain.DistinguishedName);
-    }
-
+    
     private static List<LdapAttributeName> GetAttributes(RadiusPipelineContext context)
     {
         var attributes = new List<LdapAttributeName>(DefaultAttributes);
@@ -359,15 +233,5 @@ internal sealed class ProfileLoadingStep : IRadiusPipelineStep
             context.RequestPacket.UserName,
             context.RequestPacket.AccountType);
         return true;
-    }
-
-    private static LdapConnectionString CopySchemaAndPort(LdapConnectionString source, string newHost)
-    {
-        return new LdapConnectionString($"{source.Scheme}://{newHost}:{source.Port}", true);
-    }
-
-    private static string DnToFqdn(DistinguishedName name)
-    {
-        return string.Join(".", name.Components.Reverse().Select(x => x.Value));
     }
 }

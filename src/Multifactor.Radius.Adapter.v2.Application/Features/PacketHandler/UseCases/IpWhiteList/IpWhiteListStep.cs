@@ -21,8 +21,9 @@ internal sealed class IpWhiteListStep : IRadiusPipelineStep
         var ipWhiteList = context.ClientConfiguration.IpWhiteList;
         if (ipWhiteList.Count == 0) return Task.CompletedTask;
         
-        var callingStationId = context.RequestPacket.CallingStationIdAttribute  //TODO
-                               ?? context.ClientConfiguration.CallingStationIdAttribute ?? null;
+        var callingStationId = context.ClientConfiguration.IsIpFromUdp ? 
+            context.RequestPacket.CallingStationIdAttribute :
+            context.ClientConfiguration.CallingStationIdAttribute;
 
         var clientIp =  IPAddress.TryParse(callingStationId, out var callingStationIp)
             ? callingStationIp : context.RequestPacket.RemoteEndpoint?.Address;

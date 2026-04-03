@@ -7,8 +7,8 @@ public static class Module
 {
     public static IServiceCollection AddLdapForestLoadInfra(this IServiceCollection services)
     {
-        services.AddTransient<ILoadLdapForest, LoadLdapForest>();
         services.AddTransient<IForestCache, ForestCache>();
+        services.AddTransient<ILoadLdapForest, LoadLdapForest>();
         return services;
     }
 }

@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using Multifactor.Core.Ldap;
 using Multifactor.Core.Ldap.Connection;
 using Multifactor.Core.Ldap.Connection.LdapConnectionFactory;
+using Multifactor.Core.Ldap.Schema;
 using Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCases.LoadLdapForest.Models;
 using Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCases.LoadLdapForest.Port;
 
@@ -11,13 +12,15 @@ namespace Multifactor.Radius.Adapter.v2.Infrastructure.Features.PacketHandler.Us
 internal sealed class LoadLdapForest : ILoadLdapForest
 {
     private readonly ILdapConnectionFactory _connectionFactory;
+    private readonly LdapSchemaLoader _schemaLoader;
     private readonly ILogger<ILoadLdapForest> _logger;
 
     public LoadLdapForest(ILdapConnectionFactory connectionFactory,
-        ILogger<ILoadLdapForest> logger)
+        ILogger<ILoadLdapForest> logger, LdapSchemaLoader schemaLoader)
     {
         _connectionFactory = connectionFactory;
         _logger = logger;
+        _schemaLoader = schemaLoader;
     }
 
     private const string DomainLocation = "CN=System";
@@ -34,29 +37,17 @@ internal sealed class LoadLdapForest : ILoadLdapForest
         {
             _logger.LogDebug("Loading forest metadata from {connectionString}", dto.ConnectionString);
 
-            using var connection = CreateConnection(dto.ConnectionString, dto.UserName, 
+            var ldapConnectionString = new LdapConnectionString(dto.ConnectionString, true);
+            using var connection = CreateConnection(ldapConnectionString, dto.UserName, 
                 dto.Password, dto.BindTimeoutInSeconds);
 
             var (rootDn, domain) = GetDomainName(connection);
 
             _logger.LogDebug("Root domain: {domain}, Root DN: {rootDn}", domain, rootDn);
 
-            var metadata = new ForestMetadata
-            {
-                RootDomain = domain
-            };
-
-            // ШАГ 1: Получаем информацию о корневом домене
-            var rootDomainInfo = GetDomainInfo(connection, rootDn, domain, isTrusted: false);
-            if (rootDomainInfo != null)
-            {
-                AddDomainToMetadata(metadata, rootDomainInfo);
-                _logger.LogDebug("Added root domain: {domain} (DN: {dn})",
-                    rootDomainInfo.DnsName, rootDomainInfo.DistinguishedName);
-            }
-
-            // ШАГ 2: Ищем доверенные домены
-            var trustedDomains = GetTrustedDomains(connection, rootDn);
+            var metadata = new ForestMetadata();
+            var trustedDomains = GetTrustedDomains(connection, rootDn, ldapConnectionString,  dto.UserName, 
+                dto.Password, dto.BindTimeoutInSeconds);
             foreach (var trustedDomain in trustedDomains)
             {
                 AddDomainToMetadata(metadata, trustedDomain);
@@ -64,7 +55,6 @@ internal sealed class LoadLdapForest : ILoadLdapForest
                     trustedDomain.DnsName, trustedDomain.DistinguishedName);
             }
 
-            // ШАГ 3: Для каждого домена получаем UPN-суффиксы
             foreach (var domainInfo in metadata.Domains.Values.ToList())
             {
                 var suffixes = GetUpnSuffixes(connection, domainInfo.DistinguishedName, dto.AlternativeSuffixesEnabled);
@@ -76,7 +66,6 @@ internal sealed class LoadLdapForest : ILoadLdapForest
                         suffix, domainInfo.DnsName);
                 }
 
-                // Добавляем основной DNS суффикс, если его еще нет
                 if (metadata.UpnSuffixes.TryAdd(domainInfo.DnsName, domainInfo))
                 {
                     domainInfo.UpnSuffixes.Add(domainInfo.DnsName);
@@ -97,8 +86,7 @@ internal sealed class LoadLdapForest : ILoadLdapForest
             return null;
         }
     }
-
-
+    
     private (string dn, string dns) GetDomainName(ILdapConnection connection)
     {
         string? rootDn = null;
@@ -135,9 +123,9 @@ internal sealed class LoadLdapForest : ILoadLdapForest
         }
     }
 
-    private ILdapConnection CreateConnection(string connectionString, string userName, string password, int bindTimeoutInSeconds)
+    private ILdapConnection CreateConnection(LdapConnectionString connectionString, string userName, string password, int bindTimeoutInSeconds)
     {
-        var options = new LdapConnectionOptions(new LdapConnectionString(connectionString, true, false), 
+        var options = new LdapConnectionOptions(connectionString, 
             AuthType.Basic, 
             userName, 
             password, 
@@ -161,45 +149,7 @@ internal sealed class LoadLdapForest : ILoadLdapForest
         return string.Join(".", parts);
     }
 
-    private DomainInfo? GetDomainInfo(ILdapConnection connection, string dn, string dnsName, bool isTrusted)
-    {
-        try
-        {
-            var request = new SearchRequest(
-                dn,
-                "(objectClass=domain)",
-                SearchScope.Base,
-                "dn", "distinguishedName", "name", "netbiosname");
-
-            var response = (SearchResponse)connection.SendRequest(request);
-
-            if (response.Entries.Count == 0)
-                return null;
-
-            var entry = response.Entries[0];
-            var netBiosName = GetAttributeValue(entry, "netbiosname");
-
-            if (string.IsNullOrEmpty(netBiosName))
-            {
-                netBiosName = dnsName.Split('.')[0].ToUpperInvariant();
-            }
-
-            return new DomainInfo
-            {
-                DnsName = dnsName,
-                DistinguishedName = dn,
-                NetBiosName = netBiosName,
-                IsTrusted = isTrusted
-            };
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Failed to get domain info for {dn}", dn);
-            return null;
-        }
-    }
-
-    private List<DomainInfo> GetTrustedDomains(ILdapConnection connection, string rootDn)
+    private List<DomainInfo> GetTrustedDomains(ILdapConnection connection, string rootDn, LdapConnectionString ldapConnectionString, string userName, string password, int bindTimeoutInSeconds)
     {
         var trustedDomains = new List<DomainInfo>();
         try
@@ -227,12 +177,16 @@ internal sealed class LoadLdapForest : ILoadLdapForest
 
                     var dn = ConvertToDn(dnsName);
 
+                    var connectionString = BuildConnectionStringForDomain(ldapConnectionString, dnsName);
+                    var schema = LoadSchema(connectionString, userName, password, bindTimeoutInSeconds);
+
                     var domainInfo = new DomainInfo
                     {
+                        ConnectionString = connectionString,
                         NetBiosName = netBiosName,
                         DnsName = dnsName,
                         DistinguishedName = dn,
-                        IsTrusted = true
+                        Schema = schema
                     };
 
                     trustedDomains.Add(domainInfo);
@@ -301,6 +255,18 @@ internal sealed class LoadLdapForest : ILoadLdapForest
 
         return suffixes;
     }
+    
+    private ILdapSchema LoadSchema(string connectionString, string username, string password, int bindTimeoutInSeconds)
+    {
+        var options = new LdapConnectionOptions(
+            new LdapConnectionString(connectionString, true),
+            AuthType.Negotiate,
+            username,
+            password,
+            TimeSpan.FromSeconds(bindTimeoutInSeconds)
+        );
+        return _schemaLoader.Load(options);
+    }
 
     private static void AddDomainToMetadata(ForestMetadata metadata, DomainInfo domainInfo)
     {
@@ -317,12 +283,17 @@ internal sealed class LoadLdapForest : ILoadLdapForest
         if (entry.Attributes.Contains(attributeName))
         {
             var values = entry.Attributes[attributeName].GetValues(typeof(string));
-            if (values != null && values.Length > 0)
+            if (values is { Length: > 0 })
             {
                 return values[0].ToString();
             }
         }
         return null;
+    }
+    
+    private static string BuildConnectionStringForDomain(LdapConnectionString baseConnectionString, string domainDnsName)
+    {
+        return new LdapConnectionString($"{baseConnectionString.Scheme}://{domainDnsName}:{baseConnectionString.Port}").ToString()!;
     }
 }
 

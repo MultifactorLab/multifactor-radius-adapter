@@ -8,7 +8,7 @@ namespace Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCa
 /// <summary>
 /// Шаг загрузки метаданных леса Active Directory
 /// </summary>
-internal sealed class LoadLdapForestStep : IRadiusPipelineStep //TODO check
+internal sealed class LoadLdapForestStep : IRadiusPipelineStep
 {
     private readonly ILoadLdapForest _ldapForestLoad;
     private readonly IForestCache _cache;
@@ -41,7 +41,7 @@ internal sealed class LoadLdapForestStep : IRadiusPipelineStep //TODO check
         if (forestMetadata is null)
         {
             _logger.LogWarning("Unable to load forest metadata, using fallback");
-            forestMetadata = CreateFallbackMetadata(context.LdapConfiguration.ConnectionString);
+            return Task.CompletedTask;
         }
 
         if (context.LdapConfiguration.IncludedDomains?.Count > 0 ||
@@ -74,9 +74,7 @@ internal sealed class LoadLdapForestStep : IRadiusPipelineStep //TODO check
         if (!context.LdapConfiguration.EnableTrustedDomains)
         {
             _logger.LogDebug("Trusted domains disabled");
-            var singleDomain = CreateSingleDomainMetadata(context);
-            _cache.Set(cacheKey, singleDomain);
-            return singleDomain;
+            return null;
         }
 
         var request = new LoadMetadataDto(
@@ -96,101 +94,6 @@ internal sealed class LoadLdapForestStep : IRadiusPipelineStep //TODO check
         return metadata;
     }
 
-    private IForestMetadata CreateSingleDomainMetadata(RadiusPipelineContext context)
-    {
-        var namingContext = context.LdapSchema?.NamingContext;
-
-        if (namingContext is null)
-        {
-            _logger.LogError("No schema available, falling back to connection string parsing");
-            throw new Exception("No schema available, falling back to connection string parsing");
-        }
-
-        var dnsName = ExtractDnsFromDn(namingContext.StringRepresentation);
-        var netBiosName = dnsName.Split('.')[0].ToUpperInvariant();
-
-        _logger.LogDebug("Creating single domain metadata from schema: {dnsName} (DN: {dn})",
-            dnsName, namingContext.StringRepresentation);
-
-        var domainInfo = new DomainInfo
-        {
-            DnsName = dnsName,
-            DistinguishedName = namingContext.StringRepresentation,
-            NetBiosName = netBiosName,
-            IsTrusted = false,
-            UpnSuffixes = [dnsName]
-        };
-
-        return new ForestMetadata
-        {
-            RootDomain = dnsName,
-            Domains = new Dictionary<string, DomainInfo>
-            {
-                [dnsName.ToLowerInvariant()] = domainInfo
-            },
-            UpnSuffixes = new Dictionary<string, DomainInfo>
-            {
-                [dnsName.ToLowerInvariant()] = domainInfo
-            },
-            NetBiosNames = new Dictionary<string, DomainInfo>
-            {
-                [netBiosName] = domainInfo
-            }
-        };
-    }
-    
-    private static string ExtractDnsFromDn(string dn)
-    {
-        var parts = dn.Split(',')
-            .Where(p => p.Trim().StartsWith("DC=", StringComparison.OrdinalIgnoreCase))
-            .Select(p => p.Substring(3).Trim())
-            .ToArray();
-
-        return string.Join(".", parts);
-    }
-
-    private static IForestMetadata CreateFallbackMetadata(string connectionString)
-    {
-        var uri = new Uri(connectionString);
-        var domain = uri.Host;
-
-        return new ForestMetadata
-        {
-            RootDomain = domain,
-            Domains = new Dictionary<string, DomainInfo>
-            {
-                [domain] = new()
-                {
-                    DnsName = domain,
-                    DistinguishedName = ConvertToDn(domain),
-                    NetBiosName = domain.Split('.')[0].ToUpperInvariant()
-                }
-            },
-            UpnSuffixes = new Dictionary<string, DomainInfo>
-            {
-                [domain] = new()
-                {
-                    DnsName = domain,
-                    DistinguishedName = ConvertToDn(domain)
-                }
-            },
-            NetBiosNames = new Dictionary<string, DomainInfo>
-            {
-                [domain.Split('.')[0].ToUpperInvariant()] = new()
-                {
-                    DnsName = domain,
-                    DistinguishedName = ConvertToDn(domain)
-                }
-            }
-        };
-    }
-
-    private static string ConvertToDn(string domain)
-    {
-        var parts = domain.Split('.');
-        return string.Join(",", parts.Select(p => $"DC={p}"));
-    }
-
     private IForestMetadata ApplyDomainFilters(IForestMetadata metadata, IReadOnlyList<string>? included, IReadOnlyList<string>? excluded)
     {
         if ((included == null || included.Count == 0) && (excluded == null || excluded.Count == 0))
@@ -199,10 +102,7 @@ internal sealed class LoadLdapForestStep : IRadiusPipelineStep //TODO check
         if(included?.Count > 0 && excluded?.Count > 0)
             throw new ArgumentException("Both included and excluded are set");
 
-        var filteredMetadata = new ForestMetadata
-        {
-            RootDomain = metadata.RootDomain
-        };
+        var filteredMetadata = new ForestMetadata();
 
         foreach (var domain in metadata.Domains.Values)
         {

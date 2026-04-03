@@ -35,7 +35,6 @@ internal sealed class UserNameValidationStep : IRadiusPipelineStep
         }
 
         var identity = new UserIdentity(userName);
-        //todo кривая проверка RequiresUpn и IsPermittedSuffix с GetUpnSuffix
         if (serverSettings.RequiresUpn && identity.Format != UserIdentityFormat.UserPrincipalName)
         {
             TerminateWithError(context, "User name in UPN format is required.");

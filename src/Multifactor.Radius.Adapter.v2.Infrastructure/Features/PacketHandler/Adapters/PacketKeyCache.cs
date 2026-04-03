@@ -6,6 +6,7 @@ namespace Multifactor.Radius.Adapter.v2.Infrastructure.Features.PacketHandler.Ad
 internal sealed class PacketKeyCache : IPacketKeyCache
 {
     private readonly IMemoryCache _cache;
+    private const string CacheKeyPrefix = "PacketKey";
 
     public PacketKeyCache(IMemoryCache memoryCache)
     {
@@ -16,8 +17,8 @@ internal sealed class PacketKeyCache : IPacketKeyCache
     {
         if (string.IsNullOrWhiteSpace(key))
             throw new ArgumentNullException(nameof(key));
-        
-        _cache.Set(key, 0, new MemoryCacheEntryOptions
+        var cacheKey = $"{CacheKeyPrefix}:{key}";
+        _cache.Set(cacheKey, 0, new MemoryCacheEntryOptions
         {
             AbsoluteExpiration = DateTimeOffset.UtcNow.AddMinutes(1),
             Size = 1
@@ -27,7 +28,9 @@ internal sealed class PacketKeyCache : IPacketKeyCache
     public bool HasValue(string key)
     {
         if (string.IsNullOrWhiteSpace(key))
-            throw new ArgumentNullException(nameof(key));
-        return _cache.TryGetValue(key, out _);
+            throw new ArgumentNullException(nameof(key));       
+        var cacheKey = $"{CacheKeyPrefix}:{key}";
+
+        return _cache.TryGetValue(cacheKey, out _);
     }
 }

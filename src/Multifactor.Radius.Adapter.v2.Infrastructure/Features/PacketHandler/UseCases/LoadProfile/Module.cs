@@ -5,7 +5,7 @@ namespace Multifactor.Radius.Adapter.v2.Infrastructure.Features.PacketHandler.Us
 
 internal static class Module
 {
-    public static IServiceCollection AddProfileSearch(this IServiceCollection services)
+    public static IServiceCollection AddLoadProfileInfra(this IServiceCollection services)
     {
         return services.AddTransient<IProfileSearch, LdapProfileSearch>();
     }

@@ -8,7 +8,7 @@ namespace Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCa
 
 internal sealed class PreAuthCheckStep : IRadiusPipelineStep
 {
-    private readonly ICheckMembership _checkMembership;//TODO add trust
+    private readonly ICheckMembership _checkMembership;
     private readonly ILogger<PreAuthCheckStep> _logger;
     
     public PreAuthCheckStep(ICheckMembership checkMembership, ILogger<PreAuthCheckStep> logger)
@@ -43,8 +43,10 @@ internal sealed class PreAuthCheckStep : IRadiusPipelineStep
         var serverConfig = context.LdapConfiguration;
         if (serverConfig is null || !serverConfig.SecondFaBypassGroups.Any())
             return true;
-        
-        var request = MembershipDto.FromContext(context, serverConfig.SecondFaBypassGroups);
+        var userIdentity = new UserIdentity(context.RequestPacket.UserName);
+        var domainInfo = context.ForestMetadata?.DetermineForestDomain(userIdentity);
+
+        var request = MembershipDto.FromContext(context, serverConfig.SecondFaBypassGroups, domainInfo);
         var isMemberOfBypassGroups = _checkMembership.Execute(request);
         
         return !isMemberOfBypassGroups;

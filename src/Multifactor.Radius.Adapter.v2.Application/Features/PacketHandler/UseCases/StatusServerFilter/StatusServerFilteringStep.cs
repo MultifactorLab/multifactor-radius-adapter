@@ -6,7 +6,7 @@ namespace Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCa
 
 internal sealed class StatusServerFilteringStep : IRadiusPipelineStep
 {
-    private readonly ApplicationVariables _applicationVariables; //TODO
+    private readonly ApplicationVariables _applicationVariables;
     private readonly ILogger<StatusServerFilteringStep> _logger;
     public StatusServerFilteringStep(ApplicationVariables applicationVariables, ILogger<StatusServerFilteringStep> logger)
     {

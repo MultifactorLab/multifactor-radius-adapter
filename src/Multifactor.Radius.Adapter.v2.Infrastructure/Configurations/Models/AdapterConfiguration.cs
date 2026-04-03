@@ -80,8 +80,13 @@ internal sealed class AppSettingsSection
     public string InvalidCredentialDelay { get; set; }
     [Description("calling-station-id-attribute")]
     public string CallingStationIdAttribute { get; set; }
+    [Description("ip-from-udp")]
+    public bool? IpFromUdp { get; set; }
+    
     [Description("ip-white-list")]
     public string IpWhiteList { get; set; }
+    [Description("access-challenge-password")]
+    public bool? AccessChallengePassword { get; set; }
 }
 
 internal sealed class LdapServerSection

@@ -7,9 +7,11 @@ public static class RequestDataExtractor
 {
     public static PersonalData ExtractPersonalData(RadiusPipelineContext context)
     {
+        var callingStationIdAttribute = context.ClientConfiguration.IsIpFromUdp
+            ? context.RequestPacket.CallingStationIdAttribute
+            : context.ClientConfiguration.CallingStationIdAttribute;
         var identity = GetSecondFactorIdentity(context);
-        var callingStationId = GetCallingStationId(
-            context.RequestPacket.CallingStationIdAttribute ?? context.ClientConfiguration.CallingStationIdAttribute,
+        var callingStationId = GetCallingStationId(callingStationIdAttribute,
             context.RequestPacket.RemoteEndpoint);
 
         return new PersonalData
