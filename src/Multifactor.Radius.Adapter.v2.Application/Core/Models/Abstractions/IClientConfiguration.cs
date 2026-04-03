@@ -29,7 +29,7 @@ public interface IClientConfiguration
     public string? CallingStationIdAttribute { get; }  
     public bool IsIpFromUdp { get; }  
     public IReadOnlyList<IPAddressRange> IpWhiteList { get; }
-    public bool? IsAccessChallengePassword { get; }
+    public bool IsAccessChallengePassword { get; }
 
     
     public IReadOnlyList<ILdapServerConfiguration>? LdapServers { get; }

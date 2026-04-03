@@ -7,7 +7,7 @@ using Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCases.
 using Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCases.SecondFactor.Multifactor.Models;
 using Multifactor.Radius.Adapter.v2.Application.SharedPorts;
 
-namespace Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCases.SharedServices.ChallengeProcessor;
+namespace Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.SharedServices.ChallengeProcessor;
 
 internal sealed class SecondFactorChallengeProcessor : IChallengeProcessor
 {

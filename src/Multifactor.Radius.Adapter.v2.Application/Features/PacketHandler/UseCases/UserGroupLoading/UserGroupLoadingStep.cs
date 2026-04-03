@@ -68,7 +68,7 @@ internal sealed class UserGroupLoadingStep : IRadiusPipelineStep
 
             var dto = new LoadUserGroupDto()
             { 
-                ConnectionString = connectionString!,
+                ConnectionString = connectionString,
                 UserName = context.LdapConfiguration.Username,
                 Password = context.LdapConfiguration.Password,
                 BindTimeoutInSeconds = context.LdapConfiguration.BindTimeoutSeconds,

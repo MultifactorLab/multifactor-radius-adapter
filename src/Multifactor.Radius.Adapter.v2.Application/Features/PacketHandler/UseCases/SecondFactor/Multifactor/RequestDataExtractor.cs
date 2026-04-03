@@ -7,12 +7,11 @@ public static class RequestDataExtractor
 {
     public static PersonalData ExtractPersonalData(RadiusPipelineContext context)
     {
-        var callingStationIdAttribute = context.ClientConfiguration.IsIpFromUdp
-            ? context.RequestPacket.CallingStationIdAttribute
-            : context.ClientConfiguration.CallingStationIdAttribute;
+        var callingStationIdAttribute = string.IsNullOrWhiteSpace(context.ClientConfiguration.CallingStationIdAttribute) ? context.RequestPacket.CallingStationIdAttribute
+            : context.RequestPacket.GetAttributeValueAsString(context.ClientConfiguration.CallingStationIdAttribute);
         var identity = GetSecondFactorIdentity(context);
         var callingStationId = GetCallingStationId(callingStationIdAttribute,
-            context.RequestPacket.RemoteEndpoint);
+            context.RequestPacket.RemoteEndpoint, context.ClientConfiguration.IsIpFromUdp);
 
         return new PersonalData
         {
@@ -51,10 +50,11 @@ public static class RequestDataExtractor
         return context.LdapProfile.Phone;
     }
 
-    public static string? GetCallingStationId(string? callingStationIdAttributeValue, IPEndPoint remoteEndPoint)
+    public static string? GetCallingStationId(string? callingStationIdAttributeValue, IPEndPoint remoteEndPoint, bool isIpFromUdp)
     {
-        return IPAddress.TryParse(callingStationIdAttributeValue ?? string.Empty, out _)
-            ? callingStationIdAttributeValue
-            : remoteEndPoint.Address.ToString();
+        if (isIpFromUdp)
+            return remoteEndPoint.Address.ToString();
+        return IPAddress.TryParse(callingStationIdAttributeValue, out _) 
+            ? callingStationIdAttributeValue : remoteEndPoint.Address.ToString();
     }
 }
