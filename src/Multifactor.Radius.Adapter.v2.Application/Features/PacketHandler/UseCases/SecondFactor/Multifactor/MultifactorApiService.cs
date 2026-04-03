@@ -86,7 +86,8 @@ public sealed class MultifactorApiService
                 return mfResponse;
             }
 
-            var callingStationIdAttribute = context.RequestPacket.CallingStationIdAttribute;
+            var callingStationIdAttributeName = context.ClientConfiguration.CallingStationIdAttribute;
+            var callingStationIdAttribute = context.RequestPacket.GetCallingStationIdAttribute(callingStationIdAttributeName);
             LogGrantedInfo(personalData.Identity, response, callingStationIdAttribute);
             _authenticatedClientCache.SetCache(callingStationIdAttribute, 
                 personalData.Identity, 
@@ -120,8 +121,8 @@ public sealed class MultifactorApiService
 
         var dto = new ChallengeRequestDto(identity, answer, requestId);
         
-        var callingStationIdAttr = string.IsNullOrWhiteSpace(context.ClientConfiguration.CallingStationIdAttribute) ? context.RequestPacket.CallingStationIdAttribute
-            : context.RequestPacket.GetAttributeValueAsString(context.ClientConfiguration.CallingStationIdAttribute);
+        var callingStationIdAttributeName = context.ClientConfiguration.CallingStationIdAttribute;
+        var callingStationIdAttr = context.RequestPacket.GetCallingStationIdAttribute(callingStationIdAttributeName);
         var callingStationId = RequestDataExtractor.GetCallingStationId(callingStationIdAttr, context.RequestPacket.RemoteEndpoint, context.ClientConfiguration.IsIpFromUdp);
         
         try

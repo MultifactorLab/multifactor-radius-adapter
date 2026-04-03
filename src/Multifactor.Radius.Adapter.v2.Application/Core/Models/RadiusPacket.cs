@@ -76,8 +76,12 @@ public sealed class RadiusPacket
             return pwd != null && pwd.StartsWith("SCRV1:");
         }
     }
-    
-    public string? CallingStationIdAttribute => GetAttributeValueAsString("Calling-Station-Id");
+
+    public string? GetCallingStationIdAttribute(string? callingStationIdAttributeName)
+    {
+        return GetAttributeValueAsString(string.IsNullOrWhiteSpace(callingStationIdAttributeName) 
+            ? "Calling-Station-Id" : callingStationIdAttributeName);
+    }
     public string? CalledStationIdAttribute => GetAttributeValueAsString("Called-Station-Id");
     public string? State => GetAttributeValueAsString("State");
     
@@ -154,7 +158,7 @@ public sealed class RadiusPacket
     /// Gets a single string attribute value
     /// Throws an exception if multiple attributes with the same name are found
     /// </summary>
-    public string? GetAttributeValueAsString(string name)
+    private string? GetAttributeValueAsString(string name)
     {
         if (!_attributes.TryGetValue(name, out var attribute))
         {

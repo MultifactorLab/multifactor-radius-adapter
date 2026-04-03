@@ -20,8 +20,8 @@ internal sealed class IpWhiteListStep : IRadiusPipelineStep
         _logger.LogDebug("'{name}' started", StepName);
         var ipWhiteList = context.ClientConfiguration.IpWhiteList;
         if (ipWhiteList.Count == 0) return Task.CompletedTask;
-
-        var callingStationId = context.RequestPacket.CallingStationIdAttribute;
+        var callingStationIdAttributeName = context.ClientConfiguration.CallingStationIdAttribute;
+        var callingStationId = context.RequestPacket.GetCallingStationIdAttribute(callingStationIdAttributeName);
 
         var clientIp =  IPAddress.TryParse(callingStationId, out var callingStationIp)
             ? callingStationIp : context.RequestPacket.RemoteEndpoint?.Address;

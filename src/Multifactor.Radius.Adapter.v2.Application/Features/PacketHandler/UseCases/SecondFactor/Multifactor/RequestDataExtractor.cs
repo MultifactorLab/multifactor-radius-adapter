@@ -7,8 +7,9 @@ public static class RequestDataExtractor
 {
     public static PersonalData ExtractPersonalData(RadiusPipelineContext context)
     {
-        var callingStationIdAttribute = string.IsNullOrWhiteSpace(context.ClientConfiguration.CallingStationIdAttribute) ? context.RequestPacket.CallingStationIdAttribute
-            : context.RequestPacket.GetAttributeValueAsString(context.ClientConfiguration.CallingStationIdAttribute);
+        
+        var callingStationIdAttributeName = context.ClientConfiguration.CallingStationIdAttribute;
+        var callingStationIdAttribute = context.RequestPacket.GetCallingStationIdAttribute(callingStationIdAttributeName);
         var identity = GetSecondFactorIdentity(context);
         var callingStationId = GetCallingStationId(callingStationIdAttribute,
             context.RequestPacket.RemoteEndpoint, context.ClientConfiguration.IsIpFromUdp);
@@ -52,8 +53,9 @@ public static class RequestDataExtractor
 
     public static string? GetCallingStationId(string? callingStationIdAttributeValue, IPEndPoint remoteEndPoint, bool isIpFromUdp)
     {
-        if (isIpFromUdp)
-            return remoteEndPoint.Address.ToString();
+        if (!isIpFromUdp && !string.IsNullOrWhiteSpace(callingStationIdAttributeValue))
+            return callingStationIdAttributeValue;
+        
         return IPAddress.TryParse(callingStationIdAttributeValue, out _) 
             ? callingStationIdAttributeValue : remoteEndPoint.Address.ToString();
     }

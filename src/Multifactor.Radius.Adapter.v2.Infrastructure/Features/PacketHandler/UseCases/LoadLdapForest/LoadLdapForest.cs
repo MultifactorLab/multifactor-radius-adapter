@@ -174,10 +174,12 @@ internal sealed class LoadLdapForest : ILoadLdapForest
                     {
                         dnsName = netBiosName;
                     }
-
-                    var dn = ConvertToDn(dnsName);
+                    var dn = ConvertToDn(dnsName);   
+                    
 
                     var connectionString = BuildConnectionStringForDomain(ldapConnectionString, dnsName);
+                    _logger.LogDebug($"Trying to connect to: {dnsName}");
+                    _logger.LogDebug($"Connection string: {connectionString}");
                     var schema = LoadSchema(connectionString, userName, password, bindTimeoutInSeconds);
 
                     var domainInfo = new DomainInfo
@@ -293,7 +295,7 @@ internal sealed class LoadLdapForest : ILoadLdapForest
     
     private static string BuildConnectionStringForDomain(LdapConnectionString baseConnectionString, string domainDnsName)
     {
-        return new LdapConnectionString($"{baseConnectionString.Scheme}://{domainDnsName}:{baseConnectionString.Port}").ToString()!;
+        return $"{baseConnectionString.Scheme}://{domainDnsName}:{baseConnectionString.Port}";
     }
 }
 
