@@ -1,7 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
-using Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCases.SharedServices.ChallengeProcessor;
+using Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.SharedServices.ChallengeProcessor;
 
-namespace Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCases.SharedServices;
+namespace Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.SharedServices;
 
 public static class Module
 {

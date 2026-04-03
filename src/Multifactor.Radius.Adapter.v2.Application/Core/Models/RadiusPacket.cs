@@ -154,7 +154,7 @@ public sealed class RadiusPacket
     /// Gets a single string attribute value
     /// Throws an exception if multiple attributes with the same name are found
     /// </summary>
-    private string? GetAttributeValueAsString(string name)
+    public string? GetAttributeValueAsString(string name)
     {
         if (!_attributes.TryGetValue(name, out var attribute))
         {

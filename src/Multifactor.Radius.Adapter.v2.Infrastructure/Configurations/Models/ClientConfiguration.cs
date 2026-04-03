@@ -34,7 +34,7 @@ internal sealed class ClientConfiguration : IClientConfiguration
     public string? CallingStationIdAttribute { get; private init; }
     public bool IsIpFromUdp { get; private init; }  
     public IReadOnlyList<IPAddressRange> IpWhiteList { get; private set; }
-    public bool? IsAccessChallengePassword { get; private init; }
+    public bool IsAccessChallengePassword { get; private init; }
 
 
     public IReadOnlyList<ILdapServerConfiguration>? LdapServers { get; set; }
@@ -73,7 +73,7 @@ internal sealed class ClientConfiguration : IClientConfiguration
             SignUpGroups = [],
             RadiusClientIps = [],
             IpWhiteList = [],
-            IsAccessChallengePassword = configurationFile.AppSettings.AccessChallengePassword
+            IsAccessChallengePassword = configurationFile.AppSettings.AccessChallengePassword ?? true
         };
         if (!string.IsNullOrWhiteSpace(configurationFile.AppSettings.SignUpGroups))
             if (ConfigurationValueParser.TryParseStringList(configurationFile.AppSettings.SignUpGroups, out var list))

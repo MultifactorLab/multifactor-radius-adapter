@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.SharedServices;
 using Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCases.AccessChallenge;
 using Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCases.AccessGroupsCheck;
 using Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCases.AccessRequestFilter;
@@ -10,7 +11,6 @@ using Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCases.
 using Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCases.PreAuthCheck;
 using Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCases.PreAuthPostCheck;
 using Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCases.SecondFactor;
-using Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCases.SharedServices;
 using Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCases.StatusServerFilter;
 using Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCases.UserGroupLoading;
 using Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCases.UserNameValidation;

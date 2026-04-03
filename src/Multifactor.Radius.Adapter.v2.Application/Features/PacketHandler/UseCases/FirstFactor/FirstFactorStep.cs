@@ -1,8 +1,8 @@
 using Microsoft.Extensions.Logging;
 using Multifactor.Radius.Adapter.v2.Application.Core.Enum;
 using Multifactor.Radius.Adapter.v2.Application.Core.Models;
+using Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.SharedServices;
 using Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCases.FirstFactor.Processor;
-using Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCases.SharedServices;
 
 namespace Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCases.FirstFactor;
 
@@ -32,7 +32,7 @@ internal sealed class FirstFactorStep : IRadiusPipelineStep
 
         if (!string.IsNullOrWhiteSpace(context.MustChangePasswordDomain))
         {
-            if (context.ClientConfiguration.IsAccessChallengePassword.HasValue && !context.ClientConfiguration.IsAccessChallengePassword.Value)
+            if (!context.ClientConfiguration.IsAccessChallengePassword)
             {
                 context.FirstFactorStatus = AuthenticationStatus.Reject;
                 context.ResponseInformation = new ResponseInformation
@@ -40,6 +40,7 @@ internal sealed class FirstFactorStep : IRadiusPipelineStep
                     ReplyMessage = "Password expired. Access rejected."
                 };
                 context.Terminate();
+                _logger.LogDebug("'access-challenge-password' is false. Access rejected");
                 return;
             }
             var challengeProcessor = _challengeProcessorProvider.GetChallengeProcessorByType(ChallengeType.PasswordChange);

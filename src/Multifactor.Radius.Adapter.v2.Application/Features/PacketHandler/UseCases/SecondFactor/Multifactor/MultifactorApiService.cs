@@ -86,9 +86,7 @@ public sealed class MultifactorApiService
                 return mfResponse;
             }
 
-            var callingStationIdAttribute = context.ClientConfiguration.IsIpFromUdp
-                ? context.RequestPacket.CallingStationIdAttribute
-                : context.ClientConfiguration.CallingStationIdAttribute;
+            var callingStationIdAttribute = context.RequestPacket.CallingStationIdAttribute;
             LogGrantedInfo(personalData.Identity, response, callingStationIdAttribute);
             _authenticatedClientCache.SetCache(callingStationIdAttribute, 
                 personalData.Identity, 
@@ -121,11 +119,10 @@ public sealed class MultifactorApiService
             throw new InvalidOperationException("The identity is empty.");
 
         var dto = new ChallengeRequestDto(identity, answer, requestId);
-
-        var callingStationIdAttr = context.ClientConfiguration.IsIpFromUdp
-            ? context.RequestPacket.CallingStationIdAttribute
-            : context.ClientConfiguration.CallingStationIdAttribute;
-        var callingStationId = RequestDataExtractor.GetCallingStationId(callingStationIdAttr, context.RequestPacket.RemoteEndpoint);
+        
+        var callingStationIdAttr = string.IsNullOrWhiteSpace(context.ClientConfiguration.CallingStationIdAttribute) ? context.RequestPacket.CallingStationIdAttribute
+            : context.RequestPacket.GetAttributeValueAsString(context.ClientConfiguration.CallingStationIdAttribute);
+        var callingStationId = RequestDataExtractor.GetCallingStationId(callingStationIdAttr, context.RequestPacket.RemoteEndpoint, context.ClientConfiguration.IsIpFromUdp);
         
         try
         {
