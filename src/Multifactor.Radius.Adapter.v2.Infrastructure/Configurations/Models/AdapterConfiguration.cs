@@ -3,23 +3,17 @@ using System.Xml.Serialization;
 
 namespace Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Models;
 
-internal class AdapterConfiguration
+internal sealed class AdapterConfiguration
 {
-    public AdapterConfiguration()
-    {
-        AppSettings = new AppSettingsSection();
-        LdapServers = new List<LdapServerSection>();
-        RadiusReply = new RadiusReplySection();
-    }
-    public string FileName { get; set; }
-    public AppSettingsSection AppSettings { get; set; } = new();
-    
-    public List<LdapServerSection> LdapServers { get; set; } = [];
-    
-    public RadiusReplySection RadiusReply { get; set; } = new();
+    public string? FileName { get; set; }
+    public AppSettingsSection AppSettings { get; init; } = new();
+
+    public List<LdapServerSection> LdapServers { get; init; } = new();
+
+    public RadiusReplySection RadiusReply { get; init; } = new();
 }
 
-internal class AppSettingsSection
+internal sealed class AppSettingsSection
 {
     [Description("multifactor-api-url")]
     public string MultifactorApiUrl { get; set; }
@@ -85,12 +79,17 @@ internal class AppSettingsSection
     [Description("invalid-credential-delay")]
     public string InvalidCredentialDelay { get; set; }
     [Description("calling-station-id-attribute")]
-    public string CallingStationIdAttribute { get; set; } //TODO not used
+    public string CallingStationIdAttribute { get; set; }
+    [Description("ip-from-udp")]
+    public bool? IpFromUdp { get; set; }
+    
     [Description("ip-white-list")]
     public string IpWhiteList { get; set; }
+    [Description("access-challenge-password")]
+    public bool? AccessChallengePassword { get; set; }
 }
 
-internal class LdapServerSection
+internal sealed class LdapServerSection
 {
     [Description("connection-string")]
     public required string ConnectionString { get; set; }
@@ -119,7 +118,7 @@ internal class LdapServerSection
     [Description("requires-upn")]
     public bool RequiresUpn { get; set; }
     [Description("enable-trusted-domains")]
-    public bool TrustedDomainsEnabled { get; set; }
+    public bool EnableTrustedDomains { get; set; }
     [Description("enable-alternative-suffixes")]
     public bool AlternativeSuffixesEnabled { get; set; }
     [Description("included-domains")]
@@ -134,14 +133,14 @@ internal class LdapServerSection
     public string BypassSecondFactorWhenApiUnreachableGroups { get; set; }
 }
 
-internal class RadiusReplySection
+internal sealed class RadiusReplySection
 {
     [XmlArray("Attributes")]
     [XmlArrayItem("add")]
     public List<RadiusAttributeItem> Attributes { get; set; }
 }
 
-internal class RadiusAttributeItem
+internal sealed class RadiusAttributeItem
 {
     [Description("name")]
     public string Name { get; set; }

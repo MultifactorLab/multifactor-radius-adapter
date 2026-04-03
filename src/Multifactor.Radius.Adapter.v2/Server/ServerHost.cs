@@ -9,6 +9,7 @@ internal sealed class ServerHost : IHostedService
     private readonly ILogger<ServerHost> _logger;
     private Task? _serverTask;
     private CancellationTokenSource? _cts;
+    
     private const int ShoutDownTimeout = 30;
     
     public ServerHost(AdapterServer server, ILogger<ServerHost> logger)
@@ -40,15 +41,13 @@ internal sealed class ServerHost : IHostedService
         _logger.LogInformation("Stopping RADIUS server host...");
         try
         {
-            if(_cts != null)
-                await _cts.CancelAsync();
+            if(_cts != null) await _cts.CancelAsync();
             
             if (_serverTask is { IsCompleted: false })
             {
                 await Task.WhenAny(_serverTask, 
                     Task.Delay(TimeSpan.FromSeconds(ShoutDownTimeout), cancellationToken));
             }
-            
             _logger.LogInformation("RADIUS server host stopped");
         }
         catch (Exception ex)

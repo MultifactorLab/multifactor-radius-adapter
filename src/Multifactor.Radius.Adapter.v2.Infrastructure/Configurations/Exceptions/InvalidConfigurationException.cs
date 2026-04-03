@@ -8,15 +8,13 @@ namespace Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Exceptions
 /// <summary>
 /// The Radius adapter configuration is invalid.
 /// </summary>
-internal class InvalidConfigurationException : Exception
+internal sealed class InvalidConfigurationException : Exception
 {
     public InvalidConfigurationException(string message)
         : base($"Configuration error: {message}") { }
     public InvalidConfigurationException(string message, string fileName)
         : base($"Configuration error: {message}. Configuration file name: {fileName}") { }
 
-    public InvalidConfigurationException(string message, Exception inner)
-        : base($"Configuration error: {message}", inner) { }
     
     public static InvalidConfigurationException For<TProp>(Expression<Func<AdapterConfiguration, TProp>> propertySelector, 
         string formattedMessage,
@@ -42,17 +40,9 @@ internal class InvalidConfigurationException : Exception
     
     private static string Property<TProp>(Expression<Func<AdapterConfiguration, TProp>> propertySelector)
     {
-        if (propertySelector is null)
-        {
-            throw new ArgumentNullException(nameof(propertySelector));
-        }
+        ArgumentNullException.ThrowIfNull(propertySelector);
 
-        if (propertySelector.Body is not MemberExpression expression)
-        {
-            throw new InvalidOperationException("Only the class property should be selected");
-        }
-
-        if (expression.Member is not PropertyInfo property)
+        if (propertySelector.Body is not MemberExpression expression || expression.Member is not PropertyInfo property)
         {
             throw new InvalidOperationException("Only the class property should be selected");
         }
@@ -64,11 +54,6 @@ internal class InvalidConfigurationException : Exception
         }
 
         var description = attribute.Description;
-        if (string.IsNullOrWhiteSpace(description))
-        {
-            return property.Name;
-        }
-
-        return description;
+        return string.IsNullOrWhiteSpace(description) ? property.Name : description;
     }
 }

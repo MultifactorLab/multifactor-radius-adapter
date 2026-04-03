@@ -1,11 +1,9 @@
 ﻿using System.Text;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Multifactor.Radius.Adapter.v2.Application.Features.Radius.Ports;
-using Multifactor.Radius.Adapter.v2.Infrastructure.Extensions;
-using Multifactor.Radius.Adapter.v2.Application.Extensions;
+using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations;
+using Multifactor.Radius.Adapter.v2.Infrastructure.Integrations;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Logging;
-using Multifactor.Radius.Adapter.v2.Infrastructure.Radius.Sender;
 using Multifactor.Radius.Adapter.v2.Server;
 
 IHost? host = null;
@@ -14,54 +12,29 @@ try
     var builder = Host.CreateApplicationBuilder(args);
     builder.Services.AddWindowsService(options => options.ServiceName = "Multifactor RADIUS");
     builder.Services.AddMemoryCache();
-    builder.Services.AddApplicationVariables();
-
     builder.Services.AddConfiguration();
     builder.Services.AddAdapterLogging();
-
-    builder.Services.AddLdap();
-
-    builder.Services.AddChallenge();
-    builder.Services.AddFirstFactor();
-    builder.Services.AddPipelineSteps();
-    builder.Services.AddPipelines();
-
-    builder.Services.AddTransient<IResponseSender, AdapterResponseSender>();
-
-    builder.Services.AddInfraServices();
-    builder.Services.AddAppServices();
-
-    builder.Services.AddRadiusUdpClient();
-    builder.Services.AddMultifactorApi();
-
-    builder.Services.AddSingleton<AdapterServer>();
-    builder.Services.AddHostedService<ServerHost>();
+    builder.Services.AddIntegrations();    
+    builder.Services.AddServer();
+    
     host = builder.Build();
     host.Run();
 }
 catch (Exception ex)
 {
-    // if(ex is InvalidConfigurationException)
-    //     StartupLogger.Error(ex, "Unable to start: {Message:l}", ex.Message);
-    // else
-    // {
-        var errorMessage = FlattenException(ex);
-        StartupLogger.Error(ex, "Unable to start: {Message:l}", errorMessage);
-    // }
+    var errorMessage = FlattenException(ex);
+    StartupLogger.Error(ex, "Unable to start: {Message:l}", errorMessage);
 }
 finally
 {
     await (host?.StopAsync() ?? Task.CompletedTask);
 }
-
 return;
 
 static string FlattenException(Exception? exception)
 {
     var stringBuilder = new StringBuilder();
-
     var counter = 0;
-
     while (exception != null)
     {
         if (counter++ > 0)
@@ -69,10 +42,8 @@ static string FlattenException(Exception? exception)
             var prefix = new string('-', counter) + ">\t";
             stringBuilder.Append(prefix);
         }
-
         stringBuilder.AppendLine(exception.Message);
         exception = exception.InnerException;
     }
-
     return stringBuilder.ToString();
 }

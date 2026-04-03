@@ -3,11 +3,11 @@ using Microsoft.Extensions.Configuration;
 
 namespace Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Reader;
 
-public class PrefixEnvironmentVariablesConfigurationProvider : ConfigurationProvider
+internal sealed class PrefixEnvironmentVariablesConfigurationProvider : ConfigurationProvider
 {
     private readonly string _prefix;
     
-    public PrefixEnvironmentVariablesConfigurationProvider(string prefix)
+    public PrefixEnvironmentVariablesConfigurationProvider(string? prefix)
     {
         _prefix = prefix ?? string.Empty;
     }
@@ -15,25 +15,19 @@ public class PrefixEnvironmentVariablesConfigurationProvider : ConfigurationProv
     public override void Load()
     {
         Data.Clear();
-        
         var envVars = Environment.GetEnvironmentVariables();
         
         foreach (DictionaryEntry entry in envVars)
         {
             var key = entry.Key.ToString();
-            if (!string.IsNullOrEmpty(key) && key.StartsWith(_prefix, StringComparison.OrdinalIgnoreCase))
-            {
-                var value = entry.Value?.ToString();
-                if (value != null)
-                {
-                    // Убираем префикс и преобразуем в формат конфигурации
-                    var configKey = key.Substring(_prefix.Length)
-                        .Replace("__", ":")  // Двойное подчеркивание -> разделитель
-                        .ToLower();          // Все в нижний регистр для консистентности
+            if (string.IsNullOrEmpty(key) || !key.StartsWith(_prefix, StringComparison.OrdinalIgnoreCase)) continue;
+            var value = entry.Value?.ToString();
+            if (value == null) continue;
+            var configKey = key[_prefix.Length..]
+                .Replace("__", ":") 
+                .ToLower();
                     
-                    Data[configKey] = value;
-                }
-            }
+            Data[configKey] = value;
         }
     }
 }

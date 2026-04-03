@@ -1,5 +1,5 @@
 using Elastic.CommonSchema.Serilog;
-using Multifactor.Radius.Adapter.v2.Application.Configuration.Models;
+using Multifactor.Radius.Adapter.v2.Application.Core.Models.Abstractions;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Exceptions;
 using Serilog;
 using Serilog.Core;
@@ -7,7 +7,6 @@ using Serilog.Events;
 using Serilog.Formatting;
 using Serilog.Formatting.Compact;
 using Serilog.Sinks.Syslog;
-using Serilog.Sinks.SystemConsole.Themes;
 
 namespace Multifactor.Radius.Adapter.v2.Infrastructure.Logging;
 
@@ -46,7 +45,6 @@ public static class SerilogLoggerFactory
         }
 
         SetLogLevel(levelSwitch, level);
-
         return loggerConfiguration;
     }
 
@@ -79,10 +77,9 @@ public static class SerilogLoggerFactory
             return;
         }
 
-        if (!string.IsNullOrWhiteSpace(consoleTemplate))
+        if (!string.IsNullOrWhiteSpace(consoleTemplate)) 
             loggerConfiguration.WriteTo.Console(outputTemplate: consoleTemplate);
-        else
-            loggerConfiguration.WriteTo.Console();
+        else loggerConfiguration.WriteTo.Console();
         
         if (!string.IsNullOrWhiteSpace(fileTemplate))
         {
@@ -163,7 +160,6 @@ public static class SerilogLoggerFactory
             default:
                 throw new NotImplementedException($"Unknown scheme {uri.Scheme} for syslog-server {server}. Expected udp or tcp");
         }
-
     }
 
     private static void SetLogLevel(LoggingLevelSwitch levelSwitch, string level)
@@ -177,7 +173,6 @@ public static class SerilogLoggerFactory
             "Error" => LogEventLevel.Error,
             _ => levelSwitch.MinimumLevel
         };
-
         Log.Logger.Information("Logging minimum level: {Level:l}", levelSwitch.MinimumLevel);
     }
 

@@ -7,10 +7,10 @@ using Serilog.Formatting.Json;
 
 namespace Multifactor.Radius.Adapter.v2.Infrastructure.Logging;
 
-public class CustomCompactJsonFormatter : ITextFormatter
+internal sealed class CustomCompactJsonFormatter : ITextFormatter
 {
     private readonly JsonValueFormatter _valueFormatter;
-    private static string _timestampTemplate;
+    private static string? _timestampTemplate;
 
     public CustomCompactJsonFormatter(string timestampTemplate, JsonValueFormatter? valueFormatter = null)
     {
@@ -28,9 +28,9 @@ public class CustomCompactJsonFormatter : ITextFormatter
 
     private static void FormatEvent(LogEvent logEvent, TextWriter output, JsonValueFormatter valueFormatter)
     {
-        if (logEvent == null) throw new ArgumentNullException(nameof(logEvent));
-        if (output == null) throw new ArgumentNullException(nameof(output));
-        if (valueFormatter == null) throw new ArgumentNullException(nameof(valueFormatter));
+        ArgumentNullException.ThrowIfNull(logEvent);
+        ArgumentNullException.ThrowIfNull(output);
+        ArgumentNullException.ThrowIfNull(valueFormatter);
 
         output.Write("{\"@t\":\"");
         output.Write(logEvent.Timestamp.ToString(_timestampTemplate));

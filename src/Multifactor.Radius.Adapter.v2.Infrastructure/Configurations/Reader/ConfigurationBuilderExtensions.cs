@@ -2,7 +2,7 @@ using Microsoft.Extensions.Configuration;
 
 namespace Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Reader;
 
-public static class ConfigurationBuilderExtensions
+internal static class ConfigurationBuilderExtensions
 {
     public static IConfigurationBuilder AddXmlConfig(
         this IConfigurationBuilder builder, 

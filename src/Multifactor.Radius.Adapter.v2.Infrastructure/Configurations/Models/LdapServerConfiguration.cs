@@ -1,38 +1,36 @@
-using Elastic.CommonSchema;
-using Microsoft.AspNetCore.Hosting.Server;
 using Multifactor.Core.Ldap.Name;
-using Multifactor.Radius.Adapter.v2.Application.Configuration.Models;
+using Multifactor.Radius.Adapter.v2.Application.Core.Models.Abstractions;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Exceptions;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Parser;
 
 namespace Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Models;
 
-internal class LdapServerConfiguration : ILdapServerConfiguration
+internal sealed class LdapServerConfiguration : ILdapServerConfiguration
 {
-    public string ConnectionString { get; init; }
-    public string Username { get; init; }
-    public string Password { get; init; }
-    public int BindTimeoutSeconds{ get; init; }
-    public IReadOnlyList<DistinguishedName> AccessGroups { get; init; }
-    public IReadOnlyList<DistinguishedName> SecondFaGroups { get; init; }
-    public IReadOnlyList<DistinguishedName> SecondFaBypassGroups { get; init; }
-    public bool LoadNestedGroups { get; init; }
-    public IReadOnlyList<DistinguishedName> NestedGroupsBaseDns { get; init; }
-    public IReadOnlyList<DistinguishedName> AuthenticationCacheGroups { get; init; }
-    public IReadOnlyList<string> PhoneAttributes { get; init; }
-    public string IdentityAttribute { get; init; }
-    public bool RequiresUpn { get; init; }//TODO not used
-    public bool TrustedDomainsEnabled { get; init; }//TODO not used
-    public bool AlternativeSuffixesEnabled { get; init; }//TODO not used
-    public IReadOnlyList<string> IncludedDomains { get; init; }//TODO not used
-    public IReadOnlyList<string> ExcludedDomains { get; init; }//TODO not used
+    public string ConnectionString { get; private init; }
+    public string Username { get; private init; }
+    public string Password { get; private init; }
+    public int BindTimeoutSeconds{ get; private init; }
+    public IReadOnlyList<DistinguishedName> AccessGroups { get; private init; }
+    public IReadOnlyList<DistinguishedName> SecondFaGroups { get; private init; }
+    public IReadOnlyList<DistinguishedName> SecondFaBypassGroups { get; private init; }
+    public bool LoadNestedGroups { get; private init; }
+    public IReadOnlyList<DistinguishedName> NestedGroupsBaseDns { get; private init; }
+    public IReadOnlyList<DistinguishedName> AuthenticationCacheGroups { get; private init; }
+    public IReadOnlyList<string> PhoneAttributes { get; private init; }
+    public string IdentityAttribute { get; private init; }
+    public bool RequiresUpn { get; private init; }
+    public bool EnableTrustedDomains { get; private init; }
+    public bool AlternativeSuffixesEnabled { get; private init; }
+    public IReadOnlyList<string> IncludedDomains { get; init; }
+    public IReadOnlyList<string> ExcludedDomains { get; init; }
     public IReadOnlyList<string> IncludedSuffixes { get; init; }
     public IReadOnlyList<string> ExcludedSuffixes { get; init; }
     public IReadOnlyList<string> BypassSecondFactorWhenApiUnreachableGroups { get; init; }
 
     public static LdapServerConfiguration FromConfiguration(LdapServerSection ldapServerSection, string fileName)
     {
-        if (ldapServerSection is { TrustedDomainsEnabled: true, RequiresUpn: false })
+        if (ldapServerSection is { EnableTrustedDomains: true, RequiresUpn: false })
             throw new InvalidConfigurationException($"Config name: '{fileName}', LDAP server: '{ldapServerSection.ConnectionString}'. To use trusted domains also set 'requires-upn' to 'true'.");
 
         if (!string.IsNullOrWhiteSpace(ldapServerSection.IncludedDomains) && !string.IsNullOrWhiteSpace(ldapServerSection.ExcludedDomains))
@@ -82,7 +80,7 @@ internal class LdapServerConfiguration : ILdapServerConfiguration
                     : [],
             IdentityAttribute = ldapServerSection.IdentityAttribute,
             RequiresUpn = ldapServerSection.RequiresUpn,
-            TrustedDomainsEnabled = ldapServerSection.TrustedDomainsEnabled,
+            EnableTrustedDomains = ldapServerSection.EnableTrustedDomains,
             AlternativeSuffixesEnabled = ldapServerSection.AlternativeSuffixesEnabled,
             IncludedDomains =
                 ConfigurationValueParser.TryParseStringList(ldapServerSection.IncludedDomains,

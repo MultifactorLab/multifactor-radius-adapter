@@ -5,22 +5,18 @@ VisualStudioVersion = 17.4.33103.184
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{1FDA0815-14C7-4C4A-B632-52BFF4AF7788}"
 	ProjectSection(SolutionItems) = preProject
+		compose.yaml = compose.yaml
 		..\LICENSE.md = ..\LICENSE.md
 		..\LICENSE.ru.md = ..\LICENSE.ru.md
 		..\README.md = ..\README.md
 		..\README.ru.md = ..\README.ru.md
-		compose.yaml = compose.yaml
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Multifactor.Radius.Adapter.v2", "Multifactor.Radius.Adapter.v2\Multifactor.Radius.Adapter.v2.csproj", "{03C86912-C263-4CF9-A0D8-94167AB647BE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Multifactor.Radius.Adapter.v2.Tests", "Multifactor.Radius.Adapter.v2.Tests\Multifactor.Radius.Adapter.v2.Tests.csproj", "{3E7169B6-274B-48F0-A56F-9C227DDD596A}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Multifactor.Radius.Adapter.v2.Infrastructure", "Multifactor.Radius.Adapter.v2.Infrastructure\Multifactor.Radius.Adapter.v2.Infrastructure.csproj", "{1C003665-1D1D-428F-ACB5-F4489BC21C04}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Multifactor.Radius.Adapter.v2.Application", "Multifactor.Radius.Adapter.v2.Application\Multifactor.Radius.Adapter.v2.Application.csproj", "{3B698212-A44A-49BF-BA2C-B2FF1FC9780F}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Multifactor.Radius.Adapter.v2.Shared", "Multifactor.Radius.Adapter.v2.Shared\Multifactor.Radius.Adapter.v2.Shared.csproj", "{7B428E7E-778B-4F37-8911-EB0B893B1AFE}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -32,10 +28,6 @@ Global
 		{03C86912-C263-4CF9-A0D8-94167AB647BE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{03C86912-C263-4CF9-A0D8-94167AB647BE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{03C86912-C263-4CF9-A0D8-94167AB647BE}.Release|Any CPU.Build.0 = Release|Any CPU
-		{3E7169B6-274B-48F0-A56F-9C227DDD596A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{3E7169B6-274B-48F0-A56F-9C227DDD596A}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{3E7169B6-274B-48F0-A56F-9C227DDD596A}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{3E7169B6-274B-48F0-A56F-9C227DDD596A}.Release|Any CPU.Build.0 = Release|Any CPU
 		{1C003665-1D1D-428F-ACB5-F4489BC21C04}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{1C003665-1D1D-428F-ACB5-F4489BC21C04}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1C003665-1D1D-428F-ACB5-F4489BC21C04}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -44,10 +36,6 @@ Global
 		{3B698212-A44A-49BF-BA2C-B2FF1FC9780F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3B698212-A44A-49BF-BA2C-B2FF1FC9780F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3B698212-A44A-49BF-BA2C-B2FF1FC9780F}.Release|Any CPU.Build.0 = Release|Any CPU
-		{7B428E7E-778B-4F37-8911-EB0B893B1AFE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{7B428E7E-778B-4F37-8911-EB0B893B1AFE}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{7B428E7E-778B-4F37-8911-EB0B893B1AFE}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{7B428E7E-778B-4F37-8911-EB0B893B1AFE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

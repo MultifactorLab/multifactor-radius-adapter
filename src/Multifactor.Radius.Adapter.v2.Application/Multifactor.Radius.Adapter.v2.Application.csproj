@@ -14,8 +14,4 @@
       <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="8.0.0" />
     </ItemGroup>
 
-    <ItemGroup>
-      <ProjectReference Include="..\Multifactor.Radius.Adapter.v2.Shared\Multifactor.Radius.Adapter.v2.Shared.csproj" />
-    </ItemGroup>
-
 </Project>
