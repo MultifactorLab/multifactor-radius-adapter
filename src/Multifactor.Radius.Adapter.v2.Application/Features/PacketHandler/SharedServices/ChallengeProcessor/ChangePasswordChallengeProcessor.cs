@@ -63,7 +63,10 @@ internal sealed class ChangePasswordChallengeProcessor : IChallengeProcessor
         
         var passwordChangeRequest = GetPasswordChangeRequest(identifier.RequestId);
         if (passwordChangeRequest == null)
+        {
+            
             return Task.FromResult(ChallengeStatus.Accept);
+        }
         
         if (string.IsNullOrWhiteSpace(context.Passphrase.Raw))
         {

@@ -32,17 +32,17 @@ internal sealed class FirstFactorStep : IRadiusPipelineStep
 
         if (!string.IsNullOrWhiteSpace(context.MustChangePasswordDomain))
         {
-            // if (!context.ClientConfiguration.IsAccessChallengePassword)
-            // {
-            //     context.FirstFactorStatus = AuthenticationStatus.Reject;
-            //     context.ResponseInformation = new ResponseInformation
-            //     {
-            //         ReplyMessage = "Password expired. Access rejected."
-            //     };
-            //     context.Terminate();
-            //     _logger.LogDebug("'access-challenge-password' is false. Access rejected");
-            //     return;
-            // }
+            if (!context.ClientConfiguration.IsAccessChallengePassword)
+            {
+                context.FirstFactorStatus = AuthenticationStatus.Reject;
+                context.ResponseInformation = new ResponseInformation
+                {
+                    ReplyMessage = "Password expired. Access rejected.",
+                };
+                context.Terminate();
+                _logger.LogDebug("'access-challenge-password' is false. Access rejected");
+                return;
+            }
             var challengeProcessor = _challengeProcessorProvider.GetChallengeProcessorByType(ChallengeType.PasswordChange);
             if (challengeProcessor is null)
                 throw new Exception($"Challenge processor for {context.ClientConfiguration.FirstFactorAuthenticationSource} is not available");

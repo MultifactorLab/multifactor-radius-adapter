@@ -19,13 +19,18 @@ internal sealed class AccessChallengeStep : IRadiusPipelineStep
     {
         _logger.LogDebug("'{name}' started", nameof(AccessChallengeStep));
         if (string.IsNullOrWhiteSpace(context.RequestPacket.State))
+        {
+            _logger.LogDebug("Packet state is empty. Skipping step");
             return;
-
+        }
         var identifier = new ChallengeIdentifier(context.ClientConfiguration.Name, context.RequestPacket.State);
         var processor = _challengeProcessorProvider.GetChallengeProcessorByIdentifier(identifier);
         
         if (processor is null)
+        {
+            _logger.LogDebug("Processor for {state} not found. Skipping step", context.RequestPacket.State);
             return;
+        }
         
         var result = await processor.ProcessChallengeAsync(identifier, context);
 
