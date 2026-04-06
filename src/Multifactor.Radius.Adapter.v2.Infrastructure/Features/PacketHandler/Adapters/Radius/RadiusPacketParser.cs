@@ -35,7 +35,7 @@ internal sealed class RadiusPacketParser : IRadiusPacketParser
         var header = RadiusPacketHeader.Parse(packetBytes);
         var packet = new RadiusPacket(header, requestAuthenticator);
         
-        if (packet.Code == PacketCode.AccountingRequest || packet.Code == PacketCode.DisconnectRequest)
+        if (packet.Code is PacketCode.AccountingRequest or PacketCode.DisconnectRequest)
         {
             var requestAuth = RadiusCryptoProvider.CalculateRequestAuthenticator(sharedSecret, packetBytes);
             if (!packet.Authenticator.Value.SequenceEqual(requestAuth))

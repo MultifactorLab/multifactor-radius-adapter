@@ -64,8 +64,7 @@ internal sealed class LdapFirstFactorProcessor : IFirstFactorProcessor
         var domain = context.ForestMetadata?.DetermineForestDomain(userIdentity);
         var formatted = LdapBindNameFormatter.FormatName(context.RequestPacket.UserName!, context.LdapProfile!);
         var connectionString = domain?.ConnectionString ?? context.LdapConfiguration!.ConnectionString;
-        var authType = domain?.GetAuthType() ?? AuthType.Basic;
-        var isValid = ValidateUserCredentials(context, formatted, passphrase.Password, connectionString, context.LdapConfiguration.BindTimeoutSeconds, authType);
+        var isValid = ValidateUserCredentials(context, formatted, passphrase.Password, connectionString, context.LdapConfiguration.BindTimeoutSeconds);
 
         if (!isValid)
         {
@@ -84,19 +83,16 @@ internal sealed class LdapFirstFactorProcessor : IFirstFactorProcessor
         string login,
         string password,
         string connectionString,
-        int bindTimeoutSeconds,
-        AuthType authType)
+        int bindTimeoutSeconds)
     {
         try
         {
             _logger.LogDebug("Use '{name}' for LDAP bind.", login);
 
             var request = new CheckConnectionDto(connectionString, login,
-                password, bindTimeoutSeconds, authType);
+                password, bindTimeoutSeconds);
             
-            context.MustChangePasswordDomain = connectionString;
-            return false;
-            // return _checkConnection.Execute(request);
+            return _checkConnection.Execute(request);
         }
         catch (Exception ex)
         {

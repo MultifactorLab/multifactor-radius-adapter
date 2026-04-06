@@ -96,7 +96,7 @@ internal sealed class RadiusAttributeParser : IRadiusAttributeParser
         SharedSecret sharedSecret)
     {
         var attributeDefinition = _radiusDictionary.GetAttribute(typeCode);
-        if (attributeDefinition == null)
+        if (attributeDefinition is null)
         {
             _logger.LogDebug("Unknown attribute type: {TypeCode}", typeCode);
             return null;
