@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using Multifactor.Core.Ldap;
 using Multifactor.Core.Ldap.Connection;
 using Multifactor.Core.Ldap.Connection.LdapConnectionFactory;
+using Multifactor.Core.Ldap.Name;
 using Multifactor.Core.Ldap.Schema;
 using Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCases.LoadLdapForest.Models;
 using Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCases.LoadLdapForest.Port;
@@ -178,9 +179,9 @@ internal sealed class LoadLdapForest : ILoadLdapForest
                     
 
                     var connectionString = BuildConnectionStringForDomain(ldapConnectionString, dnsName);
-                    _logger.LogDebug($"Trying to connect to: {dnsName}");
-                    _logger.LogDebug($"Connection string: {connectionString}");
-                    var schema = LoadSchema(connectionString, userName, password, bindTimeoutInSeconds);
+                    var (nbn, samAccountName) = TransformDnToNetBiosSam(userName);
+                    var user = $"{nbn}\\{samAccountName}";
+                    var schema = LoadSchema(connectionString, user, password, bindTimeoutInSeconds);
 
                     var domainInfo = new DomainInfo
                     {
@@ -254,12 +255,12 @@ internal sealed class LoadLdapForest : ILoadLdapForest
             _logger.LogDebug(ex, "No UPN suffixes found for {domainDn} (normal for child domains)", domainDn);
             // Не логируем как ошибку - для дочерних доменов это нормально
         }
-
         return suffixes;
     }
     
     private ILdapSchema LoadSchema(string connectionString, string username, string password, int bindTimeoutInSeconds)
     {
+        _logger.LogDebug($"Trying to connect to: {connectionString} by {username}");
         var options = new LdapConnectionOptions(
             new LdapConnectionString(connectionString, true),
             AuthType.Negotiate,
@@ -296,6 +297,20 @@ internal sealed class LoadLdapForest : ILoadLdapForest
     private static string BuildConnectionStringForDomain(LdapConnectionString baseConnectionString, string domainDnsName)
     {
         return $"{baseConnectionString.Scheme}://{domainDnsName}:{baseConnectionString.Port}";
+    }
+    
+    private static (string netBiosName, string samAccountName) TransformDnToNetBiosSam(string dn)
+    {
+        var distinguishedName = new DistinguishedName(dn);
+        var samAccountName = distinguishedName.Components
+            .First(x => x.Type == RdnAttributeType.CN).Value;
+    
+        var dnsSuffix = string.Join(".", distinguishedName.Components
+            .Where(x => x.Type == RdnAttributeType.DC).Reverse()
+            .Select(x => x.Value));
+    
+        var netBiosName = dnsSuffix.Split('.')[0].ToUpper();
+        return (netBiosName, samAccountName);
     }
 }
 
