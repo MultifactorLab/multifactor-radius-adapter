@@ -40,7 +40,7 @@ internal sealed class LoadLdapForestStep : IRadiusPipelineStep
 
         if (forestMetadata is null)
         {
-            _logger.LogWarning("Unable to load forest metadata, using fallback");
+            _logger.LogWarning("Unable to load forest metadata");
             return Task.CompletedTask;
         }
 
@@ -66,16 +66,16 @@ internal sealed class LoadLdapForestStep : IRadiusPipelineStep
 
     private IForestMetadata? TryGetForestMetadata(RadiusPipelineContext context)
     {
-        var cacheKey = context.LdapConfiguration!.ConnectionString;
-
-        if (_cache.TryGetValue(cacheKey, out var cached))
-            return cached;
-
-        if (!context.LdapConfiguration.EnableTrustedDomains)
+        if (!context.LdapConfiguration!.EnableTrustedDomains)
         {
             _logger.LogDebug("Trusted domains disabled");
             return null;
         }
+
+        var cacheKey = context.LdapConfiguration!.ConnectionString;
+
+        if (_cache.TryGetValue(cacheKey, out var cached))
+            return cached;
 
         var request = new LoadMetadataDto(
             context.LdapConfiguration.ConnectionString,

@@ -1,13 +1,13 @@
 using Microsoft.Extensions.Logging;
 using Multifactor.Radius.Adapter.v2.Application.Core.Enum;
 using Multifactor.Radius.Adapter.v2.Application.Core.Models;
+using Multifactor.Radius.Adapter.v2.Application.Core.Models.Packet;
 
 namespace Multifactor.Radius.Adapter.v2.Infrastructure.Features.PacketHandler.Adapters.Radius;
 
 public interface IRadiusPacketParser
 {
-    RadiusPacket Parse(byte[] packetBytes, SharedSecret sharedSecret);
-    RadiusPacket Parse(byte[] packetBytes, SharedSecret sharedSecret, RadiusAuthenticator requestAuthenticator);
+    RadiusPacket Parse(byte[] packetBytes, SharedSecret sharedSecret, RadiusAuthenticator? requestAuthenticator = null);
 }
 
 internal sealed class RadiusPacketParser : IRadiusPacketParser
@@ -27,20 +27,7 @@ internal sealed class RadiusPacketParser : IRadiusPacketParser
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    public RadiusPacket Parse(byte[] packetBytes, SharedSecret sharedSecret)
-    {
-        return ParseInternal(packetBytes, sharedSecret, null);
-    }
-
-    public RadiusPacket Parse(byte[] packetBytes, SharedSecret sharedSecret, RadiusAuthenticator requestAuthenticator)
-    {
-        return ParseInternal(packetBytes, sharedSecret, requestAuthenticator);
-    }
-
-    private RadiusPacket ParseInternal(
-        byte[] packetBytes,
-        SharedSecret sharedSecret,
-        RadiusAuthenticator? requestAuthenticator)
+    public RadiusPacket Parse(byte[] packetBytes, SharedSecret sharedSecret, RadiusAuthenticator? requestAuthenticator = null)
     {
         ValidatePacketLength(packetBytes);
         ValidatePacketLengthField(packetBytes);

@@ -1,3 +1,4 @@
+using Multifactor.Core.Ldap.Name;
 using Multifactor.Radius.Adapter.v2.Application.Core.Enum;
 
 namespace Multifactor.Radius.Adapter.v2.Application.Core.Models;
@@ -39,5 +40,22 @@ public sealed class UserIdentity
 
         var suffix = Identity.Split('@', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries).Last();
         return suffix;
+    }
+
+    public static string TransformDnToUpn(string dn)
+    {
+        var distinguishedName = new DistinguishedName(dn);
+
+        // Получаем samAccountName (CN или другой RDN)
+        var samAccountName = distinguishedName.Components.Deepest.Value;
+
+        // Собираем DNS суффикс из компонентов DC=
+        var dnsSuffix = string.Join(".", distinguishedName.Components
+            .Where(x => x.Type == RdnAttributeType.DC)
+            .Reverse()
+            .Select(x => x.Value));
+
+        // Формируем UPN: samAccountName@dnsSuffix
+        return $"{samAccountName}@{dnsSuffix}";
     }
 }

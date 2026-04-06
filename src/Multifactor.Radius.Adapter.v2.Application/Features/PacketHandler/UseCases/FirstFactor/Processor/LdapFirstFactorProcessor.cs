@@ -1,12 +1,13 @@
-﻿using System.DirectoryServices.Protocols;
-using System.Text.RegularExpressions;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using Multifactor.Core.Ldap;
 using Multifactor.Core.Ldap.Name;
 using Multifactor.Radius.Adapter.v2.Application.Core.Enum;
 using Multifactor.Radius.Adapter.v2.Application.Core.Models;
 using Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCases.FirstFactor.Models;
 using Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCases.FirstFactor.Ports;
+using Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCases.LoadLdapForest.Models;
+using System.DirectoryServices.Protocols;
+using System.Text.RegularExpressions;
 
 namespace Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCases.FirstFactor.Processor;
 
@@ -63,7 +64,7 @@ internal sealed class LdapFirstFactorProcessor : IFirstFactorProcessor
         var domain = context.ForestMetadata?.DetermineForestDomain(userIdentity);
         var formatted = LdapBindNameFormatter.FormatName(context.RequestPacket.UserName!, context.LdapProfile!);
         var connectionString = domain?.ConnectionString ?? context.LdapConfiguration!.ConnectionString;
-        var authType = domain is null ? AuthType.Basic : AuthType.Negotiate;
+        var authType = domain?.GetAuthType() ?? AuthType.Basic;
         var isValid = ValidateUserCredentials(context, formatted, passphrase.Password, connectionString, authType);
 
         if (!isValid)

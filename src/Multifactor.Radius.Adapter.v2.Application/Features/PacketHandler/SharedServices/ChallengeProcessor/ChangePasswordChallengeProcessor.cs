@@ -60,7 +60,6 @@ internal sealed class ChangePasswordChallengeProcessor : IChallengeProcessor
         ArgumentNullException.ThrowIfNull(context);
         ArgumentNullException.ThrowIfNull(context.LdapProfile);
         ArgumentNullException.ThrowIfNull(context.LdapConfiguration);
-        ArgumentNullException.ThrowIfNull(context.LdapSchema);
         
         var passwordChangeRequest = GetPasswordChangeRequest(identifier.RequestId);
         if (passwordChangeRequest == null)
@@ -83,13 +82,14 @@ internal sealed class ChangePasswordChallengeProcessor : IChallengeProcessor
         var userIdentity = new UserIdentity(context.RequestPacket.UserName);
         var domainInfo = context.ForestMetadata?.DetermineForestDomain(userIdentity);
         var connectionString = domainInfo?.ConnectionString ?? context.LdapConfiguration!.ConnectionString;
-        var schema = domainInfo?.Schema ?? context.LdapSchema!;
+        var schema = domainInfo?.Schema ?? context.LdapSchema;
 
+        var upn = UserIdentity.TransformDnToUpn(context.LdapConfiguration.Username);
         var dto = new ChangeUserPasswordDto
         {
-            AuthType = domainInfo is null ? AuthType.Basic : AuthType.Negotiate,
+            AuthType = domainInfo?.GetAuthType() ?? AuthType.Basic,
             ConnectionString = connectionString,
-            UserName = context.LdapConfiguration.Username,
+            UserName = upn,
             Password = context.LdapConfiguration.Password,
             BindTimeoutInSeconds = context.LdapConfiguration.BindTimeoutSeconds,
             LdapSchema = schema,

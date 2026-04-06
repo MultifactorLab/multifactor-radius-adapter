@@ -70,7 +70,6 @@ internal sealed class ProfileLoadingStep : IRadiusPipelineStep
     {
         ArgumentNullException.ThrowIfNull(context);
         ArgumentNullException.ThrowIfNull(context.LdapConfiguration);
-        ArgumentNullException.ThrowIfNull(context.LdapSchema);
 
         if (!string.IsNullOrWhiteSpace(context.RequestPacket.UserName)) return;
         var clientAddress = context.RequestPacket.ProxyEndpoint?.Address.ToString() 
@@ -106,7 +105,7 @@ internal sealed class ProfileLoadingStep : IRadiusPipelineStep
         var searchBase = new DistinguishedName(domainInfo.DistinguishedName);
         var request = CreateFindUserRequest(
             domainInfo.ConnectionString,
-            AuthType.Negotiate,
+            domainInfo?.GetAuthType() ?? AuthType.Basic,
             userIdentity,
             searchBase,
             domainInfo.Schema,
@@ -132,11 +131,12 @@ internal sealed class ProfileLoadingStep : IRadiusPipelineStep
         List<LdapAttributeName> attributes,
         ILdapServerConfiguration config)
     {
+        var upn = UserIdentity.TransformDnToUpn(config.Username);
         return new FindUserDto
         {
             ConnectionString = connectionString,
             AuthType = authType,
-            UserName = config.Username,
+            UserName = upn,
             Password = config.Password,
             BindTimeoutInSeconds = config.BindTimeoutSeconds,
             UserIdentity = userIdentity,
@@ -155,7 +155,7 @@ internal sealed class ProfileLoadingStep : IRadiusPipelineStep
             context.LdapConfiguration!.ConnectionString,
             AuthType.Basic,
             userIdentity,
-            context.LdapSchema!.NamingContext,
+            context.LdapSchema.NamingContext,
             context.LdapSchema,
             attributes,
             context.LdapConfiguration);
@@ -176,7 +176,7 @@ internal sealed class ProfileLoadingStep : IRadiusPipelineStep
     private static string GetProfileLocation(ILdapProfile profile, RadiusPipelineContext context)
     {
         return profile.Dn?.StringRepresentation 
-               ?? context.LdapSchema?.NamingContext?.StringRepresentation 
+               ?? context.LdapSchema?.NamingContext?.StringRepresentation //todo 
                ?? "unknown";
     }
 

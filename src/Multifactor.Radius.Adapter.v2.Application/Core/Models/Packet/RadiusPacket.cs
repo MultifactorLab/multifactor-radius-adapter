@@ -2,7 +2,7 @@ using System.Net;
 using System.Text;
 using Multifactor.Radius.Adapter.v2.Application.Core.Enum;
 
-namespace Multifactor.Radius.Adapter.v2.Application.Core.Models;
+namespace Multifactor.Radius.Adapter.v2.Application.Core.Models.Packet;
 
 // See https://datatracker.ietf.org/doc/html/rfc2865#section-3 to understand class structure
 public sealed class RadiusPacket

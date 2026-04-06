@@ -24,7 +24,6 @@ internal sealed class AccessGroupsCheckingStep : IRadiusPipelineStep
         _logger.LogDebug("'{name}' started", StepName);
         ArgumentNullException.ThrowIfNull(context, nameof(context));
         ArgumentNullException.ThrowIfNull(context.LdapConfiguration, nameof(context.LdapConfiguration));
-        ArgumentNullException.ThrowIfNull(context.LdapSchema, nameof(context.LdapSchema));
 
         if (ShouldSkipStep(context))
             return Task.CompletedTask;

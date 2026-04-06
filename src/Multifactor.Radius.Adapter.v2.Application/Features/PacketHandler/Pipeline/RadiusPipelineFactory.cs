@@ -59,8 +59,8 @@ internal sealed class RadiusPipelineFactory : IRadiusPipelineFactory
         if (withLdap)
         {
             if (OperatingSystem.IsWindows()) steps.Add(CreateStep<LoadLdapForestStep>());
+            else steps.Add(CreateStep<LoadLdapSchemaStep>());
             steps.Add(CreateStep<UserNameValidationStep>());
-            steps.Add(CreateStep<LoadLdapSchemaStep>());
             steps.Add(CreateStep<ProfileLoadingStep>());
             steps.Add(CreateStep<AccessGroupsCheckingStep>());
         }

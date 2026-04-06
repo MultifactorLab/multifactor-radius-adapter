@@ -2,6 +2,7 @@ using Microsoft.Extensions.Logging;
 using Multifactor.Radius.Adapter.v2.Application.Core.Enum;
 using Multifactor.Radius.Adapter.v2.Application.Core.Models;
 using Multifactor.Radius.Adapter.v2.Application.Core.Models.Abstractions;
+using Multifactor.Radius.Adapter.v2.Application.Core.Models.Packet;
 using Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.Exceptions;
 using Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.Pipeline;
 using Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.Ports;

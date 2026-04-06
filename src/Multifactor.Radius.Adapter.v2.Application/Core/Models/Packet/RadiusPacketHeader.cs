@@ -1,7 +1,7 @@
 using System.Security.Cryptography;
 using Multifactor.Radius.Adapter.v2.Application.Core.Enum;
 
-namespace Multifactor.Radius.Adapter.v2.Application.Core.Models;
+namespace Multifactor.Radius.Adapter.v2.Application.Core.Models.Packet;
 
 /// <summary>
 /// Radius packet header model 
