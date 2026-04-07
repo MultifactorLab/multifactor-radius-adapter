@@ -2,6 +2,7 @@ using System.Net;
 using Multifactor.Core.Ldap.Attributes;
 using Multifactor.Radius.Adapter.v2.Application.Core.Enum;
 using Multifactor.Radius.Adapter.v2.Application.Core.Models.Abstractions;
+using Multifactor.Radius.Adapter.v2.Application.Core.Models.Packet;
 
 namespace Multifactor.Radius.Adapter.v2.Application.Core.Models;
 

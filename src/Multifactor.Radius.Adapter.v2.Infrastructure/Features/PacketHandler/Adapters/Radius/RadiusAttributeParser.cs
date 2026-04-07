@@ -2,6 +2,7 @@ using System.Net;
 using System.Text;
 using Microsoft.Extensions.Logging;
 using Multifactor.Radius.Adapter.v2.Application.Core.Models;
+using Multifactor.Radius.Adapter.v2.Application.Core.Models.Packet;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Models.Dictionary;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Models.Dictionary.Attributes;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Features.PacketHandler.Adapters.Radius.Models;
@@ -95,7 +96,7 @@ internal sealed class RadiusAttributeParser : IRadiusAttributeParser
         SharedSecret sharedSecret)
     {
         var attributeDefinition = _radiusDictionary.GetAttribute(typeCode);
-        if (attributeDefinition == null)
+        if (attributeDefinition is null)
         {
             _logger.LogDebug("Unknown attribute type: {TypeCode}", typeCode);
             return null;

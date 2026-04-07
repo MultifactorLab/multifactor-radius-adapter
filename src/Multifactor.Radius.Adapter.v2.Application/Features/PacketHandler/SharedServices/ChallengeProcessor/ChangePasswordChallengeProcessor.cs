@@ -12,19 +12,16 @@ namespace Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.Share
 internal sealed class ChangePasswordChallengeProcessor : IChallengeProcessor
 {
     private readonly IPasswordChangeCache _passCache;
-    private readonly IChallengeContextCache _contextCache;
     private readonly IChangePassword _changePassword;
     private readonly ILogger<ChangePasswordChallengeProcessor> _logger;
     public ChangePasswordChallengeProcessor(
         IPasswordChangeCache passCache,
         IChangePassword changePassword,
-        IChallengeContextCache contextCache,
         ILogger<ChangePasswordChallengeProcessor> logger)
     {
         _passCache = passCache;
         _changePassword = changePassword;
         _logger = logger;
-        _contextCache = contextCache;
     }
 
     public ChallengeType ChallengeType => ChallengeType.PasswordChange;
@@ -46,25 +43,26 @@ internal sealed class ChangePasswordChallengeProcessor : IChallengeProcessor
             CurrentPasswordEncryptedData = encryptedPassword
         };
 
-        _passCache.Set(passwordRequest.Id, passwordRequest, DateTimeOffset.UtcNow.AddMinutes(5));
+        _passCache.Set(passwordRequest.Id, passwordRequest, DateTimeOffset.UtcNow.AddMinutes(10));
         _logger.LogInformation("Password change state: \"{PasswordRequestId}\"", passwordRequest.Id);
         context.ResponseInformation.State = passwordRequest.Id;
         context.ResponseInformation.ReplyMessage = "Please change password to continue. Enter new password: ";
         return new ChallengeIdentifier(context.ClientConfiguration.Name, context.ResponseInformation.State);
     }
 
-    public bool HasChallengeContext(ChallengeIdentifier identifier) => _contextCache.TryGetValue(identifier.RequestId, out _);
+    public bool HasChallengeContext(ChallengeIdentifier identifier) => _passCache.TryGetValue(identifier.RequestId, out _);
 
     public Task<ChallengeStatus> ProcessChallengeAsync(ChallengeIdentifier identifier, RadiusPipelineContext context)
     {
         ArgumentNullException.ThrowIfNull(context);
         ArgumentNullException.ThrowIfNull(context.LdapProfile);
         ArgumentNullException.ThrowIfNull(context.LdapConfiguration);
-        ArgumentNullException.ThrowIfNull(context.LdapSchema);
         
         var passwordChangeRequest = GetPasswordChangeRequest(identifier.RequestId);
         if (passwordChangeRequest == null)
+        {
             return Task.FromResult(ChallengeStatus.Accept);
+        }
         
         if (string.IsNullOrWhiteSpace(context.Passphrase.Raw))
         {
@@ -83,13 +81,14 @@ internal sealed class ChangePasswordChallengeProcessor : IChallengeProcessor
         var userIdentity = new UserIdentity(context.RequestPacket.UserName);
         var domainInfo = context.ForestMetadata?.DetermineForestDomain(userIdentity);
         var connectionString = domainInfo?.ConnectionString ?? context.LdapConfiguration!.ConnectionString;
-        var schema = domainInfo?.Schema ?? context.LdapSchema!;
+        var schema = domainInfo?.Schema ?? context.LdapSchema;
 
+        var upn = UserIdentity.TransformDnToUpn(context.LdapConfiguration.Username);
         var dto = new ChangeUserPasswordDto
         {
-            AuthType = domainInfo is null ? AuthType.Basic : AuthType.Negotiate,
+            AuthType = domainInfo?.GetAuthType() ?? AuthType.Basic,
             ConnectionString = connectionString,
-            UserName = context.LdapConfiguration.Username,
+            UserName = upn,
             Password = context.LdapConfiguration.Password,
             BindTimeoutInSeconds = context.LdapConfiguration.BindTimeoutSeconds,
             LdapSchema = schema,

@@ -1,11 +1,14 @@
-﻿using System.DirectoryServices.Protocols;
+﻿using Elastic.CommonSchema;
 using Microsoft.Extensions.Logging;
 using Multifactor.Core.Ldap;
 using Multifactor.Core.Ldap.Connection;
 using Multifactor.Core.Ldap.Connection.LdapConnectionFactory;
+using Multifactor.Core.Ldap.Name;
 using Multifactor.Core.Ldap.Schema;
+using Multifactor.Radius.Adapter.v2.Application.Core.Models;
 using Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCases.LoadLdapForest.Models;
 using Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCases.LoadLdapForest.Port;
+using System.DirectoryServices.Protocols;
 
 namespace Multifactor.Radius.Adapter.v2.Infrastructure.Features.PacketHandler.UseCases.LoadLdapForest;
 
@@ -46,6 +49,17 @@ internal sealed class LoadLdapForest : ILoadLdapForest
             _logger.LogDebug("Root domain: {domain}, Root DN: {rootDn}", domain, rootDn);
 
             var metadata = new ForestMetadata();
+
+            // ШАГ 1: Получаем информацию о корневом домене
+            var rootDomainInfo = GetDomainInfo(connection, rootDn, ldapConnectionString, domain, dto.UserName,
+                dto.Password, dto.BindTimeoutInSeconds);
+            if (rootDomainInfo != null)
+            {
+                AddDomainToMetadata(metadata, rootDomainInfo);
+                _logger.LogDebug("Added root domain: {domain} (DN: {dn})",
+                    rootDomainInfo.DnsName, rootDomainInfo.DistinguishedName);
+            }
+
             var trustedDomains = GetTrustedDomains(connection, rootDn, ldapConnectionString,  dto.UserName, 
                 dto.Password, dto.BindTimeoutInSeconds);
             foreach (var trustedDomain in trustedDomains)
@@ -149,6 +163,48 @@ internal sealed class LoadLdapForest : ILoadLdapForest
         return string.Join(".", parts);
     }
 
+    private DomainInfo? GetDomainInfo(ILdapConnection connection, string dn, LdapConnectionString ldapConnectionString, string dnsName, string userName, string password, int bindTimeoutInSeconds)
+    {
+        try
+        {
+            var request = new SearchRequest(
+                dn,
+                "(objectClass=domain)",
+                SearchScope.Base,
+                "dn", "distinguishedName", "name", "netbiosname");
+
+            var response = (SearchResponse)connection.SendRequest(request);
+
+            if (response.Entries.Count == 0)
+                return null;
+
+            var entry = response.Entries[0];
+            var netBiosName = GetAttributeValue(entry, "netbiosname");
+
+            if (string.IsNullOrEmpty(netBiosName))
+            {
+                netBiosName = dnsName.Split('.')[0].ToUpperInvariant();
+            }
+            var connectionString = BuildConnectionStringForDomain(ldapConnectionString, dnsName);
+            var schema = LoadSchema(connectionString, userName, password, bindTimeoutInSeconds, AuthType.Basic);
+
+            return new DomainInfo
+            {
+                ConnectionString = connectionString,
+                DnsName = dnsName,
+                DistinguishedName = dn,
+                NetBiosName = netBiosName,
+                Schema = schema,
+                IsTrusted = false
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to get domain info for {dn}", dn);
+            return null;
+        }
+    }
+
     private List<DomainInfo> GetTrustedDomains(ILdapConnection connection, string rootDn, LdapConnectionString ldapConnectionString, string userName, string password, int bindTimeoutInSeconds)
     {
         var trustedDomains = new List<DomainInfo>();
@@ -178,9 +234,8 @@ internal sealed class LoadLdapForest : ILoadLdapForest
                     
 
                     var connectionString = BuildConnectionStringForDomain(ldapConnectionString, dnsName);
-                    _logger.LogDebug($"Trying to connect to: {dnsName}");
-                    _logger.LogDebug($"Connection string: {connectionString}");
-                    var schema = LoadSchema(connectionString, userName, password, bindTimeoutInSeconds);
+                    var upn = UserIdentity.TransformDnToUpn(userName);
+                    var schema = LoadSchema(connectionString, upn, password, bindTimeoutInSeconds, AuthType.Negotiate);
 
                     var domainInfo = new DomainInfo
                     {
@@ -188,7 +243,8 @@ internal sealed class LoadLdapForest : ILoadLdapForest
                         NetBiosName = netBiosName,
                         DnsName = dnsName,
                         DistinguishedName = dn,
-                        Schema = schema
+                        Schema = schema,
+                        IsTrusted = true
                     };
 
                     trustedDomains.Add(domainInfo);
@@ -254,15 +310,15 @@ internal sealed class LoadLdapForest : ILoadLdapForest
             _logger.LogDebug(ex, "No UPN suffixes found for {domainDn} (normal for child domains)", domainDn);
             // Не логируем как ошибку - для дочерних доменов это нормально
         }
-
         return suffixes;
     }
     
-    private ILdapSchema LoadSchema(string connectionString, string username, string password, int bindTimeoutInSeconds)
+    private ILdapSchema LoadSchema(string connectionString, string username, string password, int bindTimeoutInSeconds, AuthType auth)
     {
+        _logger.LogDebug($"Trying to connect to: {connectionString} by {username}");
         var options = new LdapConnectionOptions(
             new LdapConnectionString(connectionString, true),
-            AuthType.Negotiate,
+            auth,
             username,
             password,
             TimeSpan.FromSeconds(bindTimeoutInSeconds)
@@ -297,6 +353,7 @@ internal sealed class LoadLdapForest : ILoadLdapForest
     {
         return $"{baseConnectionString.Scheme}://{domainDnsName}:{baseConnectionString.Port}";
     }
+
 }
 
 

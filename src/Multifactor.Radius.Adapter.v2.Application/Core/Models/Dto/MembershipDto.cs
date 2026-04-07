@@ -20,16 +20,18 @@ public sealed record MembershipDto
     public static MembershipDto FromContext(RadiusPipelineContext context, IReadOnlyList<DistinguishedName> groups, DomainInfo? domainInfo)
     {
         if (groups.Count == 0)
-            throw new ArgumentNullException();
-        
+            throw new ArgumentNullException(); 
+
+        var upn = UserIdentity.TransformDnToUpn(context.LdapConfiguration.Username);
+
         return new MembershipDto
         {
-            AuthType = domainInfo is null ? AuthType.Basic : AuthType.Negotiate,
+            AuthType = domainInfo?.GetAuthType() ?? AuthType.Basic,
             ConnectionString = domainInfo?.ConnectionString ?? context.LdapConfiguration!.ConnectionString,
-            UserName = context.LdapConfiguration.Username,
+            UserName = upn,
             Password = context.LdapConfiguration.Password,
             BindTimeoutInSeconds = context.LdapConfiguration.BindTimeoutSeconds,
-            LdapSchema = domainInfo?.Schema ?? context.LdapSchema!,
+            LdapSchema = domainInfo?.Schema ?? context.LdapSchema,
             DistinguishedName = context.LdapProfile.Dn,
             TargetGroups = groups.ToArray(),
             NestedGroupsBaseDns = context.LdapConfiguration.NestedGroupsBaseDns.ToArray()

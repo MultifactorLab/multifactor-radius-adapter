@@ -94,6 +94,11 @@ internal sealed class AdapterServer : IAsyncDisposable
             {
                 break;
             }
+            catch (SocketException ex) when (ex.SocketErrorCode == SocketError.ConnectionReset)
+            {
+                _logger.LogDebug("Client disconnected unexpectedly: {Message}", ex.Message);
+                continue;
+            }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error in UDP receive loop");

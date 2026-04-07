@@ -1,12 +1,13 @@
-﻿using System.DirectoryServices.Protocols;
-using System.Text.RegularExpressions;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using Multifactor.Core.Ldap;
 using Multifactor.Core.Ldap.Name;
 using Multifactor.Radius.Adapter.v2.Application.Core.Enum;
 using Multifactor.Radius.Adapter.v2.Application.Core.Models;
 using Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCases.FirstFactor.Models;
 using Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCases.FirstFactor.Ports;
+using Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCases.LoadLdapForest.Models;
+using System.DirectoryServices.Protocols;
+using System.Text.RegularExpressions;
 
 namespace Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCases.FirstFactor.Processor;
 
@@ -63,8 +64,7 @@ internal sealed class LdapFirstFactorProcessor : IFirstFactorProcessor
         var domain = context.ForestMetadata?.DetermineForestDomain(userIdentity);
         var formatted = LdapBindNameFormatter.FormatName(context.RequestPacket.UserName!, context.LdapProfile!);
         var connectionString = domain?.ConnectionString ?? context.LdapConfiguration!.ConnectionString;
-        var authType = domain is null ? AuthType.Basic : AuthType.Negotiate;
-        var isValid = ValidateUserCredentials(context, formatted, passphrase.Password, connectionString, authType);
+        var isValid = ValidateUserCredentials(context, formatted, passphrase.Password, connectionString, context.LdapConfiguration.BindTimeoutSeconds);
 
         if (!isValid)
         {
@@ -83,19 +83,15 @@ internal sealed class LdapFirstFactorProcessor : IFirstFactorProcessor
         string login,
         string password,
         string connectionString,
-        AuthType authType)
+        int bindTimeoutSeconds)
     {
-        var serverConfig = context.LdapConfiguration;
-        if (serverConfig is null)
-            throw new InvalidOperationException("No Ldap servers configured.");
-
         try
         {
             _logger.LogDebug("Use '{name}' for LDAP bind.", login);
 
             var request = new CheckConnectionDto(connectionString, login,
-                password, serverConfig.BindTimeoutSeconds, authType);
-
+                password, bindTimeoutSeconds);
+            
             return _checkConnection.Execute(request);
         }
         catch (Exception ex)

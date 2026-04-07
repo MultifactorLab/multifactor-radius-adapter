@@ -2,7 +2,7 @@ using System.Net;
 using System.Text;
 using Multifactor.Radius.Adapter.v2.Application.Core.Enum;
 
-namespace Multifactor.Radius.Adapter.v2.Application.Core.Models;
+namespace Multifactor.Radius.Adapter.v2.Application.Core.Models.Packet;
 
 // See https://datatracker.ietf.org/doc/html/rfc2865#section-3 to understand class structure
 public sealed class RadiusPacket
@@ -68,7 +68,7 @@ public sealed class RadiusPacket
     /// OpenVPN with static-challenge sends pwd and otp in base64 with SCRV1 prefix
     /// https://openvpn.net/community-resources/management-interface/
     /// </summary>
-    private bool IsOpenVpnStaticChallenge
+    public bool IsOpenVpnStaticChallenge
     {
         get
         {
@@ -76,7 +76,11 @@ public sealed class RadiusPacket
             return pwd != null && pwd.StartsWith("SCRV1:");
         }
     }
-
+    
+    public string? MsClientMachineAccountNameAttribute => GetAttributeValueAsString("MS-Client-Machine-Account-Name");
+    public string? MsRasClientNameAttribute => GetAttributeValueAsString("MS-RAS-Client-Name");
+    public string? RemoteHostName => GetAttributeValueAsString("MS-Client-Machine-Account-Name") ?? GetAttributeValueAsString("MS-RAS-Client-Name");
+    public string? NasIdentifierAttribute => GetAttributeValueAsString("NAS-Identifier");
     public string? GetCallingStationIdAttribute(string? callingStationIdAttributeName)
     {
         return GetAttributeValueAsString(string.IsNullOrWhiteSpace(callingStationIdAttributeName) 

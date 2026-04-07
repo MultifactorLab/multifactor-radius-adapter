@@ -1,4 +1,4 @@
-namespace Multifactor.Radius.Adapter.v2.Application.Core.Models;
+namespace Multifactor.Radius.Adapter.v2.Application.Core.Models.Packet;
 
 public sealed class RadiusAuthenticator
 {

@@ -60,7 +60,8 @@ internal sealed class UserGroupLoadingStep : IRadiusPipelineStep
         var domainInfo = context.ForestMetadata?.DetermineForestDomain(userIdentity);
         var connectionString = domainInfo?.ConnectionString ?? context.LdapConfiguration!.ConnectionString;
         var schema = domainInfo?.Schema ?? context.LdapSchema!;
-        var authType = domainInfo is null ? AuthType.Basic : AuthType.Negotiate;
+        var authType = domainInfo?.GetAuthType() ?? AuthType.Basic;
+        var upn = UserIdentity.TransformDnToUpn(context.LdapConfiguration.Username);
 
         foreach (var dn in context.LdapConfiguration!.NestedGroupsBaseDns)
         {
@@ -69,7 +70,7 @@ internal sealed class UserGroupLoadingStep : IRadiusPipelineStep
             var dto = new LoadUserGroupDto()
             { 
                 ConnectionString = connectionString,
-                UserName = context.LdapConfiguration.Username,
+                UserName = upn,
                 Password = context.LdapConfiguration.Password,
                 BindTimeoutInSeconds = context.LdapConfiguration.BindTimeoutSeconds,
                 LdapSchema = schema,
@@ -93,12 +94,13 @@ internal sealed class UserGroupLoadingStep : IRadiusPipelineStep
         var domainInfo = context.ForestMetadata?.DetermineForestDomain(userIdentity);
         var connectionString = domainInfo?.ConnectionString ?? context.LdapConfiguration!.ConnectionString;
         var schema = domainInfo?.Schema ?? context.LdapSchema!;
-        var authType = domainInfo is null ? AuthType.Basic : AuthType.Negotiate;
+        var authType = domainInfo?.GetAuthType() ?? AuthType.Basic;
 
+        var upn = UserIdentity.TransformDnToUpn(context.LdapConfiguration.Username);
         var dto = new LoadUserGroupDto()
         {
             ConnectionString = connectionString!,
-            UserName = context.LdapConfiguration.Username,
+            UserName = upn,
             Password = context.LdapConfiguration.Password,
             BindTimeoutInSeconds = context.LdapConfiguration.BindTimeoutSeconds,
             LdapSchema = schema,

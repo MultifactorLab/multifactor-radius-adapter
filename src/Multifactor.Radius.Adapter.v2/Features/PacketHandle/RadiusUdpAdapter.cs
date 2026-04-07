@@ -4,6 +4,7 @@ using System.Text;
 using Microsoft.Extensions.Logging;
 using Multifactor.Radius.Adapter.v2.Application.Core.Models;
 using Multifactor.Radius.Adapter.v2.Application.Core.Models.Abstractions;
+using Multifactor.Radius.Adapter.v2.Application.Core.Models.Packet;
 using Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.Ports;
 using Multifactor.Radius.Adapter.v2.Application.SharedPorts;
 
