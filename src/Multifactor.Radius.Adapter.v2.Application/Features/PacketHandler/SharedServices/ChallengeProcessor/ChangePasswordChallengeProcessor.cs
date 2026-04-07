@@ -12,19 +12,16 @@ namespace Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.Share
 internal sealed class ChangePasswordChallengeProcessor : IChallengeProcessor
 {
     private readonly IPasswordChangeCache _passCache;
-    private readonly IChallengeContextCache _contextCache;
     private readonly IChangePassword _changePassword;
     private readonly ILogger<ChangePasswordChallengeProcessor> _logger;
     public ChangePasswordChallengeProcessor(
         IPasswordChangeCache passCache,
         IChangePassword changePassword,
-        IChallengeContextCache contextCache,
         ILogger<ChangePasswordChallengeProcessor> logger)
     {
         _passCache = passCache;
         _changePassword = changePassword;
         _logger = logger;
-        _contextCache = contextCache;
     }
 
     public ChallengeType ChallengeType => ChallengeType.PasswordChange;
@@ -46,14 +43,14 @@ internal sealed class ChangePasswordChallengeProcessor : IChallengeProcessor
             CurrentPasswordEncryptedData = encryptedPassword
         };
 
-        _passCache.Set(passwordRequest.Id, passwordRequest, DateTimeOffset.UtcNow.AddMinutes(5));
+        _passCache.Set(passwordRequest.Id, passwordRequest, DateTimeOffset.UtcNow.AddMinutes(10));
         _logger.LogInformation("Password change state: \"{PasswordRequestId}\"", passwordRequest.Id);
         context.ResponseInformation.State = passwordRequest.Id;
         context.ResponseInformation.ReplyMessage = "Please change password to continue. Enter new password: ";
         return new ChallengeIdentifier(context.ClientConfiguration.Name, context.ResponseInformation.State);
     }
 
-    public bool HasChallengeContext(ChallengeIdentifier identifier) => _contextCache.TryGetValue(identifier.RequestId, out _);
+    public bool HasChallengeContext(ChallengeIdentifier identifier) => _passCache.TryGetValue(identifier.RequestId, out _);
 
     public Task<ChallengeStatus> ProcessChallengeAsync(ChallengeIdentifier identifier, RadiusPipelineContext context)
     {
@@ -64,7 +61,6 @@ internal sealed class ChangePasswordChallengeProcessor : IChallengeProcessor
         var passwordChangeRequest = GetPasswordChangeRequest(identifier.RequestId);
         if (passwordChangeRequest == null)
         {
-            
             return Task.FromResult(ChallengeStatus.Accept);
         }
         
