@@ -36,9 +36,16 @@ internal sealed class AccessGroupsCheckingStep : IRadiusPipelineStep
         var request = MembershipDto.FromContext(context, accessGroup, domainInfo);
         var isMember = context.LdapProfile.MemberOf.Intersect(accessGroup).Any() || _checkMembership.Execute(request);
 
-        return isMember ? Task.CompletedTask : TerminatePipeline(context);
+        return isMember ? ProcessPipeline(context) : TerminatePipeline(context);
     }
 
+    private Task ProcessPipeline(RadiusPipelineContext context)
+    {
+        _logger.LogWarning("User '{user}' is member of '{group}'", context.RequestPacket.UserName,
+            context.LdapConfiguration?.AccessGroups);
+        return Task.CompletedTask;
+    }
+    
     private Task TerminatePipeline(RadiusPipelineContext context)
     {
         _logger.LogWarning("User '{user}' is not member of any access group of the '{connectionString}'.",

@@ -17,7 +17,7 @@ internal sealed class CheckConnection : ICheckConnection
 
     public bool Execute(CheckConnectionDto dto)
     {
-        var options = new LdapConnectionOptions(new LdapConnectionString(dto.ConnectionString, true, false), 
+        var options = new LdapConnectionOptions(new LdapConnectionString(dto.ConnectionString), 
             dto.AuthType,
             dto.UserName, 
             dto.Password, 

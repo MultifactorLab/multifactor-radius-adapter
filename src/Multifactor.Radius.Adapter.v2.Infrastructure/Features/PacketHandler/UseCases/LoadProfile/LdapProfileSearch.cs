@@ -41,7 +41,7 @@ internal sealed class LdapProfileSearch : IProfileSearch
         var filter = GetFilter(identityToSearch, dto.LdapSchema);
         _logger.LogDebug("Search base = '{searchBase}'. Filter for search = '{filter}'", dto.SearchBase.StringRepresentation, filter);
         
-        var connectionString = new LdapConnectionString(dto.ConnectionString, true);
+        var connectionString = new LdapConnectionString(dto.ConnectionString);
         var options = new LdapConnectionOptions(connectionString,
             dto.AuthType,
             dto.UserName,

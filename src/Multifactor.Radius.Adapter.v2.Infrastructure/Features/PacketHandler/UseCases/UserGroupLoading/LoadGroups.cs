@@ -21,7 +21,7 @@ internal sealed class LoadGroups : ILoadGroups
     public IReadOnlyList<string> Execute(LoadUserGroupDto dto)
     {
         var options = new LdapConnectionOptions(
-            new LdapConnectionString(dto.ConnectionString, true), 
+            new LdapConnectionString(dto.ConnectionString), 
             dto.AuthType,
             dto.UserName, 
             dto.Password, 

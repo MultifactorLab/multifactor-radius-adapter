@@ -40,7 +40,7 @@ internal sealed class LoadLdapForest : ILoadLdapForest
         {
             _logger.LogDebug("Loading forest metadata from {connectionString}", dto.ConnectionString);
 
-            var ldapConnectionString = new LdapConnectionString(dto.ConnectionString, true);
+            var ldapConnectionString = new LdapConnectionString(dto.ConnectionString);
             using var connection = CreateConnection(ldapConnectionString, dto.UserName, 
                 dto.Password, dto.BindTimeoutInSeconds);
 
@@ -317,7 +317,7 @@ internal sealed class LoadLdapForest : ILoadLdapForest
     {
         _logger.LogDebug($"Trying to connect to: {connectionString} by {username}");
         var options = new LdapConnectionOptions(
-            new LdapConnectionString(connectionString, true),
+            new LdapConnectionString(connectionString),
             auth,
             username,
             password,
