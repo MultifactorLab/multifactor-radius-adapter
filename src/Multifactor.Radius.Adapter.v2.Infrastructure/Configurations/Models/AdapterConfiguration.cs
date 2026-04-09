@@ -52,7 +52,7 @@ internal sealed class AppSettingsSection
     public string MultifactorNasIdentifier { get; set; }
     [Description("multifactor-shared-secret")]
     public string MultifactorSharedSecret { get; set; }
-    [Description("sign-up-group")]
+    [Description("sign-up-groups")]
     public string SignUpGroups { get; set; }
     [Description("bypass-second-factor-when-api-unreachable")]
     public bool BypassSecondFactorWhenApiUnreachable { get; set; }
@@ -71,7 +71,7 @@ internal sealed class AppSettingsSection
     [Description("nps-server-timeout")]
     public string NpsServerTimeout { get; set; }
     [Description("privacy-mode")]
-    public string Privacy { get; set; }
+    public string PrivacyMode { get; set; }
     [Description("pre-authentication-method")]
     public string PreAuthenticationMethod { get; set; }
     [Description("authentication-cache-lifetime")]

@@ -41,7 +41,7 @@ internal sealed class AccessGroupsCheckingStep : IRadiusPipelineStep
 
     private Task ProcessPipeline(RadiusPipelineContext context)
     {
-        _logger.LogWarning("User '{user}' is member of '{group}'", context.RequestPacket.UserName,
+        _logger.LogDebug("User '{user}' is member of '{group}'", context.RequestPacket.UserName,
             context.LdapConfiguration?.AccessGroups);
         return Task.CompletedTask;
     }

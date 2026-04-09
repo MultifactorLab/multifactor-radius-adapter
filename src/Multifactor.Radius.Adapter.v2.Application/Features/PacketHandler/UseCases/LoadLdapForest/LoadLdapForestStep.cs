@@ -40,7 +40,7 @@ internal sealed class LoadLdapForestStep : IRadiusPipelineStep
 
         if (forestMetadata is null)
         {
-            _logger.LogWarning("Unable to load forest metadata");
+            _logger.LogDebug("Unable to load forest metadata");
             return Task.CompletedTask;
         }
 

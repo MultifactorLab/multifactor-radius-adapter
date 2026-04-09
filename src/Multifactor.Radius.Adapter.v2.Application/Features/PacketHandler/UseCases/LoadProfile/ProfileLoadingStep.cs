@@ -175,14 +175,19 @@ internal sealed class ProfileLoadingStep : IRadiusPipelineStep
 
     private static string GetProfileLocation(ILdapProfile profile, RadiusPipelineContext context)
     {
-        return profile.Dn?.StringRepresentation 
-               ?? context.LdapSchema?.NamingContext?.StringRepresentation //todo 
+        if (!string.IsNullOrWhiteSpace(profile.Dn?.StringRepresentation)) 
+            return profile.Dn.StringRepresentation;
+        var userIdentity = new UserIdentity(context.RequestPacket.UserName);
+        var schema = context.ForestMetadata?.DetermineForestDomain(userIdentity)?.Schema ?? context.LdapSchema;
+        return schema?.NamingContext?.StringRepresentation
                ?? "unknown";
     }
 
     private static string GetSearchBaseInfo(RadiusPipelineContext context)
     {
-        return context.LdapSchema?.NamingContext.StringRepresentation 
+        var userIdentity = new UserIdentity(context.RequestPacket.UserName);
+        var schema = context.ForestMetadata?.DetermineForestDomain(userIdentity)?.Schema ?? context.LdapSchema;
+        return schema?.NamingContext?.StringRepresentation
                ?? "unknown";
     }
     
