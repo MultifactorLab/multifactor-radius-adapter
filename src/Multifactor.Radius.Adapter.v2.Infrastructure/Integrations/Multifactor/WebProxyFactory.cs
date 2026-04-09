@@ -4,31 +4,16 @@ namespace Multifactor.Radius.Adapter.v2.Infrastructure.Integrations.Multifactor;
 
 internal static class WebProxyFactory
 {
-    public static bool TryCreateWebProxy(string proxyAddress, out WebProxy? proxy)
+    public static bool TryCreateWebProxy(Uri? proxyAddress, out WebProxy? proxy)
     {
-        if (string.IsNullOrWhiteSpace(proxyAddress) || !TryParseUri(proxyAddress, out var proxyUri))
+        if (proxyAddress is null)
         {
             proxy = null;
             return false;
         }
 
-        proxy = new WebProxy(proxyUri);
-        SetProxyCredentials(proxy, proxyUri);
-        return true;
-    }
-
-    private static bool TryParseUri(string apiUri, out Uri uri)
-    {
-        if (Uri.TryCreate(apiUri, UriKind.Absolute, out uri!))
-            return true;
-        var uriSeparatorIdx = apiUri.LastIndexOf('@');
-        if (uriSeparatorIdx == -1)
-            return false;
-        
-        var leftPart = apiUri[..uriSeparatorIdx].Replace("@", "%40");
-        var rightPart = apiUri[(uriSeparatorIdx + 1)..];
-        var escapedUri = $"{leftPart}@{rightPart}";
-        uri = new Uri(escapedUri);
+        proxy = new WebProxy(proxyAddress);
+        SetProxyCredentials(proxy, proxyAddress);
         return true;
     }
 

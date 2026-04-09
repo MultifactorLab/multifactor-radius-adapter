@@ -21,6 +21,8 @@ internal sealed class AppSettingsSection
     public string MultifactorApiProxy { get; set; }
     [Description("multifactor-api-timeout")]
     public string MultifactorApiTimeout { get; set; }
+    [Description("multifactor-api-proxy-timeout")]
+    public string MultifactorApiProxyTimeout { get; set; }
     [Description("adapter-server-endpoint")]
     public string AdapterServerEndpoint { get; set; }
     [Description("logging-level")]
