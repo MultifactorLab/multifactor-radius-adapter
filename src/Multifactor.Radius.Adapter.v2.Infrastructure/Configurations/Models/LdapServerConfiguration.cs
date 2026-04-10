@@ -81,7 +81,7 @@ internal sealed class LdapServerConfiguration : ILdapServerConfiguration
             IdentityAttribute = ldapServerSection.IdentityAttribute,
             RequiresUpn = ldapServerSection.RequiresUpn,
             EnableTrustedDomains = ldapServerSection.EnableTrustedDomains,
-            AlternativeSuffixesEnabled = ldapServerSection.AlternativeSuffixesEnabled,
+            AlternativeSuffixesEnabled = ldapServerSection.EnableAlternativeSuffixes,
             IncludedDomains =
                 ConfigurationValueParser.TryParseStringList(ldapServerSection.IncludedDomains,
                     out var includedDomains)

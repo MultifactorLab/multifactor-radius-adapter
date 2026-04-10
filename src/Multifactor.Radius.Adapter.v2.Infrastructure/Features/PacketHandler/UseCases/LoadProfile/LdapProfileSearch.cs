@@ -48,8 +48,7 @@ internal sealed class LdapProfileSearch : IProfileSearch
             dto.Password,
             TimeSpan.FromSeconds(dto.BindTimeoutInSeconds));
         using var connection = _connectionFactory.CreateConnection(options);
-        var result = connection.Find(dto.SearchBase, filter, SearchScope.Subtree, attributes: dto.AttributeNames ?? []);
-        var entry = result.FirstOrDefault();
+        var entry = connection.FindOne(dto.SearchBase, filter, SearchScope.Subtree, attributes: dto.AttributeNames ?? []);
 
         return entry is null ? null : new LdapProfile(entry, dto.LdapSchema);
     }

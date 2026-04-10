@@ -5,10 +5,12 @@ using Multifactor.Core.Ldap.Connection;
 using Multifactor.Core.Ldap.Connection.LdapConnectionFactory;
 using Multifactor.Core.Ldap.Name;
 using Multifactor.Core.Ldap.Schema;
+using Multifactor.Core.Ldap.Extensions;
 using Multifactor.Radius.Adapter.v2.Application.Core.Models;
 using Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCases.LoadLdapForest.Models;
 using Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCases.LoadLdapForest.Port;
 using System.DirectoryServices.Protocols;
+using Multifactor.Core.Ldap.Entry;
 
 namespace Multifactor.Radius.Adapter.v2.Infrastructure.Features.PacketHandler.UseCases.LoadLdapForest;
 
@@ -50,7 +52,6 @@ internal sealed class LoadLdapForest : ILoadLdapForest
 
             var metadata = new ForestMetadata();
 
-            // ШАГ 1: Получаем информацию о корневом домене
             var rootDomainInfo = GetDomainInfo(connection, rootDn, ldapConnectionString, domain, dto.UserName,
                 dto.Password, dto.BindTimeoutInSeconds);
             if (rootDomainInfo != null)
@@ -108,25 +109,19 @@ internal sealed class LoadLdapForest : ILoadLdapForest
 
         try
         {
-            var rootDseRequest = new SearchRequest(
-                "",
+            var rootDse = connection.FindOne(
+                DistinguishedName.Empty,
                 "(objectClass=*)",
                 SearchScope.Base,
-                "defaultNamingContext", "dnsHostName");
+                WellKnownAttributes.DefaultNamingContext,
+                WellKnownAttributes.DnsHostName);
 
-            var response = (SearchResponse)connection.SendRequest(rootDseRequest);
 
-            if (response.Entries.Count > 0)
+            rootDn = GetAttributeValue(rootDse, WellKnownAttributes.DefaultNamingContext);
+            if (rootDn is not null)
             {
-                var entry = response.Entries[0];
-
-                // Получаем defaultNamingContext (DN корневого домена)
-                if (entry.Attributes["defaultNamingContext"] != null)
-                {
-                    rootDn = entry.Attributes["defaultNamingContext"][0].ToString();
-                    dnsName = ExtractDnsFromDn(rootDn);
-                    _logger.LogDebug("Detected domain from RootDSE: {domain} (DN: {dn})", dnsName, rootDn);
-                }
+                dnsName = ExtractDnsFromDn(rootDn);
+                _logger.LogDebug("Detected domain from RootDSE: {domain} (DN: {dn})", dnsName, rootDn);
             }
             return (rootDn, dnsName);
         }
@@ -167,18 +162,17 @@ internal sealed class LoadLdapForest : ILoadLdapForest
     {
         try
         {
-            var request = new SearchRequest(
-                dn,
+            var entry = connection.FindOne(
+                DistinguishedName.Empty,
                 "(objectClass=domain)",
                 SearchScope.Base,
-                "dn", "distinguishedName", "name", "netbiosname");
+                WellKnownAttributes.DefaultNamingContext,
+                WellKnownAttributes.DnsHostName,
+                "netbiosname");
 
-            var response = (SearchResponse)connection.SendRequest(request);
-
-            if (response.Entries.Count == 0)
+            if (entry is null)
                 return null;
 
-            var entry = response.Entries[0];
             var netBiosName = GetAttributeValue(entry, "netbiosname");
 
             if (string.IsNullOrEmpty(netBiosName))
@@ -210,22 +204,25 @@ internal sealed class LoadLdapForest : ILoadLdapForest
         var trustedDomains = new List<DomainInfo>();
         try
         {
-            var searchRequest = new SearchRequest(
-                $"{DomainLocation},{rootDn}",
+            var searchBase = new DistinguishedName($"{DomainLocation},{rootDn}");
+            var entries = connection.Find(
+                searchBase,
                 $"(objectClass={DomainObjectClass})",
                 SearchScope.OneLevel,
-                "cn", "trustPartner", "trustDirection", "trustType", "trustAttributes");
+                null,
+                "cn", 
+                "trustPartner", 
+                "trustDirection", 
+                "trustType", 
+                "trustAttributes");
 
-            var response = (SearchResponse)connection.SendRequest(searchRequest);
-
-            foreach (SearchResultEntry entry in response.Entries)
+            foreach (var entry in entries)
             {
                 try
                 {
                     var netBiosName = GetAttributeValue(entry, "cn");
                     var dnsName = GetAttributeValue(entry, "trustPartner");
 
-                    // Если нет trustPartner, используем cn как DNS имя
                     if (string.IsNullOrEmpty(dnsName))
                     {
                         dnsName = netBiosName;
@@ -275,35 +272,30 @@ internal sealed class LoadLdapForest : ILoadLdapForest
 
         try
         {
-            var configDn = $"{SuffixLocation},{domainDn}";
+            var configDn = new DistinguishedName($"{SuffixLocation},{domainDn}");
 
-            var searchRequest = new SearchRequest(
+            var entry = connection.FindOne(
                 configDn,
                 "(objectClass=*)",
                 SearchScope.Base,
                 SuffixAttribute);
-
-            var response = (SearchResponse)connection.SendRequest(searchRequest);
-
-            if (response.Entries.Count > 0)
+            
+            if (entry is not null && entry.Attributes.Any(x => string.Equals(x.Name, SuffixAttribute, StringComparison.CurrentCultureIgnoreCase)))
             {
-                var entry = response.Entries[0];
-                if (entry.Attributes.Contains("uPNSuffixes"))
+                var values = entry.Attributes.FirstOrDefault(x=> string.Equals(x.Name, "SuffixAttribute", StringComparison.CurrentCultureIgnoreCase))?.Values;
+                if (values is not null)
                 {
-                    var values = entry.Attributes["uPNSuffixes"].GetValues(typeof(string));
-                    if (values != null)
+                    foreach (var value in values)
                     {
-                        foreach (var value in values)
+                        var suffix = value.ToString();
+                        if (!string.IsNullOrEmpty(suffix))
                         {
-                            var suffix = value.ToString();
-                            if (!string.IsNullOrEmpty(suffix))
-                            {
-                                suffixes.Add(suffix);
-                            }
+                            suffixes.Add(suffix);
                         }
                     }
                 }
             }
+            
         }
         catch (Exception ex)
         {
@@ -336,11 +328,11 @@ internal sealed class LoadLdapForest : ILoadLdapForest
         }
     }
 
-    private static string? GetAttributeValue(SearchResultEntry entry, string attributeName)
+    private static string? GetAttributeValue(LdapEntry entry, string attributeName)
     {
-        if (entry.Attributes.Contains(attributeName))
+        if (entry.Attributes.Any(x => string.Equals(x.Name, attributeName, StringComparison.CurrentCultureIgnoreCase)))
         {
-            var values = entry.Attributes[attributeName].GetValues(typeof(string));
+            var values = entry.Attributes[attributeName].Values;
             if (values is { Length: > 0 })
             {
                 return values[0].ToString();

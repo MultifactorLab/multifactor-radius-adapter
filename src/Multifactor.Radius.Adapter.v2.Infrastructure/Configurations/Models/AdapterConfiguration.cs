@@ -120,7 +120,7 @@ internal sealed class LdapServerSection
     [Description("enable-trusted-domains")]
     public bool EnableTrustedDomains { get; set; }
     [Description("enable-alternative-suffixes")]
-    public bool AlternativeSuffixesEnabled { get; set; }
+    public bool EnableAlternativeSuffixes { get; set; }
     [Description("included-domains")]
     public string IncludedDomains { get; set; }
     [Description("excluded-domains")]
