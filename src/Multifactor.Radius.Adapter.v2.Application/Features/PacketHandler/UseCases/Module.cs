@@ -12,7 +12,6 @@ using Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCases.
 using Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCases.PreAuthPostCheck;
 using Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCases.SecondFactor;
 using Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCases.StatusServerFilter;
-using Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCases.UserGroupLoading;
 using Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCases.UserNameValidation;
 
 namespace Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCases;
@@ -24,7 +23,6 @@ public static class Module
         return services
             .AddSharedServices()
             .AddUserNameValidation()
-            .AddUserGroupLoading()
             .AddStatusServerFilter()
             .AddSecondFactor()
             .AddPreAuthPostCheck()

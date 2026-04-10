@@ -16,7 +16,6 @@ using Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCases.
 using Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCases.PreAuthPostCheck;
 using Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCases.SecondFactor;
 using Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCases.StatusServerFilter;
-using Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCases.UserGroupLoading;
 using Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCases.UserNameValidation;
 
 namespace Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.Pipeline;
@@ -80,11 +79,6 @@ internal sealed class RadiusPipelineFactory : IRadiusPipelineFactory
             steps.Add(CreateStep<SecondFactorStep>());
         }
         
-        if (withLdap && ShouldLoadUserGroups(clientConfig))
-        {
-            steps.Add(CreateStep<UserGroupLoadingStep>());
-        }
-        
         return steps;
     }
     
@@ -104,11 +98,4 @@ internal sealed class RadiusPipelineFactory : IRadiusPipelineFactory
         }
         _logger.LogDebug(builder.ToString());
     }
-    
-    private static bool ShouldLoadUserGroups(IClientConfiguration config) => config
-        .ReplyAttributes != null && config
-        .ReplyAttributes
-        .Values
-        .SelectMany(x => x)
-        .Any(x => x.IsMemberOf || x.UserGroupCondition.Count > 0);
 }

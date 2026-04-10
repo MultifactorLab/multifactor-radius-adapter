@@ -6,7 +6,6 @@ using Multifactor.Radius.Adapter.v2.Infrastructure.Features.PacketHandler.UseCas
 using Multifactor.Radius.Adapter.v2.Infrastructure.Features.PacketHandler.UseCases.LoadProfile;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Features.PacketHandler.UseCases.LoadSchema;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Features.PacketHandler.UseCases.SecondFactor;
-using Multifactor.Radius.Adapter.v2.Infrastructure.Features.PacketHandler.UseCases.UserGroupLoading;
 
 namespace Multifactor.Radius.Adapter.v2.Infrastructure.Features.PacketHandler.UseCases;
 
@@ -20,7 +19,6 @@ internal static class Module
         services.AddLoadProfileInfra();
         services.AddLoadSchemaInfra();
         services.AddSecondFactorInfra();
-        services.AddLoadGroupsInfra();
         return services;
     }
 }
