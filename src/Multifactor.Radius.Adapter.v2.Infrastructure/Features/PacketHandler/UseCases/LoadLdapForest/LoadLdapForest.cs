@@ -50,7 +50,6 @@ internal sealed class LoadLdapForest : ILoadLdapForest
 
             var metadata = new ForestMetadata();
 
-            // ШАГ 1: Получаем информацию о корневом домене
             var rootDomainInfo = GetDomainInfo(connection, rootDn, ldapConnectionString, domain, dto.UserName,
                 dto.Password, dto.BindTimeoutInSeconds);
             if (rootDomainInfo != null)
@@ -115,6 +114,7 @@ internal sealed class LoadLdapForest : ILoadLdapForest
                 "defaultNamingContext", "dnsHostName");
 
             var response = (SearchResponse)connection.SendRequest(rootDseRequest);
+            
 
             if (response.Entries.Count > 0)
             {
@@ -225,7 +225,6 @@ internal sealed class LoadLdapForest : ILoadLdapForest
                     var netBiosName = GetAttributeValue(entry, "cn");
                     var dnsName = GetAttributeValue(entry, "trustPartner");
 
-                    // Если нет trustPartner, используем cn как DNS имя
                     if (string.IsNullOrEmpty(dnsName))
                     {
                         dnsName = netBiosName;
