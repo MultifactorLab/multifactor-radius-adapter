@@ -117,7 +117,7 @@ internal static class ConfigurationValueParser
         
         foreach (var endpoint in parts)
         {
-            if (IPEndPoint.TryParse(endpoint, out var endpointResult))
+            if (IPEndPoint.TryParse(endpoint.Trim(), out var endpointResult))
             {
                 endpoints.Add(endpointResult);
             }

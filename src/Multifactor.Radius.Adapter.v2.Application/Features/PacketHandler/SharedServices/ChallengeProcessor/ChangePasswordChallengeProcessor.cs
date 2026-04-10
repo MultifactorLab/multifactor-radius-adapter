@@ -82,13 +82,18 @@ internal sealed class ChangePasswordChallengeProcessor : IChallengeProcessor
         var domainInfo = context.ForestMetadata?.DetermineForestDomain(userIdentity);
         var connectionString = domainInfo?.ConnectionString ?? context.LdapConfiguration!.ConnectionString;
         var schema = domainInfo?.Schema ?? context.LdapSchema;
-
-        var upn = UserIdentity.TransformDnToUpn(context.LdapConfiguration.Username);
+        
+        var authType = domainInfo?.GetAuthType() ?? AuthType.Basic;
+        var userName = context.LdapConfiguration.Username;
+        if (authType == AuthType.Negotiate)
+        {
+            userName = UserIdentity.TransformDnToUpn(context.LdapConfiguration.Username);
+        }
         var dto = new ChangeUserPasswordDto
         {
-            AuthType = domainInfo?.GetAuthType() ?? AuthType.Basic,
+            AuthType = authType,
             ConnectionString = connectionString,
-            UserName = upn,
+            UserName = userName,
             Password = context.LdapConfiguration.Password,
             BindTimeoutInSeconds = context.LdapConfiguration.BindTimeoutSeconds,
             LdapSchema = schema,

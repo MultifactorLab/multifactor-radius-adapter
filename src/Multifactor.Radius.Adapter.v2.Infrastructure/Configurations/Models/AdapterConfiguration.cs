@@ -106,7 +106,7 @@ internal sealed class LdapServerSection
     [Description("second-fa-bypass-groups")]
     public string SecondFaBypassGroups { get; set; }
     [Description("load-nested-groups")]
-    public bool LoadNestedGroups { get; set; }
+    public bool? LoadNestedGroups { get; set; }
     [Description("nested-groups-base-dn")]
     public string NestedGroupsBaseDn { get; set; }
     [Description("authentication-cache-groups")]

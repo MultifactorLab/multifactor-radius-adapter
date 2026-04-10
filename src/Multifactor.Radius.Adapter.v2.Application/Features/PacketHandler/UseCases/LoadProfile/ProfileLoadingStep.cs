@@ -131,12 +131,16 @@ internal sealed class ProfileLoadingStep : IRadiusPipelineStep
         List<LdapAttributeName> attributes,
         ILdapServerConfiguration config)
     {
-        var upn = UserIdentity.TransformDnToUpn(config.Username);
+        var userName = config.Username;
+        if (authType == AuthType.Negotiate)
+        {
+            userName = UserIdentity.TransformDnToUpn(config.Username);
+        }
         return new FindUserDto
         {
             ConnectionString = connectionString,
             AuthType = authType,
-            UserName = upn,
+            UserName = userName,
             Password = config.Password,
             BindTimeoutInSeconds = config.BindTimeoutSeconds,
             UserIdentity = userIdentity,

@@ -64,7 +64,7 @@ internal sealed class LdapServerConfiguration : ILdapServerConfiguration
                 ConfigurationValueParser.TryParseDistinguishedNames(ldapServerSection.SecondFaBypassGroups, out var secondFaBypassGroups)
                     ? secondFaBypassGroups
                     : [],
-            LoadNestedGroups = ldapServerSection.LoadNestedGroups,
+            LoadNestedGroups = ldapServerSection.LoadNestedGroups ?? true,
             NestedGroupsBaseDns =
                 ConfigurationValueParser.TryParseDistinguishedNames(ldapServerSection.NestedGroupsBaseDn, out var nestedGroupsBaseDn)
                     ? nestedGroupsBaseDn
