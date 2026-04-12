@@ -12,6 +12,7 @@
       <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.1" />
       <PackageReference Include="Microsoft.Extensions.Http" Version="8.0.1" />
       <PackageReference Include="Microsoft.Extensions.Http.Polly" Version="8.0.22" />
+      <PackageReference Include="Multifactor.Core.Ldap" Version="1.9.3" />
       <PackageReference Include="OpenTelemetry" Version="1.15.1" />
       <PackageReference Include="OpenTelemetry.Api.ProviderBuilderExtensions" Version="1.15.1" />
       <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.15.1" />
@@ -23,7 +24,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\..\Multifactor.Core.Ldap\src\Multifactor.Core.Ldap\Multifactor.Core.Ldap\Multifactor.Core.Ldap.csproj" />
       <ProjectReference Include="..\Multifactor.Radius.Adapter.v2.Application\Multifactor.Radius.Adapter.v2.Application.csproj" />
     </ItemGroup>
 

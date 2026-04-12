@@ -10,11 +10,8 @@
       <PackageReference Include="IPAddressRange" Version="6.3.0" />
       <PackageReference Include="Microsoft.Extensions.Caching.Abstractions" Version="9.0.5" />
       <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.3" />
+      <PackageReference Include="Multifactor.Core.Ldap" Version="1.9.3" />
       <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="8.0.0" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <ProjectReference Include="..\..\..\Multifactor.Core.Ldap\src\Multifactor.Core.Ldap\Multifactor.Core.Ldap\Multifactor.Core.Ldap.csproj" />
     </ItemGroup>
 
 </Project>

@@ -122,13 +122,13 @@ internal sealed class LdapServerSection
     [Description("enable-alternative-suffixes")]
     public bool EnableAlternativeSuffixes { get; set; }
     [Description("included-domains")]
-    public string IncludedDomains { get; set; }
+    public string? IncludedDomains { get; set; }
     [Description("excluded-domains")]
-    public string ExcludedDomains { get; set; }
+    public string? ExcludedDomains { get; set; }
     [Description("included-suffixes")]
-    public string IncludedSuffixes { get; set; }
+    public string? IncludedSuffixes { get; set; }
     [Description("excluded-suffixes")]
-    public string ExcludedSuffixes { get; set; }
+    public string? ExcludedSuffixes { get; set; }
     [Description("bypass-second-factor-when-api-unreachable-groups")]
     public string BypassSecondFactorWhenApiUnreachableGroups { get; set; }
 }

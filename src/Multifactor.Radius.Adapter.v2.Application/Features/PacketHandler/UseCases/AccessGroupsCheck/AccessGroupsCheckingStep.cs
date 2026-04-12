@@ -33,12 +33,12 @@ internal sealed class AccessGroupsCheckingStep : IRadiusPipelineStep
         var userIdentity = new UserIdentity(context.RequestPacket.UserName);
         var domainInfo = context.ForestMetadata?.DetermineForestDomain(userIdentity);
         var accessGroup = context.LdapConfiguration.AccessGroups;
-        var request = MembershipDto.FromContext(context, accessGroup, domainInfo);
         var isMember = context.LdapProfile.MemberOf.Intersect(accessGroup).Any();
         if (!isMember && !context.LdapConfiguration.LoadNestedGroups)
         {
             return isMember ? ProcessPipeline(context) : TerminatePipeline(context);
         }
+        var request = MembershipDto.FromContext(context, accessGroup, domainInfo);
         isMember = _checkMembership.Execute(request);
 
         return isMember ? ProcessPipeline(context) : TerminatePipeline(context);

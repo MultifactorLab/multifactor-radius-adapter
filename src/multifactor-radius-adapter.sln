@@ -18,8 +18,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Multifactor.Radius.Adapter.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Multifactor.Radius.Adapter.v2.Application", "Multifactor.Radius.Adapter.v2.Application\Multifactor.Radius.Adapter.v2.Application.csproj", "{3B698212-A44A-49BF-BA2C-B2FF1FC9780F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Multifactor.Core.Ldap", "..\..\Multifactor.Core.Ldap\src\Multifactor.Core.Ldap\Multifactor.Core.Ldap\Multifactor.Core.Ldap.csproj", "{B9D7DAC5-C24A-A447-9F47-A4BE6EC632BD}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -38,10 +36,6 @@ Global
 		{3B698212-A44A-49BF-BA2C-B2FF1FC9780F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3B698212-A44A-49BF-BA2C-B2FF1FC9780F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3B698212-A44A-49BF-BA2C-B2FF1FC9780F}.Release|Any CPU.Build.0 = Release|Any CPU
-		{B9D7DAC5-C24A-A447-9F47-A4BE6EC632BD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{B9D7DAC5-C24A-A447-9F47-A4BE6EC632BD}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{B9D7DAC5-C24A-A447-9F47-A4BE6EC632BD}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{B9D7DAC5-C24A-A447-9F47-A4BE6EC632BD}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
