@@ -45,7 +45,7 @@ internal sealed class AuthenticatedClientCache : IAuthenticatedClientCache
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(clientName);
         
-        if (lifetime == TimeSpan.Zero || string.IsNullOrWhiteSpace(callingStationId))
+        if (lifetime == TimeSpan.Zero)
             return;
 
         var id = AuthenticatedClient.ParseId(callingStationId, clientName, userName);
