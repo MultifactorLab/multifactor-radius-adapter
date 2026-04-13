@@ -1,0 +1,28 @@
+using Microsoft.Extensions.Caching.Memory;
+using Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCases.LoadLdapForest.Models;
+using Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCases.LoadLdapForest.Port;
+
+namespace Multifactor.Radius.Adapter.v2.Infrastructure.Features.PacketHandler.UseCases.LoadLdapForest;
+
+internal sealed class ForestCache : IForestCache
+{
+    private static readonly TimeSpan CacheDuration = TimeSpan.FromHours(1);
+    private const string CacheKeyPrefix = "Forest";
+    private readonly IMemoryCache _memoryCache;
+    public ForestCache(IMemoryCache memoryCache)
+    {
+        _memoryCache = memoryCache;
+    }
+    public void Set(string key, IForestMetadata value)
+    {
+        var cacheKey = $"{CacheKeyPrefix}:{key}";
+        _memoryCache.Set(cacheKey, value, DateTimeOffset.Now.Add(CacheDuration));
+    }
+
+    public bool TryGetValue(string key, out IForestMetadata? value)
+    {        
+        var cacheKey = $"{CacheKeyPrefix}:{key}";
+        var result = _memoryCache.TryGetValue(cacheKey, out value);
+        return result;
+    }
+}

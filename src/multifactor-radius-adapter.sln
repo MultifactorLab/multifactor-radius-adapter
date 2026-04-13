@@ -5,21 +5,18 @@ VisualStudioVersion = 17.4.33103.184
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{1FDA0815-14C7-4C4A-B632-52BFF4AF7788}"
 	ProjectSection(SolutionItems) = preProject
+		compose.yaml = compose.yaml
 		..\LICENSE.md = ..\LICENSE.md
 		..\LICENSE.ru.md = ..\LICENSE.ru.md
 		..\README.md = ..\README.md
 		..\README.ru.md = ..\README.ru.md
 	EndProjectSection
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MultiFactor.Radius.Adapter.Tests", "MultiFactor.Radius.Adapter.Tests\MultiFactor.Radius.Adapter.Tests.csproj", "{E8A7518C-A622-4343-A594-46EE5869EE96}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MultiFactor.Radius.Adapter", "MultiFactor.Radius.Adapter\MultiFactor.Radius.Adapter.csproj", "{8C663BCC-03FE-437C-A81E-1B581BF2BD3D}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Multifactor.Radius.Adapter.v2", "Multifactor.Radius.Adapter.v2\Multifactor.Radius.Adapter.v2.csproj", "{03C86912-C263-4CF9-A0D8-94167AB647BE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Multifactor.Radius.Adapter.v2.Tests", "Multifactor.Radius.Adapter.v2.Tests\Multifactor.Radius.Adapter.v2.Tests.csproj", "{3E7169B6-274B-48F0-A56F-9C227DDD596A}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Multifactor.Radius.Adapter.v2.Infrastructure", "Multifactor.Radius.Adapter.v2.Infrastructure\Multifactor.Radius.Adapter.v2.Infrastructure.csproj", "{1C003665-1D1D-428F-ACB5-F4489BC21C04}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Multifactor.Radius.Adapter.v2.EndToEndTests", "Multifactor.Radius.Adapter.v2.EndToEndTests\Multifactor.Radius.Adapter.v2.EndToEndTests.csproj", "{3882D448-6BDC-449C-AC9E-687EE82F407B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Multifactor.Radius.Adapter.v2.Application", "Multifactor.Radius.Adapter.v2.Application\Multifactor.Radius.Adapter.v2.Application.csproj", "{3B698212-A44A-49BF-BA2C-B2FF1FC9780F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -27,26 +24,18 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{E8A7518C-A622-4343-A594-46EE5869EE96}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{E8A7518C-A622-4343-A594-46EE5869EE96}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{E8A7518C-A622-4343-A594-46EE5869EE96}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{E8A7518C-A622-4343-A594-46EE5869EE96}.Release|Any CPU.Build.0 = Release|Any CPU
-		{8C663BCC-03FE-437C-A81E-1B581BF2BD3D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{8C663BCC-03FE-437C-A81E-1B581BF2BD3D}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{8C663BCC-03FE-437C-A81E-1B581BF2BD3D}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{8C663BCC-03FE-437C-A81E-1B581BF2BD3D}.Release|Any CPU.Build.0 = Release|Any CPU
 		{03C86912-C263-4CF9-A0D8-94167AB647BE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{03C86912-C263-4CF9-A0D8-94167AB647BE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{03C86912-C263-4CF9-A0D8-94167AB647BE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{03C86912-C263-4CF9-A0D8-94167AB647BE}.Release|Any CPU.Build.0 = Release|Any CPU
-		{3E7169B6-274B-48F0-A56F-9C227DDD596A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{3E7169B6-274B-48F0-A56F-9C227DDD596A}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{3E7169B6-274B-48F0-A56F-9C227DDD596A}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{3E7169B6-274B-48F0-A56F-9C227DDD596A}.Release|Any CPU.Build.0 = Release|Any CPU
-		{3882D448-6BDC-449C-AC9E-687EE82F407B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{3882D448-6BDC-449C-AC9E-687EE82F407B}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{3882D448-6BDC-449C-AC9E-687EE82F407B}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{3882D448-6BDC-449C-AC9E-687EE82F407B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1C003665-1D1D-428F-ACB5-F4489BC21C04}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1C003665-1D1D-428F-ACB5-F4489BC21C04}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1C003665-1D1D-428F-ACB5-F4489BC21C04}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1C003665-1D1D-428F-ACB5-F4489BC21C04}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3B698212-A44A-49BF-BA2C-B2FF1FC9780F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3B698212-A44A-49BF-BA2C-B2FF1FC9780F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3B698212-A44A-49BF-BA2C-B2FF1FC9780F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3B698212-A44A-49BF-BA2C-B2FF1FC9780F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

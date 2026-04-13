@@ -1201,6 +1201,9 @@ VendorSpecificAttribute	2526	1	Ipass-Country-Code	string
 VendorSpecificAttribute	2526	2	Ipass-Media-Access-Type	string
 VendorSpecificAttribute	2526	3	Ipass-Location-Description	string
 
+# VendorId 2620
+VendorSpecificAttribute 2620   229  Gaia-User-Role string
+
 # VendorId 2636
 VendorSpecificAttribute	2636	1	Juniper-Local-User-Name	string
 VendorSpecificAttribute	2636	2	Juniper-Allow-Commands	string
@@ -1340,6 +1343,7 @@ VendorSpecificAttribute	3076	66	Altiga-IPSec-Authorization-Required-G	integer
 VendorSpecificAttribute	3076	67	Altiga-IPSec-DN-Field-G	string
 VendorSpecificAttribute	3076	68	Altiga-IPSec-Confidence-Level-G	integer
 VendorSpecificAttribute	3076	75	Altiga-LEAP-Bypass-G	integer
+VendorSpecificAttribute 3076    85  Tunnel-Group-Lock   string
 VendorSpecificAttribute	3076	128	Altiga-Part-Primary-DHCP-G	ipaddr
 VendorSpecificAttribute	3076	129	Altiga-Part-Secondary-DHCP-G	ipaddr
 VendorSpecificAttribute	3076	131	Altiga-Part-Premise-Router-G	ipaddr
@@ -1391,6 +1395,7 @@ VendorSpecificAttribute	3414	40	Ipass-3414-40	string
 VendorSpecificAttribute	3414	41	Ipass-3414-41	string
 VendorSpecificAttribute	3414	42	Ipass-3414-42	string
 VendorSpecificAttribute	3414	43	Ipass-3414-43	string
+
 
 # VendorId 3551
 VendorSpecificAttribute	3551	1	ST-Acct-VC-Connection-Id	string
@@ -1821,6 +1826,11 @@ VendorSpecificAttribute 25461	7	PaloAlto-Source-IP	string
 VendorSpecificAttribute 25461	8	PaloAlto-PaloAlto-Client-OS	string
 VendorSpecificAttribute 25461	9	PaloAlto-Client-Hostname	string
 VendorSpecificAttribute 25461	10	PaloAlto-GlobalProtect-Version	string
+
+
+# VendorId 39410
+VendorSpecificAttribute 39410  30  Ideco-Administrator-Role  string
+VendorSpecificAttribute 39410  31  Ideco-Administrator-Name  string
 
 # VendorId 774641 (Multifactor)
 VendorSpecificAttribute	774641	1	mfa-client-name	string

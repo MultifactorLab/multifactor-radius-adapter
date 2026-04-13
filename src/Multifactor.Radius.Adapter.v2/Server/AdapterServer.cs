@@ -1,111 +1,195 @@
+using System.Collections.Concurrent;
 using System.Net.Sockets;
 using Microsoft.Extensions.Logging;
-using Multifactor.Radius.Adapter.v2.Core;
-using Multifactor.Radius.Adapter.v2.Core.Configuration.Service;
-using Multifactor.Radius.Adapter.v2.Core.Radius.Attributes;
-using Multifactor.Radius.Adapter.v2.Server.Udp;
+using Multifactor.Radius.Adapter.v2.Application.Core.Models;
+using Multifactor.Radius.Adapter.v2.Application.SharedPorts;
+using Multifactor.Radius.Adapter.v2.Features.PacketHandle;
 
 namespace Multifactor.Radius.Adapter.v2.Server;
 
-public class AdapterServer : IDisposable
+internal sealed class AdapterServer : IAsyncDisposable
 {
     private readonly IUdpClient _udpClient;
-    private readonly IUdpPacketHandler _packetHandler;
-    private readonly ILogger<AdapterServer> _logger;
-    private readonly IServiceConfiguration _serviceConfiguration;
+    private readonly IRadiusUdpAdapter _packetAdapter;
     private readonly ApplicationVariables _applicationVariables;
-    private readonly IRadiusDictionary _radiusDictionary;
+    private readonly ServiceConfiguration _serviceConfiguration;
+    private readonly ILogger<AdapterServer> _logger;
     
-    private bool _isRunning;
+    private Task? _receiveLoopTask;
+    private CancellationTokenSource? _cts;
+    private readonly SemaphoreSlim _concurrencyLimiter;
+    private readonly ConcurrentBag<Task> _activeProcessingTasks = [];
+    
+    private const int ShoutDownTimeout = 30;
+    private const int MaxConcurrentRequests = 10000;
     
     public AdapterServer(
         IUdpClient udpClient,
-        IUdpPacketHandler handler,
-        IServiceConfiguration serviceConfiguration,
+        IRadiusUdpAdapter packetAdapter,
         ApplicationVariables applicationVariables,
-        IRadiusDictionary radiusDictionary,
+        ServiceConfiguration serviceConfiguration,
         ILogger<AdapterServer> logger)
     {
         _udpClient = udpClient;
-        _packetHandler = handler;
-        _serviceConfiguration = serviceConfiguration;
+        _packetAdapter = packetAdapter;
         _applicationVariables = applicationVariables;
-        _radiusDictionary = radiusDictionary;
+        _serviceConfiguration = serviceConfiguration;
         _logger = logger;
+        
+        _concurrencyLimiter = new SemaphoreSlim(MaxConcurrentRequests);
     }
 
-    public async Task StartAsync(CancellationToken cancellationToken)
+    public Task StartAsync(CancellationToken cancellationToken = default)
     {
-            if (_isRunning)
-            {
-                _logger.LogInformation("Server is already running.");
-                return;
-            }
-
-            _isRunning = true;
-            LogHelloMessage();
-            UdpReceiveResult udpPacket = new UdpReceiveResult();
-            while (_isRunning && !cancellationToken.IsCancellationRequested)
-            {
-                try
-                {
-                    var packet = await ReceivePackets();
-                    udpPacket = packet;
-                    _logger.LogInformation("Received packet from {host:l}:{port}.", packet.RemoteEndPoint.Address, packet.RemoteEndPoint.Port);
-                    var task = Task.Factory.StartNew(() => ProcessPacket(packet), TaskCreationOptions.LongRunning);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning(ex, "Error while processing packet from '{client:l}'", udpPacket.RemoteEndPoint.Address);
-                }
-            }
-    }
-
-    public Task Stop()
-    {
-        if (!_isRunning)
+        if (_receiveLoopTask != null)
         {
+            _logger.LogWarning("Server is already running");
             return Task.CompletedTask;
         }
+
+        _cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         
-        _logger.LogInformation("Stopping server");
-        _isRunning = false;
-        _udpClient?.Dispose();
-        _logger.LogInformation("Server is stopped");
-        return Task.CompletedTask;
-    }
-
-    private void LogHelloMessage()
-    {
-        _logger.LogInformation("Multifactor (c) cross-platform RADIUS Adapter, v. {Version:l}", _applicationVariables.AppVersion);
-        _logger.LogInformation("Starting Radius server on {host:l}:{port}",
-            _serviceConfiguration.ServiceServerEndpoint.Address,
-            _serviceConfiguration.ServiceServerEndpoint.Port);
-
-        _logger.LogInformation(_radiusDictionary.GetInfo());
-    }
-
-    private async Task ProcessPacket(UdpReceiveResult udpPacket)
-    {
+        LogStartupMessage();
+        
         try
         {
-            await _packetHandler.HandleUdpPacket(udpPacket);
+            _receiveLoopTask = Task.Run(() => ReceiveLoopAsync(_cts.Token), _cts.Token);
+            _logger.LogInformation("RADIUS server started successfully");
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to process packet from {host:l}:{port}", udpPacket.RemoteEndPoint.Address, udpPacket.RemoteEndPoint.Port);
+            _logger.LogError(ex, "Failed to start RADIUS server");
+            throw;
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private async Task ReceiveLoopAsync(CancellationToken cancellationToken)
+    {
+        _logger.LogDebug("Starting UDP receive loop");
+        
+        while (!cancellationToken.IsCancellationRequested)
+        {
+            try
+            {
+                await _concurrencyLimiter.WaitAsync(cancellationToken);
+                
+                var packet = await _udpClient.ReceiveAsync(cancellationToken);
+                
+                var processingTask = ProcessPacketAsync(packet, cancellationToken);
+                
+                _activeProcessingTasks.Add(processingTask);
+                
+                _ = processingTask.ContinueWith(t => 
+                {
+                    _activeProcessingTasks.TryTake(out _);
+                    _concurrencyLimiter.Release();
+                }, TaskScheduler.Default);
+                
+                _logger.LogDebug("Received packet from {Host}:{Port}", 
+                    packet.RemoteEndPoint.Address, packet.RemoteEndPoint.Port);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                break;
+            }
+            catch (SocketException ex) when (ex.SocketErrorCode == SocketError.ConnectionReset)
+            {
+                _logger.LogDebug("Client disconnected unexpectedly: {Message}", ex.Message);
+                continue;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in UDP receive loop");
+                await Task.Delay(TimeSpan.FromSeconds(1), cancellationToken);
+            }
         }
         
-        await Task.CompletedTask;
+        _logger.LogDebug("UDP receive loop stopped");
     }
 
-    private Task<UdpReceiveResult> ReceivePackets()
+    private async Task ProcessPacketAsync(UdpReceiveResult udpPacket, CancellationToken cancellationToken)
     {
-        return _udpClient.ReceiveAsync();
+        try
+        {
+            await _packetAdapter.Handle(udpPacket);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, 
+                "Failed to process packet from {Host}:{Port}", 
+                udpPacket.RemoteEndPoint.Address, 
+                udpPacket.RemoteEndPoint.Port);
+        }
     }
 
-    public void Dispose()
+    private async Task StopAsync(CancellationToken cancellationToken = default)
     {
-        Stop();
+        _logger.LogInformation("Stopping RADIUS server...");
+        
+        if(_cts != null)
+            await _cts.CancelAsync();
+        
+        if (_receiveLoopTask != null)
+        {
+            try
+            {
+                await _receiveLoopTask.WaitAsync(
+                    TimeSpan.FromSeconds(ShoutDownTimeout), 
+                    cancellationToken);
+            }
+            catch (TimeoutException)
+            {
+                _logger.LogWarning("Receive loop did not stop gracefully within timeout");
+            }
+            catch (OperationCanceledException)
+            {
+                // shoutdown was canceled
+            }
+        }
+        
+        if (!_activeProcessingTasks.IsEmpty)
+        {
+            _logger.LogDebug("Waiting for {Count} active processing tasks to complete", 
+                _activeProcessingTasks.Count);
+                
+            try
+            {
+                await Task.WhenAll(_activeProcessingTasks)
+                    .WaitAsync(TimeSpan.FromSeconds(ShoutDownTimeout), cancellationToken);
+            }
+            catch (TimeoutException)
+            {
+                _logger.LogWarning("Some processing tasks did not complete within timeout");
+            }
+        }
+        
+        _logger.LogInformation("RADIUS server stopped");
+    }
+
+    private void LogStartupMessage()
+    {
+        _logger.LogInformation("Multifactor (c) cross-platform RADIUS Adapter, v. {Version:l}", _applicationVariables.AppVersion);
+        var endpoint = _serviceConfiguration.RootConfiguration.AdapterServerEndpoint;
+        _logger.LogInformation(
+            "Starting RADIUS server on {Host}:{Port} (Max concurrent: {MaxConcurrent})", 
+            endpoint.Address, 
+            endpoint.Port,
+            MaxConcurrentRequests);
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        await StopAsync();
+        
+        _concurrencyLimiter.Dispose();
+        _cts?.Dispose();
+        _udpClient.Dispose();
+        
+        GC.SuppressFinalize(this);
     }
 }
