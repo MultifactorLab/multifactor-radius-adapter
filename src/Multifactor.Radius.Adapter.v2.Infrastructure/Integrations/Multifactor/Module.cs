@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Net;
 using System.Security.Authentication;
 using Microsoft.Extensions.DependencyInjection;
 using Multifactor.Radius.Adapter.v2.Application.Core.Models;
@@ -16,57 +17,90 @@ public static class Module
     {
         services.AddTelemetry();
         services.AddSingleton<IEndpointSelector, RoundRobinEndpointSelector>();
+        services.AddSingleton<IProxySelector, RoundRobinProxySelector>();
         services.AddHttpClient("multifactor-api")
             .ConfigureHttpClient((serviceProvider, client) =>
             {
                 var config = serviceProvider.GetRequiredService<ServiceConfiguration>();
                 if (config.RootConfiguration.MultifactorApiUrls.Any())
                 {
-                    var primaryUrl = config.RootConfiguration.MultifactorApiUrls[0];
+                    var selector = serviceProvider.GetRequiredService<IEndpointSelector>();
+                    var primaryUrl = selector.GetCurrentEndpoint();
                     client.BaseAddress = primaryUrl;
                     client.Timeout = config.RootConfiguration.MultifactorApiTimeout;
                 }
             })
-            .AddPolicyHandler((serviceProvider, request) => {
-
+            .AddPolicyHandler((serviceProvider, request) => 
+            {
                 var config = serviceProvider.GetRequiredService<ServiceConfiguration>();
                 var timeout = config.RootConfiguration.MultifactorApiTimeout;
-                var selector = serviceProvider.GetRequiredService<IEndpointSelector>();
+                var endpointSelector = serviceProvider.GetRequiredService<IEndpointSelector>();
+                var proxySelector = serviceProvider.GetRequiredService<IProxySelector>();
 
                 return Policy<HttpResponseMessage>
                     .Handle<HttpRequestException>()
                     .OrResult(response => !response.IsSuccessStatusCode && (int)response.StatusCode >= 500)
                     .RetryAsync(
-                        retryCount: config.RootConfiguration.MultifactorApiUrls.Count - 1,
+                        retryCount: config.RootConfiguration.MultifactorApiUrls.Count * 
+                                   (config.RootConfiguration.MultifactorApiProxy?.Count ?? 1) - 1,
                         onRetryAsync: async (outcome, retryNumber, context) =>
                         {
-                            var fallbackUrl = await selector.GetNextEndpointAsync();
-                            request.RequestUri = new Uri(fallbackUrl, request.RequestUri!.PathAndQuery);
+                            var (nextUrl, nextProxy) = await GetNextEndpointAndProxyAsync(
+                                endpointSelector, proxySelector);
+                            request.RequestUri = new Uri(nextUrl, request.RequestUri!.PathAndQuery);
+                            if (context.TryGetValue("HttpClientHandler", out var handlerObj) && 
+                                handlerObj is HttpClientHandler handler)
+                            {
+                                handler.Proxy = nextProxy;
+                            }
                         })
                     .WrapAsync(Policy.TimeoutAsync<HttpResponseMessage>(timeout));
-            } 
-        )
-        .ConfigurePrimaryHttpMessageHandler(provider =>
-        {
-            var config = provider.GetRequiredService<ServiceConfiguration>();
-            var handler = new HttpClientHandler
+            })
+            .ConfigurePrimaryHttpMessageHandler(provider =>
             {
-                MaxConnectionsPerServer = 100,
-                SslProtocols = SslProtocols.Tls13 | SslProtocols.Tls12
-            };
-            
-            if (string.IsNullOrWhiteSpace(config.RootConfiguration.MultifactorApiProxy))
+                var proxySelector = provider.GetRequiredService<IProxySelector>();
+                
+                var handler = new HttpClientHandler
+                {
+                    MaxConnectionsPerServer = 100,
+                    SslProtocols = SslProtocols.Tls13 | SslProtocols.Tls12
+                };
+                
+                var initialProxy = proxySelector.GetCurrentProxy();
+                if (initialProxy is not null)
+                {
+                    if (!WebProxyFactory.TryCreateWebProxy(initialProxy, out var webProxy))
+                        throw new Exception("Unable to initialize WebProxy. Please, check whether multifactor-api-proxy URI is valid.");
+                    
+                    handler.Proxy = webProxy;
+                }
                 return handler;
-            
-            if (!WebProxyFactory.TryCreateWebProxy(config.RootConfiguration.MultifactorApiProxy, out var webProxy))
-                throw new Exception(
-                    "Unable to initialize WebProxy. Please, check whether multifactor-api-proxy URI is valid.");
-            
-            handler.Proxy = webProxy;
-            return handler;
-        });
+            });
     }
 
+    private static async Task<(Uri url, WebProxy? proxy)> GetNextEndpointAndProxyAsync(
+        IEndpointSelector endpointSelector, 
+        IProxySelector proxySelector)
+    {
+        var nextUrl = await endpointSelector.GetNextEndpointAsync();
+        var nextProxyUrl = await proxySelector.GetCurrentProxyAsync();
+        if (nextUrl == null && endpointSelector.IsCycleComplete)
+        {
+            nextProxyUrl = await proxySelector.GetNextProxyAsync();
+            endpointSelector.Reset();
+            nextUrl = endpointSelector.GetCurrentEndpoint();
+        }
+    
+        WebProxy? webProxy = null;
+        if (nextProxyUrl is not null)
+        {
+            if (!WebProxyFactory.TryCreateWebProxy(nextProxyUrl, out webProxy))
+                throw new Exception($"Unable to initialize WebProxy for {nextProxyUrl}");
+        }
+    
+        return (nextUrl, webProxy);
+    }
+    
     private static void AddTelemetry(this IServiceCollection services)
     {
         Activity.DefaultIdFormat = ActivityIdFormat.W3C;
@@ -101,7 +135,7 @@ public static class Module
                     .AddSource("Multifactor.Radius.Adapter.v2.*");
             });
     }
-
+    
     private static string GetOrCreateMfTraceId(this Activity? activity)
     {
         return activity?.GetTagItem(MfTraceIdTag)?.ToString()

@@ -6,64 +6,56 @@ namespace Multifactor.Radius.Adapter.v2.Infrastructure.Integrations.Multifactor;
 
 internal interface IEndpointSelector
 {
-    Task<Uri> GetNextEndpointAsync();
+    Task<Uri?> GetNextEndpointAsync();
+    Uri GetCurrentEndpoint();
+    bool IsCycleComplete { get; }
+    void Reset();
 }
 
 internal sealed class RoundRobinEndpointSelector : IEndpointSelector
 {
     private readonly IReadOnlyList<Uri> _endpoints;
-    private readonly ConcurrentDictionary<Uri, DateTime> _failedEndpoints;
-    private int _currentIndex = -1;
+    private int _currentIndex = 0;
     private readonly object _lock = new();
     private readonly ILogger<RoundRobinEndpointSelector> _logger;
-    private readonly TimeSpan _failureRetryPeriod = TimeSpan.FromMinutes(5);
 
     public RoundRobinEndpointSelector(
         ServiceConfiguration configuration, 
         ILogger<RoundRobinEndpointSelector> logger)
     {
         _endpoints = configuration.RootConfiguration.MultifactorApiUrls;
-        _failedEndpoints = new ConcurrentDictionary<Uri, DateTime>();
         _logger = logger;
     }
 
-    public Task<Uri> GetNextEndpointAsync()
+    public Task<Uri?> GetNextEndpointAsync()
     {
         return Task.FromResult(GetNextHealthyEndpoint());
     }
+    
+    public Uri GetCurrentEndpoint()
+    {
+        return _endpoints[_currentIndex];
+    }
 
-    private Uri GetNextHealthyEndpoint()
+    public bool IsCycleComplete => _currentIndex >= _endpoints.Count;
+    public void Reset()
+    {
+        _currentIndex = 0;
+    }
+
+    private Uri? GetNextHealthyEndpoint()
     {
         if (_endpoints.Count == 0)
             throw new InvalidOperationException("No endpoints configured");
 
-        CleanupOldFailures();
-
         lock (_lock)
         {
-            for (int i = 0; i < _endpoints.Count; i++)
-            {
-                _currentIndex = (_currentIndex + 1) % _endpoints.Count;
-                var endpoint = _endpoints[_currentIndex];
-                if (_failedEndpoints.ContainsKey(endpoint)) continue;
-                _logger.LogDebug("Selected endpoint: {Endpoint}", endpoint);
-                return endpoint;
-            }
-            _logger.LogWarning("All endpoints are marked as failed, trying first endpoint");
-            return _endpoints[0];
+            _currentIndex = (_currentIndex + 1) % _endpoints.Count;
+            if (IsCycleComplete) return null;
+            var endpoint = _endpoints[_currentIndex];
+            _logger.LogDebug("Selected endpoint: {Endpoint}", endpoint);
+            return endpoint;
         }
     }
 
-    private void CleanupOldFailures()
-    {
-        var cutoff = DateTime.UtcNow - _failureRetryPeriod;
-        foreach (var kvp in _failedEndpoints)
-        {
-            if (kvp.Value < cutoff)
-            {
-                _failedEndpoints.TryRemove(kvp.Key, out _);
-                _logger.LogDebug("Removed expired failure for {Endpoint}", kvp.Key);
-            }
-        }
-    }
 }
