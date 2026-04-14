@@ -25,7 +25,11 @@ internal sealed class LoadLdapSchemaStep: IRadiusPipelineStep
         _logger.LogDebug("'{name}' started", StepName);
         ArgumentNullException.ThrowIfNull(context, nameof(context));
         ArgumentNullException.ThrowIfNull(context.LdapConfiguration, nameof(context.LdapConfiguration));
-        
+        if (context.ForestMetadata is not null)
+        {
+            _logger.LogDebug("Forest metadata provided. Step skipped");
+            return Task.CompletedTask;
+        }
         var schema = TryGetLdapSchema(context);
 
         if (schema is null)

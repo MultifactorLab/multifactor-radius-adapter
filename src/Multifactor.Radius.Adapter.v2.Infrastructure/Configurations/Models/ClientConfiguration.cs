@@ -136,8 +136,8 @@ internal sealed class ClientConfiguration : IClientConfiguration
                 StartupLogger.Warning(exception.Message);
             }
 
-        if (!string.IsNullOrWhiteSpace(configurationFile.AppSettings.Privacy))
-            if (ConfigurationValueParser.TryParsePrivacyModeWithFields(configurationFile.AppSettings.Privacy,
+        if (!string.IsNullOrWhiteSpace(configurationFile.AppSettings.PrivacyMode))
+            if (ConfigurationValueParser.TryParsePrivacyModeWithFields(configurationFile.AppSettings.PrivacyMode,
                     out var privacy))
             {
                 dto.Privacy = privacy;
@@ -145,8 +145,8 @@ internal sealed class ClientConfiguration : IClientConfiguration
             else
             {
                 dto.Privacy = new Privacy(PrivacyMode.None, []);
-                var exception = InvalidConfigurationException.For(c => c.AppSettings.Privacy,
-                    formatedMessage, configurationFile.AppSettings.Privacy);
+                var exception = InvalidConfigurationException.For(c => c.AppSettings.PrivacyMode,
+                    formatedMessage, configurationFile.AppSettings.PrivacyMode);
                 StartupLogger.Warning(exception.Message);
             }
 

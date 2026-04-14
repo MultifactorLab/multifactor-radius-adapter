@@ -22,7 +22,7 @@ internal sealed class ChangePassword : IChangePassword
     public bool Execute(ChangeUserPasswordDto dto)
     {
         ArgumentNullException.ThrowIfNull(dto, nameof(dto));
-        var options = new LdapConnectionOptions(new LdapConnectionString(dto.ConnectionString, true), 
+        var options = new LdapConnectionOptions(new LdapConnectionString(dto.ConnectionString), 
             dto.AuthType,
             dto.UserName, 
             dto.Password, 

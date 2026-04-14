@@ -96,7 +96,7 @@ public sealed class UserPassphrase
 
     private static bool TryGetOtpCode(string? rawPwd, out string? code)
     {
-        const int length = 10;
+        const int length = 6;
         var passwordAndOtp = rawPwd?.Trim() ?? string.Empty;
         if (passwordAndOtp.Length < length)
         {

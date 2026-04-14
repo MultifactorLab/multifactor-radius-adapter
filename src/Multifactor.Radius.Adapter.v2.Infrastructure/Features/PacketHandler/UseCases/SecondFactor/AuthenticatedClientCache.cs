@@ -23,12 +23,6 @@ internal sealed class AuthenticatedClientCache : IAuthenticatedClientCache
         if (lifetime == TimeSpan.Zero)
             return false;
 
-        if (string.IsNullOrWhiteSpace(callingStationId))
-        {
-            _logger.LogError("Remote host parameter miss for user {userName:l}", userName);
-            return false;
-        }
-
         var id = AuthenticatedClient.ParseId(callingStationId, clientName, userName);
         
         if (!_memoryCache.TryGetValue(id, out var cachedValue))
@@ -45,7 +39,7 @@ internal sealed class AuthenticatedClientCache : IAuthenticatedClientCache
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(clientName);
         
-        if (lifetime == TimeSpan.Zero || string.IsNullOrWhiteSpace(callingStationId))
+        if (lifetime == TimeSpan.Zero)
             return;
 
         var id = AuthenticatedClient.ParseId(callingStationId, clientName, userName);

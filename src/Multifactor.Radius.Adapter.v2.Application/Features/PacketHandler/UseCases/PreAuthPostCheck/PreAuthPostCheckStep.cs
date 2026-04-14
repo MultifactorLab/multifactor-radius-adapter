@@ -17,14 +17,16 @@ internal sealed class PreAuthPostCheckStep : IRadiusPipelineStep
     {
         _logger.LogDebug("'{name}' started", StepName);
 
+        var userIdentity = new UserIdentity(context.RequestPacket.UserName);
+        var schema = context.ForestMetadata?.DetermineForestDomain(userIdentity)?.Schema ?? context.LdapSchema;
         if (context.SecondFactorStatus is AuthenticationStatus.Accept or AuthenticationStatus.Bypass)
         {
-            _logger.LogDebug("Pre-auth post-check continued pipeline for '{user}' at '{domain}'.", context.RequestPacket.UserName, context.LdapSchema?.NamingContext.StringRepresentation);
+            _logger.LogDebug("Pre-auth post-check continued pipeline for '{user}' at '{domain}'.", context.RequestPacket.UserName, schema?.NamingContext.StringRepresentation);
             return Task.CompletedTask;
         }
 
         context.Terminate();
-        _logger.LogDebug("Pre-auth post-check terminated pipeline for '{user}' at '{domain}'.", context.RequestPacket.UserName, context.LdapSchema?.NamingContext.StringRepresentation);
+        _logger.LogDebug("Pre-auth post-check terminated pipeline for '{user}' at '{domain}'.", context.RequestPacket.UserName, schema?.NamingContext.StringRepresentation);
         return Task.CompletedTask;
     }
 }

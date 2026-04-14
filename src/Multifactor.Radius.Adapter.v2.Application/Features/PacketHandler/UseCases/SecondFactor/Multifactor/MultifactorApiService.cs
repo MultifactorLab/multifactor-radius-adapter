@@ -86,10 +86,8 @@ public sealed class MultifactorApiService
                 return mfResponse;
             }
 
-            var callingStationIdAttributeName = context.ClientConfiguration.CallingStationIdAttribute;
-            var callingStationIdAttribute = context.RequestPacket.GetCallingStationIdAttribute(callingStationIdAttributeName);
-            LogGrantedInfo(personalData.Identity, response, callingStationIdAttribute);
-            _authenticatedClientCache.SetCache(callingStationIdAttribute, 
+            LogGrantedInfo(personalData.Identity, response, personalData.CallingStationId);
+            _authenticatedClientCache.SetCache(personalData.CallingStationId, 
                 personalData.Identity, 
                 context.ClientConfiguration.Name, 
                 context.ClientConfiguration.AuthenticationCacheLifetime);

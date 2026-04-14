@@ -46,16 +46,13 @@ public sealed class UserIdentity
     {
         var distinguishedName = new DistinguishedName(dn);
 
-        // Получаем samAccountName (CN или другой RDN)
         var samAccountName = distinguishedName.Components.Deepest.Value;
 
-        // Собираем DNS суффикс из компонентов DC=
         var dnsSuffix = string.Join(".", distinguishedName.Components
             .Where(x => x.Type == RdnAttributeType.DC)
             .Reverse()
             .Select(x => x.Value));
 
-        // Формируем UPN: samAccountName@dnsSuffix
         return $"{samAccountName}@{dnsSuffix}";
     }
 }

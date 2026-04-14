@@ -54,7 +54,7 @@ internal sealed class AppSettingsSection
     public string MultifactorNasIdentifier { get; set; }
     [Description("multifactor-shared-secret")]
     public string MultifactorSharedSecret { get; set; }
-    [Description("sign-up-group")]
+    [Description("sign-up-groups")]
     public string SignUpGroups { get; set; }
     [Description("bypass-second-factor-when-api-unreachable")]
     public bool BypassSecondFactorWhenApiUnreachable { get; set; }
@@ -73,7 +73,7 @@ internal sealed class AppSettingsSection
     [Description("nps-server-timeout")]
     public string NpsServerTimeout { get; set; }
     [Description("privacy-mode")]
-    public string Privacy { get; set; }
+    public string PrivacyMode { get; set; }
     [Description("pre-authentication-method")]
     public string PreAuthenticationMethod { get; set; }
     [Description("authentication-cache-lifetime")]
@@ -108,7 +108,7 @@ internal sealed class LdapServerSection
     [Description("second-fa-bypass-groups")]
     public string SecondFaBypassGroups { get; set; }
     [Description("load-nested-groups")]
-    public bool LoadNestedGroups { get; set; }
+    public bool? LoadNestedGroups { get; set; }
     [Description("nested-groups-base-dn")]
     public string NestedGroupsBaseDn { get; set; }
     [Description("authentication-cache-groups")]
@@ -122,15 +122,15 @@ internal sealed class LdapServerSection
     [Description("enable-trusted-domains")]
     public bool EnableTrustedDomains { get; set; }
     [Description("enable-alternative-suffixes")]
-    public bool AlternativeSuffixesEnabled { get; set; }
+    public bool EnableAlternativeSuffixes { get; set; }
     [Description("included-domains")]
-    public string IncludedDomains { get; set; }
+    public string? IncludedDomains { get; set; }
     [Description("excluded-domains")]
-    public string ExcludedDomains { get; set; }
+    public string? ExcludedDomains { get; set; }
     [Description("included-suffixes")]
-    public string IncludedSuffixes { get; set; }
+    public string? IncludedSuffixes { get; set; }
     [Description("excluded-suffixes")]
-    public string ExcludedSuffixes { get; set; }
+    public string? ExcludedSuffixes { get; set; }
     [Description("bypass-second-factor-when-api-unreachable-groups")]
     public string BypassSecondFactorWhenApiUnreachableGroups { get; set; }
 }

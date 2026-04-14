@@ -16,7 +16,6 @@ using Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCases.
 using Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCases.PreAuthPostCheck;
 using Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCases.SecondFactor;
 using Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCases.StatusServerFilter;
-using Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCases.UserGroupLoading;
 using Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCases.UserNameValidation;
 
 namespace Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.Pipeline;
@@ -49,6 +48,7 @@ internal sealed class RadiusPipelineFactory : IRadiusPipelineFactory
     private List<IRadiusPipelineStep> CreatePipelineSteps(IClientConfiguration clientConfig)
     {
         var withLdap = clientConfig.LdapServers?.Count > 0;
+        var withTrust = OperatingSystem.IsWindows() && withLdap && clientConfig.LdapServers!.Any(s => s.EnableTrustedDomains);
         var steps = new List<IRadiusPipelineStep>
         {
             CreateStep<StatusServerFilteringStep>(),
@@ -58,8 +58,8 @@ internal sealed class RadiusPipelineFactory : IRadiusPipelineFactory
 
         if (withLdap)
         {
-            if (OperatingSystem.IsWindows()) steps.Add(CreateStep<LoadLdapForestStep>());
-            else steps.Add(CreateStep<LoadLdapSchemaStep>());
+            if (withTrust) steps.Add(CreateStep<LoadLdapForestStep>());
+            steps.Add(CreateStep<LoadLdapSchemaStep>());
             steps.Add(CreateStep<UserNameValidationStep>());
             steps.Add(CreateStep<ProfileLoadingStep>());
             steps.Add(CreateStep<AccessGroupsCheckingStep>());
@@ -78,11 +78,6 @@ internal sealed class RadiusPipelineFactory : IRadiusPipelineFactory
         {
             steps.Add(CreateStep<FirstFactorStep>());
             steps.Add(CreateStep<SecondFactorStep>());
-        }
-        
-        if (withLdap && ShouldLoadUserGroups(clientConfig))
-        {
-            steps.Add(CreateStep<UserGroupLoadingStep>());
         }
         
         return steps;
@@ -104,11 +99,4 @@ internal sealed class RadiusPipelineFactory : IRadiusPipelineFactory
         }
         _logger.LogDebug(builder.ToString());
     }
-    
-    private static bool ShouldLoadUserGroups(IClientConfiguration config) => config
-        .ReplyAttributes != null && config
-        .ReplyAttributes
-        .Values
-        .SelectMany(x => x)
-        .Any(x => x.IsMemberOf || x.UserGroupCondition.Count > 0);
 }

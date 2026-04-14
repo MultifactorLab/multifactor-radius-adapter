@@ -28,7 +28,7 @@ public static class RequestDataExtractor
     public static string? GetSecondFactorIdentity(RadiusPipelineContext context)
     {
         return string.IsNullOrWhiteSpace(context.LdapConfiguration?.IdentityAttribute) ? context.RequestPacket.UserName 
-            : context.LdapProfile?.Attributes?.Where(attr => attr.Name == context.LdapConfiguration.IdentityAttribute)
+            : context.LdapProfile?.Attributes?.Where(attr => string.Equals(attr.Name, context.LdapConfiguration.IdentityAttribute, StringComparison.CurrentCultureIgnoreCase))
             .SelectMany(attr => attr.Values)
             .FirstOrDefault(value => !string.IsNullOrWhiteSpace(value));
     }

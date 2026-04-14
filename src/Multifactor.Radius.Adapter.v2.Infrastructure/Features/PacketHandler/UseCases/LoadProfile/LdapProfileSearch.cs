@@ -41,15 +41,14 @@ internal sealed class LdapProfileSearch : IProfileSearch
         var filter = GetFilter(identityToSearch, dto.LdapSchema);
         _logger.LogDebug("Search base = '{searchBase}'. Filter for search = '{filter}'", dto.SearchBase.StringRepresentation, filter);
         
-        var connectionString = new LdapConnectionString(dto.ConnectionString, true);
+        var connectionString = new LdapConnectionString(dto.ConnectionString);
         var options = new LdapConnectionOptions(connectionString,
             dto.AuthType,
             dto.UserName,
             dto.Password,
             TimeSpan.FromSeconds(dto.BindTimeoutInSeconds));
         using var connection = _connectionFactory.CreateConnection(options);
-        var result = connection.Find(dto.SearchBase, filter, SearchScope.Subtree, attributes: dto.AttributeNames ?? []);
-        var entry = result.FirstOrDefault();
+        var entry = connection.FindOne(dto.SearchBase, filter, SearchScope.Subtree, attributes: dto.AttributeNames ?? []);
 
         return entry is null ? null : new LdapProfile(entry, dto.LdapSchema);
     }
