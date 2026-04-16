@@ -14,10 +14,9 @@ internal interface IProxySelector
 internal sealed class RoundRobinProxySelector : IProxySelector
 {
     private readonly IReadOnlyList<Uri>? _proxies;
-    private int _currentIndex = -1;
+    private int _currentIndex = 0;
     private readonly object _lock = new();
     private readonly ILogger<RoundRobinEndpointSelector> _logger;
-    private readonly TimeSpan _failureRetryPeriod = TimeSpan.FromMinutes(5);
 
     public RoundRobinProxySelector(
         ServiceConfiguration configuration, 

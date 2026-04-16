@@ -50,7 +50,7 @@ internal sealed class RoundRobinEndpointSelector : IEndpointSelector
 
         lock (_lock)
         {
-            _currentIndex = (_currentIndex + 1) % _endpoints.Count;
+            _currentIndex = _currentIndex + 1;
             if (IsCycleComplete) return null;
             var endpoint = _endpoints[_currentIndex];
             _logger.LogDebug("Selected endpoint: {Endpoint}", endpoint);

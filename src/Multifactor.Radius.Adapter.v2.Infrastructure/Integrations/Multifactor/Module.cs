@@ -18,6 +18,7 @@ public static class Module
         services.AddTelemetry();
         services.AddSingleton<IEndpointSelector, RoundRobinEndpointSelector>();
         services.AddSingleton<IProxySelector, RoundRobinProxySelector>();
+        services.AddSingleton<DynamicProxyHandler>();
         services.AddHttpClient("multifactor-api")
             .ConfigureHttpClient((serviceProvider, client) =>
             {
@@ -30,52 +31,32 @@ public static class Module
                     client.Timeout = config.RootConfiguration.MultifactorApiTimeout;
                 }
             })
-            .AddPolicyHandler((serviceProvider, request) => 
+            .AddPolicyHandler((serviceProvider, request) =>
             {
                 var config = serviceProvider.GetRequiredService<ServiceConfiguration>();
                 var timeout = config.RootConfiguration.MultifactorApiTimeout;
                 var endpointSelector = serviceProvider.GetRequiredService<IEndpointSelector>();
                 var proxySelector = serviceProvider.GetRequiredService<IProxySelector>();
+                var dynamicHandler = serviceProvider.GetRequiredService<DynamicProxyHandler>();
 
                 return Policy<HttpResponseMessage>
                     .Handle<HttpRequestException>()
                     .OrResult(response => !response.IsSuccessStatusCode && (int)response.StatusCode >= 500)
                     .RetryAsync(
-                        retryCount: config.RootConfiguration.MultifactorApiUrls.Count * 
+                        retryCount: config.RootConfiguration.MultifactorApiUrls.Count *
                                    (config.RootConfiguration.MultifactorApiProxy?.Count ?? 1) - 1,
                         onRetryAsync: async (outcome, retryNumber, context) =>
                         {
                             var (nextUrl, nextProxy) = await GetNextEndpointAndProxyAsync(
                                 endpointSelector, proxySelector);
                             request.RequestUri = new Uri(nextUrl, request.RequestUri!.PathAndQuery);
-                            if (context.TryGetValue("HttpClientHandler", out var handlerObj) && 
-                                handlerObj is HttpClientHandler handler)
-                            {
-                                handler.Proxy = nextProxy;
-                            }
+
+                            dynamicHandler.UpdateProxy();
                         })
                     .WrapAsync(Policy.TimeoutAsync<HttpResponseMessage>(timeout));
             })
             .ConfigurePrimaryHttpMessageHandler(provider =>
-            {
-                var proxySelector = provider.GetRequiredService<IProxySelector>();
-                
-                var handler = new HttpClientHandler
-                {
-                    MaxConnectionsPerServer = 100,
-                    SslProtocols = SslProtocols.Tls13 | SslProtocols.Tls12
-                };
-                
-                var initialProxy = proxySelector.GetCurrentProxy();
-                if (initialProxy is not null)
-                {
-                    if (!WebProxyFactory.TryCreateWebProxy(initialProxy, out var webProxy))
-                        throw new Exception("Unable to initialize WebProxy. Please, check whether multifactor-api-proxy URI is valid.");
-                    
-                    handler.Proxy = webProxy;
-                }
-                return handler;
-            });
+                provider.GetRequiredService<DynamicProxyHandler>());
     }
 
     private static async Task<(Uri url, WebProxy? proxy)> GetNextEndpointAndProxyAsync(
