@@ -62,6 +62,8 @@ internal sealed class AppSettingsSection
     public string AdapterClientEndpoint { get; set; }
     [Description("radius-client-ip")]
     public string RadiusClientIp { get; set; }
+    [Description("radius-client-nas-ip")]
+    public string RadiusClientNasIp { get; set; }
     [Description("radius-client-nas-identifier")]
     public string RadiusClientNasIdentifier { get; set; }
     [Description("radius-shared-secret")]

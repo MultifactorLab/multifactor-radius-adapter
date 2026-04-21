@@ -16,10 +16,9 @@ namespace Multifactor.Radius.Adapter.v2.Infrastructure.Features.PacketHandler.Us
 
 internal sealed class LdapProfileSearch : IProfileSearch
 {
-    private readonly ILogger<IProfileSearch> _logger;
     private readonly ILdapConnectionFactory _connectionFactory;
-    public LdapProfileSearch(ILogger<IProfileSearch> logger,
-        ILdapConnectionFactory connectionFactory)
+    private readonly ILogger<IProfileSearch> _logger;
+    public LdapProfileSearch(ILdapConnectionFactory connectionFactory, ILogger<IProfileSearch> logger)
     {
         _logger = logger;
         _connectionFactory = connectionFactory;
@@ -27,6 +26,7 @@ internal sealed class LdapProfileSearch : IProfileSearch
     
     public ILdapProfile? Execute(FindUserDto dto)
     {
+        ArgumentNullException.ThrowIfNull(dto);
         _logger.LogDebug("Try to find '{userIdentity}' profile at '{domain}'.", dto.UserIdentity.Identity, dto.SearchBase.StringRepresentation);
 
         var identityToSearch = dto.UserIdentity;

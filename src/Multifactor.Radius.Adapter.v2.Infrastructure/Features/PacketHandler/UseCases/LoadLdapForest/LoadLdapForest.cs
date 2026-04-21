@@ -20,8 +20,8 @@ internal sealed class LoadLdapForest : ILoadLdapForest
     private readonly LdapSchemaLoader _schemaLoader;
     private readonly ILogger<ILoadLdapForest> _logger;
 
-    public LoadLdapForest(ILdapConnectionFactory connectionFactory,
-        ILogger<ILoadLdapForest> logger, LdapSchemaLoader schemaLoader)
+    public LoadLdapForest(ILdapConnectionFactory connectionFactory, LdapSchemaLoader schemaLoader,
+        ILogger<ILoadLdapForest> logger)
     {
         _connectionFactory = connectionFactory;
         _logger = logger;
@@ -38,6 +38,7 @@ internal sealed class LoadLdapForest : ILoadLdapForest
     /// </summary>
     public IForestMetadata? Execute(LoadMetadataDto dto)
     {
+        ArgumentNullException.ThrowIfNull(dto);
         try
         {
             _logger.LogDebug("Loading forest metadata from {connectionString}", dto.ConnectionString);

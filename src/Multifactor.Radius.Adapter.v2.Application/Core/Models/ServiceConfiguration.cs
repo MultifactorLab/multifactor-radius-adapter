@@ -17,7 +17,7 @@ public sealed class ServiceConfiguration
         return ClientsConfigurations.FirstOrDefault(config => config.RadiusClientNasIdentifier == nasIdentifier);
     } 
     
-    public IClientConfiguration? GetClientConfiguration(IPAddress ip)
+    public IClientConfiguration? GetClientConfigurationByIp(IPAddress ip)
     {
         if (IsRootClientMode)
         {
@@ -26,5 +26,16 @@ public sealed class ServiceConfiguration
         
         return ClientsConfigurations.FirstOrDefault(config =>
             config.RadiusClientIps.Any() && config.RadiusClientIps.Contains(ip));
+    }
+
+    public IClientConfiguration? GetClientConfigurationByNasIp(IPAddress ip)
+    {
+        if (IsRootClientMode)
+        {
+            return ClientsConfigurations[0];
+        }
+
+        return ClientsConfigurations.FirstOrDefault(config =>
+            config.RadiusClientNasIps.Any() && config.RadiusClientNasIps.Contains(ip));
     }
 }

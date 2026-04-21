@@ -19,6 +19,7 @@ public interface IClientConfiguration
     public string RadiusSharedSecret { get; }
     public TimeSpan NpsServerTimeout { get; }
     public IReadOnlyList<IPAddress?> RadiusClientIps { get; }
+    public IReadOnlyList<IPAddress?> RadiusClientNasIps { get; }
     public IReadOnlyList<IPEndPoint> NpsServerEndpoints { get; }
     
     public Privacy Privacy { get; }
