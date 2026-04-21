@@ -3,7 +3,6 @@ using Multifactor.Core.Ldap.Schema;
 using Multifactor.Radius.Adapter.v2.Application.Core.Models;
 using Multifactor.Radius.Adapter.v2.Application.Core.Models.Dto;
 using Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCases.LoadSchema.Ports;
-using Multifactor.Radius.Adapter.v2.Application.SharedPorts;
 
 namespace Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCases.LoadSchema;
 

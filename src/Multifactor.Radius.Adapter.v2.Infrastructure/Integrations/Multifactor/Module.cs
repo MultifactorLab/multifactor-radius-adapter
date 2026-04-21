@@ -1,6 +1,5 @@
 using System.Diagnostics;
 using System.Net;
-using System.Security.Authentication;
 using Microsoft.Extensions.DependencyInjection;
 using Multifactor.Radius.Adapter.v2.Application.Core.Models;
 using OpenTelemetry.Trace;
@@ -44,7 +43,7 @@ public static class Module
                     .OrResult(response => !response.IsSuccessStatusCode && (int)response.StatusCode >= 500)
                     .RetryAsync(
                         retryCount: config.RootConfiguration.MultifactorApiUrls.Count *
-                                   (config.RootConfiguration.MultifactorApiProxy?.Count ?? 1) - 1,
+                        (config.RootConfiguration.MultifactorApiProxy?.Count ?? 1) - 1,
                         onRetryAsync: async (outcome, retryNumber, context) =>
                         {
                             var (nextUrl, nextProxy) = await GetNextEndpointAndProxyAsync(
@@ -56,7 +55,12 @@ public static class Module
                     .WrapAsync(Policy.TimeoutAsync<HttpResponseMessage>(timeout));
             })
             .ConfigurePrimaryHttpMessageHandler(provider =>
-                provider.GetRequiredService<DynamicProxyHandler>());
+            {
+                var config = provider.GetRequiredService<ServiceConfiguration>();
+                var handler = provider.GetRequiredService<DynamicProxyHandler>();
+                handler.SetProxyTimeout(config.RootConfiguration.MultifactorApiProxyTimeout);
+                return handler;
+            });
     }
 
     private static async Task<(Uri url, WebProxy? proxy)> GetNextEndpointAndProxyAsync(

@@ -1,16 +1,13 @@
 using System.DirectoryServices.Protocols;
 using Microsoft.Extensions.Logging;
-using Multifactor.Core.Ldap;
 using Multifactor.Core.Ldap.Attributes;
 using Multifactor.Core.Ldap.Name;
 using Multifactor.Core.Ldap.Schema;
 using Multifactor.Radius.Adapter.v2.Application.Core.Models;
 using Multifactor.Radius.Adapter.v2.Application.Core.Models.Abstractions;
-using Multifactor.Radius.Adapter.v2.Application.Core.Models.Dto;
 using Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCases.LoadLdapForest.Models;
 using Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCases.LoadProfile.Models;
 using Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCases.LoadProfile.Ports;
-using Multifactor.Radius.Adapter.v2.Application.SharedPorts;
 
 namespace Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCases.LoadProfile;
 

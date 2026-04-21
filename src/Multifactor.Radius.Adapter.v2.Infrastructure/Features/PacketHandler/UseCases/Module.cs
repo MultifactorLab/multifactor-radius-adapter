@@ -1,5 +1,4 @@
 using Microsoft.Extensions.DependencyInjection;
-using Multifactor.Radius.Adapter.v2.Infrastructure.Features.PacketHandler.Adapters;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Features.PacketHandler.UseCases.ChangePassword;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Features.PacketHandler.UseCases.FirstFactor;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Features.PacketHandler.UseCases.LoadLdapForest;

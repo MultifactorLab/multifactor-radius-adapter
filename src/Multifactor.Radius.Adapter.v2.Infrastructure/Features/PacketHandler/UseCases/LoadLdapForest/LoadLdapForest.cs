@@ -1,5 +1,4 @@
-﻿using Elastic.CommonSchema;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using Multifactor.Core.Ldap;
 using Multifactor.Core.Ldap.Connection;
 using Multifactor.Core.Ldap.Connection.LdapConnectionFactory;
