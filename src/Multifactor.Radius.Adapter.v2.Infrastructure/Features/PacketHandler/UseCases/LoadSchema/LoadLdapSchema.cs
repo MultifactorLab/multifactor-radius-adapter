@@ -16,6 +16,7 @@ internal sealed class LoadLdapSchema : ILoadLdapSchema
     }
     public ILdapSchema? Execute(LoadLdapSchemaDto dto)
     {
+        ArgumentNullException.ThrowIfNull(dto);
         var options = new LdapConnectionOptions(
             new LdapConnectionString(dto.ConnectionString),
             dto.AuthType,

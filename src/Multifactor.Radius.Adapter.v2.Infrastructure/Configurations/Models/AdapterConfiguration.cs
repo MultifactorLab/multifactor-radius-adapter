@@ -55,13 +55,15 @@ internal sealed class AppSettingsSection
     [Description("sign-up-groups")]
     public string SignUpGroups { get; set; }
     [Description("bypass-second-factor-when-api-unreachable")]
-    public bool BypassSecondFactorWhenApiUnreachable { get; set; }
+    public bool? BypassSecondFactorWhenApiUnreachable { get; set; }
     [Description("first-factor-authentication-source")]
     public string FirstFactorAuthenticationSource { get; set; }
     [Description("adapter-client-endpoint")]
     public string AdapterClientEndpoint { get; set; }
     [Description("radius-client-ip")]
     public string RadiusClientIp { get; set; }
+    [Description("radius-client-nas-ip")]
+    public string RadiusClientNasIp { get; set; }
     [Description("radius-client-nas-identifier")]
     public string RadiusClientNasIdentifier { get; set; }
     [Description("radius-shared-secret")]
@@ -130,7 +132,7 @@ internal sealed class LdapServerSection
     [Description("excluded-suffixes")]
     public string? ExcludedSuffixes { get; set; }
     [Description("bypass-second-factor-when-api-unreachable-groups")]
-    public string BypassSecondFactorWhenApiUnreachableGroups { get; set; }
+    public string? BypassSecondFactorWhenApiUnreachableGroups { get; set; }
 }
 
 internal sealed class RadiusReplySection

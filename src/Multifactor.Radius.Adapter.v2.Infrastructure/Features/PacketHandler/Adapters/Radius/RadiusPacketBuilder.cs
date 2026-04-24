@@ -181,7 +181,7 @@ internal sealed class RadiusPacketBuilder : IRadiusPacketBuilder
                         break;
                     default:
                         throw new InvalidOperationException(
-                            "Unknown attribute {attribute.Key}, check spelling or dictionary");
+                            $"Unknown attribute {attribute.Name}, check spelling or dictionary");
                 }
     
                 headerBytes[1] = (byte)(headerBytes.Length + contentBytes.Length);

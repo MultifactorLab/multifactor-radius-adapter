@@ -66,7 +66,7 @@ public static class SerilogLoggerFactory
                     logsPath,
                     flushToDiskInterval: TimeSpan.FromSeconds(1),
                     rollingInterval: RollingInterval.Day,
-                    fileSizeLimitBytes: fileSize) ;
+                    fileSizeLimitBytes: fileSize);
 
             if (!string.IsNullOrWhiteSpace(fileTemplate))
             {

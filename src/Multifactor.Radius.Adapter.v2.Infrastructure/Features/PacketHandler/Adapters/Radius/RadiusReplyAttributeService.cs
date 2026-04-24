@@ -25,7 +25,7 @@ internal sealed class RadiusReplyAttributeService : IRadiusReplyAttributeService
     
     public IDictionary<string, List<object>> GetReplyAttributes(GetReplyAttributesRequest request)
     {
-        ArgumentNullException.ThrowIfNull(request, nameof(request));
+        ArgumentNullException.ThrowIfNull(request);
         ArgumentNullException.ThrowIfNull(request.ReplyAttributes, nameof(request.ReplyAttributes));
         
         var result = new Dictionary<string, List<object>>();

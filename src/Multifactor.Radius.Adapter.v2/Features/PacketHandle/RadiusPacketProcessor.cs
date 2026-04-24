@@ -111,9 +111,14 @@ internal sealed class RadiusPacketProcessor : IRadiusPacketProcessor
             
             return true;
         }
-        catch (PipelineNotFoundException ex)
+        catch (PipelineNotFoundException)
         {
-            _logger.LogError(ex, "Pipeline configuration error for client {ClientName}", clientConfiguration.Name);
+            _logger.LogError(null, "Pipeline configuration error for client {ClientName}", clientConfiguration.Name);
+            throw;
+        }
+        catch (InvalidOperationException ex)
+        {
+            _logger.LogError(null, "Pipeline configuration error for client {ClientName}. Reason: {Reason}", clientConfiguration.Name, ex.Message);
             throw;
         }
         catch (Exception ex)
