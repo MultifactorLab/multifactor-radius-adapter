@@ -20,8 +20,8 @@ internal sealed class ClientConfiguration : IClientConfiguration
     public AuthenticationSource FirstFactorAuthenticationSource { get; private set; }
     public IPEndPoint AdapterClientEndpoint { get; private set; }
 
-    public IReadOnlyList<IPAddress>? RadiusClientIps { get; private set; }
-    public IReadOnlyList<IPAddress>? RadiusClientNasIps { get; private set; }
+    public IReadOnlyList<IpEntry>? RadiusClientIps { get; private set; }
+    public IReadOnlyList<IpEntry>? RadiusClientNasIps { get; private set; }
     public string RadiusClientNasIdentifier { get; private set; }
     public string RadiusSharedSecret { get; private init; }
     public IReadOnlyList<IPEndPoint> NpsServerEndpoints { get; private set; }
@@ -34,7 +34,7 @@ internal sealed class ClientConfiguration : IClientConfiguration
     public CredentialDelay? InvalidCredentialDelay { get; private set; }
     public string? CallingStationIdAttribute { get; private init; }
     public bool IsIpFromUdp { get; private init; }  
-    public IReadOnlyList<IPAddressRange> IpWhiteList { get; private set; }
+    public IReadOnlyList<IpEntry> IpWhiteList { get; private set; }
     public bool IsAccessChallengePassword { get; private init; }
 
 
@@ -64,7 +64,7 @@ internal sealed class ClientConfiguration : IClientConfiguration
                     "Property '{prop}' is required. Config name: '{0}'", configurationFile.FileName),
             CallingStationIdAttribute = configurationFile.AppSettings.CallingStationIdAttribute,
             IsIpFromUdp = configurationFile.AppSettings.IpFromUdp ?? true,
-            BypassSecondFactorWhenApiUnreachable = configurationFile.AppSettings.BypassSecondFactorWhenApiUnreachable,
+            BypassSecondFactorWhenApiUnreachable = configurationFile.AppSettings.BypassSecondFactorWhenApiUnreachable ?? true,
             Privacy = new Privacy(PrivacyMode.None, []),
             PreAuthenticationMethod = PreAuthMode.None,
             AuthenticationCacheLifetime = TimeSpan.Zero,
@@ -105,7 +105,7 @@ internal sealed class ClientConfiguration : IClientConfiguration
             }
 
             if (!string.IsNullOrWhiteSpace(configurationFile.AppSettings.RadiusClientIp))
-                if (ConfigurationValueParser.TryParseIpAddress(configurationFile.AppSettings.RadiusClientIp,
+                if (ConfigurationValueParser.TryParseIpEntries(configurationFile.AppSettings.RadiusClientIp,
                         out var address))
                 {
                     dto.RadiusClientIps = address;
@@ -118,7 +118,7 @@ internal sealed class ClientConfiguration : IClientConfiguration
                     dto.RadiusClientIps = [];
                 }
             if (!string.IsNullOrWhiteSpace(configurationFile.AppSettings.RadiusClientNasIp))
-                if (ConfigurationValueParser.TryParseIpAddress(configurationFile.AppSettings.RadiusClientNasIp,
+                if (ConfigurationValueParser.TryParseIpEntries(configurationFile.AppSettings.RadiusClientNasIp,
                         out var address))
                 {
                     dto.RadiusClientNasIps = address;
@@ -206,7 +206,7 @@ internal sealed class ClientConfiguration : IClientConfiguration
             }
 
         if (!string.IsNullOrWhiteSpace(configurationFile.AppSettings.IpWhiteList))
-            if (ConfigurationValueParser.TryParseIpRanges(configurationFile.AppSettings.IpWhiteList,
+            if (ConfigurationValueParser.TryParseIpEntries(configurationFile.AppSettings.IpWhiteList,
                     out var ipWhiteList))
             {
                 dto.IpWhiteList = ipWhiteList;

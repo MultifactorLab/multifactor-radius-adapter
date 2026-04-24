@@ -25,7 +25,9 @@ public sealed class ServiceConfiguration
         }
         
         return ClientsConfigurations.FirstOrDefault(config =>
-            config.RadiusClientIps.Any() && config.RadiusClientIps.Contains(ip));
+            config.RadiusClientIps is not null
+            && config.RadiusClientIps.Any() 
+            && IpEntry.Matches(config.RadiusClientIps, ip));
     }
 
     public IClientConfiguration? GetClientConfigurationByNasIp(IPAddress ip)
@@ -36,6 +38,8 @@ public sealed class ServiceConfiguration
         }
 
         return ClientsConfigurations.FirstOrDefault(config =>
-            config.RadiusClientNasIps.Any() && config.RadiusClientNasIps.Contains(ip));
+            config.RadiusClientNasIps is not null 
+            && config.RadiusClientNasIps.Any() 
+            && IpEntry.Matches(config.RadiusClientNasIps, ip));
     }
 }

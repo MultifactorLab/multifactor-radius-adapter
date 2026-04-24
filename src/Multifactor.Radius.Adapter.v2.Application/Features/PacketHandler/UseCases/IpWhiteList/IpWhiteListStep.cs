@@ -24,9 +24,9 @@ internal sealed class IpWhiteListStep : IRadiusPipelineStep
         var callingStationId = context.RequestPacket.GetCallingStationIdAttribute(callingStationIdAttributeName);
 
         var clientIp =  IPAddress.TryParse(callingStationId, out var callingStationIp)
-            ? callingStationIp : context.RequestPacket.RemoteEndpoint?.Address;
+            ? callingStationIp : context.RequestPacket.RemoteEndpoint!.Address;
         
-        var isIpInRange = ipWhiteList.Any(x => x.Contains(clientIp));
+        var isIpInRange = IpEntry.Matches(ipWhiteList, clientIp);
         var rangesStr = string.Join(", ", ipWhiteList);
         if (isIpInRange)
         {

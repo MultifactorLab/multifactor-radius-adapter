@@ -1,6 +1,5 @@
 using System.Net;
 using Multifactor.Radius.Adapter.v2.Application.Core.Enum;
-using NetTools;
 
 namespace Multifactor.Radius.Adapter.v2.Application.Core.Models.Abstractions;
 
@@ -18,8 +17,8 @@ public interface IClientConfiguration
     public string RadiusClientNasIdentifier { get; }
     public string RadiusSharedSecret { get; }
     public TimeSpan NpsServerTimeout { get; }
-    public IReadOnlyList<IPAddress?> RadiusClientIps { get; }
-    public IReadOnlyList<IPAddress?> RadiusClientNasIps { get; }
+    public IReadOnlyList<IpEntry>? RadiusClientIps { get; }
+    public IReadOnlyList<IpEntry>? RadiusClientNasIps { get; }
     public IReadOnlyList<IPEndPoint> NpsServerEndpoints { get; }
     
     public Privacy Privacy { get; }
@@ -29,7 +28,7 @@ public interface IClientConfiguration
     public CredentialDelay? InvalidCredentialDelay { get; }
     public string? CallingStationIdAttribute { get; }  
     public bool IsIpFromUdp { get; }  
-    public IReadOnlyList<IPAddressRange> IpWhiteList { get; }
+    public IReadOnlyList<IpEntry> IpWhiteList { get; }
     public bool IsAccessChallengePassword { get; }
 
     
