@@ -105,9 +105,11 @@ internal sealed class RadiusUdpAdapter : IRadiusUdpAdapter
         {
             throw new ArgumentNullException(nameof(udpPacket.Buffer));
         }
-        if(RadiusNasIdentifierExtractor.TryExtract(udpPacket.Buffer, out var nasIdentifier))
+        if(RadiusNasExtractor.TryExtractIdentifier(udpPacket.Buffer, out var nasIdentifier))
             clientConfiguration = _serviceConfiguration.GetClientConfiguration(nasIdentifier);
-        clientConfiguration ??= _serviceConfiguration.GetClientConfiguration(udpPacket.RemoteEndPoint.Address);
+        if (RadiusNasExtractor.TryExtractIpAddress(udpPacket.Buffer, out var nasIp))
+            clientConfiguration = _serviceConfiguration.GetClientConfigurationByNasIp(nasIp);
+        clientConfiguration ??= _serviceConfiguration.GetClientConfigurationByIp(udpPacket.RemoteEndPoint.Address);
 
         return clientConfiguration;
     }

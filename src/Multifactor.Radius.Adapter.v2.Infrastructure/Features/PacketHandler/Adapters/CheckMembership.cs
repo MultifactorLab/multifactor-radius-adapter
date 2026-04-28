@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using Multifactor.Core.Ldap;
 using Multifactor.Core.Ldap.Connection;
 using Multifactor.Core.Ldap.Connection.LdapConnectionFactory;
@@ -12,18 +13,20 @@ internal sealed class CheckMembership : ICheckMembership
 {
     private readonly ILdapConnectionFactory _connectionFactory;
     private readonly IMembershipCheckerFactory _ldapMembershipCheckerFactory;
+    private readonly ILogger<ICheckMembership> _logger;
 
-    public CheckMembership(ILdapConnectionFactory connectionFactory, IMembershipCheckerFactory ldapMembershipCheckerFactory)
+    public CheckMembership(ILdapConnectionFactory connectionFactory, IMembershipCheckerFactory ldapMembershipCheckerFactory, ILogger<ICheckMembership> logger)
     {
         _connectionFactory = connectionFactory;
         _ldapMembershipCheckerFactory = ldapMembershipCheckerFactory;
+        _logger = logger;
     }
 
     public bool Execute(MembershipDto dto)
     {        
         ArgumentNullException.ThrowIfNull(dto);
         if(dto.TargetGroups == null || dto.TargetGroups.Length == 0)
-            throw new InvalidOperationException();
+            throw new InvalidOperationException("TargetGroups is empty");
         var options = new LdapConnectionOptions(
             new LdapConnectionString(dto.ConnectionString, true), 
             dto.AuthType, 
@@ -41,7 +44,9 @@ internal sealed class CheckMembership : ICheckMembership
     
     private bool IsMemberOf(MembershipDto request, ILdapConnection connection, DistinguishedName? searchBase = null)
     {
-        var membershipChecker = _ldapMembershipCheckerFactory.GetMembershipChecker(request.LdapSchema, connection, searchBase ?? request.LdapSchema.NamingContext);
-        return membershipChecker.IsMemberOf(request.DistinguishedName, request.TargetGroups.ToArray()); 
+        var searchDn = searchBase ?? request.LdapSchema.NamingContext;
+        _logger.LogDebug("Try member search. User = '{user}'. Search base = '{searchBase}'. Groups = '{@targetGroups}'", request.DistinguishedName.StringRepresentation, searchDn, request.TargetGroups.Select(g=>g.StringRepresentation));
+        var membershipChecker = _ldapMembershipCheckerFactory.GetMembershipChecker(request.LdapSchema, connection, searchDn);
+        return membershipChecker.IsMemberOf(request.DistinguishedName, request.TargetGroups); 
     }
 }

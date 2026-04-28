@@ -35,7 +35,7 @@ internal sealed class LoadLdapSchemaStep: IRadiusPipelineStep
         if (schema is null)
         {
             _logger.LogWarning("Unable to load LDAP schema for '{domain}'", context.LdapConfiguration.ConnectionString);
-            throw new InvalidOperationException();
+            throw new InvalidOperationException($"Unable to load LDAP schema for '{context.LdapConfiguration.ConnectionString}");
         }
         context.LdapSchema = schema;
         return Task.CompletedTask;

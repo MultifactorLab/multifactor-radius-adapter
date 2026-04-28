@@ -26,7 +26,7 @@ internal sealed class LdapServerConfiguration : ILdapServerConfiguration
     public IReadOnlyList<string> ExcludedDomains { get; init; }
     public IReadOnlyList<string> IncludedSuffixes { get; init; }
     public IReadOnlyList<string> ExcludedSuffixes { get; init; }
-    public IReadOnlyList<string> BypassSecondFactorWhenApiUnreachableGroups { get; init; }
+    public IReadOnlyList<DistinguishedName> BypassSecondFactorWhenApiUnreachableGroups { get; init; }
 
     public static LdapServerConfiguration FromConfiguration(LdapServerSection ldapServerSection, string fileName)
     {
@@ -61,16 +61,19 @@ internal sealed class LdapServerConfiguration : ILdapServerConfiguration
                     ? secondFaGroups
                     : [],
             SecondFaBypassGroups =
-                ConfigurationValueParser.TryParseDistinguishedNames(ldapServerSection.SecondFaBypassGroups, out var secondFaBypassGroups)
+                ConfigurationValueParser.TryParseDistinguishedNames(ldapServerSection.SecondFaBypassGroups, 
+                    out var secondFaBypassGroups)
                     ? secondFaBypassGroups
                     : [],
             LoadNestedGroups = ldapServerSection.LoadNestedGroups ?? true,
             NestedGroupsBaseDns =
-                ConfigurationValueParser.TryParseDistinguishedNames(ldapServerSection.NestedGroupsBaseDn, out var nestedGroupsBaseDn)
+                ConfigurationValueParser.TryParseDistinguishedNames(ldapServerSection.NestedGroupsBaseDn, 
+                    out var nestedGroupsBaseDn)
                     ? nestedGroupsBaseDn
                     : [],
             AuthenticationCacheGroups =
-                ConfigurationValueParser.TryParseDistinguishedNames(ldapServerSection.AuthenticationCacheGroups, out var authenticationCacheGroups)
+                ConfigurationValueParser.TryParseDistinguishedNames(ldapServerSection.AuthenticationCacheGroups, 
+                    out var authenticationCacheGroups)
                     ? authenticationCacheGroups
                     : [],
             PhoneAttributes =
@@ -102,7 +105,7 @@ internal sealed class LdapServerConfiguration : ILdapServerConfiguration
                     out var excludedSuffixes)
                     ? excludedSuffixes
                     : [],
-            BypassSecondFactorWhenApiUnreachableGroups = ConfigurationValueParser.TryParseStringList(ldapServerSection.BypassSecondFactorWhenApiUnreachableGroups,
+            BypassSecondFactorWhenApiUnreachableGroups = ConfigurationValueParser.TryParseDistinguishedNames(ldapServerSection.BypassSecondFactorWhenApiUnreachableGroups,
                 out var bypassSecondFactorWhenApiUnreachableGroups)
                 ? bypassSecondFactorWhenApiUnreachableGroups
                 : []

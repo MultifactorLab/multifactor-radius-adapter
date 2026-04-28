@@ -2,11 +2,13 @@ using System.Net;
 using Microsoft.Extensions.Logging;
 using Multifactor.Radius.Adapter.v2.Application.Core.Enum;
 using Multifactor.Radius.Adapter.v2.Application.Core.Models;
+using Multifactor.Radius.Adapter.v2.Application.Core.Models.Dto;
 using Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCases.SecondFactor.Multifactor.Exceptions;
 using Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCases.SecondFactor.Multifactor.Models;
 using Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCases.SecondFactor.Multifactor.Models.Enum;
 using Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCases.SecondFactor.Multifactor.Ports;
 using Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCases.SecondFactor.Ports;
+using Multifactor.Radius.Adapter.v2.Application.SharedPorts;
 
 namespace Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCases.SecondFactor.Multifactor;
 
@@ -14,23 +16,25 @@ public sealed class MultifactorApiService
 {
     private readonly ICreateAccessRequest _accessRequest;
     private readonly ISendChallenge _sendChallenge;
+    private readonly ICheckMembership _checkMembership;
     private readonly IAuthenticatedClientCache _authenticatedClientCache;
     private readonly ILogger<MultifactorApiService> _logger;
 
-    public MultifactorApiService(
-        IAuthenticatedClientCache authenticatedClientCache,
-        ILogger<MultifactorApiService> logger, ICreateAccessRequest accessRequest, ISendChallenge sendChallenge)
+    public MultifactorApiService(IAuthenticatedClientCache authenticatedClientCache, 
+        ICheckMembership checkMembership, ICreateAccessRequest accessRequest, 
+        ISendChallenge sendChallenge, ILogger<MultifactorApiService> logger)
     {
         _authenticatedClientCache = authenticatedClientCache;
-        _logger = logger;
         _accessRequest = accessRequest;
         _sendChallenge = sendChallenge;
+        _checkMembership = checkMembership;
+        _logger = logger;
     }
 
     public async Task<SecondFactorResponse> CreateSecondFactorRequestAsync(RadiusPipelineContext context, bool cacheEnabled)
     {
-        ArgumentNullException.ThrowIfNull(context, nameof(context));
-        _logger.LogInformation($"Creating second-factor request for user {context.RequestPacket.UserName}");
+        ArgumentNullException.ThrowIfNull(context);
+        _logger.LogInformation("Creating second-factor request for user {RequestPacketUserName}", context.RequestPacket.UserName);
         var personalData = RequestDataExtractor.ExtractPersonalData(context);
         if (string.IsNullOrWhiteSpace(personalData.Identity))
         {
@@ -96,10 +100,7 @@ public sealed class MultifactorApiService
         }
         catch (MultifactorApiUnreachableException apiEx)
         {
-            return ProcessMfException(apiEx, personalData.Identity,
-                context.ClientConfiguration.BypassSecondFactorWhenApiUnreachable, 
-                context.LdapConfiguration?.BypassSecondFactorWhenApiUnreachableGroups, 
-                context.UserGroups, context.RequestPacket.RemoteEndpoint);
+            return ProcessMfException(apiEx, context, personalData.Identity);
         }
         catch (Exception ex)
         {
@@ -151,10 +152,7 @@ public sealed class MultifactorApiService
         }
         catch (MultifactorApiUnreachableException apiEx)
         {
-            return ProcessMfException(apiEx, identity,
-                context.ClientConfiguration.BypassSecondFactorWhenApiUnreachable, 
-                context.LdapConfiguration?.BypassSecondFactorWhenApiUnreachableGroups, 
-                context.UserGroups, context.RequestPacket.RemoteEndpoint);
+            return ProcessMfException(apiEx, context, identity);
         }
         catch (Exception ex)
         {
@@ -281,31 +279,53 @@ public sealed class MultifactorApiService
     }
 
     private SecondFactorResponse ProcessMfException(
-        MultifactorApiUnreachableException apiEx, 
-        string identity, 
-        bool bypassSecondFactorWhenApiUnreachable, 
-        IReadOnlyList<string> bypassSecondFactorWhenApiUnreachableGroups,
-        HashSet<string> userGroups,
-        IPEndPoint remoteEndpoint)
+        MultifactorApiUnreachableException apiEx,
+        RadiusPipelineContext context,
+        string identity)
     {
         _logger.LogError(apiEx,
             "Error occured while requesting API for user '{user:l}' from {host:l}:{port}, {msg:l}",
             identity,
-            remoteEndpoint.Address,
-            remoteEndpoint.Port,
+            context.RequestPacket.RemoteEndpoint.Address,
+            context.RequestPacket.RemoteEndpoint.Port,
             apiEx.Message);
         
-        if (bypassSecondFactorWhenApiUnreachable && 
-                (!bypassSecondFactorWhenApiUnreachableGroups.Any() 
-                || bypassSecondFactorWhenApiUnreachableGroups.Intersect(userGroups).Any())
-            )
+        if (IsUserPassThrow(context))
         {
             var code = ConvertToAuthCode(AccessRequestResponse.Bypass);
             return new SecondFactorResponse(code);
         }
-        
         var radCode = ConvertToAuthCode(null);
         return new SecondFactorResponse(radCode);
+    }
+
+    private bool IsUserPassThrow(RadiusPipelineContext context)
+    {
+        if (!context.ClientConfiguration.BypassSecondFactorWhenApiUnreachable)
+        {
+            return false;
+        }
+        var bypassSecondFactorWhenApiUnreachableGroups =
+            context.LdapConfiguration?.BypassSecondFactorWhenApiUnreachableGroups;
+        if (bypassSecondFactorWhenApiUnreachableGroups is null || !bypassSecondFactorWhenApiUnreachableGroups.Any())
+        {
+            return true;
+        }
+        var userIdentity = new UserIdentity(context.RequestPacket.UserName);
+        var domainInfo = context.ForestMetadata?.DetermineForestDomain(userIdentity);
+        var isMember = _checkMembership.Execute(MembershipDto.FromContext(context, bypassSecondFactorWhenApiUnreachableGroups,
+            domainInfo));
+        if (isMember)
+        {
+            _logger.LogInformation("User '{user:l}' is a member of the 2FA bypass group in '{domain:l}'", 
+                context.RequestPacket.UserName, context.LdapConfiguration?.ConnectionString);
+        }
+        else
+        { 
+            _logger.LogInformation("User '{user:l}' is not a member of the 2FA bypass group in '{domain:l}'", 
+                context.RequestPacket.UserName, context.LdapConfiguration?.ConnectionString);
+        }
+        return isMember;
     }
 
     private SecondFactorResponse ProcessException(Exception ex, string identity, IPEndPoint remoteEndpoint)

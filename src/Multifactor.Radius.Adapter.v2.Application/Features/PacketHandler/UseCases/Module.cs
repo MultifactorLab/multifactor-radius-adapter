@@ -8,6 +8,7 @@ using Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCases.
 using Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCases.LoadLdapForest;
 using Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCases.LoadProfile;
 using Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCases.LoadSchema;
+using Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCases.LoadUserGroup;
 using Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCases.PreAuthCheck;
 using Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCases.PreAuthPostCheck;
 using Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCases.SecondFactor;
@@ -34,6 +35,7 @@ public static class Module
             .AddAccessGroupsCheck()
             .AddAccessChallenge()
             .AddPreAuthCheck()
-            .AddProfileLoading();
+            .AddProfileLoading()
+            .AddUserGroupLoading();
     }
 }

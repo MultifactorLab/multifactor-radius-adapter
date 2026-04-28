@@ -1,5 +1,6 @@
 using System.DirectoryServices.Protocols;
 using System.Text;
+using Microsoft.Extensions.Logging;
 using Multifactor.Core.Ldap;
 using Multifactor.Core.Ldap.Connection;
 using Multifactor.Core.Ldap.Connection.LdapConnectionFactory;
@@ -13,15 +14,18 @@ namespace Multifactor.Radius.Adapter.v2.Infrastructure.Features.PacketHandler.Us
 internal sealed class ChangePassword : IChangePassword
 {
     private readonly ILdapConnectionFactory _connectionFactory;
+    private readonly ILogger<IChangePassword> _logger;
 
-    public ChangePassword(ILdapConnectionFactory connectionFactory)
+    public ChangePassword(ILdapConnectionFactory connectionFactory, ILogger<IChangePassword> logger)
     {
         _connectionFactory = connectionFactory;
+        _logger = logger;
     }
 
     public bool Execute(ChangeUserPasswordDto dto)
     {
-        ArgumentNullException.ThrowIfNull(dto, nameof(dto));
+        ArgumentNullException.ThrowIfNull(dto);
+        _logger.LogDebug("Try to change password for '{userIdentity}'.",dto.DistinguishedName);
         var options = new LdapConnectionOptions(new LdapConnectionString(dto.ConnectionString), 
             dto.AuthType,
             dto.UserName, 

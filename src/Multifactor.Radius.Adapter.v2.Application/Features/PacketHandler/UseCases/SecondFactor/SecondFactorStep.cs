@@ -86,13 +86,13 @@ internal sealed class SecondFactorStep : IRadiusPipelineStep
             var userIdentity = new UserIdentity(context.RequestPacket.UserName);
             var domainInfo = context.ForestMetadata?.DetermineForestDomain(userIdentity);
             var request = MembershipDto.FromContext(context, serverConfig.SecondFaBypassGroups, domainInfo);
-            bypassMember = context.LdapProfile.MemberOf.Intersect(serverConfig.SecondFaBypassGroups).Any() || _checkMembership.Execute(request);
-        }
-
-        if (bypassMember is true)
-        {
-            _logger.LogInformation("User '{user:l}' is a member of the 2FA bypass group in '{domain:l}'", context.RequestPacket.UserName, serverConfig.ConnectionString);
-            return true;
+            bypassMember = context.LdapProfile!.MemberOf.Intersect(serverConfig.SecondFaBypassGroups).Any() || _checkMembership.Execute(request);
+            if (bypassMember is true)
+            {
+                _logger.LogInformation("User '{user:l}' is a member of the 2FA bypass group in '{domain:l}'", context.RequestPacket.UserName, serverConfig.ConnectionString);
+                return true;
+            }
+            _logger.LogInformation("User '{user:l}' is not a member of the 2FA bypass group in '{domain:l}'", context.RequestPacket.UserName, serverConfig.ConnectionString);
         }
 
         bool? secondFactorMember = null;
@@ -101,9 +101,15 @@ internal sealed class SecondFactorStep : IRadiusPipelineStep
             var userIdentity = new UserIdentity(context.RequestPacket.UserName);
             var domainInfo = context.ForestMetadata?.DetermineForestDomain(userIdentity);
             var request = MembershipDto.FromContext(context, serverConfig.SecondFaGroups, domainInfo);
-            secondFactorMember = context.LdapProfile.MemberOf.Intersect(serverConfig.SecondFaGroups).Any() || _checkMembership.Execute(request);
-            if (secondFactorMember is false)
-                _logger.LogInformation("User '{user:l}' is not a member of the 2FA group at '{domain:l}'", context.RequestPacket.UserName, serverConfig.ConnectionString);
+            secondFactorMember = context.LdapProfile!.MemberOf.Intersect(serverConfig.SecondFaGroups).Any() || _checkMembership.Execute(request);
+            if (secondFactorMember is true)
+            {
+                _logger.LogInformation("User '{user:l}' is a member of the 2FA group in '{domain:l}'", context.RequestPacket.UserName, serverConfig.ConnectionString);
+            }
+            else
+            {
+                _logger.LogInformation("User '{user:l}' is not a member of the 2FA group in '{domain:l}'", context.RequestPacket.UserName, serverConfig.ConnectionString);
+            }
         }
 
         if (secondFactorMember.HasValue)
@@ -129,7 +135,7 @@ internal sealed class SecondFactorStep : IRadiusPipelineStep
         var userIdentity = new UserIdentity(context.RequestPacket.UserName);
         var domainInfo = context.ForestMetadata?.DetermineForestDomain(userIdentity);
         var request = MembershipDto.FromContext(context, context.LdapConfiguration.AuthenticationCacheGroups, domainInfo);
-        var isMember = context.LdapProfile.MemberOf.Intersect(context.LdapConfiguration.AuthenticationCacheGroups).Any() || _checkMembership.Execute(request);
+        var isMember = context.LdapProfile!.MemberOf.Intersect(context.LdapConfiguration.AuthenticationCacheGroups).Any() || _checkMembership.Execute(request);
         var groupsStr = string.Join(',', context.LdapConfiguration.AuthenticationCacheGroups);
         var username = context.RequestPacket.UserName;
         if (!isMember)

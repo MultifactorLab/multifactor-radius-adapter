@@ -131,31 +131,6 @@ internal static class ConfigurationValueParser
         return true;
     }
 
-    public static bool TryParseIpAddress(string? value, out IReadOnlyList<IPAddress>? result)
-    {
-        result = null;
-        
-        if (string.IsNullOrWhiteSpace(value))
-            return false;
-        
-        var addresses = new List<IPAddress>();
-        var parts = value.Split(';', StringSplitOptions.RemoveEmptyEntries);
-
-
-        foreach (var part in parts)
-        {
-            var trimmed = part.Trim();
-            if (!IPAddress.TryParse(trimmed, out var ipAddress))
-            {
-                return false;
-            }
-            addresses.Add(ipAddress);
-        }
-        
-        result = addresses;
-        return true;
-    }
-
     public static bool TryParseUrls(string? value, out IReadOnlyList<Uri> result)
     {
         result = [];
@@ -178,31 +153,6 @@ internal static class ConfigurationValueParser
         }
         
         result = urls;
-        return true;
-    }
-    
-    public static bool TryParseIpRanges(string? value, out IReadOnlyList<IPAddressRange> result)
-    {
-        result = [];
-        
-        if (string.IsNullOrWhiteSpace(value))
-            return false;
-        
-        var ranges = new List<IPAddressRange>();
-        var parts = value.Split(';', StringSplitOptions.RemoveEmptyEntries);
-        
-        foreach (var part in parts)
-        {
-            var trimmed = part.Trim();
-            if (!IPAddressRange.TryParse(trimmed, out var range))
-            {
-                return false;
-            }
-            
-            ranges.Add(range);
-        }
-        
-        result = ranges;
         return true;
     }
     
@@ -303,6 +253,53 @@ internal static class ConfigurationValueParser
             return false;
             
         result = new CredentialDelay(values[0], values[1]);
+        return true;
+    }
+    
+    public static bool TryParseIpEntries(string? value, out IpEntry[]? entries)
+    {
+        entries = null;
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return false;
+        }
+
+        var parts = value.Split(';', StringSplitOptions.RemoveEmptyEntries);
+        entries = new IpEntry[parts.Length];
+
+        for (int i = 0; i < parts.Length; i++)
+        {
+            var trimmed = parts[i].Trim();
+
+            if (trimmed.Contains('-'))
+            {
+                var range = trimmed.Split('-');
+                if (!IPAddress.TryParse(range[0].Trim(), out var s) ||
+                    !IPAddress.TryParse(range[1].Trim(), out var e))
+                    return false;
+                entries[i] = IpEntry.Range(s, e);
+            }
+            else if (trimmed.Contains('/'))
+            {
+                var cidr = trimmed.Split('/');
+                if (!IPAddress.TryParse(cidr[0].Trim(), out var n) ||
+                    !int.TryParse(cidr[1].Trim(), out var p))
+                    return false;
+            
+                int maxPrefix = n.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6 ? 128 : 32;
+                if (p < 0 || p > maxPrefix)
+                    return false;
+                
+                entries[i] = IpEntry.Cidr(n, p);
+            }
+            else
+            {
+                if (!IPAddress.TryParse(trimmed, out var ip))
+                    return false;
+                entries[i] = IpEntry.Single(ip);
+            }
+        }
+
         return true;
     }
 }

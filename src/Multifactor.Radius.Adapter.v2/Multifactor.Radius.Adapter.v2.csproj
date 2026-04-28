@@ -11,6 +11,8 @@
         <Description>Multifactor Radus Adapter v2</Description>
         <Version>2.1.0</Version>
         <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+        <Deterministic>true</Deterministic>
+        <DeterministicSourcePaths>true</DeterministicSourcePaths>
     </PropertyGroup>
 
     <ItemGroup>
