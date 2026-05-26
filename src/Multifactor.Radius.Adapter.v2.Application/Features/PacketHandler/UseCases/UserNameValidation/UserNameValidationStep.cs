@@ -22,7 +22,13 @@ internal sealed class UserNameValidationStep : IRadiusPipelineStep
         var userName = context.RequestPacket.UserName;
         if (string.IsNullOrWhiteSpace(userName))
         {
-            _logger.LogDebug("User name is empty");
+            var clientAddress = context.RequestPacket.ProxyEndpoint?.Address.ToString()
+                                ?? context.RequestPacket.RemoteEndpoint?.Address.ToString();
+            TerminateWithError(context, "Username is required.");
+            _logger.LogWarning(
+                "Can't find User-Name in message id={PacketId} from {Client}",
+                context.RequestPacket.Identifier,
+                clientAddress);
             return Task.CompletedTask;
         }
 
