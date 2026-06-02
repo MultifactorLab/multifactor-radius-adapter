@@ -27,6 +27,7 @@ internal sealed class LdapServerConfiguration : ILdapServerConfiguration
     public IReadOnlyList<string> IncludedSuffixes { get; init; }
     public IReadOnlyList<string> ExcludedSuffixes { get; init; }
     public IReadOnlyList<DistinguishedName> BypassSecondFactorWhenApiUnreachableGroups { get; init; }
+    public IReadOnlyList<DistinguishedName> DenyGroups { get; private init; }
 
     public static LdapServerConfiguration FromConfiguration(LdapServerSection ldapServerSection, string fileName)
     {
@@ -38,6 +39,45 @@ internal sealed class LdapServerConfiguration : ILdapServerConfiguration
 
         if (!string.IsNullOrWhiteSpace(ldapServerSection.IncludedSuffixes) && !string.IsNullOrWhiteSpace(ldapServerSection.ExcludedSuffixes))
             throw new InvalidConfigurationException($"Config name: '{fileName}', LDAP server: '{ldapServerSection.ConnectionString}'. Simultaneous use of 'included-suffixes' and 'excluded-suffixes' is not allowed.");
+        
+        // Validate: deny-groups and access-groups cannot be used together
+        if (!string.IsNullOrWhiteSpace(ldapServerSection.DenyGroups) && !string.IsNullOrWhiteSpace(ldapServerSection.AccessGroups))
+            throw new InvalidConfigurationException(
+                $"Config name: '{fileName}', LDAP server: '{ldapServerSection.ConnectionString}'. " +
+                $"Simultaneous use of 'deny-groups' and 'access-groups' is not allowed.");
+        
+        var parsedDenyGroups = ConfigurationValueParser.TryParseDistinguishedNames(ldapServerSection.DenyGroups, out var denyGroupsParsed)
+            ? denyGroupsParsed
+            : (IReadOnlyList<DistinguishedName>)[];
+ 
+        // Validate: deny-groups cannot intersect with other group parameters
+        if (parsedDenyGroups.Count > 0)
+        {
+            var otherGroups = new[]
+            {
+                (ldapServerSection.SecondFaGroups, "second-fa-groups"),
+                (ldapServerSection.SecondFaBypassGroups, "second-fa-bypass-groups"),
+                (ldapServerSection.AuthenticationCacheGroups, "authentication-cache-groups"),
+                (ldapServerSection.BypassSecondFactorWhenApiUnreachableGroups, "bypass-second-factor-when-api-unreachable-groups")
+            };
+            foreach (var (groupValue, groupName) in otherGroups)
+            {
+                if (string.IsNullOrWhiteSpace(groupValue))
+                    continue;
+                
+                if (!ConfigurationValueParser.TryParseDistinguishedNames(groupValue, out var parsedOther))
+                    continue;
+                
+                var intersection = parsedDenyGroups.Intersect(parsedOther).ToList();
+                if (!intersection.Any())
+                    continue;
+                
+                throw new InvalidConfigurationException(
+                    $"Config name: '{fileName}', LDAP server: '{ldapServerSection.ConnectionString}'. " +
+                    $"Groups specified in 'deny-groups' cannot be listed in '{groupName}': {string.Join(", ", intersection)}");
+            }
+        }
+ 
         var dto = new LdapServerConfiguration
         {
             ConnectionString = !string.IsNullOrWhiteSpace(ldapServerSection.ConnectionString) ? ldapServerSection.ConnectionString :
@@ -108,8 +148,8 @@ internal sealed class LdapServerConfiguration : ILdapServerConfiguration
             BypassSecondFactorWhenApiUnreachableGroups = ConfigurationValueParser.TryParseDistinguishedNames(ldapServerSection.BypassSecondFactorWhenApiUnreachableGroups,
                 out var bypassSecondFactorWhenApiUnreachableGroups)
                 ? bypassSecondFactorWhenApiUnreachableGroups
-                : []
-
+                : [],
+            DenyGroups = parsedDenyGroups
         };
         return dto;
     }

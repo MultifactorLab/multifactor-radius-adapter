@@ -7,6 +7,7 @@ using Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCases;
 using Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCases.AccessChallenge;
 using Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCases.AccessGroupsCheck;
 using Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCases.AccessRequestFilter;
+using Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCases.DenyGroupsCheck;
 using Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCases.FirstFactor;
 using Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCases.IpWhiteList;
 using Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCases.LoadLdapForest;
@@ -63,6 +64,7 @@ internal sealed class RadiusPipelineFactory : IRadiusPipelineFactory
             steps.Add(CreateStep<LoadLdapSchemaStep>());
             steps.Add(CreateStep<UserNameValidationStep>());
             steps.Add(CreateStep<ProfileLoadingStep>());
+            steps.Add(CreateStep<DenyGroupsCheckingStep>());
             steps.Add(CreateStep<AccessGroupsCheckingStep>());
         }
         

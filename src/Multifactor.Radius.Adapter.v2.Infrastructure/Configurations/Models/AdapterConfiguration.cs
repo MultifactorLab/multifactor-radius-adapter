@@ -133,6 +133,8 @@ internal sealed class LdapServerSection
     public string? ExcludedSuffixes { get; set; }
     [Description("bypass-second-factor-when-api-unreachable-groups")]
     public string? BypassSecondFactorWhenApiUnreachableGroups { get; set; }
+    [Description("deny-groups")]
+    public string? DenyGroups { get; set; }
 }
 
 internal sealed class RadiusReplySection
