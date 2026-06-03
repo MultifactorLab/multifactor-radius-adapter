@@ -3,6 +3,7 @@ using Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.SharedSer
 using Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCases.AccessChallenge;
 using Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCases.AccessGroupsCheck;
 using Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCases.AccessRequestFilter;
+using Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCases.DenyGroupsCheck;
 using Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCases.FirstFactor;
 using Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCases.IpWhiteList;
 using Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCases.LoadLdapForest;
@@ -33,6 +34,7 @@ public static class Module
             .AddFirstFactor()
             .AddAccessRequestFiltering()
             .AddAccessGroupsCheck()
+            .AddDenyGroupsCheck()
             .AddAccessChallenge()
             .AddPreAuthCheck()
             .AddProfileLoading()

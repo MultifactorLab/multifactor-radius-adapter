@@ -24,4 +24,5 @@ public interface ILdapServerConfiguration
     public IReadOnlyList<string>? IncludedSuffixes { get; }
     public IReadOnlyList<string>? ExcludedSuffixes { get; }
     public IReadOnlyList<DistinguishedName>? BypassSecondFactorWhenApiUnreachableGroups { get; }
+    public IReadOnlyList<DistinguishedName> DenyGroups { get; }
 }
