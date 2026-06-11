@@ -50,6 +50,7 @@ internal sealed class LdapServerConfiguration : ILdapServerConfiguration
             var otherGroups = new[]
             {
                 (ldapServerSection.SecondFaGroups, "second-fa-groups"),
+                (ldapServerSection.AccessGroups, "access-groups"),
                 (ldapServerSection.SecondFaBypassGroups, "second-fa-bypass-groups"),
                 (ldapServerSection.AuthenticationCacheGroups, "authentication-cache-groups"),
                 (ldapServerSection.BypassSecondFactorWhenApiUnreachableGroups, "bypass-second-factor-when-api-unreachable-groups")
