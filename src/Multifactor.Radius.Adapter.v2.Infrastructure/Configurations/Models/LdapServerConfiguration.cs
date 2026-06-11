@@ -40,12 +40,6 @@ internal sealed class LdapServerConfiguration : ILdapServerConfiguration
         if (!string.IsNullOrWhiteSpace(ldapServerSection.IncludedSuffixes) && !string.IsNullOrWhiteSpace(ldapServerSection.ExcludedSuffixes))
             throw new InvalidConfigurationException($"Config name: '{fileName}', LDAP server: '{ldapServerSection.ConnectionString}'. Simultaneous use of 'included-suffixes' and 'excluded-suffixes' is not allowed.");
         
-        // Validate: deny-groups and access-groups cannot be used together
-        if (!string.IsNullOrWhiteSpace(ldapServerSection.DenyGroups) && !string.IsNullOrWhiteSpace(ldapServerSection.AccessGroups))
-            throw new InvalidConfigurationException(
-                $"Config name: '{fileName}', LDAP server: '{ldapServerSection.ConnectionString}'. " +
-                $"Simultaneous use of 'deny-groups' and 'access-groups' is not allowed.");
-        
         var parsedDenyGroups = ConfigurationValueParser.TryParseDistinguishedNames(ldapServerSection.DenyGroups, out var denyGroupsParsed)
             ? denyGroupsParsed
             : (IReadOnlyList<DistinguishedName>)[];
@@ -56,6 +50,7 @@ internal sealed class LdapServerConfiguration : ILdapServerConfiguration
             var otherGroups = new[]
             {
                 (ldapServerSection.SecondFaGroups, "second-fa-groups"),
+                (ldapServerSection.AccessGroups, "access-groups"),
                 (ldapServerSection.SecondFaBypassGroups, "second-fa-bypass-groups"),
                 (ldapServerSection.AuthenticationCacheGroups, "authentication-cache-groups"),
                 (ldapServerSection.BypassSecondFactorWhenApiUnreachableGroups, "bypass-second-factor-when-api-unreachable-groups")

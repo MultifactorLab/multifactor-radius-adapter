@@ -6,7 +6,7 @@ using Multifactor.Radius.Adapter.v2.Application.SharedPorts;
 
 namespace Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCases.DenyGroupsCheck;
 
-public class DenyGroupsCheckingStep : IRadiusPipelineStep
+internal sealed class DenyGroupsCheckingStep : IRadiusPipelineStep
 {
     private readonly ICheckMembership _checkMembership;
     private readonly ILogger<DenyGroupsCheckingStep> _logger;
@@ -34,23 +34,23 @@ public class DenyGroupsCheckingStep : IRadiusPipelineStep
         var domainInfo = context.ForestMetadata?.DetermineForestDomain(userIdentity);
         var denyGroups = context.LdapConfiguration.DenyGroups;
  
-        var isMember = context.LdapProfile.MemberOf.Intersect(denyGroups).Any();
-        if (isMember && !context.LdapConfiguration.LoadNestedGroups)
+        // Fast path: check flat MemberOf before querying nested groups
+        var matchedGroup = context.LdapProfile.MemberOf.Intersect(denyGroups).FirstOrDefault();
+        if (matchedGroup is not null && !context.LdapConfiguration.LoadNestedGroups)
         {
-            _logger.LogInformation(
-                "User '{user:l}' is a member of the Deny group in '{domain:l}'. Access rejected.",
-                context.RequestPacket.UserName, context.LdapConfiguration.ConnectionString);
+            LogDenied(context.RequestPacket.UserName, matchedGroup.ToString());
             return TerminatePipeline(context);
         }
  
         var request = MembershipDto.FromContext(context, denyGroups, domainInfo);
-        isMember = _checkMembership.Execute(request);
+        var isMember = _checkMembership.Execute(request);
  
         if (isMember)
         {
-            _logger.LogInformation(
-                "User '{user:l}' is a member of the Deny group in '{domain:l}'. Access rejected.",
-                context.RequestPacket.UserName, context.LdapConfiguration.ConnectionString);
+            // For nested groups we don't have the exact matched group name from ICheckMembership,
+            // so we report the configured deny groups for full context
+            var groupNames = string.Join(", ", denyGroups);
+            LogDenied(context.RequestPacket.UserName, groupNames);
             return TerminatePipeline(context);
         }
  
@@ -58,6 +58,13 @@ public class DenyGroupsCheckingStep : IRadiusPipelineStep
             "User '{user:l}' is not a member of any Deny group in '{domain:l}'. Access allowed to proceed.",
             context.RequestPacket.UserName, context.LdapConfiguration.ConnectionString);
         return Task.CompletedTask;
+    }
+ 
+    private void LogDenied(string userName, string groupName)
+    {
+        _logger.LogInformation(
+            "User '{user:l}' authentication failed. Denied by group '{group:l}'.",
+            userName, groupName);
     }
  
     private static Task TerminatePipeline(RadiusPipelineContext context)
