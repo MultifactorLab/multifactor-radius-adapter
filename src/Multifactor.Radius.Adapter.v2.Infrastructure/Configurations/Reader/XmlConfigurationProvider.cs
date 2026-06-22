@@ -1,18 +1,20 @@
-
 //Copyright(c) 2020 MultiFactor
 //Please see licence at 
 //https://github.com/MultifactorLab/multifactor-radius-adapter/blob/main/LICENSE.md
+using System.Reflection;
 using System.Text;
 using System.Xml.Linq;
 using Microsoft.Extensions.Configuration;
+using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Exceptions;
+using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Models;
 
 namespace Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Reader;
 
 internal sealed class XmlConfigurationProvider : ConfigurationProvider, IConfigurationSource
 {
     private const string AppSettingsElement = "appSettings";
-    
-    private string _path;
+    private readonly string _path;
+    private readonly HashSet<string> _knownKeys = [];
 
     public XmlConfigurationProvider(string path)
     {
@@ -43,11 +45,14 @@ internal sealed class XmlConfigurationProvider : ConfigurationProvider, IConfigu
             throw new Exception("Root XML element not found");
         }
 
+        CollectKnownKeys();
         var appSettings = root.Element(AppSettingsElement);
         if (appSettings != null)
         {
             var appSettingsElements = appSettings.Elements().ToArray();
             XmlAssert.HasUniqueElements(appSettingsElements, x => x.Attribute("key")?.Value);
+            
+            ValidateAppSettingsKeys(appSettingsElements);
             FillAppSettingsSection(appSettingsElements);
         }
 
@@ -180,6 +185,65 @@ internal sealed class XmlConfigurationProvider : ConfigurationProvider, IConfigu
         }
         
         return result.ToString();
+    }
+    
+    private void CollectKnownKeys()
+    {
+        var knownKeys = GetKnownKeysFromModel();
+        foreach (var key in knownKeys)
+        {
+            _knownKeys.Add(key);
+        }
+    }
+
+    private HashSet<string> GetKnownKeysFromModel()
+    {
+        var keys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        
+        var configType = typeof(AdapterConfiguration);
+        CollectProperties(configType, keys);
+        
+        return keys;
+    }
+
+    private void CollectProperties(Type type, HashSet<string> keys, string prefix = "")
+    {
+        var properties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance);
+        
+        foreach (var prop in properties)
+        {
+            var key = string.IsNullOrEmpty(prefix) ? prop.Name : $"{prefix}:{prop.Name}";
+            keys.Add(key);
+            
+            if (prop.PropertyType.IsGenericType)
+            {
+                var genericType = prop.PropertyType.GetGenericArguments()[0];
+                if (!genericType.IsPrimitive && genericType != typeof(string))
+                {
+                    CollectProperties(genericType, keys, key);
+                }
+            }
+            else if (!prop.PropertyType.IsPrimitive && prop.PropertyType != typeof(string) && 
+                     !prop.PropertyType.IsValueType)
+            {
+                CollectProperties(prop.PropertyType, keys, key);
+            }
+        }
+    }
+
+    private void ValidateAppSettingsKeys(XElement[] appSettingsElements)
+    {
+        foreach (var element in appSettingsElements)
+        {
+            var key = XmlAssert.HasAttribute(element, "key");
+            var pascalKey = ToPascalCase(key);
+            if (!_knownKeys.Contains(pascalKey) && !_knownKeys.Contains($"AppSettings:{pascalKey}"))
+            {
+                throw new InvalidConfigurationException(
+                    $"Unknown configuration key '{key}' in appSettings. " +
+                    $"Known keys: {string.Join(", ", _knownKeys.Where(k => k.StartsWith("appSettings:") || k == key))}");
+            }
+        }
     }
 }
 

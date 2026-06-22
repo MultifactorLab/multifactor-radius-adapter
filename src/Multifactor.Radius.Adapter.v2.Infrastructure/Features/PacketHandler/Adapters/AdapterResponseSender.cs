@@ -144,7 +144,7 @@ internal sealed class AdapterResponseSender : IResponseSender
         }
     }
     
-    private static void AddCommonAttributes(RadiusPacket responsePacket, SendAdapterResponseRequest request)
+    private void AddCommonAttributes(RadiusPacket responsePacket, SendAdapterResponseRequest request)
     {
         // Reply-Message
         if (!string.IsNullOrWhiteSpace(request.ResponseInformation.ReplyMessage))
@@ -163,7 +163,7 @@ internal sealed class AdapterResponseSender : IResponseSender
     {
         if (source is null || target is null)
             return;
-            
+
         foreach (var attribute in source.Attributes.Values)
         {
             target.RemoveAttribute(attribute.Name);
@@ -174,13 +174,14 @@ internal sealed class AdapterResponseSender : IResponseSender
         }
     }
     
-    private static void AddProxyStateAttribute(RadiusPacket source, RadiusPacket target)
+    private void AddProxyStateAttribute(RadiusPacket source, RadiusPacket target)
     {
         if (!source.Attributes.TryGetValue(ProxyStateAttribute, out var proxyStateAttribute)) return;
         if (target.Attributes.ContainsKey(ProxyStateAttribute)) return;
         var value = proxyStateAttribute.Values.FirstOrDefault();
         if (value != null)
         {
+            _logger.LogDebug("Added/replaced attribute '{attrname:l}' to reply", ProxyStateAttribute);
             target.AddAttributeValue(ProxyStateAttribute, value);
         }
     }
@@ -209,6 +210,7 @@ internal sealed class AdapterResponseSender : IResponseSender
             
             foreach (var attrValue in attribute.Value)
             {
+                _logger.LogDebug("Added/replaced attribute '{attrname:l}:{attrval:l}' to reply", attribute.Key, attrValue.ToString());
                 target.AddAttributeValue(attribute.Key, attrValue);
             }
         }
