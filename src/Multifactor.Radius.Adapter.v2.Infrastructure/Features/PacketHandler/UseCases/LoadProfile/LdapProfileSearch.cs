@@ -10,6 +10,7 @@ using Multifactor.Radius.Adapter.v2.Application.Core.Models;
 using Multifactor.Radius.Adapter.v2.Application.Core.Models.Abstractions;
 using Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCases.LoadProfile.Models;
 using Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCases.LoadProfile.Ports;
+using Multifactor.Radius.Adapter.v2.Infrastructure.Extensions;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Features.PacketHandler.UseCases.LoadProfile.Models;
 
 namespace Multifactor.Radius.Adapter.v2.Infrastructure.Features.PacketHandler.UseCases.LoadProfile;
@@ -52,14 +53,14 @@ internal sealed class LdapProfileSearch : IProfileSearch
 
         return entry is null ? null : new LdapProfile(entry, dto.LdapSchema);
     }
-
+    
     private static string GetFilter(UserIdentity identity, ILdapSchema schema)
     {
         var identityAttribute = GetIdentityAttribute(identity, schema);
         var objectClass = schema.ObjectClass;
         var classValue = schema.UserObjectClass;
 
-        return $"(&({objectClass}={classValue})({identityAttribute}={identity.Identity}))";
+        return $"(&({objectClass}={classValue})({identityAttribute}={identity.Identity.EscapeCharacters()}))";
     }
 
     private static string GetIdentityAttribute(UserIdentity identity, ILdapSchema schema) => identity.Format switch
