@@ -1,6 +1,6 @@
 using System.Net;
 using System.Net.Http.Headers;
-using System.Net.Http.Json;
+using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCases.SecondFactor.Multifactor.Exceptions;
@@ -33,10 +33,14 @@ internal sealed class CreateAccessRequest : ICreateAccessRequest
         
         var data = AccessRequestQuery.FromAppModel(dto);
         using var client = CreateClient(authData);
+
+        var requestJson = JsonSerializer.Serialize(data, _jsonOptions);
+        _logger.LogDebug("Sending request to API: {Request:l}", requestJson);
+
         try
         {
-            var response = await client.PostAsJsonAsync(Url,
-                data, _jsonOptions, cancellationToken);
+            using var requestContent = new StringContent(requestJson, Encoding.UTF8, "application/json");
+            var response = await client.PostAsync(Url, requestContent, cancellationToken);
             
             return await ProcessResponseAsync(response, cancellationToken);
         }
@@ -83,6 +87,9 @@ internal sealed class CreateAccessRequest : ICreateAccessRequest
         }
         
         var content = await response.Content.ReadAsStringAsync(cancellationToken);
+
+        _logger.LogDebug("Received response from API: {Response:l}", content);
+
         var apiResponse = JsonSerializer.Deserialize<MultiFactorApiResponse<AccessRequestResponse>>(
             content, 
             _jsonOptions);
