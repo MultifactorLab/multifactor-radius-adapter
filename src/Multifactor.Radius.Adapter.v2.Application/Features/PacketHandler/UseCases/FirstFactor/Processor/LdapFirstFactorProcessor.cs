@@ -70,17 +70,11 @@ internal sealed class LdapFirstFactorProcessor : IFirstFactorProcessor
             ?? domain?.ConnectionString
             ?? context.LdapConfiguration!.ConnectionString;
 
-        var bindStopwatch = Stopwatch.StartNew();
         var isValid = ValidateUserCredentials(context,
             formatted,
             passphrase.Password,
             connectionString,
             context.LdapConfiguration.BindTimeoutSeconds);
-        bindStopwatch.Stop();
-        _logger.LogInformation(
-            "LDAP bind for user '{user:l}' to '{ldapUri:l}' took {ElapsedMs} ms. Success: {Success}",
-            radiusPacket.UserName, connectionString, bindStopwatch.ElapsedMilliseconds, isValid);
-        
 
         if (!isValid)
         {
