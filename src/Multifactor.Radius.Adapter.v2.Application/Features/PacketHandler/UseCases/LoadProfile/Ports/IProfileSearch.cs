@@ -1,31 +1,36 @@
-﻿using System.DirectoryServices.Protocols;
-using Multifactor.Radius.Adapter.v2.Application.Core.Models.Abstractions;
+﻿using Multifactor.Radius.Adapter.v2.Application.Core.Models.Abstractions;
 using Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCases.LoadProfile.Models;
 
 namespace Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCases.LoadProfile.Ports;
 
 public interface IProfileSearch
 {
-    ILdapProfile? Execute(FindUserDto request);
+    /// <summary>
+    /// Ищет профиль пользователя (обычный поиск по одному домену,
+    /// поиск через Global Catalog со снятием неоднозначности, повторное чтение полного
+    /// профиля с найденного DC).
+    /// </summary>
+    FindUserResult Execute(FindUserDto request);
+}
+
+public record FindUserResult
+{
+    /// <summary>
+    /// Профиль найден и однозначно определён.
+    /// </summary>
+    /// <param name="Profile">Профиль пользователя (полный, а не частично реплицированный).</param>
+    /// <param name="BindConnectionString">
+    /// Connection-string, к которому нужно обращаться для bind этого пользователя.
+    /// </param>
+    public sealed record Found(ILdapProfile Profile, string BindConnectionString) : FindUserResult;
 
     /// <summary>
-    /// Возвращает ВСЕ записи, подошедшие под фильтр поиска, а не только первую.
-    /// Нужен при поиске через Global Catalog, где sAMAccountName формально уникален
-    /// только в рамках домена (не леса).
+    /// Профиль не найден (или найден неоднозначно и не смог быть уточнён).
     /// </summary>
-    IReadOnlyList<ILdapProfile> ExecuteMany(FindUserDto request);
-
-    /// <summary>
-    /// Резолвит NetBIOS-имя домена в его DNS-имя
-    /// Нужен, чтобы явно указанный пользователем домен в DOMAIN\user не терялся при поиске
-    /// через Global Catalog. Возвращает null, если сопоставление не найдено.
-    /// </summary>
-    string? ResolveDomainDnsNameByNetBiosName(
-        string connectionString,
-        AuthType authType,
-        string userName,
-        string password,
-        int bindTimeoutInSeconds,
-        string netBiosName);
+    /// <param name="IsFinal">
+    /// true — результат окончательный - сразу отказываем в аутентификации.<br/>
+    /// false — можно попробовать следующий настроенный LDAP-сервер.
+    /// </param>
+    public sealed record NotFound(bool IsFinal) : FindUserResult;
 }
 

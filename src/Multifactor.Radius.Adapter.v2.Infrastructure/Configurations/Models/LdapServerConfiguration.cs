@@ -1,6 +1,5 @@
 using Multifactor.Core.Ldap;
 using Multifactor.Core.Ldap.Name;
-using Multifactor.Radius.Adapter.v2.Application.Core.Extensions;
 using Multifactor.Radius.Adapter.v2.Application.Core.Models.Abstractions;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Exceptions;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Parser;
@@ -36,8 +35,7 @@ internal sealed class LdapServerConfiguration : ILdapServerConfiguration
         if (ldapServerSection is { EnableTrustedDomains: true, RequiresUpn: false })
             throw new InvalidConfigurationException($"Config name: '{fileName}', LDAP server: '{ldapServerSection.ConnectionString}'. To use trusted domains also set 'requires-upn' to 'true'.");
 
-        var isGlobalCatalogPort = LdapGlobalCatalogExtensions.IsGlobalCatalogPort(
-            new LdapConnectionString(ldapServerSection.ConnectionString).Port);
+        var isGlobalCatalogPort = new LdapConnectionString(ldapServerSection.ConnectionString).IsGlobalCatalog;
 
         if (isGlobalCatalogPort && ldapServerSection.EnableTrustedDomains)
             throw new InvalidConfigurationException(
