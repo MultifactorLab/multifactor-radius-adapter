@@ -62,7 +62,7 @@ internal sealed class ProfileLoadingStep : IRadiusPipelineStep
             case FindUserResult.NotFound { IsFinal: true }:
                 // Поиск уже был окончательным - отказываем сразу.
                 _logger.LogInformation(
-                    "User '{User}' not found. Rejecting immediately.",
+                    "User '{User}' not found. Rejected.",
                     userIdentity.Identity);
                 context.FirstFactorStatus = AuthenticationStatus.Reject;
                 context.SecondFactorStatus = AuthenticationStatus.Reject;

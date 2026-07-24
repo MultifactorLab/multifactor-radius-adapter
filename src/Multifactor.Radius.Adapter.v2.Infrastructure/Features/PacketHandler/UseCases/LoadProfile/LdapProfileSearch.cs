@@ -181,14 +181,13 @@ internal sealed class LdapProfileSearch : IProfileSearch
         if (match is not null)
         {
             _logger.LogInformation(
-                "Ambiguity for '{UserIdentity:l}' resolved by UPN suffix to '{Dn:l}'.",
+                "'{UserIdentity:l}' isn't unique, picked '{Dn:l}' by UPN domain.",
                 userIdentity.Identity, match.Dn.StringRepresentation);
             return match;
         }
 
         _logger.LogError(
-            "User '{UserIdentity:l}' is ambiguous across {Count} domains and cannot be resolved automatically from the provided login. " +
-            "Rejecting authentication instead of guessing. Conflicting DNs: {Dns}",
+            "'{UserIdentity:l}' matches {Count} users in different domains. Matches: {Dns}",
             userIdentity.Identity, matches.Count, conflictingDns);
 
         return null;
