@@ -49,7 +49,9 @@ internal sealed class SendChallenge: ISendChallenge
         catch (TaskCanceledException) when (!cancellationToken.IsCancellationRequested)
         {
             _logger.LogWarning("Multifactor API timeout expired for endpoint: {Url}", Url);
-            return CreateDeniedResponse("Request timeout");
+            throw new MultifactorApiUnreachableException(
+                $"Multifactor API timeout expired for endpoint: {Url}. " +
+                $"Host: {client.BaseAddress?.OriginalString}. Reason: Request timeout");
         }
         catch (OperationCanceledException)
         {
