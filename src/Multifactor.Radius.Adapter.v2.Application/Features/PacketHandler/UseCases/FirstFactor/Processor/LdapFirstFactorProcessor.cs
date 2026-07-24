@@ -1,11 +1,9 @@
 ﻿using Microsoft.Extensions.Logging;
-using Multifactor.Core.Ldap;
-using Multifactor.Core.Ldap.Name;
 using Multifactor.Radius.Adapter.v2.Application.Core.Enum;
 using Multifactor.Radius.Adapter.v2.Application.Core.Models;
 using Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCases.FirstFactor.Models;
 using Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCases.FirstFactor.Ports;
-using Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCases.LoadLdapForest.Models;
+using System.Diagnostics;
 using System.DirectoryServices.Protocols;
 using System.Text.RegularExpressions;
 
@@ -63,8 +61,20 @@ internal sealed class LdapFirstFactorProcessor : IFirstFactorProcessor
         var userIdentity = new UserIdentity(context.RequestPacket.UserName);
         var domain = context.ForestMetadata?.DetermineForestDomain(userIdentity);
         var formatted = LdapBindNameFormatter.FormatName(context.RequestPacket.UserName!, context.LdapProfile!);
-        var connectionString = domain?.ConnectionString ?? context.LdapConfiguration!.ConnectionString;
-        var isValid = ValidateUserCredentials(context, formatted, passphrase.Password, connectionString, context.LdapConfiguration.BindTimeoutSeconds);
+
+        // Приоритет источников connection-string для bind:
+        // 1. Домен, вычисленный из DN пользователя после поиска через Global Catalog;
+        // 2. Домен, определённый эвристикой по UPN/NetBIOS (механизм trusted domains);
+        // 3. Connection-string текущего LdapServer-блока.
+        var connectionString = context.ResolvedBindConnectionString
+            ?? domain?.ConnectionString
+            ?? context.LdapConfiguration!.ConnectionString;
+
+        var isValid = ValidateUserCredentials(context,
+            formatted,
+            passphrase.Password,
+            connectionString,
+            context.LdapConfiguration.BindTimeoutSeconds);
 
         if (!isValid)
         {

@@ -1,3 +1,4 @@
+using Multifactor.Core.Ldap;
 using Multifactor.Core.Ldap.Name;
 using Multifactor.Radius.Adapter.v2.Application.Core.Models.Abstractions;
 using Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Exceptions;
@@ -33,6 +34,13 @@ internal sealed class LdapServerConfiguration : ILdapServerConfiguration
     {
         if (ldapServerSection is { EnableTrustedDomains: true, RequiresUpn: false })
             throw new InvalidConfigurationException($"Config name: '{fileName}', LDAP server: '{ldapServerSection.ConnectionString}'. To use trusted domains also set 'requires-upn' to 'true'.");
+
+        var isGlobalCatalogPort = new LdapConnectionString(ldapServerSection.ConnectionString).IsGlobalCatalog;
+
+        if (isGlobalCatalogPort && ldapServerSection.EnableTrustedDomains)
+            throw new InvalidConfigurationException(
+                $"Config name: '{fileName}', LDAP server: '{ldapServerSection.ConnectionString}'. " +
+                "'enable-trusted-domains' cannot be used together with a Global Catalog connection-string (port 3268/3269)");
 
         if (!string.IsNullOrWhiteSpace(ldapServerSection.IncludedDomains) && !string.IsNullOrWhiteSpace(ldapServerSection.ExcludedDomains))
             throw new InvalidConfigurationException($"Config name: '{fileName}', LDAP server: '{ldapServerSection.ConnectionString}'. Simultaneous use of 'included-domains' and 'excluded-domains' is not allowed.");

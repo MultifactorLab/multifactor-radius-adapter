@@ -1,16 +1,13 @@
 using System.DirectoryServices.Protocols;
 using Microsoft.Extensions.Logging;
-using Multifactor.Core.Ldap;
 using Multifactor.Core.Ldap.Attributes;
 using Multifactor.Core.Ldap.Name;
 using Multifactor.Core.Ldap.Schema;
+using Multifactor.Radius.Adapter.v2.Application.Core.Enum;
 using Multifactor.Radius.Adapter.v2.Application.Core.Models;
 using Multifactor.Radius.Adapter.v2.Application.Core.Models.Abstractions;
-using Multifactor.Radius.Adapter.v2.Application.Core.Models.Dto;
-using Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCases.LoadLdapForest.Models;
 using Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCases.LoadProfile.Models;
 using Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCases.LoadProfile.Ports;
-using Multifactor.Radius.Adapter.v2.Application.SharedPorts;
 
 namespace Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCases.LoadProfile;
 
@@ -49,21 +46,38 @@ internal sealed class ProfileLoadingStep : IRadiusPipelineStep
 
         var userIdentity = new UserIdentity(context.RequestPacket.UserName);
         var attributes = GetAttributes(context);
-        var profile = await LoadUserProfileAsync(userIdentity, attributes, context);
-        if (profile is null)
+        var result = await LoadUserProfileAsync(userIdentity, attributes, context);
+
+        switch (result)
         {
-            var searchBase = GetSearchBaseInfo(context);
-            _logger.LogWarning(
-                "Unable to load profile for user '{User}' from '{Domain}'", 
-                userIdentity.Identity, 
-                searchBase);
-            throw new InvalidOperationException($"Failed to load profile for user {userIdentity.Identity}");
+            case FindUserResult.Found found:
+                context.LdapProfile = found.Profile;
+                context.ResolvedBindConnectionString = found.BindConnectionString;
+                _logger.LogInformation(
+                    "Successfully found '{UserIdentity}' profile at '{Domain}'.",
+                    userIdentity.Identity,
+                    GetProfileLocation(found.Profile, context));
+                return;
+
+            case FindUserResult.NotFound { IsFinal: true }:
+                // Поиск уже был окончательным - отказываем сразу.
+                _logger.LogInformation(
+                    "User '{User}' not found. Rejected.",
+                    userIdentity.Identity);
+                context.FirstFactorStatus = AuthenticationStatus.Reject;
+                context.SecondFactorStatus = AuthenticationStatus.Reject;
+                context.Terminate();
+                return;
+
+            case FindUserResult.NotFound { IsFinal: false }:
+                // Пользователя нет именно в этом домене - попробуем следующий настроенный LDAP-сервер.
+                var searchBase = GetSearchBaseInfo(context);
+                _logger.LogWarning(
+                    "Unable to load profile for user '{User}' from '{Domain}'",
+                    userIdentity.Identity,
+                    searchBase);
+                throw new InvalidOperationException($"Failed to load profile for user {userIdentity.Identity}");
         }
-        context.LdapProfile = profile;
-        _logger.LogInformation(
-            "Successfully found '{UserIdentity}' profile at '{Domain}'.", 
-            userIdentity.Identity, 
-            GetProfileLocation(profile, context));
     }
 
     private void ValidateContext(RadiusPipelineContext context)
@@ -81,7 +95,7 @@ internal sealed class ProfileLoadingStep : IRadiusPipelineStep
         throw new InvalidOperationException("Username is required");
     }
 
-    private async Task<ILdapProfile?> LoadUserProfileAsync(
+    private Task<FindUserResult> LoadUserProfileAsync(
         UserIdentity userIdentity, 
         List<LdapAttributeName> attributes, 
         RadiusPipelineContext context)
@@ -90,36 +104,28 @@ internal sealed class ProfileLoadingStep : IRadiusPipelineStep
         
         if (domainInfo is not null)
         {
-            return await LoadProfileFromSpecificDomainAsync(userIdentity, attributes, context, domainInfo);
+            var trustedDomainRequest = CreateFindUserRequest(
+                domainInfo.ConnectionString,
+                domainInfo?.GetAuthType() ?? AuthType.Basic,
+                userIdentity,
+                new DistinguishedName(domainInfo.DistinguishedName),
+                domainInfo.Schema,
+                attributes,
+                context.LdapConfiguration!);
+
+            return Task.FromResult(_profileSearch.Execute(trustedDomainRequest));
         }
 
-        return TryGetUserProfile(userIdentity, attributes, context);
-    }
-
-    private Task<ILdapProfile?> LoadProfileFromSpecificDomainAsync(
-        UserIdentity userIdentity,
-        List<LdapAttributeName> attributes,
-        RadiusPipelineContext context,
-        DomainInfo domainInfo)
-    {
-        var searchBase = new DistinguishedName(domainInfo.DistinguishedName);
         var request = CreateFindUserRequest(
-            domainInfo.ConnectionString,
-            domainInfo?.GetAuthType() ?? AuthType.Basic,
+            context.LdapConfiguration!.ConnectionString,
+            AuthType.Basic,
             userIdentity,
-            searchBase,
-            domainInfo.Schema,
+            context.LdapSchema!.NamingContext,
+            context.LdapSchema,
             attributes,
             context.LdapConfiguration);
 
-        var profile = _profileSearch.Execute(request);
-        
-        if (profile is not null)
-        {
-            _logger.LogDebug("Found profile in specific domain '{Domain}'", searchBase.StringRepresentation);
-        }
-
-        return Task.FromResult(profile);
+        return Task.FromResult(_profileSearch.Execute(request));
     }
 
     private static FindUserDto CreateFindUserRequest(
@@ -148,33 +154,6 @@ internal sealed class ProfileLoadingStep : IRadiusPipelineStep
             LdapSchema = schema,
             AttributeNames = attributes.ToArray()
         };
-    }
-
-    private ILdapProfile? TryGetUserProfile(
-        UserIdentity userIdentity,
-        List<LdapAttributeName> attributes,
-        RadiusPipelineContext context)
-    {
-        var request = CreateFindUserRequest(
-            context.LdapConfiguration!.ConnectionString,
-            AuthType.Basic,
-            userIdentity,
-            context.LdapSchema.NamingContext,
-            context.LdapSchema,
-            attributes,
-            context.LdapConfiguration);
-
-        var profile = _profileSearch.Execute(request);
-
-        if (profile is not null)
-        {
-            _logger.LogDebug(
-                "'{UserIdentity}' profile at '{Domain}' was found.",
-                userIdentity.Identity,
-                context.LdapSchema.NamingContext.StringRepresentation);
-        }
-
-        return profile;
     }
 
     private static string GetProfileLocation(ILdapProfile profile, RadiusPipelineContext context)

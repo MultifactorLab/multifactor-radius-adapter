@@ -16,6 +16,13 @@ public sealed class RadiusPipelineContext
     public IForestMetadata? ForestMetadata { get; set; }
     public ILdapProfile? LdapProfile { get; set; }
     public string MustChangePasswordDomain  { get; set; }
+
+    /// <summary>
+    /// Connection-string контроллера домена (389/636), вычисленный из DN пользователя
+    /// после поиска через Global Catalog. Если задан — используется для bind вместо
+    /// <see cref="LdapConfiguration"/>.ConnectionString и вместо эвристики по ForestMetadata.
+    /// </summary>
+    public string? ResolvedBindConnectionString { get; set; }
     public HashSet<string> UserGroups { get; set; } = [];
 
     public RadiusPacket? ResponsePacket { get; set; }
