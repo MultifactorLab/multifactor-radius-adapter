@@ -5,7 +5,7 @@ namespace Multifactor.Radius.Adapter.v2.Application.Core.Models.Abstractions;
 public interface IRootConfiguration
 {
     IReadOnlyList<Uri> MultifactorApiUrls { get; }
-    string? MultifactorApiProxy { get; }
+    IReadOnlyList<Uri> MultifactorApiProxies { get; }
     TimeSpan MultifactorApiTimeout { get; }
     IPEndPoint AdapterServerEndpoint { get; }
     string LoggingLevel { get; }

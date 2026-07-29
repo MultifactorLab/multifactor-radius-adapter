@@ -173,19 +173,33 @@ internal sealed class AdapterResponseSender : IResponseSender
             }
         }
     }
-    
+
     private void AddProxyStateAttribute(RadiusPacket source, RadiusPacket target)
     {
-        if (!source.Attributes.TryGetValue(ProxyStateAttribute, out var proxyStateAttribute)) return;
-        if (target.Attributes.ContainsKey(ProxyStateAttribute)) return;
+        if (!source.Attributes.TryGetValue(ProxyStateAttribute, out var proxyStateAttribute))
+        {
+
+            _logger.LogDebug("Source Attribute '{attrname:l}' is empty", ProxyStateAttribute);
+            return;
+        }
+        if (target.Attributes.ContainsKey(ProxyStateAttribute))
+        {
+            _logger.LogDebug("Target already contains attribute '{attrname:l}'", ProxyStateAttribute);
+            return;
+        }
         var value = proxyStateAttribute.Values.FirstOrDefault();
         if (value != null)
         {
             _logger.LogDebug("Added/replaced attribute '{attrname:l}' to reply", ProxyStateAttribute);
             target.AddAttributeValue(ProxyStateAttribute, value);
         }
+        else
+        {
+            _logger.LogDebug("Attribute '{attrname:l}' is empty", ProxyStateAttribute);
+        }
     }
-    
+
+
     private static void AddMessageAuthenticatorIfMissing(RadiusPacket packet)
     {
         if (packet.Attributes.ContainsKey(MessageAuthenticatorAttribute)) return;

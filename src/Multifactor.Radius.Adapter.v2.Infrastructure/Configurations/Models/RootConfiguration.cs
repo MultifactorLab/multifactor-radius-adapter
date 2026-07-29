@@ -8,7 +8,7 @@ namespace Multifactor.Radius.Adapter.v2.Infrastructure.Configurations.Models;
 internal sealed class RootConfiguration : IRootConfiguration
 {    
     public IReadOnlyList<Uri> MultifactorApiUrls { get; set; }
-    public string? MultifactorApiProxy { get; set; }
+    public IReadOnlyList<Uri> MultifactorApiProxies { get; set; }
     public TimeSpan MultifactorApiTimeout { get; set; }
     public IPEndPoint? AdapterServerEndpoint { get; set; }
     public string LoggingLevel { get; set; }
@@ -30,7 +30,6 @@ internal sealed class RootConfiguration : IRootConfiguration
         ArgumentNullException.ThrowIfNull(configurationFile);
         var conf = new RootConfiguration
         {
-            MultifactorApiProxy = configurationFile.AppSettings?.MultifactorApiProxy,
             MultifactorApiTimeout = ConfigurationValueParser.TryParseTimeout(
                 configurationFile.AppSettings?.MultifactorApiTimeout, out var span)
                 ? span!.Value : TimeSpan.FromSeconds(65),
@@ -49,9 +48,16 @@ internal sealed class RootConfiguration : IRootConfiguration
         };
         var urls = !string.IsNullOrWhiteSpace(configurationFile.AppSettings?.MultifactorApiUrl) ? configurationFile.AppSettings.MultifactorApiUrl :
             throw InvalidConfigurationException.For(prop => prop.AppSettings.MultifactorApiUrl, "Property '{prop}' is required. Config name: '{0}'",  configurationFile.FileName);
+        var proxies = !string.IsNullOrWhiteSpace(configurationFile.AppSettings?.MultifactorApiProxy) ? configurationFile.AppSettings.MultifactorApiProxy : "";
+
         conf.MultifactorApiUrls = ConfigurationValueParser.TryParseUrls(urls, out var parsedUrls) ? parsedUrls :
             throw InvalidConfigurationException.For(prop => prop.AppSettings.MultifactorApiUrl, $"Invalid {{prop}}: '{urls}'",  configurationFile.FileName);
-
+        
+        conf.MultifactorApiProxies = ConfigurationValueParser.TryParseUrls(proxies, out var parsedProxies) ? parsedProxies : [];
+        if (parsedUrls.Count > 1 && parsedProxies.Count > 1)
+        {
+            throw new InvalidConfigurationException($"'multifactor-api-url' and 'multifactor-api-proxy' can not be multiple both", configurationFile.FileName);
+        }
         var endpoint = !string.IsNullOrWhiteSpace(configurationFile.AppSettings?.AdapterServerEndpoint) ? configurationFile.AppSettings.AdapterServerEndpoint : throw new InvalidConfigurationException(nameof(conf.AdapterServerEndpoint));
 
         conf.AdapterServerEndpoint = ConfigurationValueParser.TryParseEndpoint(endpoint, out var point)

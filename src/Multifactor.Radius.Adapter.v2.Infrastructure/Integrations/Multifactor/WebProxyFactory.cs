@@ -4,9 +4,9 @@ namespace Multifactor.Radius.Adapter.v2.Infrastructure.Integrations.Multifactor;
 
 internal static class WebProxyFactory
 {
-    public static bool TryCreateWebProxy(string proxyAddress, out WebProxy? proxy)
+    public static bool TryCreateWebProxy(Uri? proxyUri, out WebProxy? proxy)
     {
-        if (string.IsNullOrWhiteSpace(proxyAddress) || !TryParseUri(proxyAddress, out var proxyUri))
+        if (proxyUri is null)
         {
             proxy = null;
             return false;
