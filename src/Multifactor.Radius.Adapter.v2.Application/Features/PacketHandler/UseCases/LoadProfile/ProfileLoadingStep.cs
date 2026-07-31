@@ -52,14 +52,14 @@ internal sealed class ProfileLoadingStep : IRadiusPipelineStep
         {
             case FindUserResult.Found found:
                 context.LdapProfile = found.Profile;
-                context.ResolvedBindConnectionString = found.BindConnectionString;
+                context.DcConnectionString = found.BindConnectionString;
                 _logger.LogInformation(
                     "Successfully found '{UserIdentity}' profile at '{Domain}'.",
                     userIdentity.Identity,
                     GetProfileLocation(found.Profile, context));
                 return;
 
-            case FindUserResult.NotFound { IsFinal: true }:
+            case FindUserResult.NotFound { Scope: ProfileSearchScope.Forest }:
                 // Поиск уже был окончательным - отказываем сразу.
                 _logger.LogInformation(
                     "User '{User}' not found. Rejected.",
@@ -69,7 +69,7 @@ internal sealed class ProfileLoadingStep : IRadiusPipelineStep
                 context.Terminate();
                 return;
 
-            case FindUserResult.NotFound { IsFinal: false }:
+            case FindUserResult.NotFound { Scope: ProfileSearchScope.Domain }:
                 // Пользователя нет именно в этом домене - попробуем следующий настроенный LDAP-сервер.
                 var searchBase = GetSearchBaseInfo(context);
                 _logger.LogWarning(

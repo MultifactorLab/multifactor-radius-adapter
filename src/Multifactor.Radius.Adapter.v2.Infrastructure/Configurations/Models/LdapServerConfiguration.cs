@@ -38,9 +38,11 @@ internal sealed class LdapServerConfiguration : ILdapServerConfiguration
         var isGlobalCatalogPort = new LdapConnectionString(ldapServerSection.ConnectionString).IsGlobalCatalog;
 
         if (isGlobalCatalogPort && ldapServerSection.EnableTrustedDomains)
-            throw new InvalidConfigurationException(
-                $"Config name: '{fileName}', LDAP server: '{ldapServerSection.ConnectionString}'. " +
-                "'enable-trusted-domains' cannot be used together with a Global Catalog connection-string (port 3268/3269)");
+            throw InvalidConfigurationException.For(
+                prop => prop.LdapServers[0].EnableTrustedDomains,
+                "Property '{prop}' cannot be used together with a Global Catalog connection-string (port 3268/3269). Config name: '{0}', LDAP server: '{1}'",
+                fileName,
+                ldapServerSection.ConnectionString);
 
         if (!string.IsNullOrWhiteSpace(ldapServerSection.IncludedDomains) && !string.IsNullOrWhiteSpace(ldapServerSection.ExcludedDomains))
             throw new InvalidConfigurationException($"Config name: '{fileName}', LDAP server: '{ldapServerSection.ConnectionString}'. Simultaneous use of 'included-domains' and 'excluded-domains' is not allowed.");

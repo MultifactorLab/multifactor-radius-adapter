@@ -22,7 +22,7 @@ public sealed class RadiusPipelineContext
     /// после поиска через Global Catalog. Если задан — используется для bind вместо
     /// <see cref="LdapConfiguration"/>.ConnectionString и вместо эвристики по ForestMetadata.
     /// </summary>
-    public string? ResolvedBindConnectionString { get; set; }
+    public string? DcConnectionString { get; set; }
     public HashSet<string> UserGroups { get; set; } = [];
 
     public RadiusPacket? ResponsePacket { get; set; }

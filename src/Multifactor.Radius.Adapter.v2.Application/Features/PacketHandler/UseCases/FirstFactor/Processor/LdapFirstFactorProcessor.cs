@@ -66,7 +66,7 @@ internal sealed class LdapFirstFactorProcessor : IFirstFactorProcessor
         // 1. Домен, вычисленный из DN пользователя после поиска через Global Catalog;
         // 2. Домен, определённый эвристикой по UPN/NetBIOS (механизм trusted domains);
         // 3. Connection-string текущего LdapServer-блока.
-        var connectionString = context.ResolvedBindConnectionString
+        var connectionString = context.DcConnectionString
             ?? domain?.ConnectionString
             ?? context.LdapConfiguration!.ConnectionString;
 

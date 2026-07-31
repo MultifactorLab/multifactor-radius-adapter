@@ -56,7 +56,7 @@ internal sealed class LdapProfileSearch : IProfileSearch
 
         if (entry is null)
         {
-            return new FindUserResult.NotFound(IsFinal: false);
+            return new FindUserResult.NotFound(ProfileSearchScope.Domain);
         }
 
         _logger.LogDebug("'{userIdentity:l}' profile at '{domain:l}' was found.", dto.UserIdentity.Identity, dto.SearchBase.StringRepresentation);
@@ -93,13 +93,13 @@ internal sealed class LdapProfileSearch : IProfileSearch
         var profile = ResolveSingleMatch(dto.UserIdentity, matches);
         if (profile is null)
         {
-            return new FindUserResult.NotFound(IsFinal: true);
+            return new FindUserResult.NotFound(ProfileSearchScope.Forest);
         }
 
         var domainDnsName = profile.Dn.GetDomainDnsName();
         var bindConnectionString = globalCatalogConnectionString.ToDomainController(domainDnsName);
 
-        if (bindConnectionString.StartsWith("ldaps://", StringComparison.OrdinalIgnoreCase))
+        if (globalCatalogConnectionString.Scheme == LdapConnectionString.LdapScheme.Ldaps.Name)
         {
             _logger.LogWarning(
                 "Resolved bind target '{ConnectionString:l}' uses LDAPS. Domain controller certificates are usually " +
