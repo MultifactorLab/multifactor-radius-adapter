@@ -292,11 +292,29 @@ public sealed class MultifactorApiService
         
         if (IsUserPassThrow(context))
         {
+            LogApiUnreachableBypass(context, identity);
             var code = ConvertToAuthCode(AccessRequestResponse.Bypass);
             return new SecondFactorResponse(code);
         }
         var radCode = ConvertToAuthCode(null);
         return new SecondFactorResponse(radCode);
+    }
+
+    private void LogApiUnreachableBypass(RadiusPipelineContext context, string identity)
+    {
+        var callingStationIdAttributeName = context.ClientConfiguration.CallingStationIdAttribute;
+        var callingStationIdAttr = context.RequestPacket.GetCallingStationIdAttribute(callingStationIdAttributeName);
+        var callingStationId = RequestDataExtractor.GetCallingStationId(
+            callingStationIdAttr,
+            context.RequestPacket.RemoteEndpoint,
+            context.ClientConfiguration.IsIpFromUdp);
+
+        _logger.LogInformation(
+            "Bypass second factor for user '{user:l}' with calling-station-id {csi:l} from {host:l}:{port} because Multifactor API is unreachable",
+            identity,
+            callingStationId,
+            context.RequestPacket.RemoteEndpoint.Address,
+            context.RequestPacket.RemoteEndpoint.Port);
     }
 
     private bool IsUserPassThrow(RadiusPipelineContext context)
