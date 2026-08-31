@@ -178,7 +178,6 @@ internal sealed class AdapterResponseSender : IResponseSender
     {
         if (!source.Attributes.TryGetValue(ProxyStateAttribute, out var proxyStateAttribute))
         {
-            
             _logger.LogDebug("Source Attribute '{attrname:l}' is empty", ProxyStateAttribute);
             return;
         }
@@ -191,7 +190,12 @@ internal sealed class AdapterResponseSender : IResponseSender
         if (value is { Count: > 0 })
         {
             _logger.LogDebug("Added/replaced attribute '{attrname:l}' to reply", ProxyStateAttribute);
-            target.AddAttributeValue(ProxyStateAttribute, value);
+
+            foreach (var attrValue in proxyStateAttribute.Values)
+            {
+                _logger.LogDebug("{ProxyStateAttribute} = {AttrValue}", ProxyStateAttribute, attrValue);
+                target.AddAttributeValue(ProxyStateAttribute, attrValue);
+            }
         }
         else
         {
