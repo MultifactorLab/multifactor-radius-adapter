@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Net;
 using System.Text;
 using Multifactor.Radius.Adapter.v2.Application.Core.Enum;
@@ -210,10 +211,22 @@ internal sealed class RadiusPacketBuilder : IRadiusPacketBuilder
                 contentBytes = BitConverter.GetBytes(val);
                 Array.Reverse(contentBytes);
                 return contentBytes;
+            case long val:
+                contentBytes = BitConverter.GetBytes(val);
+                Array.Reverse(contentBytes);
+                return contentBytes;
+            case ulong val:
+                contentBytes = BitConverter.GetBytes(val);
+                Array.Reverse(contentBytes);
+                return contentBytes;
             case byte[] val:
                 return val;
             case IPAddress val:
                 return val.GetAddressBytes();
+            case IEnumerable val:
+                return val.Cast<object>()
+                    .SelectMany(GetAttributeValueBytes)
+                    .ToArray();
             default:
                 throw new NotImplementedException();
         }
