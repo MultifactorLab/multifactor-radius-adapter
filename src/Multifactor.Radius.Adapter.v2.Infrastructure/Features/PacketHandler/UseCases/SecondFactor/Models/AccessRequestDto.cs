@@ -25,11 +25,11 @@ internal sealed class AccessRequestQuery
             PassCode = query.PassCode,
             CalledStationId = query.CalledStationId,
             CallingStationId = query.CallingStationId,
-            Capabilities = new Capabilities(true),
+            Capabilities = new Capabilities(InlineEnroll: true, MobilePushOtp: query.MobilePushOtpSupported),
             GroupPolicyPreset = new GroupPolicyPreset(query.SignUpGroups)
         };
     }
 }
 
-internal sealed record Capabilities(bool InlineEnroll);
+internal sealed record Capabilities(bool InlineEnroll, bool MobilePushOtp);
 internal sealed record GroupPolicyPreset(string? SignUpGroups);
