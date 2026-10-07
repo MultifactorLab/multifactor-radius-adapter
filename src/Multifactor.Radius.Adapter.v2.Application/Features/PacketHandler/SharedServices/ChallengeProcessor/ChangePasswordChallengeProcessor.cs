@@ -80,7 +80,14 @@ internal sealed class ChangePasswordChallengeProcessor : IChallengeProcessor
         
         var userIdentity = new UserIdentity(context.RequestPacket.UserName);
         var domainInfo = context.ForestMetadata?.DetermineForestDomain(userIdentity);
-        var connectionString = domainInfo?.ConnectionString ?? context.LdapConfiguration!.ConnectionString;
+
+        // Приоритет источников connection-string (тот же, что при bind в LdapFirstFactorProcessor):
+        // 1. Домен, вычисленный из DN пользователя после поиска через Global Catalog;
+        // 2. Домен, определённый эвристикой по UPN/NetBIOS (механизм trusted domains);
+        // 3. Connection-string текущего LdapServer-блока.
+        var connectionString = context.DcConnectionString
+            ?? domainInfo?.ConnectionString
+            ?? context.LdapConfiguration!.ConnectionString;
         var schema = domainInfo?.Schema ?? context.LdapSchema;
         
         var authType = domainInfo?.GetAuthType() ?? AuthType.Basic;

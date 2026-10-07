@@ -1,4 +1,4 @@
-using System.DirectoryServices.Protocols;
+﻿using System.DirectoryServices.Protocols;
 using System.Text;
 using Microsoft.Extensions.Logging;
 using Multifactor.Core.Ldap;
@@ -25,16 +25,31 @@ internal sealed class ChangePassword : IChangePassword
     public bool Execute(ChangeUserPasswordDto dto)
     {
         ArgumentNullException.ThrowIfNull(dto);
-        _logger.LogDebug("Try to change password for '{userIdentity}'.",dto.DistinguishedName);
+        _logger.LogDebug("Try to change password for '{userIdentity}'.", dto.DistinguishedName.StringRepresentation);
         var options = new LdapConnectionOptions(new LdapConnectionString(dto.ConnectionString), 
             dto.AuthType,
             dto.UserName, 
             dto.Password, 
             TimeSpan.FromSeconds(dto.BindTimeoutInSeconds));
-        using var connection = _connectionFactory.CreateConnection(options);
-        var changePasswordRequest = BuildPasswordChangeRequest(dto.LdapSchema, dto.DistinguishedName, dto.NewPassword);
-        var response = connection.SendRequest(changePasswordRequest);
-        return response.ResultCode == ResultCode.Success;
+        try
+        {
+            using var connection = _connectionFactory.CreateConnection(options);
+            var changePasswordRequest = BuildPasswordChangeRequest(dto.LdapSchema, dto.DistinguishedName, dto.NewPassword);
+            var response = connection.SendRequest(changePasswordRequest);
+            return response.ResultCode == ResultCode.Success;
+        }
+        catch (DirectoryOperationException ex)
+        {
+            _logger.LogWarning(ex, "Failed to change password for '{userIdentity}' at {ldapUri:l}: {resultCode} {serverMessage:l}",
+                dto.DistinguishedName.StringRepresentation, dto.ConnectionString, ex.Response?.ResultCode, ex.Response?.ErrorMessage);
+            return false;
+        }
+        catch (LdapException ex)
+        {
+            _logger.LogWarning(ex, "Failed to change password for '{userIdentity}' at {ldapUri:l}: {serverMessage:l}",
+                dto.DistinguishedName.StringRepresentation, dto.ConnectionString, ex.ServerErrorMessage);
+            return false;
+        }
     }
     
     private static ModifyRequest BuildPasswordChangeRequest(ILdapSchema ldapSchema, DistinguishedName userDn, string newPassword)

@@ -30,6 +30,7 @@ Windows version of the component is available in our [MultiFactor.Radius.Adapter
 * [Configuration](#configuration)
   * [General Parameters](#general-parameters)
   * [Active Directory Connection Parameters](#active-directory-connection-parameters)
+  * [Changing an Expired Password](#changing-an-expired-password)
   * [External RADIUS Server Connection](#external-radius-server-connection)
   * [Optional RADIUS Attributes](#optional-radius-attributes)
   * [Second factor verification parameters](#second-factor-verification-parameters)
@@ -252,6 +253,30 @@ When the ```use-active-directory-user-phone``` option is enabled, the component 
 When the ```use-active-directory-mobile-user-phone``` option is enabled, the component will use the phone recorded in the Telephones tab in the Mobile field. The format of the phone can also be any format.
 
 <img src="https://multifactor.pro/img/radius-adapter/ra-ad-mobile-phone-source.png" alt="AD mobile phone" width="300">
+
+### Changing an Expired Password
+
+If the user's Active Directory password has expired, or an administrator has set "User must change password at next logon", the adapter prompts the user to change the password during sign-in using RADIUS Access-Challenge:
+
+1. The user signs in with the old password.
+2. The adapter asks for a new password: `Please change password to continue. Enter new password:`.
+3. The user enters the new password and confirms it: `Please repeat new password:`.
+4. The adapter changes the password in the domain, and sign-in continues with the new password.
+
+The feature is enabled by default and controlled by the ```access-challenge-password``` parameter:
+
+```xml
+<appSettings>
+  <!-- Offer to change an expired password (default: true). When false, the user is rejected with "Password expired. Access rejected." -->
+  <add key="access-challenge-password" value="true"/>
+</appSettings>
+```
+
+Requirements:
+
+* **LDAPS connection to the domain.** Active Directory only allows password changes over an encrypted connection. Use the `ldaps://` scheme in the connection string, for example `ldaps://10.0.0.4/DC=domain,DC=local`. Over `ldap://` the domain controller rejects the operation (`WILL_NOT_PERFORM`), and the user is denied access after entering the new password.
+* **Service account permissions.** The password is changed on behalf of the account used to connect to the domain, so it needs the "Reset Password" permission on user objects.
+* **Access-Challenge support on the client.** The VPN gateway or other RADIUS device must be able to show a message to the user and prompt for additional input.
 
 ### External RADIUS Server Connection
 
@@ -506,6 +531,7 @@ The logs of the component are located in the ``/opt/multifactor/radius/logs`` fo
 
 * The Linux version of the Adapter _can't yet_ handle multiple domains with trust established between them;
 * A simple user's password authentication is used with Active Directory. We strongly recommend using the LDAPS scheme to encrypt traffic between the adapter and the domain (AD server must have a certificate installed, including a self-signed one).
+* Changing an expired password only works over an LDAPS connection to the domain, see [Changing an Expired Password](#changing-an-expired-password).
 
 ## Use Cases
 
