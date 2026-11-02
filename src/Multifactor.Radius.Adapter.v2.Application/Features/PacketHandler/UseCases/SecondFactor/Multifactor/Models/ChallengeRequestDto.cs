@@ -3,7 +3,4 @@ namespace Multifactor.Radius.Adapter.v2.Application.Features.PacketHandler.UseCa
 public record ChallengeRequestDto(
     string Identity,
     string Challenge,
-    string RequestId,
-    ChallengeCapabilities Capabilities);
-
-public sealed record ChallengeCapabilities(bool MobilePushOtp);
+    string RequestId);

@@ -121,8 +121,7 @@ public sealed class MultifactorApiService
         var dto = new ChallengeRequestDto(
             identity,
             answer,
-            requestId,
-            new ChallengeCapabilities(SupportsMobilePushOtp(context)));
+            requestId);
         
         var callingStationIdAttributeName = context.ClientConfiguration.CallingStationIdAttribute;
         var callingStationIdAttr = context.RequestPacket.GetCallingStationIdAttribute(callingStationIdAttributeName);
@@ -226,12 +225,8 @@ public sealed class MultifactorApiService
             GetPassCodeOrNull(context),
             personalData.CallingStationId,
             personalData.CalledStationId,
-            string.Join(';', context.ClientConfiguration.SignUpGroups),
-            SupportsMobilePushOtp(context));
+            string.Join(';', context.ClientConfiguration.SignUpGroups));
     }
-
-    private static bool SupportsMobilePushOtp(RadiusPipelineContext context)
-        => context.RequestPacket.AuthenticationType is AuthenticationType.PAP or AuthenticationType.MSCHAP2;
     
     private static string? GetPassCodeOrNull(RadiusPipelineContext context)
     {

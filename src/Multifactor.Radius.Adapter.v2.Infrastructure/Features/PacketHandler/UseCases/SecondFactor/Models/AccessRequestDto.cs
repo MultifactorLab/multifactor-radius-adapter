@@ -25,7 +25,7 @@ internal sealed class AccessRequestQuery
             PassCode = query.PassCode,
             CalledStationId = query.CalledStationId,
             CallingStationId = query.CallingStationId,
-            Capabilities = new Capabilities(InlineEnroll: true, MobilePushOtp: query.MobilePushOtpSupported),
+            Capabilities = new Capabilities(InlineEnroll: true, MobilePushOtp: true),
             GroupPolicyPreset = new GroupPolicyPreset(query.SignUpGroups)
         };
     }

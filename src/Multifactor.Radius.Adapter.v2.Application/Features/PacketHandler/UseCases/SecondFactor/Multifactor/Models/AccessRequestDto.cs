@@ -8,5 +8,4 @@ public sealed record AccessRequestDto(
     string? PassCode,
     string? CallingStationId,
     string? CalledStationId,
-    string? SignUpGroups,
-    bool MobilePushOtpSupported);
+    string? SignUpGroups);

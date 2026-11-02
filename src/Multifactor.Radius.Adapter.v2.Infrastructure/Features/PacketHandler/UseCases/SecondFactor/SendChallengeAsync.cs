@@ -30,9 +30,10 @@ internal sealed class SendChallenge: ISendChallenge
     public async Task<AccessRequestResponse> Execute(ChallengeRequestDto dto, MultifactorAuthData authData, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(dto, nameof(dto));
+        var data = ChallengeRequestQuery.FromAppModel(dto);
         using var client = CreateClient(authData);
         
-        var requestJson = JsonSerializer.Serialize(dto, _jsonOptions);
+        var requestJson = JsonSerializer.Serialize(data, _jsonOptions);
         _logger.LogDebug("Sending request to API: {Request:l}", requestJson);
 
         try
