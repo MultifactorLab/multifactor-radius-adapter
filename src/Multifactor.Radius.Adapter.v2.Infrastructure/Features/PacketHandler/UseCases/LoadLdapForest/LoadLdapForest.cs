@@ -114,9 +114,9 @@ internal sealed class LoadLdapForest : ILoadLdapForest
                 DistinguishedName.Empty,
                 "(objectClass=*)",
                 SearchScope.Base,
+                schema: null,
                 WellKnownAttributes.DefaultNamingContext,
                 WellKnownAttributes.DnsHostName);
-
 
             rootDn = GetAttributeValue(rootDse, WellKnownAttributes.DefaultNamingContext);
             if (rootDn is not null)
@@ -163,10 +163,14 @@ internal sealed class LoadLdapForest : ILoadLdapForest
     {
         try
         {
+            var connectionString = BuildConnectionStringForDomain(ldapConnectionString, dnsName);
+            var schema = LoadSchema(connectionString, userName, password, bindTimeoutInSeconds, AuthType.Basic);
+            
             var entry = connection.FindOne(
                 DistinguishedName.Empty,
                 "(objectClass=domain)",
                 SearchScope.Base,
+                schema,
                 WellKnownAttributes.DefaultNamingContext,
                 WellKnownAttributes.DnsHostName,
                 "netbiosname");
@@ -180,9 +184,7 @@ internal sealed class LoadLdapForest : ILoadLdapForest
             {
                 netBiosName = dnsName.Split('.')[0].ToUpperInvariant();
             }
-            var connectionString = BuildConnectionStringForDomain(ldapConnectionString, dnsName);
-            var schema = LoadSchema(connectionString, userName, password, bindTimeoutInSeconds, AuthType.Basic);
-
+            
             return new DomainInfo
             {
                 ConnectionString = connectionString,
@@ -211,6 +213,7 @@ internal sealed class LoadLdapForest : ILoadLdapForest
                 $"(objectClass={DomainObjectClass})",
                 SearchScope.OneLevel,
                 null,
+                schema: null,
                 "cn", 
                 "trustPartner", 
                 "trustDirection", 
@@ -279,6 +282,7 @@ internal sealed class LoadLdapForest : ILoadLdapForest
                 configDn,
                 "(objectClass=*)",
                 SearchScope.Base,
+                schema: null,
                 SuffixAttribute);
             
             if (entry is not null && entry.Attributes.Any(x => string.Equals(x.Name, SuffixAttribute, StringComparison.CurrentCultureIgnoreCase)))

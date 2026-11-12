@@ -52,7 +52,7 @@ internal sealed class LdapProfileSearch : IProfileSearch
         _logger.LogDebug("Search base = '{searchBase:l}'. Filter for search = '{filter:l}'", dto.SearchBase.StringRepresentation, filter);
 
         using var connection = CreateConnection(dto);
-        var entry = connection.FindOne(dto.SearchBase, filter, SearchScope.Subtree, attributes: dto.AttributeNames ?? []);
+        var entry = connection.FindOne(dto.SearchBase, filter, SearchScope.Subtree, dto.LdapSchema, attributes: dto.AttributeNames ?? []);
 
         if (entry is null)
         {
@@ -146,7 +146,7 @@ internal sealed class LdapProfileSearch : IProfileSearch
 
             var filter = BuildFilter(refetchDto);
             using var connection = CreateConnection(refetchDto);
-            var entry = connection.FindOne(userDn, filter, SearchScope.Subtree, attributes: dto.AttributeNames ?? []);
+            var entry = connection.FindOne(userDn, filter, SearchScope.Subtree, dto.LdapSchema, attributes: dto.AttributeNames ?? []);
 
             return entry is null ? null : new LdapProfile(entry, dto.LdapSchema);
         }
@@ -267,12 +267,20 @@ internal sealed class LdapProfileSearch : IProfileSearch
 
     private string? ResolveDomainDnsNameByNetBiosName(FindUserDto dto, string netBiosName)
     {
-        using var connection = CreateConnection(dto);
+        // подключаемся к тому же DC, но на стандартный LDAP/LDAPS порт, чтобы поиск по nETBIOSName отработал
+        var sourceConnectionString = new LdapConnectionString(dto.ConnectionString);
+        var crossRefConnectionString = sourceConnectionString.IsGlobalCatalog
+            ? sourceConnectionString.ToNonGlobalCatalogOnSameHost()
+            : dto.ConnectionString;
+
+        var crossRefDto = dto with { ConnectionString = crossRefConnectionString };
+        using var connection = CreateConnection(crossRefDto);
 
         var rootDse = connection.FindOne(
             DistinguishedName.Empty,
             "(objectClass=*)",
             SearchScope.Base,
+            dto.LdapSchema,
             attributes: [new LdapAttributeName(ConfigurationNamingContextAttribute)]);
 
         var configurationNamingContext = rootDse?.Attributes
@@ -283,26 +291,28 @@ internal sealed class LdapProfileSearch : IProfileSearch
         {
             _logger.LogWarning(
                 "Could not determine Configuration naming context from RootDSE at '{ConnectionString:l}' while resolving NetBIOS domain '{NetBiosName:l}'.",
-                dto.ConnectionString, netBiosName);
+                crossRefConnectionString, netBiosName);
             return null;
         }
 
         var partitionsBase = new DistinguishedName($"CN=Partitions,{configurationNamingContext}");
         var filter = $"(&(objectClass=crossRef)({NetBiosNameAttribute}={netBiosName.EscapeCharacters()}))";
-
+        
         var entry = connection.FindOne(
             partitionsBase,
             filter,
             SearchScope.OneLevel,
-            attributes: [new LdapAttributeName(DnsRootAttribute)]);
+            attributes: [new LdapAttributeName(DnsRootAttribute), new LdapAttributeName(NetBiosNameAttribute)]);
 
-        var dnsRoot = entry?.Attributes.SafeGetAttributeValues(new LdapAttributeName(DnsRootAttribute)).FirstOrDefault();
+        var dnsRoot = entry?.Attributes
+            .SafeGetAttributeValues(new LdapAttributeName(DnsRootAttribute))
+            .FirstOrDefault();
 
         if (string.IsNullOrWhiteSpace(dnsRoot))
         {
             _logger.LogWarning(
-                "NetBIOS domain '{NetBiosName:l}' was not found among crossRef objects under '{PartitionsBase:l}'.",
-                netBiosName, partitionsBase.StringRepresentation);
+                "NetBIOS domain '{NetBiosName:l}' was not found among crossRef objects under '{PartitionsBase:l}' (queried via '{ConnectionString:l}').",
+                netBiosName, partitionsBase.StringRepresentation, crossRefConnectionString);
         }
 
         return dnsRoot;
