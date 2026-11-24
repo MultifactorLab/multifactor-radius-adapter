@@ -59,4 +59,12 @@ public static class RequestDataExtractor
         return IPAddress.TryParse(callingStationIdAttributeValue, out _) 
             ? callingStationIdAttributeValue : remoteEndPoint.Address.ToString();
     }
+
+    public static IPAddress? GetSourceIp(RadiusPipelineContext context)
+    {
+        var callingStationId = context.RequestPacket.GetCallingStationIdAttribute(context.ClientConfiguration.CallingStationIdAttribute);
+        return IPAddress.TryParse(callingStationId, out var callingStationIp)
+            ? callingStationIp
+            : context.RequestPacket.RemoteEndpoint?.Address;
+    }
 }

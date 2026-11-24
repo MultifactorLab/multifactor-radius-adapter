@@ -169,10 +169,11 @@ internal sealed class SecondFactorChallengeProcessor : IChallengeProcessor
         switch (response.Code)
         {
             case AuthenticationStatus.Accept:
+            case AuthenticationStatus.Bypass:
                 context.ResponsePacket = challengeContext.ResponsePacket;
                 context.LdapProfile = challengeContext.LdapProfile;
                 context.FirstFactorStatus = challengeContext.FirstFactorStatus;
-                context.SecondFactorStatus = AuthenticationStatus.Accept;
+                context.SecondFactorStatus = response.Code;
                 context.Passphrase = challengeContext.Passphrase;
 
                 RemoveChallengeContext(identifier);

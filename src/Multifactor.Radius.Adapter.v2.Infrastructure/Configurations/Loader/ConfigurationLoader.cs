@@ -94,7 +94,10 @@ internal sealed class ConfigurationLoader : IConfigurationLoader
         
         var clientConfig = ClientConfiguration.FromConfiguration(config, isRoot);
         clientConfig.ReplyAttributes = ParseReplyAttributes(config.RadiusReply);
-        clientConfig.LdapServers = config.LdapServers.Select(conf => LdapServerConfiguration.FromConfiguration(conf, clientConfig.Name)).ToList();
+        clientConfig.LdapServers = config.LdapServers
+            .Select(conf => LdapServerConfiguration.FromConfiguration(conf, clientConfig.Name,
+                clientConfig.BypassPolicy?.UsesGroups == true))
+            .ToList();
         
         return clientConfig;
     }

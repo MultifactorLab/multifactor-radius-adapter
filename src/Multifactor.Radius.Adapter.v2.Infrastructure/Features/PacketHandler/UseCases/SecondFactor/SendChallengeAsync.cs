@@ -1,4 +1,3 @@
-using System.Net;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
@@ -77,9 +76,9 @@ internal sealed class SendChallenge: ISendChallenge
                 "Multifactor API request failed. Endpoint: {Url}, Status: {StatusCode}, Error: {Error}",
                 Url, response.StatusCode, errorContent);
             
-            if (response.StatusCode == HttpStatusCode.TooManyRequests)
+            if (ApiErrorPolicy.ShouldDenyRequest(response.StatusCode, out var reason))
             {
-                return CreateDeniedResponse("Too Many Requests");
+                return CreateDeniedResponse(reason);
             }
             
             response.EnsureSuccessStatusCode();
@@ -121,15 +120,14 @@ internal sealed class SendChallenge: ISendChallenge
     private AccessRequestResponse ProcessHttpRequestException(
         HttpRequestException ex, string? url)
     {
-        if (ex.StatusCode != HttpStatusCode.TooManyRequests)
+        if (ApiErrorPolicy.ShouldDenyRequest(ex.StatusCode, out var reason))
         {
-            throw new MultifactorApiUnreachableException(
-                $"Multifactor API host unreachable: {url}. Reason: {ex.Message}", 
-                ex);
+            _logger.LogWarning("Multifactor API request denied: {StatusCode}. {Message}", ex.StatusCode, ex.Message);
+            return CreateDeniedResponse(reason);
         }
 
-        _logger.LogWarning("Rate limit exceeded: {Message}", ex.Message);
-        return CreateDeniedResponse("Too Many Requests");
+        throw new MultifactorApiUnreachableException(
+            $"Multifactor API host unreachable: {url}. Reason: {ex.Message}", ex);
     }
     
     private HttpClient CreateClient(MultifactorAuthData authData)

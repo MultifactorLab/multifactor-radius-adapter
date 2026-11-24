@@ -323,6 +323,51 @@ The following parameters will help you set up access to the MULTIFACTOR API when
 </appSettings>
 ```
 
+### Granular bypass policy when the API is unreachable
+
+Set `bypass-policy` in the RADIUS client configuration under `appSettings`. During a MULTIFACTOR API outage, the policy allows the second factor to be skipped based on source IP and/or LDAP group membership. To check groups, set `bypass-second-factor-when-api-unreachable-groups` on the corresponding `<ldapServer>`.
+
+```xml
+<appSettings>
+  <!-- OR | AND | IP_ONLY | GROUP_ONLY -->
+  <add key="bypass-policy" value="AND"/>
+  <!-- Single IPs, CIDR and ranges separated by ';' -->
+  <add key="bypass-ip-whitelist" value="192.168.0.1-192.168.0.5;192.168.0.10;10.0.0.0/24"/>
+</appSettings>
+
+<ldapServers>
+  <!-- LDAP group DNs separated by ';' -->
+  <ldapServer
+    connection-string="ldaps://domain.your"
+    username="CN=svc-radius,OU=users,DC=domain,DC=your"
+    password="LDAP_SERVICE_PASSWORD"
+    bypass-second-factor-when-api-unreachable-groups="CN=IT Admins,OU=groups,DC=domain,DC=your;CN=Domain Admins,OU=groups,DC=domain,DC=your"/>
+</ldapServers>
+```
+
+| Source IP matched | LDAP group matched | OR | AND |
+|---|---|---|---|
+| Yes | Yes | Allow | Allow |
+| Yes | No | Allow | Deny |
+| No | Yes | Allow | Deny |
+| No | No | Deny | Deny |
+
+`IP_ONLY` checks only the source IP, `GROUP_ONLY` checks only LDAP group membership.
+
+Rules:
+* `bypass-policy` applies only when the MULTIFACTOR API is unreachable. The adapter does not cache second-factor bypass decisions made during an API outage.
+* When `bypass-policy` is set, the adapter applies the selected mode regardless of `bypass-second-factor-when-api-unreachable`. An empty or unknown `bypass-policy` value is a configuration error.
+* When `bypass-policy` is absent and the API is unreachable, the adapter checks `bypass-second-factor-when-api-unreachable`:
+  * `false` — rejects the request.
+  * `true` (default) — skips the second factor for members of the LDAP groups listed in `bypass-second-factor-when-api-unreachable-groups`. If the list is empty or no LDAP server is configured, the adapter skips the second factor without checking group membership.
+* Group membership can match only when an LDAP server is selected. If both the IP and group lists are empty, the policy denies bypass.
+* For IP checks, the adapter uses the address in `Calling-Station-Id` or the attribute selected by `calling-station-id-attribute`. If that attribute is missing or does not contain an IP address, the adapter uses the IP of the RADIUS packet sender. When handling a challenge response, the adapter uses the IP from the initial request.
+* Group membership is checked against the user's LDAP server: direct membership first, nested groups only with `load-nested-groups=true` (respects `nested-groups-base-dn`, trusted domains and Global Catalog connections). If the LDAP group check fails, the user is treated as not a member of the groups.
+* HTTP 401, 403, and 429 from the MULTIFACTOR API deny the request even when bypass is enabled.
+* The adapter skips the second factor for members of `second-fa-bypass-groups` regardless of API availability.
+
+Every bypass decision is written to the configured log channels (file, console, syslog) with: user name, source IP, API status, mechanism (`global bypass` / `bypass-second-factor-when-api-unreachable-groups` / `second-fa-bypass-groups` / `[bypass] policy`), policy, IP check result, LDAP group check result, `load-nested-groups`, bypass decision (Allow/Deny), and reason. For a named user, the final RADIUS response log includes the second-factor status.
+
 ### Second Factor Authentication before First Factor Authentication
 
 The Adapter now supports new mode: Second Factor Authentication before First Factor Authentication.

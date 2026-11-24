@@ -61,7 +61,7 @@ public readonly struct IpEntry
     private static IpEntry CreateV4Cidr(IPAddress network, int prefix)
     {
         uint val = IpV4ToUInt(network);
-        uint mask = prefix == 0 ? 0 : ~(0xFFFFFFFFu >> prefix);
+        uint mask = prefix == 0 ? 0 : uint.MaxValue << (32 - prefix);
         return new IpEntry(val, 0, mask, 0, 1, false);
     }
 
@@ -72,14 +72,14 @@ public readonly struct IpEntry
         ulong maskHigh, maskLow;
         if (prefix <= 64)
         {
-            maskHigh = prefix == 0 ? 0 : ~(0xFFFFFFFFFFFFFFFFul >> prefix);
+            maskHigh = prefix == 0 ? 0 : ulong.MaxValue << (64 - prefix);
             maskLow = 0;
         }
         else
         {
             maskHigh = 0xFFFFFFFFFFFFFFFFul;
             int lowBits = prefix - 64;
-            maskLow = lowBits == 0 ? 0 : ~(0xFFFFFFFFFFFFFFFFul >> lowBits);
+            maskLow = ulong.MaxValue << (64 - lowBits);
         }
 
         return new IpEntry(high, low, maskHigh, maskLow, 1, true);

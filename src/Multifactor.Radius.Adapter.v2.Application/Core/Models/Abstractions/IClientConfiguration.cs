@@ -10,6 +10,10 @@ public interface IClientConfiguration
     public string MultifactorNasIdentifier { get; }
     public string MultifactorSharedSecret { get; }
     public bool BypassSecondFactorWhenApiUnreachable { get; }
+    /// <summary>
+    /// Granular bypass policy for the case when the MULTIFACTOR API is unreachable
+    /// </summary>
+    public BypassPolicy? BypassPolicy { get; }
     public AuthenticationSource FirstFactorAuthenticationSource { get; }
     public IPEndPoint AdapterClientEndpoint { get; }
     public IReadOnlyList<string> SignUpGroups { get; }

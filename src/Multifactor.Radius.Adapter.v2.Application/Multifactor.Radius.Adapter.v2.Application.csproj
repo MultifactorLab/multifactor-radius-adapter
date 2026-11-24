@@ -16,4 +16,8 @@
       <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="8.0.0" />
     </ItemGroup>
 
+    <ItemGroup>
+      <InternalsVisibleTo Include="Multifactor.Radius.Adapter.v2.Tests" />
+    </ItemGroup>
+
 </Project>

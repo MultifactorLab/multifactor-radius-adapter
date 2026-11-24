@@ -30,7 +30,8 @@ internal sealed class LdapServerConfiguration : ILdapServerConfiguration
     public IReadOnlyList<DistinguishedName> BypassSecondFactorWhenApiUnreachableGroups { get; init; }
     public IReadOnlyList<DistinguishedName> DenyGroups { get; private init; }
 
-    public static LdapServerConfiguration FromConfiguration(LdapServerSection ldapServerSection, string fileName)
+    public static LdapServerConfiguration FromConfiguration(LdapServerSection ldapServerSection, string fileName,
+        bool validateBypassGroups)
     {
         if (ldapServerSection is { EnableTrustedDomains: true, RequiresUpn: false })
             throw new InvalidConfigurationException($"Config name: '{fileName}', LDAP server: '{ldapServerSection.ConnectionString}'. To use trusted domains also set 'requires-upn' to 'true'.");
@@ -50,6 +51,12 @@ internal sealed class LdapServerConfiguration : ILdapServerConfiguration
         if (!string.IsNullOrWhiteSpace(ldapServerSection.IncludedSuffixes) && !string.IsNullOrWhiteSpace(ldapServerSection.ExcludedSuffixes))
             throw new InvalidConfigurationException($"Config name: '{fileName}', LDAP server: '{ldapServerSection.ConnectionString}'. Simultaneous use of 'included-suffixes' and 'excluded-suffixes' is not allowed.");
         
+        var bypassGroups = ldapServerSection.BypassSecondFactorWhenApiUnreachableGroups;
+        var validBypassGroups = ConfigurationValueParser.TryParseDistinguishedNames(bypassGroups, out var parsedBypassGroups);
+        if (validateBypassGroups && !string.IsNullOrWhiteSpace(bypassGroups) && !validBypassGroups)
+            throw InvalidConfigurationException.For(prop => prop.LdapServers[0].BypassSecondFactorWhenApiUnreachableGroups,
+                "Invalid '{prop}'. Config name: '{0}', LDAP server: '{1}'", fileName, ldapServerSection.ConnectionString);
+
         var parsedDenyGroups = ConfigurationValueParser.TryParseDistinguishedNames(ldapServerSection.DenyGroups, out var denyGroupsParsed)
             ? denyGroupsParsed
             : (IReadOnlyList<DistinguishedName>)[];
@@ -150,10 +157,7 @@ internal sealed class LdapServerConfiguration : ILdapServerConfiguration
                     out var excludedSuffixes)
                     ? excludedSuffixes
                     : [],
-            BypassSecondFactorWhenApiUnreachableGroups = ConfigurationValueParser.TryParseDistinguishedNames(ldapServerSection.BypassSecondFactorWhenApiUnreachableGroups,
-                out var bypassSecondFactorWhenApiUnreachableGroups)
-                ? bypassSecondFactorWhenApiUnreachableGroups
-                : [],
+            BypassSecondFactorWhenApiUnreachableGroups = validBypassGroups ? parsedBypassGroups : [],
             DenyGroups = parsedDenyGroups
         };
         return dto;

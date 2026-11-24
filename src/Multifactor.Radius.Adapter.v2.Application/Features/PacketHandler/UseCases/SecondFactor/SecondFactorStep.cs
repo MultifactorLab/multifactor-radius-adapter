@@ -31,6 +31,9 @@ internal sealed class SecondFactorStep : IRadiusPipelineStep
         _logger.LogDebug("'{name}' started", nameof(SecondFactorStep));
         ArgumentNullException.ThrowIfNull(context);
         
+        if (context.SecondFactorStatus != AuthenticationStatus.Awaiting)
+            return;
+
         if (!ShouldCallSecondFactor(context))
         {
             context.SecondFactorStatus = AuthenticationStatus.Bypass;
@@ -44,9 +47,6 @@ internal sealed class SecondFactorStep : IRadiusPipelineStep
 
     private bool ShouldCallSecondFactor(RadiusPipelineContext context)
     {
-        if (context.SecondFactorStatus != AuthenticationStatus.Awaiting)
-            return false;
-        
         if (ShouldBypassByRequest(context))
         {
             _logger.LogInformation("Second factor is bypassed for user '{user:l}' from {host:l}:{port}",
@@ -89,7 +89,10 @@ internal sealed class SecondFactorStep : IRadiusPipelineStep
             bypassMember = context.LdapProfile!.MemberOf.Intersect(serverConfig.SecondFaBypassGroups).Any() || _checkMembership.Execute(request);
             if (bypassMember is true)
             {
-                _logger.LogInformation("User '{user:l}' is a member of the 2FA bypass group in '{domain:l}'", context.RequestPacket.UserName, serverConfig.ConnectionString);
+                _logger.LogInformation("Second factor bypass decision for user '{user:l}': source IP: '{sourceIp}', API status: not requested, " +
+                                       "mechanism: 'second-fa-bypass-groups', policy: -, IP check: not checked, LDAP group check: match, load-nested-groups: {loadNestedGroups}, " +
+                                       "decision: Allow, reason: user is a member of 'second-fa-bypass-groups'",
+                    context.RequestPacket.UserName, RequestDataExtractor.GetSourceIp(context), serverConfig.LoadNestedGroups);
                 return true;
             }
             _logger.LogInformation("User '{user:l}' is not a member of the 2FA bypass group in '{domain:l}'", context.RequestPacket.UserName, serverConfig.ConnectionString);

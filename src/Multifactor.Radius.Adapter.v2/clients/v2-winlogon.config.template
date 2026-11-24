@@ -15,6 +15,13 @@
     	<add key="multifactor-nas-identifier" value="1"/>
     	<!-- get it from multifactor management panel -->
     	<add key="multifactor-shared-secret" value="2"/>	
+        <!-- Optional: granular second-factor bypass when the MULTIFACTOR API is unreachable.
+             Setting bypass-policy overrides bypass-second-factor-when-api-unreachable.
+             Windows verifies the first factor. -->
+        <!-- OR | AND | IP_ONLY | GROUP_ONLY -->
+        <!-- <add key="bypass-policy" value="IP_ONLY"/> -->
+        <!-- <add key="bypass-ip-whitelist" value="192.168.0.1-192.168.0.5; 192.168.0.10; 10.0.0.0/24"/> -->
+        <!-- For group checks, set bypass-second-factor-when-api-unreachable-groups on the LDAP server. -->
     </appSettings>
 
 </configuration>

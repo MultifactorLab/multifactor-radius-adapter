@@ -233,7 +233,7 @@ internal sealed class AdapterResponseSender : IResponseSender
         }
     }
     
-    private static PacketCode DetermineResponseCode(AuthenticationStatus firstFactorStatus, 
+    internal static PacketCode DetermineResponseCode(AuthenticationStatus firstFactorStatus,
         AuthenticationStatus secondFactorStatus)
     {
         var successfulFirstFactor = firstFactorStatus 
@@ -278,12 +278,13 @@ internal sealed class AdapterResponseSender : IResponseSender
         if (!string.IsNullOrWhiteSpace(userName))
         {
             _logger.LogInformation(
-                "{Code} sent to {Host}:{Port} id={Id} user='{User}'", 
+                "{Code} sent to {Host}:{Port} id={Id} user='{User}', second factor: {SecondFactorStatus}",
                 responsePacket.Code.ToString(), 
                 endpoint.Address, 
                 endpoint.Port, 
                 responsePacket.Identifier, 
-                userName);
+                userName,
+                request.SecondFactorStatus);
         }
         else 
         {

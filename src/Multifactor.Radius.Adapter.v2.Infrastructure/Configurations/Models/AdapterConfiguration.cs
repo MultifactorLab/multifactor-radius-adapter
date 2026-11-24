@@ -56,6 +56,10 @@ internal sealed class AppSettingsSection
     public string SignUpGroups { get; set; }
     [Description("bypass-second-factor-when-api-unreachable")]
     public bool? BypassSecondFactorWhenApiUnreachable { get; set; }
+    [Description("bypass-policy")]
+    public string? BypassPolicy { get; set; }
+    [Description("bypass-ip-whitelist")]
+    public string? BypassIpWhitelist { get; set; }
     [Description("first-factor-authentication-source")]
     public string FirstFactorAuthenticationSource { get; set; }
     [Description("adapter-client-endpoint")]

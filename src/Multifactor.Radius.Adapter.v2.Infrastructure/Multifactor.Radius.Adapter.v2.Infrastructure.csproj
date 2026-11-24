@@ -28,4 +28,8 @@
       <ProjectReference Include="..\Multifactor.Radius.Adapter.v2.Application\Multifactor.Radius.Adapter.v2.Application.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <InternalsVisibleTo Include="Multifactor.Radius.Adapter.v2.Tests" />
+    </ItemGroup>
+
 </Project>

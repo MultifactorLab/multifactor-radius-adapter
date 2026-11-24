@@ -17,6 +17,7 @@ internal sealed class ClientConfiguration : IClientConfiguration
     public string MultifactorSharedSecret { get; private init; }
     public IReadOnlyList<string> SignUpGroups { get; private set; }
     public bool BypassSecondFactorWhenApiUnreachable { get; private init; }
+    public BypassPolicy? BypassPolicy { get; private set; }
     public AuthenticationSource FirstFactorAuthenticationSource { get; private set; }
     public IPEndPoint AdapterClientEndpoint { get; private set; }
 
@@ -205,6 +206,8 @@ internal sealed class ClientConfiguration : IClientConfiguration
                 StartupLogger.Warning(exception.Message);
             }
 
+        dto.BypassPolicy = ParseBypassPolicy(configurationFile);
+
         if (!string.IsNullOrWhiteSpace(configurationFile.AppSettings.IpWhiteList))
             if (ConfigurationValueParser.TryParseIpEntries(configurationFile.AppSettings.IpWhiteList,
                     out var ipWhiteList))
@@ -260,5 +263,40 @@ internal sealed class ClientConfiguration : IClientConfiguration
                         configurationFile.FileName);
         ;
         return dto;
+    }
+
+    private static BypassPolicy? ParseBypassPolicy(AdapterConfiguration configurationFile)
+    {
+        var settings = configurationFile.AppSettings;
+        if (settings.BypassPolicy is null)
+        {
+            return null;
+        }
+
+        BypassPolicyMode? mode = settings.BypassPolicy.Trim().ToUpperInvariant() switch
+        {
+            "OR" => BypassPolicyMode.Or,
+            "AND" => BypassPolicyMode.And,
+            "IP_ONLY" => BypassPolicyMode.IpOnly,
+            "GROUP_ONLY" => BypassPolicyMode.GroupOnly,
+            _ => null
+        };
+        if (mode is null)
+        {
+            throw InvalidConfigurationException.For(c => c.AppSettings.BypassPolicy,
+                "Invalid '{prop}' value '{0}'. Config name: '{1}'",
+                settings.BypassPolicy, configurationFile.FileName);
+        }
+
+        IpEntry[]? ipWhitelist = null;
+        if (!string.IsNullOrWhiteSpace(settings.BypassIpWhitelist) &&
+            !ConfigurationValueParser.TryParseIpEntries(settings.BypassIpWhitelist, out ipWhitelist))
+        {
+            throw InvalidConfigurationException.For(c => c.AppSettings.BypassIpWhitelist,
+                "Invalid '{prop}'. Value '{0}' cannot be parsed. Config name: '{1}'", settings.BypassIpWhitelist,
+                configurationFile.FileName);
+        }
+
+        return new BypassPolicy(mode.Value, ipWhitelist ?? []);
     }
 }
